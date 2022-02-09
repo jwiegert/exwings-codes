@@ -1,2 +1,7 @@
 # exwings-codes
-Post processing-RT-sims-source-codes for Exwings
+
+Source codes for handling post processing radiative transfer simulation source codes for Exwings.
+
+## 20220209
+
+...
