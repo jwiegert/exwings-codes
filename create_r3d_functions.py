@@ -24,6 +24,7 @@ def movecoordinates(nxyz,nx,ny,nz):
     return nx,ny,nz
 # ------------------------------------------------------------ #
 
+# ------------------------------------------------------------ #
 # Req inputs:
 # base grid size (in centimeters!)
 # number of refinements (nrefines)
@@ -41,12 +42,14 @@ def create_grid(basecubesize, nxyz, refinementlist):
 
     # Info text
     print("Creating amr_grid with octree refinement.")
-    print(f"Number refinements: {nrefines}")
     print(f"Size of base cell: {basecubesize} AU")
     print(f"Number of base cells along one side of the grid: {nxyz}")
+    print(f"Distances to refinement limits: {refinementlist} AU")
+    print(f"Number refinements: {nrefines}")
 
-    # Change units to cm for basecubesize
+    # Change units to cm
     basecubesize *= AUcm
+    refinementlist = [dist*AUcm for dist in refinementlist]
 
     # Make sure the nxyz is even, if not warn and change:
     if nxyz%2 != 0:
@@ -61,6 +64,8 @@ def create_grid(basecubesize, nxyz, refinementlist):
     nbasecubes     = int(nxyz * nxyz * nxyz)
     gridedge       = nxyz * basecubesize
     gridcourners   = np.linspace(-gridedge*0.5,gridedge*0.5,nxyz+1)
+    print(f"Length of total side of whole grid: {gridedge/AUcm:.2f} AU")
+    print("")
 
     griddist       = np.zeros(nxyz)
     for nn in range(nxyz):
@@ -79,28 +84,83 @@ def create_grid(basecubesize, nxyz, refinementlist):
     for nn in range(nrefines-1):
         smallcubesize.append(0.5 * smallcubesize[nn])
         print(f"Child cell size {nn+1}: {smallcubesize[nn+1]/AUcm} AU")
-        
-    
-    # Children grid coordinates (see R3D manual for the matrix for the order of
-    # child cells inside a parent cell).
-    gridcorrx = []
-    gridcorry = []
-    gridcorrz = []
+    print("")
 
-    for nn in range(nrefines):
-        gridcorrx.append(np.array([-1,1,-1,1,-1,1,-1,1]) * 0.5 * smallcubesize[nn])
-        gridcorry.append(np.array([-1,-1,1,1,-1,-1,1,1]) * 0.5 * smallcubesize[nn])
-        gridcorrz.append(np.array([-1,-1,-1,-1,1,1,1,1]) * 0.5 * smallcubesize[nn])
+    # Children grid coordinate corrections (see R3D manual for the matrix 
+    # for the order of child cells inside a parent cell).
+    # Each sublist is a list of coord-corrections for each layer
+    # gridcorrx[level of refinement][coordinate correction of smaller cube]
+    # First level are zeros so that 
+    gridcorrx = [np.array([0,0,0,0,0,0,0,0])]
+    gridcorry = [np.array([0,0,0,0,0,0,0,0])]
+    gridcorrz = [np.array([0,0,0,0,0,0,0,0])]
+
+    for nr in range(nrefines):
+        gridcorrx.append(np.array([-1,1,-1,1,-1,1,-1,1]) * 0.5 * smallcubesize[nr])
+        gridcorry.append(np.array([-1,-1,1,1,-1,-1,1,1]) * 0.5 * smallcubesize[nr])
+        gridcorrz.append(np.array([-1,-1,-1,-1,1,1,1,1]) * 0.5 * smallcubesize[nr])
 
     # Define refinement arrays
     # I.e. add refinements within a list of radii
-    refinematrix = np.zeros(nbasecubes,nrefines)
+    refinearrayprev = np.array([0])
 
-    # Initial grid coordinates
-    nx,ny,nz = 0,0,0
+    for nr in range(nrefines+1):
 
-    for nr in range(nrefines):
+        # Initial refinement list
+        refinearray = np.zeros(nbasecubes + 8*np.size(np.where(refinearrayprev > 0)))
+
+        # Initial grid coordinates
+        nx,ny,nz = 0,0,0
+
         for nn in range(nbasecubes):
-            # TODO: change my refinement scheme to these loops
+
+            # Add refinement cell coordinate corrections
+            gridx = 0
+            gridy = 0
+            gridz = 0
+
+            # Compute distances to each refined cell for each level
+            # Up to the current refinement level
+
+            # TODO: doesn't enter this now
+            # The main loop needs to run at least once
+            # which creates the problem that refinementlist[nr] is out of index
+            # why I have this if statement
+            # so now the refinearray has the correct size but I don't
+            # get any ones in it. There should be 8 ones
+            # each folloed by 8 zeros
+            if nr < nrefines:
+                for nnr in range(nr+1):
+                    for nsmall in range(8):
+
+                        gridx += gridcorrx[nnr][nsmall]
+                        gridy += gridcorry[nnr][nsmall]
+                        gridz += gridcorrz[nnr][nsmall]
+                        
+                        # Add distances to base cell distances
+                        refdistance = np.sqrt(
+                            (griddist[nx] + gridx)**2 + 
+                            (griddist[ny] + gridy)**2 + 
+                            (griddist[nz] + gridz)**2)
+
+                        # Add layers of refinements
+                        if refdistance <= refinementlist[nr]:
+                            refinearray[nn + nnr*nsmall] = nr+1
+
+            # Move base cell coordinates
+            nx,ny,nz = movecoordinates(nxyz,nx,ny,nz)
+        
+        refinearrayprev = refinearray
     
+    print(refinearray)
+    print(nxyz**3)
+    print(len(refinearray))
+        
     
+
+
+
+            
+
+
+
