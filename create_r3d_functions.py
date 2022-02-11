@@ -25,16 +25,12 @@ def movecoordinates(nxyz,nx,ny,nz):
 # ------------------------------------------------------------ #
 
 # ------------------------------------------------------------ #
-# Req inputs:
-# base grid size (in centimeters!)
-# number of refinements (nrefines)
-# number of base cubes (on one side of the grid)
-# position of refinements, radial distances to the center of the grid
 
 def create_grid(basecubesize, nxyz, refinementlist):
     """
     Info here!
     """
+    # TODO: add info in infotext
 
     # Basic definitions
     AUcm = 1.49598e13
@@ -90,10 +86,9 @@ def create_grid(basecubesize, nxyz, refinementlist):
     # for the order of child cells inside a parent cell).
     # Each sublist is a list of coord-corrections for each layer
     # gridcorrx[level of refinement][coordinate correction of smaller cube]
-    # First level are zeros so that 
-    gridcorrx = [np.array([0,0,0,0,0,0,0,0])]
-    gridcorry = [np.array([0,0,0,0,0,0,0,0])]
-    gridcorrz = [np.array([0,0,0,0,0,0,0,0])]
+    gridcorrx = []
+    gridcorry = []
+    gridcorrz = []
 
     for nr in range(nrefines):
         gridcorrx.append(np.array([-1,1,-1,1,-1,1,-1,1]) * 0.5 * smallcubesize[nr])
@@ -102,61 +97,241 @@ def create_grid(basecubesize, nxyz, refinementlist):
 
     # Define refinement arrays
     # I.e. add refinements within a list of radii
-    refinearrayprev = np.array([0])
+    # I need to fix this to something neater, ie recurring functions instead
 
-    for nr in range(nrefines+1):
+    if nrefines > 0:
 
-        # Initial refinement list
-        refinearray = np.zeros(nbasecubes + 8*np.size(np.where(refinearrayprev > 0)))
+        # Add first refinement
 
-        # Initial grid coordinates
+        # Define first arrays
+        refinearray0 = np.zeros(nbasecubes)
         nx,ny,nz = 0,0,0
+
+        # Loop over base cells
+        for nn in range(nbasecubes):
+
+            # Compute distances to each base cell
+            refdistance = np.sqrt(
+                griddist[nx]**2 + griddist[ny]**2 + griddist[nz]**2)
+
+            # Add ones for each refined cell
+            if refdistance < refinementlist[0]:
+                refinearray0[nn] = 1
+
+            # Move coordinates
+            nx,ny,nz = movecoordinates(nxyz,nx,ny,nz)
+        
+        # Create new refinearray
+        refinearray1 = np.zeros(nbasecubes + 8*np.size(np.where(refinearray0 > 0)))
+
+        # Reset counters
+        nx,ny,nz = 0,0,0
+        counter = [0 for _ in range(nrefines)]
 
         for nn in range(nbasecubes):
 
-            # Add refinement cell coordinate corrections
-            gridx = 0
-            gridy = 0
-            gridz = 0
+            # Add 8 zeros after each 1 in refinearray
+            if refinearray0[nn] == 1:
+                refinearray1[nn + counter[0]*8] = 1
 
-            # Compute distances to each refined cell for each level
-            # Up to the current refinement level
+                # Add second level of refinements
+                if nrefines > 1:
 
-            # TODO: doesn't enter this now
-            # The main loop needs to run at least once
-            # which creates the problem that refinementlist[nr] is out of index
-            # why I have this if statement
-            # so now the refinearray has the correct size but I don't
-            # get any ones in it. There should be 8 ones
-            # each folloed by 8 zeros
-            if nr < nrefines:
-                for nnr in range(nr+1):
-                    for nsmall in range(8):
+                    # Loop over these children cells
+                    for child1 in range(8):
 
-                        gridx += gridcorrx[nnr][nsmall]
-                        gridy += gridcorry[nnr][nsmall]
-                        gridz += gridcorrz[nnr][nsmall]
-                        
-                        # Add distances to base cell distances
+                        # Check distance to cells
                         refdistance = np.sqrt(
-                            (griddist[nx] + gridx)**2 + 
-                            (griddist[ny] + gridy)**2 + 
-                            (griddist[nz] + gridz)**2)
+                            (griddist[nx] + gridcorrx[0][child1])**2 + 
+                            (griddist[ny] + gridcorry[0][child1])**2 + 
+                            (griddist[nz] + gridcorrz[0][child1])**2
+                        )
 
-                        # Add layers of refinements
-                        if refdistance <= refinementlist[nr]:
-                            refinearray[nn + nnr*nsmall] = nr+1
+                        if refdistance < refinementlist[1]:
+                            refinearray1[nn + sum(counter)*8 + child1+1] = 2
+                    
+                # Update counter
+                counter[0] += 1
 
-            # Move base cell coordinates
+            # Move coordinates
             nx,ny,nz = movecoordinates(nxyz,nx,ny,nz)
+
+        if nrefines > 1:
+
+            # Create new refinearray
+            refinearray2 = np.zeros(nbasecubes + 8*np.size(np.where(refinearray1 > 0)))
+
+            # Reset counters
+            nx,ny,nz = 0,0,0
+            counter = [0 for _ in range(nrefines)]
+
+
+            for nn in range(nbasecubes):
+
+                # Add 1s to correct positions in new refinearray
+                if refinearray0[nn] == 1:
+                    refinearray2[nn + sum(counter)*8] = 1
+
+                    for child1 in range(8):
+                        if refinearray1[nn + counter[0]*8 + child1+1] == 2:
+
+                            refinearray2[nn + sum(counter)*8 + child1+1] = 2
+
+                            # Search for second level of refinements
+                            if nrefines > 2:
+
+                                # Then loop over second level children
+                                for child2 in range(8):
+                                
+                                    # Check distance to cells
+                                    refdistance = np.sqrt(
+                                        (griddist[nx] + gridcorrx[0][child1] + gridcorrx[1][child2])**2 + 
+                                        (griddist[ny] + gridcorry[0][child1] + gridcorry[1][child2])**2 + 
+                                        (griddist[nz] + gridcorrz[0][child1] + gridcorrz[1][child2])**2
+                                    )
+
+                                    # Add 3s to the refined cells
+                                    if refdistance < refinementlist[2]:
+                                        refinearray2[
+                                            nn + sum(counter)*8 +child1+child2+2
+                                        ] = 3
+                                
+                            counter[1] += 1
+                    counter[0] += 1
+                # Move coordinates
+                nx,ny,nz = movecoordinates(nxyz,nx,ny,nz)
+            
+            if nrefines > 2:
+
+                # Create new refinearray
+                refinearray3 = np.zeros(nbasecubes + 8*np.size(np.where(refinearray2 > 0)))
+
+                # Reset counters
+                nx,ny,nz = 0,0,0
+                counter = [0 for _ in range(nrefines)]
+
+                for nn in range(nbasecubes):
+
+                    # Add 1s to correct positions in new refinearray
+                    if refinearray0[nn] == 1:
+                        refinearray3[nn + sum(counter)*8] = 1
+
+                        for child1 in range(8):
+                            
+                            # Add 2s to the correct positions
+                            if refinearray1[nn + 8*counter[0] + child1+1] == 2:
+                                refinearray3[nn + sum(counter)*8 + child1+1] = 2
+
+                                for child2 in range(8):
+
+                                    # Add 3s to the correct positions
+                                    if refinearray2[nn + 8*(counter[0]+counter[1]) + child1+child2+2] == 3:
+                                        refinearray3[nn + sum(counter)*8 + child1+child2+2] = 3
+
+                                        # Search for third refinements
+                                        if nrefines > 3:
+                                            for child3 in range(8):
+
+                                                refdistance = np.sqrt(
+                                                    (griddist[nx] + gridcorrx[0][child1] + gridcorrx[1][child2] + gridcorrx[2][child3])**2 + 
+                                                    (griddist[ny] + gridcorry[0][child1] + gridcorry[1][child2] + gridcorry[2][child3])**2 + 
+                                                    (griddist[nz] + gridcorrz[0][child1] + gridcorrz[1][child2] + gridcorrz[2][child3])**2
+                                                )
+
+                                                if refdistance < refinementlist[3]:
+                                                    refinearray3[
+                                                        nn + sum(counter)*8 + child1+child2+child3+3
+                                                    ] = 4
+                                        
+                                        # Update counters
+                                        counter[2] += 1
+                                counter[1] += 1
+                        counter[0] += 1
+                    # Move coordinates
+                    nx,ny,nz = movecoordinates(nxyz,nx,ny,nz)
+
+                # Create final refinementarray and save data
+                # (Yes this is ugly, I will have to solve this some day with
+                # nested functions instead but now it was just way too complex)
+                refinearraysave = np.zeros(nbasecubes + 8*np.size(np.where(refinearray3 > 0)))
+                counter = 0
+                for nn in range(np.size(refinearray3)):
+                    if refinearray3[nn] == 1:
+                        refinearraysave[nn+counter] = 1
+                    if refinearray3[nn] == 2:
+                        refinearraysave[nn+counter] = 1
+                    if refinearray3[nn] == 3:
+                        refinearraysave[nn+counter] = 1
+                    if refinearray3[nn] == 4:
+                        refinearraysave[nn+counter] = 1
+                        counter += 8
+
+            else:
+                refinearraysave = np.zeros(nbasecubes + 8*np.size(np.where(refinearray2 > 0)))
+                counter = 0
+                for nn in range(np.size(refinearray2)):
+                    if refinearray2[nn] == 1:
+                        refinearraysave[nn+counter] = 1
+                    if refinearray2[nn] == 2:
+                        refinearraysave[nn+counter] = 1
+                    if refinearray2[nn] == 3:
+                        refinearraysave[nn+counter] = 1
+                        counter += 8
+
+        else:
+            refinearraysave = np.zeros(nbasecubes + 8*np.size(np.where(refinearray1 > 0)))
+            counter = 0
+            for nn in range(np.size(refinearray1)):
+                if refinearray1[nn] == 1:
+                    refinearraysave[nn+counter] = 1
+                if refinearray1[nn] == 2:
+                    refinearraysave[nn+counter] = 1
+                    counter += 8
+
+    # Check results
+    print(refinearraysave)
+
+
+    # Print amr_grid
+    print("Writing amr_grid.inp")
+
+    nbranch = int(np.size(refinearraysave))
+    nleafs = int(nbranch - (nbranch - nxyz*nxyz*nxyz) / 8)
+
+    with open('../amr_grid.inp', 'w'):
+
+        # TODO update to nicer code here!
+
+
+
+    f = open('amr_grid.inp', 'w')
+    f.writelines(['1\n\n',\
+                '1\n',\
+                '0\n',\
+                '0\n\n',\
+                '1 1 1\n',\
+                str(nxyz),' ',str(nxyz),' ',str(nxyz),'\n\n',\
+                str(nrefines),' ',str(nleafs),' ',str(nbranch),'\n\n'])
+    #
+    # 2. The courners of the grid
+    #
+    for N in range(3):
+        for nn in range(nxyz+1):
+            f.writelines([str(gridcourners[nn]).strip('[]'),'\n'])
+        f.writelines(['\n'])
+    f.writelines(['\n'])
+    #
+    # 3. The refinements
+    #
+    refinearraysave = refinearraysave.astype(int)
+    for nn in range(nbranch):
+        f.writelines([str(refinearraysave[nn]).strip('[]'),'\n'])
+    f.close()
+
+
         
-        refinearrayprev = refinearray
-    
-    print(refinearray)
-    print(nxyz**3)
-    print(len(refinearray))
-        
-    
+# One function for computing distance to cell and adding number nr to the refinearray
+# functions to compute the different indeces for refinearray, where to add numbers
 
 
 
