@@ -26,7 +26,7 @@ def movecoordinates(nxyz,nx,ny,nz):
 
 # ------------------------------------------------------------ #
 
-def create_grid(basecubesize, nxyz, refinementlist):
+def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str):
     """
     Info here!
     """
@@ -37,11 +37,11 @@ def create_grid(basecubesize, nxyz, refinementlist):
     nrefines = len(refinementlist)
 
     # Info text
-    print("Creating amr_grid with octree refinement.")
-    print(f"Size of base cell: {basecubesize} AU")
-    print(f"Number of base cells along one side of the grid: {nxyz}")
-    print(f"Distances to refinement limits: {refinementlist} AU")
-    print(f"Number refinements: {nrefines}")
+    print('Creating amr_grid with octree refinement.')
+    print(f'Size of base cell: {basecubesize} AU')
+    print(f'Number of base cells along one side of the grid: {nxyz}')
+    print(f'Distances to refinement limits: {refinementlist} AU')
+    print(f'Number refinements: {nrefines}')
 
     # Change units to cm
     basecubesize *= AUcm
@@ -50,7 +50,7 @@ def create_grid(basecubesize, nxyz, refinementlist):
     # Make sure the nxyz is even, if not warn and change:
     if nxyz%2 != 0:
         nxyz += 1
-        print(f"Warning, number of base cells is not even, it's now {nxyz}.\n")
+        print(f'Warning, number of base cells is not even, it is now {nxyz}.\n')
     
     # Create basic parameters of the grid
     #   nbasecubes : total number of base cells
@@ -60,8 +60,8 @@ def create_grid(basecubesize, nxyz, refinementlist):
     nbasecubes     = int(nxyz * nxyz * nxyz)
     gridedge       = nxyz * basecubesize
     gridcourners   = np.linspace(-gridedge*0.5,gridedge*0.5,nxyz+1)
-    print(f"Length of total side of whole grid: {gridedge/AUcm:.2f} AU")
-    print("")
+    print(f'Length of total side of whole grid: {gridedge/AUcm:.2f} AU')
+    print('')
 
     griddist       = np.zeros(nxyz)
     for nn in range(nxyz):
@@ -75,11 +75,11 @@ def create_grid(basecubesize, nxyz, refinementlist):
     # Children cube sizes
     smallcubesize = []
     smallcubesize.append(0.5 * basecubesize)
-    print(f"Child cell size 0: {smallcubesize[0]/AUcm} AU")
+    print(f'Child cell size 0: {smallcubesize[0]/AUcm} AU')
 
     for nn in range(nrefines-1):
         smallcubesize.append(0.5 * smallcubesize[nn])
-        print(f"Child cell size {nn+1}: {smallcubesize[nn+1]/AUcm} AU")
+        print(f'Child cell size {nn+1}: {smallcubesize[nn+1]/AUcm} AU')
     print("")
 
     # Children grid coordinate corrections (see R3D manual for the matrix 
@@ -288,54 +288,116 @@ def create_grid(basecubesize, nxyz, refinementlist):
                     refinearraysave[nn+counter] = 1
                     counter += 8
 
-    # Check results
-    print(refinearraysave)
-
-
     # Print amr_grid
-    print("Writing amr_grid.inp")
+    print('Writing amr_grid.inp')
 
     nbranch = int(np.size(refinearraysave))
     nleafs = int(nbranch - (nbranch - nxyz*nxyz*nxyz) / 8)
 
-    with open('../amr_grid.inp', 'w'):
+    with open('../amr_grid.inp', 'w') as f:
 
-        # TODO update to nicer code here!
+        # Write header containing:
+        # Number of Base cells in earch axis
+        # Number of cells and children cells etc
+        f.write(f'1\n\n1\n0\n0\n\n1 1 1\n{nxyz} {nxyz} {nxyz}\n\n{nrefines} {nleafs} {nbranch}\n\n')
 
+        # Write coordinates of courners of base cells in cm
+        for N in range(3):
+            for gridc in gridcourners:
+                f.write(f'{gridc}\n')
+            # Add empty line between the 3 dimensions
+            f.write('')
+        # Add additional empty line before list of refinements
+        f.write('')
 
+        # Write refinements
+        for gridc in refinearraysave:
+            f.write(f'{int(gridc)}')
+    
+    print('Finished amr_grid.inp')
+    print('')
+    
+    # Print grid_distances.dat
 
-    f = open('amr_grid.inp', 'w')
-    f.writelines(['1\n\n',\
-                '1\n',\
-                '0\n',\
-                '0\n\n',\
-                '1 1 1\n',\
-                str(nxyz),' ',str(nxyz),' ',str(nxyz),'\n\n',\
-                str(nrefines),' ',str(nleafs),' ',str(nbranch),'\n\n'])
-    #
-    # 2. The courners of the grid
-    #
-    for N in range(3):
-        for nn in range(nxyz+1):
-            f.writelines([str(gridcourners[nn]).strip('[]'),'\n'])
-        f.writelines(['\n'])
-    f.writelines(['\n'])
-    #
-    # 3. The refinements
-    #
-    refinearraysave = refinearraysave.astype(int)
-    for nn in range(nbranch):
-        f.writelines([str(refinearraysave[nn]).strip('[]'),'\n'])
-    f.close()
+    if savegrid == 'y' or savegrid == 'yes' or savegrid == 'Y':
+        print('Writing grid_distances.dat (not necessary for Radmc3d, but useful for pre/portprocessing of your model files)')
 
+        # Declare an array for the distances to the centre of each cell
+        # Radial and x,y,z distances
+        griddistances = np.zeros((nleafs,4))
 
-        
-# One function for computing distance to cell and adding number nr to the refinearray
-# functions to compute the different indeces for refinearray, where to add numbers
+        # Declare a few counters
+        # nbig is the index of all cells
+        nbig,nx,ny,nz                          = 0,0,0,0
+        counter1,counter2,counter3,disccounter = 0,0,0,0
 
+        for nn in range(np.size(refinearray0)):
 
+            # Distances to base cells
+            if refinearray0[nn] == 0:
+                
+                # Distances along axes
+                griddistances[nbig,1] = griddist[nx]
+                griddistances[nbig,2] = griddist[ny]
+                griddistances[nbig,3] = griddist[nz]
 
+                # Radial distance
+                griddistances[nbig,0] = np.sqrt(
+                    griddistances[nbig,1]**2 + griddistances[nbig,2]**2 + griddistances[nbig,3]**2)
+
+                # Move coordinates
+                nx,ny,nz = movecoordinates(nxyz,nx,ny,nz)
+                nbig += 1
             
+            # Distances to first refinement
+            if refinearray0[nn] == 1:
+                for child1 in range(8):
+                    if refinearray1[nn + counter[0]*8] == 0:
+
+                        # Distances along axes
+                        griddistances[nbig,1] = griddist[nx] + gridcorrx[0][child1]
+                        griddistances[nbig,2] = griddist[ny] + gridcorry[0][child1]
+                        griddistances[nbig,3] = griddist[nz] + gridcorrz[0][child1]
+
+                        # Radial distance
+                        griddistances[nbig,0] = np.sqrt(
+                            griddistances[nbig,1]**2 + griddistances[nbig,2]**2 + griddistances[nbig,3]**2)
+
+                        # Move main index
+                        nbig += 1
+                    
+                    # Check for second refinment
+                    if nrefines > 1:
+                        if refinearray1[nn + (counter[0]+counter[1])*8 + child1+1] == 2:
+                            for child2 in range(8):
+
+                                #if ref1[child1+child2+2] == 0
+
+                                # Distances along axes
+                                griddistances[nbig,1] = griddist[nx] + gridcorrx[0][child1] + gridcorrx[1][child2]
+                                griddistances[nbig,2] = griddist[ny] + gridcorry[0][child1] + gridcorry[1][child2]
+                                griddistances[nbig,3] = griddist[nz] + gridcorrz[0][child1] + gridcorrz[1][child2]
+
+                                # Radial distance
+                                griddistances[nbig,0] = np.sqrt(
+                                    griddistances[nbig,1]**2 + griddistances[nbig,2]**2 + griddistances[nbig,3]**2)
+
+                                # Move main index
+                                nbig += 1
+                        
+                        # TODO: add if == 0 on 2nd ref, add 3rd and fourth levels
+
+
+                    
+                
 
 
 
+
+
+
+
+
+        with ('../grid_distances.csv', 'w') as f:
+            for gridc in griddistances:
+                f.write(f'{gridc[0]},{gridc[1]},{gridc[2]},{gridc[3]}\n')
