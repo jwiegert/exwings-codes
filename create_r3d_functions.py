@@ -1,7 +1,9 @@
 # Functions for creating input data for R3d simulations for Exwings project
 import os
+import sys
 import numpy as np
 import scipy as s
+from datetime import datetime
 from scipy.integrate import quad
 
 
@@ -35,6 +37,9 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str)
     # Basic definitions
     AUcm = 1.49598e13
     nrefines = len(refinementlist)
+
+    if nrefines > 4:
+        sys.exit(f'ERROR: this is hard coded to allow a maximum of 4 grid refinements. You specified {nrefines} refinements. STOPPING')
 
     # Info text
     print('Creating amr_grid with octree refinement.')
@@ -75,12 +80,12 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str)
     # Children cube sizes
     smallcubesize = []
     smallcubesize.append(0.5 * basecubesize)
-    print(f'Child cell size 0: {smallcubesize[0]/AUcm} AU')
+    print(f'Child cell size 1: {smallcubesize[0]/AUcm} AU')
 
     for nn in range(nrefines-1):
         smallcubesize.append(0.5 * smallcubesize[nn])
-        print(f'Child cell size {nn+1}: {smallcubesize[nn+1]/AUcm} AU')
-    print("")
+        print(f'Child cell size {nn+2}: {smallcubesize[nn+1]/AUcm} AU')
+    print('')
 
     # Children grid coordinate corrections (see R3D manual for the matrix 
     # for the order of child cells inside a parent cell).
@@ -101,8 +106,7 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str)
 
     if nrefines > 0:
 
-        # Add first refinement
-
+        # Add first refinement:
         # Define first arrays
         refinearray0 = np.zeros(nbasecubes)
         nx,ny,nz = 0,0,0
@@ -192,9 +196,7 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str)
 
                                     # Add 3s to the refined cells
                                     if refdistance < refinementlist[2]:
-                                        refinearray2[
-                                            nn + sum(counter)*8 +child1+child2+2
-                                        ] = 3
+                                        refinearray2[nn + sum(counter)*8 +child1+child2+2] = 3
                                 
                             counter[1] += 1
                     counter[0] += 1
@@ -239,9 +241,7 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str)
                                                 )
 
                                                 if refdistance < refinementlist[3]:
-                                                    refinearray3[
-                                                        nn + sum(counter)*8 + child1+child2+child3+3
-                                                    ] = 4
+                                                    refinearray3[nn + sum(counter)*8 + child1+child2+child3+3] = 4
                                         
                                         # Update counters
                                         counter[2] += 1
@@ -294,6 +294,9 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str)
     nbranch = int(np.size(refinearraysave))
     nleafs = int(nbranch - (nbranch - nxyz*nxyz*nxyz) / 8)
 
+    # Save time of creation of amr_grid.inp
+    dt_string = datetime.now().strftime('%Y-%m-%d %H:%M')
+
     with open('../amr_grid.inp', 'w') as f:
 
         # Write header containing:
@@ -306,13 +309,13 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str)
             for gridc in gridcourners:
                 f.write(f'{gridc}\n')
             # Add empty line between the 3 dimensions
-            f.write('')
+            f.write('\n')
         # Add additional empty line before list of refinements
-        f.write('')
+        f.write('\n')
 
         # Write refinements
         for gridc in refinearraysave:
-            f.write(f'{int(gridc)}')
+            f.write(f'{int(gridc)}\n')
     
     print('Finished amr_grid.inp')
     print('')
@@ -320,7 +323,7 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str)
     # Print grid_distances.dat
 
     if savegrid == 'y' or savegrid == 'yes' or savegrid == 'Y':
-        print('Writing grid_distances.dat (not necessary for Radmc3d, but useful for pre/portprocessing of your model files)')
+        print('Writing grid_distances.csv (not necessary for Radmc3d, but useful for pre/portprocessing of your model files. It has the same order as dust_densities.inp)')
 
         # Declare an array for the distances to the centre of each cell
         # Radial and x,y,z distances
@@ -328,8 +331,8 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str)
 
         # Declare a few counters
         # nbig is the index of all cells
-        nbig,nx,ny,nz                          = 0,0,0,0
-        counter1,counter2,counter3,disccounter = 0,0,0,0
+        nbig,nx,ny,nz = 0,0,0,0
+        counter = [0 for _ in range(nrefines)]
 
         for nn in range(np.size(refinearray0)):
 
@@ -350,9 +353,9 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str)
                 nbig += 1
             
             # Distances to first refinement
-            if refinearray0[nn] == 1:
+            if refinearray1[nn + counter[0]*8] == 1:
                 for child1 in range(8):
-                    if refinearray1[nn + counter[0]*8] == 0:
+                    if refinearray1[nn + counter[0]*8 + child1+1] == 0:
 
                         # Distances along axes
                         griddistances[nbig,1] = griddist[nx] + gridcorrx[0][child1]
@@ -367,11 +370,9 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str)
                         nbig += 1
                     
                     # Check for second refinment
-                    if nrefines > 1:
-                        if refinearray1[nn + (counter[0]+counter[1])*8 + child1+1] == 2:
-                            for child2 in range(8):
-
-                                #if ref1[child1+child2+2] == 0
+                    if nrefines > 1 and refinearray2[nn + (counter[0]+counter[1])*8 + child1+1] == 2:
+                        for child2 in range(8):
+                            if refinearray2[nn + (counter[0]+counter[1])*8 + child1+child2+2] == 0:
 
                                 # Distances along axes
                                 griddistances[nbig,1] = griddist[nx] + gridcorrx[0][child1] + gridcorrx[1][child2]
@@ -384,20 +385,78 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str)
 
                                 # Move main index
                                 nbig += 1
+                            
+                            # Check for third refinement
+                            if nrefines > 2 and refinearray3[nn + sum(counter)*8 + child1+child2+2] == 3:
+                                for child3 in range(8):
+                                    if refinearray3[nn + sum(counter)*8 + child1+child2+child3+3] == 0:
+
+                                        # Distances along axes
+                                        griddistances[nbig,1] = griddist[nx] + gridcorrx[0][child1] + gridcorrx[1][child2] + gridcorrx[2][child3]
+                                        griddistances[nbig,2] = griddist[ny] + gridcorry[0][child1] + gridcorry[1][child2] + gridcorry[2][child3]
+                                        griddistances[nbig,3] = griddist[nz] + gridcorrz[0][child1] + gridcorrz[1][child2] + gridcorrz[2][child3]
+
+                                        # Radial distance
+                                        griddistances[nbig,0] = np.sqrt(
+                                            griddistances[nbig,1]**2 + griddistances[nbig,2]**2 + griddistances[nbig,3]**2)
+                                        
+                                        # Move main index
+                                        nbig += 1
+
+                                    # Check for fourth and final refinement
+                                    if nrefines > 3 and refinearray3[nn + sum(counter)*8 + child1+child2+child3+3] == 4:
+                                        for child4 in range(8):
                         
-                        # TODO: add if == 0 on 2nd ref, add 3rd and fourth levels
+                                            # Distances along axes
+                                            griddistances[nbig,1] = griddist[nx] + gridcorrx[0][child1] + gridcorrx[1][child2] + gridcorrx[2][child3] + gridcorrx[3][child4]
+                                            griddistances[nbig,2] = griddist[ny] + gridcorry[0][child1] + gridcorry[1][child2] + gridcorry[2][child3] + gridcorry[3][child4]
+                                            griddistances[nbig,3] = griddist[nz] + gridcorrz[0][child1] + gridcorrz[1][child2] + gridcorrz[2][child3] + gridcorrz[3][child4]
 
+                                            # Radial distance
+                                            griddistances[nbig,0] = np.sqrt(
+                                                griddistances[nbig,1]**2 + griddistances[nbig,2]**2 + griddistances[nbig,3]**2)
+                                            
+                                            # Move main index
+                                            nbig += 1
+                                # Increase counters
+                                counter[2] += 1
+                        counter[1] += 1
+                counter[0] += 1
 
-                    
-                
-
-
-
-
-
-
-
-
-        with ('../grid_distances.csv', 'w') as f:
+                # Move base cell coordinates
+                nx,ny,nz = movecoordinates(nxyz,nx,ny,nz)
+        
+        # Save distances to grid cells
+        # This has the same order as the dust_densities later on
+        with open('../grid_distances.csv', 'w') as f:
+            f.write('# Distances to centrum of grid cells (same order as in dust_densities.inp) in cm from centrum of grid\n')
+            f.write('# Radial, x-distance, y-distance, z-distance\n')
+            f.write('# ----------\n')
             for gridc in griddistances:
                 f.write(f'{gridc[0]},{gridc[1]},{gridc[2]},{gridc[3]}\n')
+        print('Finished grid_distances.csv\n')
+    
+    # Print grid_info-file, text file with summary o grid info in readable form
+    print('Writing grid_info.txt')
+    with open('../grid_info.txt', 'w') as f:
+        f.writelines([
+            f'Information to amr_grid created at {dt_string}\n\n',
+            f'                             Size of base cell: {basecubesize/AUcm} AU\n',
+            f'Number of base cells (of one side of the grid): {nxyz}\n',
+            f'                        Length of side of grid: {gridedge/AUcm} AU\n'
+            f'                            Number refinements: {nrefines}\n',
+            f'         Total number of cells (numb of leafs): {nleafs}\n\n'
+        ])
+
+        for nn,refdist in enumerate(refinementlist):
+            f.write(f'Radial distance to refinement {nn+1}: {refdist/AUcm} AU\n')
+        f.write('\n')
+
+        for nn,cellsize in enumerate(smallcubesize):
+            f.write(f'Child cell size {nn+1}: {smallcubesize[nn]/AUcm} AU\n')
+
+    print('Finished grid_info.txt\n')
+
+    # Finish function
+    print('Done')
+
