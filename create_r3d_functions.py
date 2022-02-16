@@ -1,13 +1,18 @@
 # Functions for creating input data for R3d simulations for Exwings project
-import os
+# ------------------------------------------------------------ #
+# Various useful packages
 import sys
 import numpy as np
-import scipy as s
 from datetime import datetime
-from scipy.integrate import quad
 
+# Might be used later
+#import os
+#import scipy as s
+#from scipy.integrate import quad
 
 # ------------------------------------------------------------ #
+# Shorter simpler functions
+
 def movecoordinates(nxyz,nx,ny,nz):
     """
     Recurring function to move through the coordinates of the grid.
@@ -24,13 +29,26 @@ def movecoordinates(nxyz,nx,ny,nz):
         ny =  0
         nz += 1
     return nx,ny,nz
-# ------------------------------------------------------------ #
 
 # ------------------------------------------------------------ #
 
-def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str):
+def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str='y'):
     """
-    Info here!
+    Creates grid for Radmc3D simulations and related informaton 
+    files used for analysis and creating dust envelopes. Grid is 
+    octree cubic. It is refined (higher resolution) closer to 
+    the central of the grid. A maximum of four (4) levels of 
+    refinements is allowed in this version of the function.
+    
+    INPUTS
+    ------
+    basecubesize: length of side of base cells in AU (these are cubes) [int or float]
+    
+    nxyz: number of base cells along one side of the whole grid [even number, int]
+    
+    refinementlist: list of radial distances in AU to each level of refinement [float,float], no more than 4 numbers!
+    
+    savegrid: default set to 'y' [str]. If not 'y', then no grid_distances.csv will be saved. This is useful for analysing inputs and outputs of R3D!
     """
     # TODO: add info in infotext
 
