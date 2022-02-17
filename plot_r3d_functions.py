@@ -1,11 +1,11 @@
 # Functions for plotting various input and output data for Radmc3d
 # ------------------------------------------------------------ #
 # Useful packages
-import os
-import csv
-import numpy as np
+
 
 import matplotlib.pyplot as plt
+
+import create_r3d_functions as c3d
 
 # Basic definitions
 AUcm = 1.49598e13
@@ -28,7 +28,7 @@ def set_figurefonts():
     plt.yticks(fontsize=18)
 
 
-# This function sets standard plot settings
+# This function sets standard plot settings TODO: REMOVE THIS?
 def set_ticklabels(xlabel,ylabel,xscale,yscale):
 
     # Import required packages
@@ -50,6 +50,8 @@ def set_ticklabels(xlabel,ylabel,xscale,yscale):
     if yscale == "log":
         plt.yscale('log')
 
+# ------------------------------------------------------------ #
+
 # This function plots the specified grid
 def plot_grid(
         gridpath:str='../grid_distances.csv',
@@ -66,74 +68,46 @@ def plot_grid(
     nbins: number of bins for radial histogram plot
     """
 
-    # Check if both files exist
-    if os.path.exists(gridpath) == True and os.path.exists(amrpath) == True:
+    # Load data
+    griddistances = c3d.load_griddistances(gridpath,amrpath)
 
-        # Extract necessary info from amr_grid
-        with open(amrpath, 'r') as f:
-            for nn,line in enumerate(f.readlines()):
+    # Plots (need a nice way to set fontsizes and fonts?)
+    fig, ax = plt.subplots(2,2)
 
-                # nleafs is the number of cells in the grid
-                # This is supposed to be the second number on line ten
-                if nn == 9:
-                    nleafs = int(line.split(' ')[1])
+    # Plot radial distances
+    ax[0,0].hist(griddistances[:,0],bins=nbins)
+    ax[0,0].set(
+        title='Radial distances', 
+        xlabel='Number of cells', 
+        ylabel='Radial to centrum of grid (AU)'
+    )
 
-        # Create griddistances array
-        griddistances = np.zeros((nleafs,4))
+    # Plot coordinates in each plane
+    ax[0,1].plot(griddistances[:,1],griddistances[:,2],'b.')
+    ax[0,1].set(
+        title='Cells in X-Y-plane', 
+        xlabel='X coord (AU)', 
+        ylabel='Y coord (AU)'
+    )
 
+    ax[1,0].plot(griddistances[:,1],griddistances[:,3],'b.')
+    ax[1,0].set(
+        title='Cells in X-Z-plane', 
+        xlabel='X coord (AU)', 
+        ylabel='Z coord (AU)'
+    )
 
-        # Load distances to cells
-        with open(gridpath, 'r') as f:
-            griddistancesfile = csv.reader(f)
+    ax[1,1].plot(griddistances[:,2],griddistances[:,3],'b.')
+    ax[1,1].set(
+        title='Cells in Y-Z-plane', 
+        xlabel='Y coord (AU)', 
+        ylabel='Z coord (AU)'
+    )
 
-            # Set index o 0
-            nn = 0
-            for row in griddistancesfile:
+    # Better spacing between figures
+    fig.tight_layout()
+    fig.show()
 
-                # Skip the header and add radial, x,y,z distances to array
-                if row[0][-1].isdigit() == True:
-                    
-                    # Save radial, x, y, z distances (in this order)
-                    griddistances[nn,:] = [float(row[0])/AUcm,float(row[1])/AUcm,float(row[2])/AUcm,float(row[3])/AUcm]
-                    # Increase index
-                    nn += 1
+# Plot the densities as function of radial distance from centrum of star
+# def plot_radialdensity()
 
-        # Plots (need a nice way to set fontsizes and fonts?)
-        fig, ax = plt.subplots(2,2)
-
-        # Plot radial distances
-        ax[0,0].hist(griddistances[:,0],bins=nbins)
-        ax[0,0].set(
-            title='Radial distances', 
-            xlabel='Number of cells', 
-            ylabel='Radial to centrum of grid (AU)'
-        )
-
-        # Plot coordinates in each plane
-        ax[0,1].plot(griddistances[:,1],griddistances[:,2],'b.')
-        ax[0,1].set(
-            title='Cells in X-Y-plane', 
-            xlabel='X coord (AU)', 
-            ylabel='Y coord (AU)'
-        )
-
-        ax[1,0].plot(griddistances[:,1],griddistances[:,3],'b.')
-        ax[1,0].set(
-            title='Cells in X-Z-plane', 
-            xlabel='X coord (AU)', 
-            ylabel='Z coord (AU)'
-        )
-
-        ax[1,1].plot(griddistances[:,2],griddistances[:,3],'b.')
-        ax[1,1].set(
-            title='Cells in Y-Z-plane', 
-            xlabel='Y coord (AU)', 
-            ylabel='Z coord (AU)'
-        )
-
-        # Better spacing between figures
-        fig.tight_layout()
-        fig.show()
-
-    else:
-        print(f'ERROR: plot_grid can not find {gridpath} and/or {amrpath}.')

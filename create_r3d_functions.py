@@ -1,7 +1,10 @@
 # Functions for creating input data for R3d simulations for Exwings project
 # ------------------------------------------------------------ #
 # Various useful packages
+import os
 import sys
+import csv
+from matplotlib.pyplot import grid
 import numpy as np
 from datetime import datetime
 
@@ -29,6 +32,70 @@ def movecoordinates(nxyz,nx,ny,nz):
         ny =  0
         nz += 1
     return nx,ny,nz
+
+
+def load_griddistances(
+        gridpath:str='../grid_distances.csv',
+        amrpath:str='../amr_grid.inp',
+    ):
+    """
+    Loads array of distances to cells of the current grid.
+    Distances are from centrum of grid (radial,x,y, and z) in centimeters.
+
+    Inputs
+    ------
+    gridpath: path to grid_distances.csv
+    amrpath: path to amr_grid.inp
+
+    OUTPUT
+    ------
+    griddistances: np.array of size nleafs*4. Each column is distances in cm
+    """
+
+    # Check if both files exist
+    if os.path.exists(gridpath) == True and os.path.exists(amrpath) == True:
+
+        # Extract necessary info from amr_grid
+        with open(amrpath, 'r') as f:
+            for nn,line in enumerate(f.readlines()):
+
+                # nleafs is the number of cells in the grid
+                # This is supposed to be the second number on line ten
+                if nn == 9:
+                    nleafs = int(line.split(' ')[1])
+
+        # Create griddistances array
+        griddistances = np.zeros((nleafs,4))
+
+
+        # Load distances to cells
+        with open(gridpath, 'r') as f:
+            griddistancesfile = csv.reader(f)
+
+            # Set index o 0
+            nn = 0
+            for row in griddistancesfile:
+
+                # Skip the header and add radial, x,y,z distances to array
+                if row[0][-1].isdigit() == True:
+                    
+                    # Save radial, x, y, z distances (in this order)
+                    griddistances[nn,:] = [float(row[0]),float(row[1]),float(row[2]),float(row[3])]
+                    # Increase index
+                    nn += 1
+
+        # Return griddistances array    
+        return griddistances
+    
+    else:
+        return f'ERROR: load_griddistances can not find {gridpath} and/or {amrpath}.'
+
+# function that combines different dust-specie density files into one
+    # headre of dust_density
+    # 1
+    # nleafs
+    # number dust species
+
 
 # ------------------------------------------------------------ #
 
@@ -478,3 +545,83 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
     # Finish function
     print('Done')
 
+# ------------------------------------------------------------ #
+
+# def create duststar
+
+def create_duststar(
+        Mstar:float = 1,
+        Rstar:float = 100,
+        Teff:float = 2700
+    ):
+    """
+    INFO HERE
+
+    Should output
+    dust_density.inp
+    dust_temperature.dat
+    dust_kappa
+
+
+    sfärisk klump i mitten, 
+    hög abs, 0 scat. 
+    Jämför med svartkroppsstjärna. - 
+    1Msun, 7000Lsun, 2700K
+    """
+
+    # Useful units
+    #AUcm = 1.49598e13 # cm
+    Msol = 1.989e33 # g
+    Rsol = 6.955e10 # cm
+
+    # Stellar props
+    Mstar *= Msol # star mass in g
+    Rstar *= Rsol # star radius in cm
+
+    # Load griddistances and size of grid
+    griddistances = load_griddistances()
+    nleafs = np.size(griddistances[:,0])
+  
+    # Compute average density of star (R3d uses g/cm3)
+    stardensity = Mstar / (4/3 * np.pi * Rstar**3)
+
+    # Create and fill density and temperature array
+    # fill with average density (future: rho(R))
+    # and with Teff (future: T(R))
+    densities = np.zeros(nleafs)
+    temperatures = np.zeros(nleafs)
+
+    for nn in range(nleafs):
+        if griddistances[nn,0] <= Rstar:
+            densities[nn] = stardensity
+            temperatures[nn] = Teff
+    
+    # Write dust_density
+    print('Writing dust_density_01.inp')
+    with open('../dust_density_01.inp', 'w') as f:
+
+        # Header of dust_density (and dusttemperature?)
+        # 1
+        # nleafs
+        # number dust species
+        f.write(f'1\n{int(nleafs)}\n1\n')
+        for density in densities:
+            f.write(f'{density}\n')
+
+    print('Finished dust_density_01.inp')
+
+
+
+
+
+"""
+def create_spheredensity():
+
+    # Load grid (should perhaps be its own function)
+
+    # Compute normalization density (ie zero density)
+    # 
+
+
+    return 'hej'
+""";
