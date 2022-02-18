@@ -34,6 +34,56 @@ def movecoordinates(nxyz,nx,ny,nz):
     return nx,ny,nz
 
 
+# Load grid proparties
+def load_gridprops(amrpath:str='../amr_grid.inp'):
+    """
+    Loads basic proparties from amr_grid.inp
+
+    INPUT
+    -----
+    amrpath: str, path to amr_grid.inp
+
+    OUTPUT
+    ------
+    (In this order)
+    nxyz,nrefines,nleafs,nbranch,gridedge
+
+    - Number of base cells
+    - Number of grid refinements
+    - Number of grid cells (nleafs)
+    - Number of branches
+    - Size of the whole grid cube
+    """
+
+    # Check if file exists
+    if os.path.exists(amrpath) == True:
+
+        with open(amrpath, 'r') as f:
+            for nn,line in enumerate(f.readlines()):
+
+                # Number of base cells along one side
+                if nn == 7:
+                    nxyz = int(line.split(' ')[0])
+
+                # Number of refinements, number of cells (nleafs), number of branches
+                if nn == 9:
+                    nrefines = int(line.split(' ')[0])
+                    nleafs = int(line.split(' ')[1])
+                    nbranch = int(line.split(' ')[2])
+                
+                # Total size of the grid in cm
+                if nn == 11:
+                    gridedge = np.abs(float(line))
+        gridedge *= 2
+        
+        # Return everything!
+        return nxyz,nrefines,nleafs,nbranch,gridedge
+    
+    else:
+        return f'ERROR: load_gridprops can not find {amrpath}.'
+
+
+# Load griddistances
 def load_griddistances(
         gridpath:str='../grid_distances.csv',
         amrpath:str='../amr_grid.inp',
@@ -52,21 +102,14 @@ def load_griddistances(
     griddistances: np.array of size nleafs*4. Each column is distances in cm
     """
 
-    # Check if both files exist
-    if os.path.exists(gridpath) == True and os.path.exists(amrpath) == True:
+    # Check if file exists
+    if os.path.exists(gridpath) == True:
 
         # Extract necessary info from amr_grid
-        with open(amrpath, 'r') as f:
-            for nn,line in enumerate(f.readlines()):
-
-                # nleafs is the number of cells in the grid
-                # This is supposed to be the second number on line ten
-                if nn == 9:
-                    nleafs = int(line.split(' ')[1])
+        nleafs = load_gridprops(amrpath)[2]
 
         # Create griddistances array
         griddistances = np.zeros((nleafs,4))
-
 
         # Load distances to cells
         with open(gridpath, 'r') as f:
@@ -88,7 +131,60 @@ def load_griddistances(
         return griddistances
     
     else:
-        return f'ERROR: load_griddistances can not find {gridpath} and/or {amrpath}.'
+        return f'ERROR: load_griddistances can not find {gridpath}.'
+
+
+# Load list of grid cell sizes
+def load_cellsizes(
+        sizepath:str='../grid_cellsizes.csv',
+        amrpath:str='../amr_grid.inp',
+    ):
+    """
+    Loads array of grid cell sizes in centimeters
+    
+    Inputs
+    ------
+    sizepath: path to grid_cellsizes.csv
+    amrpath: path to amr_grid.inp
+
+    OUTPUT
+    ------
+    gridsizes: np.array of size nleafs*1 with cell sizes in same order as in dust_density
+    """
+
+    # Check if file exists
+    if os.path.exists(sizepath) == True:
+
+        # Extract necessary info from amr_grid
+        nleafs = load_gridprops(amrpath)[2]
+
+        # Create griddistances array
+        gridsizes = np.zeros(nleafs)
+
+        # Load distances to cells
+        with open(sizepath, 'r') as f:
+            gridsizefile = csv.reader(f)
+
+            # Set index o 0
+            nn = 0
+            for row in gridsizefile:
+
+                # Skip the header and add radial, x,y,z distances to array
+                if row[0][-1].isdigit() == True:
+                    
+                    # Save radial, x, y, z distances (in this order)
+                    gridsizes[nn] = float(row[0])
+                    # Increase index
+                    nn += 1
+
+        # Return griddistances array    
+        return gridsizes
+    
+    else:
+        return f'ERROR: load_griddistances can not find {sizepath} and/or {amrpath}.'
+
+
+
 
 # function that combines different dust-specie density files into one
     # headre of dust_density

@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 
 import create_r3d_functions as c3d
 
+import numpy as np
+
 # Basic definitions
 AUcm = 1.49598e13
 
@@ -72,12 +74,18 @@ def plot_grid(
 
     # Load data
     griddistances = c3d.load_griddistances(gridpath,amrpath)
+    gridsizes = c3d.load_cellsizes(sizepath,amrpath)
+    nleafs = np.size(gridsizes)
+    nrefines = np.unique(gridsizes)
 
     # Change units to AU
-    #for nn in range()
+    for nn in range(nleafs):
+        gridsizes[nn] = gridsizes[nn]/AUcm
+        for nx in range(4):
+            griddistances[nn,nx] = griddistances[nn,nx]/AUcm
 
     # Plots (need a nice way to set fontsizes and fonts?)
-    fig, ax = plt.subplots(2,2)
+    fig, ax = plt.subplots(3,2)
 
     # Plot radial distances
     ax[0,0].hist(griddistances[:,0],bins=nbins)
@@ -108,6 +116,9 @@ def plot_grid(
         xlabel='Y coord (AU)', 
         ylabel='Z coord (AU)'
     )
+
+    ax[2,0].hist()
+
 
     # Better spacing between figures
     fig.tight_layout()
