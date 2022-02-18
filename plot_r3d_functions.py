@@ -56,9 +56,9 @@ def set_ticklabels(xlabel,ylabel,xscale,yscale):
 
 # This function plots the specified grid
 def plot_grid(
-        amrpath:str='../amr_grid.inp',
         gridpath:str='../grid_distances.csv',
-        sizepath:str='../grid_cellsize.csv',
+        sizepath:str='../grid_cellsizes.csv',
+        amrpath:str='../amr_grid.inp',
         nbins:int=10
     ):
     """
@@ -75,8 +75,10 @@ def plot_grid(
     # Load data
     griddistances = c3d.load_griddistances(gridpath,amrpath)
     gridsizes = c3d.load_cellsizes(sizepath,amrpath)
-    nleafs = np.size(gridsizes)
-    nrefines = np.unique(gridsizes)
+    
+    # Load some grid props
+    nleafs = c3d.load_gridprops()[2]
+    ncellsizes = np.size(np.unique(gridsizes))
 
     # Change units to AU
     for nn in range(nleafs):
@@ -91,8 +93,8 @@ def plot_grid(
     ax[0,0].hist(griddistances[:,0],bins=nbins)
     ax[0,0].set(
         title='Radial distances', 
-        xlabel='Number of cells', 
-        ylabel='Radial to centrum of grid (AU)'
+        ylabel='Number of cells', 
+        xlabel='Radial to centrum of grid (AU)'
     )
 
     # Plot coordinates in each plane
@@ -117,8 +119,12 @@ def plot_grid(
         ylabel='Z coord (AU)'
     )
 
-    ax[2,0].hist()
-
+    ax[2,0].hist(gridsizes,bins=ncellsizes)
+    ax[2,0].set(
+        title='Cell sizes',
+        xlabel='Cell size (AU)',
+        ylabel='Number of cells'
+    )
 
     # Better spacing between figures
     fig.tight_layout()

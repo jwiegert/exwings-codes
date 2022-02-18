@@ -181,7 +181,7 @@ def load_cellsizes(
         return gridsizes
     
     else:
-        return f'ERROR: load_griddistances can not find {sizepath} and/or {amrpath}.'
+        return f'ERROR: load_cellsizes can not find {sizepath}.'
 
 
 
