@@ -54,8 +54,9 @@ def set_ticklabels(xlabel,ylabel,xscale,yscale):
 
 # This function plots the specified grid
 def plot_grid(
-        gridpath:str='../grid_distances.csv',
         amrpath:str='../amr_grid.inp',
+        gridpath:str='../grid_distances.csv',
+        sizepath:str='../grid_cellsize.csv',
         nbins:int=10
     ):
     """
@@ -67,9 +68,13 @@ def plot_grid(
     amrpath: path to amr_grid.inp
     nbins: number of bins for radial histogram plot
     """
+    AUcm = 1.49598e13
 
     # Load data
     griddistances = c3d.load_griddistances(gridpath,amrpath)
+
+    # Change units to AU
+    #for nn in range()
 
     # Plots (need a nice way to set fontsizes and fonts?)
     fig, ax = plt.subplots(2,2)

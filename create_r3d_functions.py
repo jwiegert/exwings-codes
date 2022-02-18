@@ -115,9 +115,17 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
     
     refinementlist: list of radial distances in AU to each level of refinement [float,float], no more than 4 numbers!
     
-    savegrid: default set to 'y' [str]. If not 'y', then no grid_distances.csv will be saved. This is useful for analysing inputs and outputs of R3D!
+    savegrid: default set to 'y' [str]. If not 'y', then no grid_distances.csv or grid_cellsizes.csv will be saved. These are useful for analysing inputs and outputs of R3D!
+
+    OUTPUTS
+    -------
+    amr_grid.inp : grid file for R3D-simulations
+
+    Optional: 
+    grid_distances.csv : array of radial, x, y, and z distances to each grid cell in cm
+    grid_cellsizes.csv : array of sizes of each grid cell in cm
+    (both have same order as in dust_density.inp and dust_temperature)
     """
-    # TODO: add info in infotext
 
     # Basic definitions
     AUcm = 1.49598e13
@@ -390,7 +398,7 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
         f.write(f'1\n\n1\n0\n0\n\n1 1 1\n{nxyz} {nxyz} {nxyz}\n\n{nrefines} {nleafs} {nbranch}\n\n')
 
         # Write coordinates of courners of base cells in cm
-        for N in range(3):
+        for _ in range(3):
             for gridc in gridcourners:
                 f.write(f'{gridc}\n')
             # Add empty line between the 3 dimensions
@@ -405,14 +413,16 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
     print('Finished amr_grid.inp')
     print('')
     
-    # Print grid_distances.dat
+    # Print grid_distances.csv and grid_cellsizes.csv
 
     if savegrid == 'y' or savegrid == 'yes' or savegrid == 'Y':
-        print('Writing grid_distances.csv (not necessary for Radmc3d, but useful for pre/portprocessing of your model files. It has the same order as dust_densities.inp)')
+        print('Writing grid_distances.csv and grid_cellsizes.csv (not necessary for Radmc3d, but useful for pre/portprocessing of your model files. They have the same order as dust_densities.inp)')
 
         # Declare an array for the distances to the centre of each cell
         # Radial and x,y,z distances
         griddistances = np.zeros((nleafs,4))
+        # And an array for the sizes of each cell
+        gridsizes = np.zeros(nleafs)
 
         # Declare a few counters
         # nbig is the index of all cells
@@ -433,6 +443,9 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
                 griddistances[nbig,0] = np.sqrt(
                     griddistances[nbig,1]**2 + griddistances[nbig,2]**2 + griddistances[nbig,3]**2)
 
+                # Cell sizes
+                gridsizes[nbig] = basecubesize
+
                 # Move coordinates
                 nx,ny,nz = movecoordinates(nxyz,nx,ny,nz)
                 nbig += 1
@@ -451,6 +464,9 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
                         griddistances[nbig,0] = np.sqrt(
                             griddistances[nbig,1]**2 + griddistances[nbig,2]**2 + griddistances[nbig,3]**2)
 
+                        # Cell sizes
+                        gridsizes[nbig] = smallcubesize[0]
+
                         # Move main index
                         nbig += 1
                     
@@ -468,6 +484,9 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
                                 griddistances[nbig,0] = np.sqrt(
                                     griddistances[nbig,1]**2 + griddistances[nbig,2]**2 + griddistances[nbig,3]**2)
 
+                                # Cell sizes
+                                gridsizes[nbig] = smallcubesize[1]
+
                                 # Move main index
                                 nbig += 1
                             
@@ -484,7 +503,10 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
                                         # Radial distance
                                         griddistances[nbig,0] = np.sqrt(
                                             griddistances[nbig,1]**2 + griddistances[nbig,2]**2 + griddistances[nbig,3]**2)
-                                        
+
+                                        # Cell sizes
+                                        gridsizes[nbig] = smallcubesize[2]
+
                                         # Move main index
                                         nbig += 1
 
@@ -500,9 +522,13 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
                                             # Radial distance
                                             griddistances[nbig,0] = np.sqrt(
                                                 griddistances[nbig,1]**2 + griddistances[nbig,2]**2 + griddistances[nbig,3]**2)
-                                            
+
+                                            # Cell sizes
+                                            gridsizes[nbig] = smallcubesize[3]
+
                                             # Move main index
                                             nbig += 1
+
                                 # Increase counters
                                 counter[2] += 1
                         counter[1] += 1
@@ -519,7 +545,16 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
             f.write('# ----------\n')
             for gridc in griddistances:
                 f.write(f'{gridc[0]},{gridc[1]},{gridc[2]},{gridc[3]}\n')
-        print('Finished grid_distances.csv\n')
+        print('Finished grid_distances.csv')
+
+        # Save sizes of grid cells
+        # This also has the same order as the dust_densities files
+        with open('../grid_cellsizes.csv', 'w') as f:
+            f.write('# Sizes of grid cells (same order as in dust_densities.inp) in cm\n')
+            f.write('# ----------\n')
+            for gridsize in gridsizes:
+                f.write(f'{gridsize}\n')
+        print('Finished grid_cellsizes.csv\n')
     
     # Print grid_info-file, text file with summary o grid info in readable form
     print('Writing grid_info.txt')
