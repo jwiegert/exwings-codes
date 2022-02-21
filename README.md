@@ -55,3 +55,29 @@ def plot_grid(
     nbins: number of bins for radial histogram plot
     """
 ```
+
+# Running R3D
+
+## Self checks
+
+- Check your grid and density distribution using vtk-files
+
+Even though you don't run any radiative transfer here you still need to formulate a radmc3d.inp file.
+
+For grid only run
+
+> radmc3d vtk_grid
+
+For density run
+
+> radmc3d vtk_dust_density 1
+
+Where 1 is the dust specie you want to visualise.
+
+- Check vtk-data with paraview
+
+> paraview FILENAME.vtk
+
+Press apply. For just a grid, chose e.g. Representation Wireframe.
+
+For a density file, press apply, and chose "threshold" (button, top left area). Chose some limit and look around.

@@ -808,20 +808,18 @@ def create_duststar(
     print('Writing dust_temperature_01.dat') # TODO: check the correct filenames!
     with open('../dust_temperature_01.dat', 'w') as f:
 
-        # TODO: check header of temperature file!
-        # 1, nleafs, nspecies
-
         # Header of dust_temperature (and dusttemperature)
         # 1
         # nleafs
         # number dust species
         f.write(f'1\n{int(nleafs)}\n1\n')
 
-
-
+        # Add temperatures
         for temperature in temperatures:
             f.write(f'{temperature}\n')
-    
+
+
+
     # TODO: write dustkappa_star.inp
     # Columns are:
     # Wavelength(um), Kappa_Abs(cm2/g), Kappa_Scat(cm2/g), g(lambda) = mean scattering angle
