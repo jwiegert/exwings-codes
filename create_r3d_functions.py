@@ -733,6 +733,9 @@ def create_wavelength(
     
     print('Done\n')
 
+    # Return the wavelength grid or useage also
+    return wavelengths
+
 # ------------------------------------------------------------ #
 
 # Creates a dust blog that imitates an AGB-star in the centrum of the grid
@@ -817,6 +820,43 @@ def create_duststar(
         # Add temperatures
         for temperature in temperatures:
             f.write(f'{temperature}\n')
+
+    # TODO
+    # Some grey body? Around 5000cm2/g to a wavelength corresponding to 
+    # Max flux of a BB of temperature Tstar? (but in terms of frequency)
+
+    # Constants in SI-units
+    c = 2.998e8
+    kb = 1.3806503e-23
+    hplanck = 6.626068e-34
+
+    # Peak of BB (in terms of frequency, but corresponding wavelength, in microns)
+    wavelengthmax = hplanck*c / (2.821*kb*Teff) * 1e6
+
+    # kappaabs_0 = 5000 cm2/g
+    kappaabszero = 5000
+
+    # TODO connect create wavelength and this function here, so that I get the 
+    # same nwave, and wavelengths
+    wavelengths = create_wavelength()
+    
+    nwave = len(wavelengths)
+
+    kappaabs_star = np.zeros(nwave)
+
+    # This but logarithmic! Not linear power law
+
+    for nn in range(nwave):
+        if wavelengths[nn] >= wavelengthmax:
+            kappaabs_star[nn] = kappaabszero * (wavelengthmax/wavelengths[nn])
+        else:
+            kappaabs_star[nn] = kappaabszero
+    
+    import matplotlib.pyplot as plt
+    plt.plot(wavelengths,kappaabs_star)
+    plt.xscale('log')
+
+
 
 
 
