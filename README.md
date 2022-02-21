@@ -38,3 +38,20 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
 
 ## plot_r3d_functions
 
+```py
+def plot_grid(
+        gridpath:str='../grid_distances.csv',
+        sizepath:str='../grid_cellsizes.csv',
+        amrpath:str='../amr_grid.inp',
+        nbins:int=10
+    ):
+    """
+    Loads and plots the current grid.
+
+    Inputs
+    ------
+    gridpath: path to grid_distances.csv
+    amrpath: path to amr_grid.inp
+    nbins: number of bins for radial histogram plot
+    """
+```

@@ -1,6 +1,7 @@
 # Functions for creating input data for R3d simulations for Exwings project
 # ------------------------------------------------------------ #
 # Various useful packages
+from email.header import Header
 import os
 import sys
 import csv
@@ -16,6 +17,7 @@ from datetime import datetime
 # ------------------------------------------------------------ #
 # Shorter simpler functions
 
+# Move base cell coordinates
 def movecoordinates(nxyz,nx,ny,nz):
     """
     Recurring function to move through the coordinates of the grid.
@@ -34,7 +36,7 @@ def movecoordinates(nxyz,nx,ny,nz):
     return nx,ny,nz
 
 
-# Load grid proparties
+# Load grid properties
 def load_gridprops(amrpath:str='../amr_grid.inp'):
     """
     Loads basic proparties from amr_grid.inp
@@ -185,12 +187,18 @@ def load_cellsizes(
 
 
 
+# Both these below need the number of species
 
 # function that combines different dust-specie density files into one
+# def merge_dustdensity():
     # headre of dust_density
     # 1
     # nleafs
     # number dust species
+
+
+# function that combines different dust tmeperature files
+# def merge_dusttemperature():
 
 
 # ------------------------------------------------------------ #
@@ -674,12 +682,60 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
     print('Finished grid_info.txt\n')
 
     # Finish function
-    print('Done')
+    print('Done\n')
 
 # ------------------------------------------------------------ #
 
-# def create duststar
+# Write wavelengthgrid
+def create_wavelength(
+        wavelengthstart:float=0.1,
+        wavelengthend:float=2000.0,
+        nwave:int=1000,
+        logscale:str='y'
+    ):
+    """
+    Creates wavelength grid file for R3D. Lists all wavelength points in microns.
 
+    INPUT
+    -----
+    wavelengthstart: Minimum wavelength in microns
+    wavelengthend: Maximum wavelenth in microns
+    nwave: Number of wavelength grid points
+    logscale: 'y' (Yes) for logarithmic wavelength grid (Default)
+    """
+
+    print('Creating wavelength grid')
+
+    if logscale == 'y' or logscale == 'yes' or logscale == 'Y' or logscale == 'Yes':
+
+        print('Logarithmic wavelength grid was chosen')
+        wavelengths = np.logspace(
+            np.log10(wavelengthstart),
+            np.log10(wavelengthend),
+            nwave
+        )
+
+    else:
+
+        print('Linear wavelength grid was chosen')
+        wavelengths = np.linspace(
+            wavelengthstart,
+            wavelengthend,
+            nwave
+        )
+
+    print('Writing wavelength_micron.inp')
+    with open('../wavelength_micron.inp', 'w') as f:
+        f.write(f'{nwave}\n')
+
+        for wavelength in wavelengths:
+            f.write(f'{wavelength}\n')
+    
+    print('Done\n')
+
+# ------------------------------------------------------------ #
+
+# Creates a dust blog that imitates an AGB-star in the centrum of the grid
 def create_duststar(
         Mstar:float = 1,
         Rstar:float = 100,
@@ -701,20 +757,24 @@ def create_duststar(
     """
 
     # Useful units
-    #AUcm = 1.49598e13 # cm
+    AUcm = 1.49598e13 # cm
     Msol = 1.989e33 # g
     Rsol = 6.955e10 # cm
 
-    # Stellar props
+    # Change units of stellar props
     Mstar *= Msol # star mass in g
     Rstar *= Rsol # star radius in cm
 
+    print(f'Radius of star: {Rstar/AUcm:.2} AU')
+
     # Load griddistances and size of grid
+    #           return nxyz,nrefines,nleafs,nbranch,gridedge
+    nleafs = load_gridprops()[2]
     griddistances = load_griddistances()
-    nleafs = np.size(griddistances[:,0])
   
     # Compute average density of star (R3d uses g/cm3)
     stardensity = Mstar / (4/3 * np.pi * Rstar**3)
+    print(f'Average star density: {stardensity:.2} g/cm3')
 
     # Create and fill density and temperature array
     # fill with average density (future: rho(R))
@@ -722,16 +782,19 @@ def create_duststar(
     densities = np.zeros(nleafs)
     temperatures = np.zeros(nleafs)
 
+    counter = 0
     for nn in range(nleafs):
         if griddistances[nn,0] <= Rstar:
             densities[nn] = stardensity
             temperatures[nn] = Teff
+            counter += 1
+    print(f'Cells inside star: {counter}')
     
     # Write dust_density
     print('Writing dust_density_01.inp')
     with open('../dust_density_01.inp', 'w') as f:
 
-        # Header of dust_density (and dusttemperature?)
+        # Header of dust_density (and dusttemperature)
         # 1
         # nleafs
         # number dust species
@@ -740,6 +803,33 @@ def create_duststar(
             f.write(f'{density}\n')
 
     print('Finished dust_density_01.inp')
+
+    # Write dust_temperature
+    print('Writing dust_temperature_01.dat') # TODO: check the correct filenames!
+    with open('../dust_temperature_01.dat', 'w') as f:
+
+        # TODO: check header of temperature file!
+        # 1, nleafs, nspecies
+
+        # Header of dust_temperature (and dusttemperature)
+        # 1
+        # nleafs
+        # number dust species
+        f.write(f'1\n{int(nleafs)}\n1\n')
+
+
+
+        for temperature in temperatures:
+            f.write(f'{temperature}\n')
+    
+    # TODO: write dustkappa_star.inp
+    # Columns are:
+    # Wavelength(um), Kappa_Abs(cm2/g), Kappa_Scat(cm2/g), g(lambda) = mean scattering angle
+    #Header
+    # 2 (?)
+    # number of wavelengths
+    # TODO: write wavelengthgrid and load here
+
 
 
 
