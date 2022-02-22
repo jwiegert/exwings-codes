@@ -80,4 +80,4 @@ Where 1 is the dust specie you want to visualise.
 
 Press apply. For just a grid, chose e.g. Representation Wireframe.
 
-For a density file, press apply, and chose "threshold" (button, top left area). Chose some limit and look around.
+For a density file, press apply, and chose "threshold" (button, top left area). Chose some limit (increase minimum) and look around. Remember that R3D sets som 1e-80 ish g/cm3 i all grid cells since it can't be zero. So you have to increase the lower limit to see past all zero-density cells.

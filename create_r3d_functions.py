@@ -731,7 +731,7 @@ def create_wavelength(
         for wavelength in wavelengths:
             f.write(f'{wavelength}\n')
     
-    print('Done\n')
+    print('Wavelength grid: done')
 
     # Return the wavelength grid or useage also
     return wavelengths
@@ -757,6 +757,12 @@ def create_duststar(
     hög abs, 0 scat. 
     Jämför med svartkroppsstjärna. - 
     1Msun, 7000Lsun, 2700K
+
+    Creates wavelength grid also
+    IMPORTANT: all create stellar input-functions should simultaneously
+    create the wavelength grid. The wavelengthfunc is more of a 
+
+
     """
 
     # Useful units
@@ -768,7 +774,7 @@ def create_duststar(
     Mstar *= Msol # star mass in g
     Rstar *= Rsol # star radius in cm
 
-    print(f'Radius of star: {Rstar/AUcm:.2} AU')
+    print(f'Radius of star: {Rstar/AUcm:.2} AU ({Rstar/Rsol} Rsun)')
 
     # Load griddistances and size of grid
     #           return nxyz,nrefines,nleafs,nbranch,gridedge
@@ -821,10 +827,6 @@ def create_duststar(
         for temperature in temperatures:
             f.write(f'{temperature}\n')
 
-    # TODO
-    # Some grey body? Around 5000cm2/g to a wavelength corresponding to 
-    # Max flux of a BB of temperature Tstar? (but in terms of frequency)
-
     # Constants in SI-units
     c = 2.998e8
     kb = 1.3806503e-23
@@ -836,38 +838,41 @@ def create_duststar(
     # kappaabs_0 = 5000 cm2/g
     kappaabszero = 5000
 
-    # TODO connect create wavelength and this function here, so that I get the 
-    # same nwave, and wavelengths
+    # Spectralindex of the tail portion
+    spectralindex = 1
+
+
+    # Create wavelength grid
     wavelengths = create_wavelength()
-    
     nwave = len(wavelengths)
 
+    # Declare arrays for "star"s kappa
     kappaabs_star = np.zeros(nwave)
-
-    # This but logarithmic! Not linear power law
+    kappascat_star = np.zeros(nwave)
+    # Note that I don't bother with any g[lambda] here, ie mean scattering angle
+    # <cos(theta)> for the "star"'s kappafile.
 
     for nn in range(nwave):
         if wavelengths[nn] >= wavelengthmax:
-            kappaabs_star[nn] = kappaabszero * (wavelengthmax/wavelengths[nn])
+            kappaabs_star[nn] = kappaabszero * (wavelengthmax/wavelengths[nn])**spectralindex
         else:
             kappaabs_star[nn] = kappaabszero
     
-    import matplotlib.pyplot as plt
-    plt.plot(wavelengths,kappaabs_star)
-    plt.xscale('log')
+    # Write dustkappa_star.inp
+    with open('../dustkappa_star.inp', 'w') as f:
 
+        # Write header
+        # iformat: 1 - reads only lambda and abs
+        #          2 - reads lambda, abs and scat
+        #          3 - reads lambda, abs, scat and g
+        # nlam: number of wavelength points
+        f.write(f'1\n{nwave}\n')
 
-
-
-
-    # TODO: write dustkappa_star.inp
-    # Columns are:
-    # Wavelength(um), Kappa_Abs(cm2/g), Kappa_Scat(cm2/g), g(lambda) = mean scattering angle
-    #Header
-    # 2 (?)
-    # number of wavelengths
-    # TODO: write wavelengthgrid and load here
-
+        # Write data
+        for nn in range(nwave):
+            f.write(f'{wavelengths[nn]}    {kappaabs_star[nn]}    {kappascat_star[nn]}\n')
+    
+    print('Duststar: done\n')
 
 
 
