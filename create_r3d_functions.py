@@ -1,11 +1,7 @@
 # Functions for creating input data for R3d simulations for Exwings project
 # ------------------------------------------------------------ #
 # Various useful packages
-from email.header import Header
-import os
 import sys
-import csv
-from matplotlib.pyplot import grid
 import numpy as np
 from datetime import datetime
 
@@ -13,6 +9,8 @@ from datetime import datetime
 #import os
 #import scipy as s
 #from scipy.integrate import quad
+
+import analyze_r3d_functions as a3d
 
 # ------------------------------------------------------------ #
 # Shorter simpler functions
@@ -35,160 +33,7 @@ def movecoordinates(nxyz,nx,ny,nz):
         nz += 1
     return nx,ny,nz
 
-
-# Load grid properties
-def load_gridprops(amrpath:str='../amr_grid.inp'):
-    """
-    Loads basic proparties from amr_grid.inp
-
-    INPUT
-    -----
-    amrpath: str, path to amr_grid.inp
-
-    OUTPUT
-    ------
-    (In this order)
-    nxyz,nrefines,nleafs,nbranch,gridedge
-
-    - Number of base cells
-    - Number of grid refinements
-    - Number of grid cells (nleafs)
-    - Number of branches
-    - Size of the whole grid cube
-    """
-
-    # Check if file exists
-    if os.path.exists(amrpath) == True:
-
-        with open(amrpath, 'r') as f:
-            for nn,line in enumerate(f.readlines()):
-
-                # Number of base cells along one side
-                if nn == 7:
-                    nxyz = int(line.split(' ')[0])
-
-                # Number of refinements, number of cells (nleafs), number of branches
-                if nn == 9:
-                    nrefines = int(line.split(' ')[0])
-                    nleafs = int(line.split(' ')[1])
-                    nbranch = int(line.split(' ')[2])
-                
-                # Total size of the grid in cm
-                if nn == 11:
-                    gridedge = np.abs(float(line))
-        gridedge *= 2
-        
-        # Return everything!
-        return nxyz,nrefines,nleafs,nbranch,gridedge
-    
-    else:
-        return f'ERROR: load_gridprops can not find {amrpath}.'
-
-
-# Load griddistances
-def load_griddistances(
-        gridpath:str='../grid_distances.csv',
-        amrpath:str='../amr_grid.inp',
-    ):
-    """
-    Loads array of distances to cells of the current grid.
-    Distances are from centrum of grid (radial,x,y, and z) in centimeters.
-
-    Inputs
-    ------
-    gridpath: path to grid_distances.csv
-    amrpath: path to amr_grid.inp
-
-    OUTPUT
-    ------
-    griddistances: np.array of size nleafs*4. Each column is distances in cm
-    """
-
-    # Check if file exists
-    if os.path.exists(gridpath) == True:
-
-        # Extract necessary info from amr_grid
-        nleafs = load_gridprops(amrpath)[2]
-
-        # Create griddistances array
-        griddistances = np.zeros((nleafs,4))
-
-        # Load distances to cells
-        with open(gridpath, 'r') as f:
-            griddistancesfile = csv.reader(f)
-
-            # Set index o 0
-            nn = 0
-            for row in griddistancesfile:
-
-                # Skip the header and add radial, x,y,z distances to array
-                if row[0][-1].isdigit() == True:
-                    
-                    # Save radial, x, y, z distances (in this order)
-                    griddistances[nn,:] = [float(row[0]),float(row[1]),float(row[2]),float(row[3])]
-                    # Increase index
-                    nn += 1
-
-        # Return griddistances array    
-        return griddistances
-    
-    else:
-        return f'ERROR: load_griddistances can not find {gridpath}.'
-
-
-# Load list of grid cell sizes
-def load_cellsizes(
-        sizepath:str='../grid_cellsizes.csv',
-        amrpath:str='../amr_grid.inp',
-    ):
-    """
-    Loads array of grid cell sizes in centimeters
-    
-    Inputs
-    ------
-    sizepath: path to grid_cellsizes.csv
-    amrpath: path to amr_grid.inp
-
-    OUTPUT
-    ------
-    gridsizes: np.array of size nleafs*1 with cell sizes in same order as in dust_density
-    """
-
-    # Check if file exists
-    if os.path.exists(sizepath) == True:
-
-        # Extract necessary info from amr_grid
-        nleafs = load_gridprops(amrpath)[2]
-
-        # Create griddistances array
-        gridsizes = np.zeros(nleafs)
-
-        # Load distances to cells
-        with open(sizepath, 'r') as f:
-            gridsizefile = csv.reader(f)
-
-            # Set index o 0
-            nn = 0
-            for row in gridsizefile:
-
-                # Skip the header and add radial, x,y,z distances to array
-                if row[0][-1].isdigit() == True:
-                    
-                    # Save radial, x, y, z distances (in this order)
-                    gridsizes[nn] = float(row[0])
-                    # Increase index
-                    nn += 1
-
-        # Return griddistances array    
-        return gridsizes
-    
-    else:
-        return f'ERROR: load_cellsizes can not find {sizepath}.'
-
-
-
-# Both these below need the number of species
-
+# TODO
 # function that combines different dust-specie density files into one
 # def merge_dustdensity():
     # headre of dust_density
@@ -196,7 +41,7 @@ def load_cellsizes(
     # nleafs
     # number dust species
 
-
+# TODO
 # function that combines different dust tmeperature files
 # def merge_dusttemperature():
 
@@ -252,7 +97,7 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
     # Make sure the nxyz is even, if not warn and change:
     if nxyz%2 != 0:
         nxyz += 1
-        print(f'Warning, number of base cells is not even, it is now {nxyz}.\n')
+        print(f'Warning, number of base cells is not even, it is now {nxyz}.')
     
     # Create basic parameters of the grid
     #   nbasecubes : total number of base cells
@@ -263,7 +108,6 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
     gridedge       = nxyz * basecubesize
     gridcourners   = np.linspace(-gridedge*0.5,gridedge*0.5,nxyz+1)
     print(f'Length of total side of whole grid: {gridedge/AUcm:.2f} AU')
-    print('')
 
     griddist       = np.zeros(nxyz)
     for nn in range(nxyz):
@@ -282,7 +126,6 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
     for nn in range(nrefines-1):
         smallcubesize.append(0.5 * smallcubesize[nn])
         print(f'Child cell size {nn+2}: {smallcubesize[nn+1]/AUcm} AU')
-    print('')
 
     # Children grid coordinate corrections (see R3D manual for the matrix 
     # for the order of child cells inside a parent cell).
@@ -515,12 +358,11 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
             f.write(f'{int(gridc)}\n')
     
     print('Finished amr_grid.inp')
-    print('')
     
     # Print grid_distances.csv and grid_cellsizes.csv
 
     if savegrid == 'y' or savegrid == 'yes' or savegrid == 'Y':
-        print('Writing grid_distances.csv and grid_cellsizes.csv (not necessary for Radmc3d, but useful for pre/portprocessing of your model files. They have the same order as dust_densities.inp)')
+        print('Writing grid_distances.csv and grid_cellsizes.csv\n(Not necessary for Radmc3d, but useful for pre/portprocessing of your model. They have the same order as dust_densities.inp)')
 
         # Declare an array for the distances to the centre of each cell
         # Radial and x,y,z distances
@@ -658,7 +500,7 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
             f.write('# ----------\n')
             for gridsize in gridsizes:
                 f.write(f'{gridsize}\n')
-        print('Finished grid_cellsizes.csv\n')
+        print('Finished grid_cellsizes.csv')
     
     # Print grid_info-file, text file with summary o grid info in readable form
     print('Writing grid_info.txt')
@@ -679,10 +521,10 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
         for nn,cellsize in enumerate(smallcubesize):
             f.write(f'Child cell size {nn+1}: {smallcubesize[nn]/AUcm} AU\n')
 
-    print('Finished grid_info.txt\n')
+    print('Finished grid_info.txt')
 
     # Finish function
-    print('Done\n')
+    print('Create grid: done.\n')
 
 # ------------------------------------------------------------ #
 
@@ -731,7 +573,7 @@ def create_wavelength(
         for wavelength in wavelengths:
             f.write(f'{wavelength}\n')
     
-    print('Wavelength grid: done')
+    print('Wavelength grid: done.\n')
 
     # Return the wavelength grid or useage also
     return wavelengths
@@ -778,8 +620,8 @@ def create_duststar(
 
     # Load griddistances and size of grid
     #           return nxyz,nrefines,nleafs,nbranch,gridedge
-    nleafs = load_gridprops()[2]
-    griddistances = load_griddistances()
+    nleafs = a3d.load_gridprops()[2]
+    griddistances = a3d.load_griddistances()
   
     # Compute average density of star (R3d uses g/cm3)
     stardensity = Mstar / (4/3 * np.pi * Rstar**3)
@@ -800,8 +642,8 @@ def create_duststar(
     print(f'Cells inside star: {counter}')
     
     # Write dust_density
-    print('Writing dust_density_01.inp')
-    with open('../dust_density_01.inp', 'w') as f:
+    print('Writing dust_density_star.inp')
+    with open('../dust_density_star.inp', 'w') as f:
 
         # Header of dust_density (and dusttemperature)
         # 1
@@ -811,11 +653,11 @@ def create_duststar(
         for density in densities:
             f.write(f'{density}\n')
 
-    print('Finished dust_density_01.inp')
+    print('Finished dust_density_star.inp')
 
     # Write dust_temperature
-    print('Writing dust_temperature_01.dat') # TODO: check the correct filenames!
-    with open('../dust_temperature_01.dat', 'w') as f:
+    print('Writing dust_temperature_star.dat') # TODO: check the correct filenames!
+    with open('../dust_temperature_star.dat', 'w') as f:
 
         # Header of dust_temperature (and dusttemperature)
         # 1
@@ -872,7 +714,7 @@ def create_duststar(
         for nn in range(nwave):
             f.write(f'{wavelengths[nn]}    {kappaabs_star[nn]}    {kappascat_star[nn]}\n')
     
-    print('Duststar: done\n')
+    print('Duststar: done.\n')
 
 
 

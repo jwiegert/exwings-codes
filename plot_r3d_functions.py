@@ -1,17 +1,14 @@
 # Functions for plotting various input and output data for Radmc3d
 # ------------------------------------------------------------ #
 # Useful packages
-
-
 import matplotlib.pyplot as plt
+import numpy as np
 
 import create_r3d_functions as c3d
-
-import numpy as np
+import analyze_r3d_functions as a3d
 
 # Basic definitions
 AUcm = 1.49598e13
-
 # ------------------------------------------------------------ #
 
 def set_figurefonts():
@@ -73,11 +70,11 @@ def plot_grid(
     AUcm = 1.49598e13
 
     # Load data
-    griddistances = c3d.load_griddistances(gridpath,amrpath)
-    gridsizes = c3d.load_cellsizes(sizepath,amrpath)
+    griddistances = a3d.load_griddistances(gridpath,amrpath)
+    gridsizes = a3d.load_cellsizes(sizepath,amrpath)
     
     # Load some grid props
-    nleafs = c3d.load_gridprops()[2]
+    nleafs = a3d.load_gridprops()[2]
     ncellsizes = np.size(np.unique(gridsizes))
 
     # Change units to AU
@@ -132,4 +129,46 @@ def plot_grid(
 
 # Plot the densities as function of radial distance from centrum of star
 # def plot_radialdensity()
+
+# ------------------------------------------------------------ #
+
+# Plot SED(s)
+def plot_sed(path:str='../r3dsims/spectrum.out'):
+    """
+    Plots one SED
+    Mainly for useage in loops where we plot several SEDs, or for the coming
+    graphical UI where we chose which SED to plot
+    """
+
+    distance = 1 # 1pc TODO will be an input!
+
+    # Load spectrum
+    wavelengths,spectrum = a3d.load_spectrum(path,distance)
+
+    fig = plt.figure(tight_layout=True)
+    ax = plt.axes(
+        xscale='log',yscale='log',
+        xlabel=r'Wavelength ($\mu$m)',
+        ylabel=f'Flux density (Jy at {distance} pc)'
+    )
+
+    ax.plot(wavelengths,spectrum)
+
+    fig.show()
+
+# Plot comparisons of two SEDs
+
+# a-b / b (only if wavelength grid are the same)
+# a and b together
+# and luminosities of both
+
+
+
+
+
+
+
+
+
+
 
