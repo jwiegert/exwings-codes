@@ -5,6 +5,10 @@ import os
 import csv
 import numpy as np
 
+# Useful numbers
+c = 2.998e8 # speed of light in m/s
+pc = 30.857e15 # 1 parsec in m
+
 # ------------------------------------------------------------ #
 # Functions that load various stuff
 
@@ -162,8 +166,17 @@ def load_cellsizes(
 # Load SED
 def load_spectrum(path:str='../r3dsims/spectrum.out',distance:float=1):
     """
-    INFO HERE
-    
+    Loads and returns SED and wavelength.
+
+    INPUT
+    -----
+    path: str with path and filename of spectrum.out file
+    distance: float, distance to star in pc
+
+    OUTPUT
+    ------
+    wavelengths: array with wavelength grid in microns
+    spectrum: array with SED in Jy normalised to indicated distance
     """
 
     # Declare lists
@@ -186,13 +199,24 @@ def load_spectrum(path:str='../r3dsims/spectrum.out',distance:float=1):
     # Return data
     return wavelengths,spectrum
 
-
-
-
-
 # ------------------------------------------------------------ #
 # Compute different storheter
 
-def compute_luminosity(path:str='../r3dsims/spectrum.out'):
-    return 'hej'
+def compute_luminosity(path:str='../r3dsims/spectrum.out',distance:float=1):
+    """
+    INFO HERE
+    """
 
+    # Load spectrum
+    wavelengths,spectrum = load_spectrum(path,1)
+    nwave = len(wavelengths)
+
+    # Integrate the SED (using trapezoidal method, and changes units to SI units)
+    sedintegral = 0
+    for nn in range(nwave-1):
+        sedintegral += 0.5*(spectrum[nn] + spectrum[nn+1])*1e-26 * (c/wavelengths[nn] - c/wavelengths[nn+1])*1e6
+
+    # Compute bolometric luminosity(?)
+    luminosity = 4.*np.pi*(distance*pc)**2. * sedintegral
+
+    return luminosity
