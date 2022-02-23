@@ -211,7 +211,7 @@ def compute_luminosity(path:str='../r3dsims/spectrum.out',distance:float=1):
     wavelengths,spectrum = load_spectrum(path,1)
     nwave = len(wavelengths)
 
-    # Integrate the SED (using trapezoidal method, and changes units to SI units)
+    # Integrate the SED (using trapezoidal method, and change units to SI units)
     sedintegral = 0
     for nn in range(nwave-1):
         sedintegral += 0.5*(spectrum[nn] + spectrum[nn+1])*1e-26 * (c/wavelengths[nn] - c/wavelengths[nn+1])*1e6

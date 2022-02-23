@@ -532,7 +532,7 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
 def create_wavelength(
         wavelengthstart:float=0.1,
         wavelengthend:float=2000.0,
-        nwave:int=1000,
+        nwave:int=100,
         logscale:str='y'
     ):
     """
@@ -587,16 +587,19 @@ def create_duststar(
         Teff:float = 2700
     ):
     """
-    INFO HERE
+    INPUTS
+    ------    
+    Mstar: Mass of duststar clump
+    Rstar: radius in solar radii
+    Teff: temperature of dust clump (effective temperature) in Kelvin, default 2700K
 
-    Should output
-    dust_density.inp
-    dust_temperature.dat
-    dust_kappa
+    OUTPUTS
+    -------
+    dust_density_star.inp
+    dust_temperature_star.dat
+    dust_kappa_star.inp
+    wavelength_micron.inp
 
-
-    sfärisk klump i mitten, 
-    hög abs, 0 scat. 
     Jämför med svartkroppsstjärna. - 
     1Msun, 7000Lsun, 2700K
 
@@ -617,7 +620,7 @@ def create_duststar(
     Rstar *= Rsol # star radius in cm
 
     print(f'Radius of star: {Rstar/AUcm:.2} AU ({Rstar/Rsol} Rsun)')
-
+    
     # Load griddistances and size of grid
     #           return nxyz,nrefines,nleafs,nbranch,gridedge
     nleafs = a3d.load_gridprops()[2]
@@ -678,11 +681,8 @@ def create_duststar(
     wavelengthmax = hplanck*c / (2.821*kb*Teff) * 1e6
 
     # kappaabs_0 = 5000 cm2/g
-    kappaabszero = 5000
-
-    # Spectralindex of the tail portion
-    spectralindex = 1
-
+    kappaabszero = 1
+    #kappascatzero = 0
 
     # Create wavelength grid
     wavelengths = create_wavelength()
@@ -695,10 +695,18 @@ def create_duststar(
     # <cos(theta)> for the "star"'s kappafile.
 
     for nn in range(nwave):
-        if wavelengths[nn] >= wavelengthmax:
-            kappaabs_star[nn] = kappaabszero * (wavelengthmax/wavelengths[nn])**spectralindex
+        if wavelengths[nn] > wavelengthmax:
+            kappaabs_star[nn] = kappaabszero * (wavelengthmax/wavelengths[nn])**1
+            #kappascat_star[nn] = kappascatzero * (wavelengthmax/wavelengths[nn])**4
         else:
             kappaabs_star[nn] = kappaabszero
+            #kappascat_star[nn] = kappascatzero
+    
+    # Chose scatter mode
+    if kappascat_star[0] == 0:
+        scattermode = 1
+    else:
+        scattermode = 2
     
     # Write dustkappa_star.inp
     with open('../dustkappa_star.inp', 'w') as f:
@@ -708,7 +716,7 @@ def create_duststar(
         #          2 - reads lambda, abs and scat
         #          3 - reads lambda, abs, scat and g
         # nlam: number of wavelength points
-        f.write(f'1\n{nwave}\n')
+        f.write(f'{scattermode}\n{nwave}\n')
 
         # Write data
         for nn in range(nwave):
