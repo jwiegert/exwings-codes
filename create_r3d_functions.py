@@ -587,6 +587,14 @@ def create_duststar(
         Teff:float = 2700
     ):
     """
+    Creates a clump of dust in the central parts of the grid to emulate an AGBstar.
+    For now, it's a spherical symmetric clump with constant mass (bulk) density and
+    temperature. Might be more adaptable in the future.
+
+    Mstar is propto the luminosity of the clump but only up until the clump is
+    optically thick. With Rstar=100Rsol, Teff=2700K, this happens at around 2e-6Msol,
+    which gives around 450Lsol.
+
     INPUTS
     ------    
     Mstar: Mass of duststar clump
