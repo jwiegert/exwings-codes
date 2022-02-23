@@ -613,9 +613,8 @@ def create_duststar(
 
     Creates wavelength grid also
     IMPORTANT: all create stellar input-functions should simultaneously
-    create the wavelength grid. The wavelengthfunc is more of a 
-
-
+    create the wavelength grid. The wavelengthfunc is more of a suplementary
+    function.
     """
 
     # Useful units
