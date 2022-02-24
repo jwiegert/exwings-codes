@@ -163,6 +163,41 @@ def load_cellsizes(
     else:
         return f'ERROR: load_cellsizes can not find {sizepath}.'
 
+
+# Load output from R3D sims
+def load_wavelengthgrid(path:str='../wavelength_micron.inp'):
+    """
+    Ancillary function. Loads and extracts wavelengths from wavelength grid.
+    
+    Input
+    -----
+    path: str, path to wavelength_micron.inp
+
+    Output
+    ------
+    wavelengths: list of wavelengths in micron
+    nwave: number of wavelength grid points    
+    """
+
+    wavelengths = []
+
+    with open(path,'r') as f:
+
+        for nn,line in enumerate(f.readlines()):
+            
+            # Extract number of wavelengths
+            if nn == 0:
+                nwave = int(line)
+            
+            # Extract wavelengths
+            else:
+                wavelengths.append(float(line))
+            
+    return wavelengths,nwave
+
+# ------------------------------------------------------------ #
+# Load output - functions from R3D
+
 # Load SED
 def load_spectrum(path:str='../r3dsims/spectrum.out',distance:float=1):
     """
@@ -198,6 +233,12 @@ def load_spectrum(path:str='../r3dsims/spectrum.out',distance:float=1):
     
     # Return data
     return wavelengths,spectrum
+
+
+
+
+
+
 
 # ------------------------------------------------------------ #
 # Compute different storheter
