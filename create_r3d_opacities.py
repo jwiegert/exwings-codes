@@ -9,6 +9,7 @@ import os
 from bhmie.makedustopac import *
 
 
+# TODO loop through all unique grain sizes in grainsize-spatial-grid-file
 
 def create_kappaabs(
         wavelengthpath:str='../wavelength_micron.inp',
@@ -82,11 +83,31 @@ def create_kappaabs(
                         lamcm > maximum.
     """
 
-
-
+    #TODO
+    # Write dustkappa_*.inp
     write_radmc3d_kappa_file(opacity,optconst)
 
-    # Move kappaabs-file to subfolder of simulation folder
+    # Write dustopac.inp
+
+    """
+    # Now make the dustopac.inp-file. (Hard coded for one dust specie).            #
+    #                                                                              #
+    np.savetxt('dustopac.inp',[],header = str(2)\
+                                    +'\n'+ str(nrspec)\
+                                    +'\n'+'-----------------------------'\
+                                    +'\n'+ str(1)\
+                                    +'\n'+ str(0)\
+                                    +'\n'+ str(optconst)\
+                                    +'\n'+'-----------------------------',comments='')
+    """
+
+
+
+    # Move kappaabs and opac-file to subfolder of simulation folder
     os.system(f'mv dustkappa_{optconst}.inp ../r3dsims/opacities/')
+    #os.system(f'mv dustopac.inp .../r3dsims/opacities')
+
+
+
 
 

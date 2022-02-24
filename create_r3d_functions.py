@@ -733,7 +733,7 @@ def create_duststar(
 
 
 
-
+# TODO
 
 """
 def create_spheredensity():
@@ -742,6 +742,14 @@ def create_spheredensity():
 
     # Compute normalization density (ie zero density)
     # 
+
+
+    # Function to create proof-of-concept, sphere with rho ~ r^-2 and agrain ~ r^k (k>0, see Darwin-papers)
+
+    # For each radial distance, round grainsize to nearest 1/10 of max grainsize.
+
+    # save in its own file, create new density array for each agrain-bin
+
 
 
     return 'hej'
