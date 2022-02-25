@@ -13,9 +13,9 @@ from bhmie.makedustopac import *
 
 def create_kappaabs(
         wavelengthpath:str='../wavelength_micron.inp',
-        optconst:str='mg2sio4'
+        optconst:str='mg2sio4',
+        agrainum:float=0.1
     ):
-
 
     # Load wavelength-grid
     wavelengths,nwave = a3d.load_wavelengthgrid(wavelengthpath)
@@ -24,16 +24,15 @@ def create_kappaabs(
     wavelengths = np.array([wavelength*1e-4 for wavelength in wavelengths])
 
     # Load dust species
-    optconst = 'mg2sio4'
     optconst_file = f'../bhmie/lnk/{optconst}.lnk'
 
     # Grain props
     matdens = 2 # g/cm3
 
+    # TODO
     # Load grain size grid
-    # Test with 1um (1e-4 cm)
-    agraincm = 1e-4
 
+    agraincm = agrainum*1e-4
 
 
     # Create all opacity files
@@ -43,11 +42,11 @@ def create_kappaabs(
         matdens=matdens,
         agraincm=agraincm,
         lamcm = wavelengths,
-        logawidth=0.5,
+        logawidth=0.1,
         wfact=3,
         na=20,
         extrapolate=True,
-        verbose=False
+        verbose=True
     )
 
     #compute_opac_mie(optconst_file,matdens,agraincm,lamcm,

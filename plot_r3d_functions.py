@@ -50,8 +50,14 @@ def set_ticklabels(xlabel,ylabel,xscale,yscale):
         plt.yscale('log')
 
 # ------------------------------------------------------------ #
+# Plots of inputs
 
-# This function plots the specified grid
+# TODO
+# plot various kappadust_*.inp
+
+
+
+# Plots the specified grid
 def plot_grid(
         gridpath:str='../grid_distances.csv',
         sizepath:str='../grid_cellsizes.csv',
@@ -131,6 +137,7 @@ def plot_grid(
 # def plot_radialdensity()
 
 # ------------------------------------------------------------ #
+# Plots of output
 
 # Plot SED(s)
 def plot_sed(path:str='../r3dsims/spectrum.out'):
