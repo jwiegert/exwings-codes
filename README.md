@@ -1,9 +1,8 @@
 # exwings-codes
 
-SUBMIT WITH NEW COMPUTER?
-
-
 Source codes for handling post processing radiative transfer simulation source codes for Exwings.
+
+I.e. translate co5bold simulations into r3dmc3d-input data and simulate synthetic observations.
 
 ## create_r3d_functions
 
