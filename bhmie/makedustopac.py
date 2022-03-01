@@ -437,6 +437,7 @@ def write_radmc3d_kappa_file(package,name):
         f.write('# Made with the makedustopac.py code by Cornelis Dullemond\n')
         f.write('# using the bhmie.py Mie code of Bohren and Huffman (python version by Cornelis Dullemond, from original bhmie.f code by Bruce Draine)\n')
         f.write('# Grain size = %13.3e cm\n'%(package['agraincm']))
+        f.write(f'# Grain size range (cm): {package["agraincm"] * 2.718281828459045**(-package["wfact"]*package["logawidth"]):e} to {package["agraincm"] * 2.718281828459045**(package["wfact"]*package["logawidth"]):e}\n')
         f.write('# Fractional symmetric smearing = %.2f \n'%(package['logawidth']))
         f.write('# Material density = %6.3f g/cm^3\n'%(package['matdens']))
         f.write('3\n')  # Format number

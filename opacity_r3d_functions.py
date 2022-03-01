@@ -14,7 +14,8 @@ from bhmie.makedustopac import *
 def create_kappaabs(
         wavelengthpath:str='../wavelength_micron.inp',
         optconst:str='mg2sio4',
-        agrainum:float=0.1
+        agrainlist:list=[0.1],
+        matdens:float=2
     ):
 
     # Load wavelength-grid
@@ -26,85 +27,98 @@ def create_kappaabs(
     # Load dust species
     optconst_file = f'../bhmie/lnk/{optconst}.lnk'
 
-    # Grain props
-    matdens = 2 # g/cm3
-
-    # TODO
     # Load grain size grid
+    for agrainum in agrainlist:
 
-    agraincm = agrainum*1e-4
+        #Change units to cm
+        agraincm = agrainum*1e-4
 
+        # Create all opacity files
 
-    # Create all opacity files
+        opacity = compute_opac_mie(
+            optconst_file=optconst_file,
+            matdens=matdens,
+            agraincm=agraincm,
+            lamcm = wavelengths,
+            logawidth=0.1,
+            wfact=3,
+            na=20,
+            extrapolate=True,
+            verbose=True
+        )
 
-    opacity = compute_opac_mie(
-        optconst_file=optconst_file,
-        matdens=matdens,
-        agraincm=agraincm,
-        lamcm = wavelengths,
-        logawidth=0.1,
-        wfact=3,
-        na=20,
-        extrapolate=True,
-        verbose=True
-    )
+        #compute_opac_mie(optconst_file,matdens,agraincm,lamcm,
+        #                     theta=None,logawidth=None,wfact=3.0,na=20,
+        #                     chopforward=0.0,errtol=0.01,verbose=False,
+        #                     extrapolate=False):
+        """
+            matdens       = Material density in g/cm^3
+            agraincm      = Grain radius in cm
+            lamcm         = Wavelength grid in cm (a numpy array)
+            theta         = Optional angular grid (a numpy array) between 0 and 180
+                            which are the scattering angle sampling points at 
+                            which the scattering phase function is computed.
+            logawidth     = Optional: if set, the size agrain will instead be a 
+                            sample of sizes around agrain. This helps to smooth out
+                            the strong wiggles in the phase function and opacity
+                            of spheres at an exact size. Since in Nature it rarely
+                            happens that grains all have exactly the same size, this
+                            is quite natural. The value of logawidth sets the width
+                            of the Gauss in ln(agrain), so for logawidth<<1 this
+                            give a real width of logawidth*agraincm. 
+            wfact         = (default=3.0) Grid width of na sampling points in units
+                            of logawidth. The Gauss distribution of grain sizes is 
+                            cut off at agrain * exp(wfact*logawidth) and
+                            agrain * exp(-wfact*logawidth).
+            na            = (default=20) Number of size sampling points 
+                            (if logawidth set).
+            extrapolate   = If set to True, then if the wavelength grid lamcm goes
+                            out of the range of the wavelength grid of the 
+                            optical constants file, then it will make a suitable
+                            extrapolation: keeping the optical constants constant
+                            for lamcm < minimum, and extrapolating log-log for
+                            lamcm > maximum.
+        """
 
-    #compute_opac_mie(optconst_file,matdens,agraincm,lamcm,
-    #                     theta=None,logawidth=None,wfact=3.0,na=20,
-    #                     chopforward=0.0,errtol=0.01,verbose=False,
-    #                     extrapolate=False):
-    """
-        matdens       = Material density in g/cm^3
-        agraincm      = Grain radius in cm
-        lamcm         = Wavelength grid in cm (a numpy array)
-        theta         = Optional angular grid (a numpy array) between 0 and 180
-                        which are the scattering angle sampling points at 
-                        which the scattering phase function is computed.
-        logawidth     = Optional: if set, the size agrain will instead be a 
-                        sample of sizes around agrain. This helps to smooth out
-                        the strong wiggles in the phase function and opacity
-                        of spheres at an exact size. Since in Nature it rarely
-                        happens that grains all have exactly the same size, this
-                        is quite natural. The value of logawidth sets the width
-                        of the Gauss in ln(agrain), so for logawidth<<1 this
-                        give a real width of logawidth*agraincm. 
-        wfact         = (default=3.0) Grid width of na sampling points in units
-                        of logawidth. The Gauss distribution of grain sizes is 
-                        cut off at agrain * exp(wfact*logawidth) and
-                        agrain * exp(-wfact*logawidth).
-        na            = (default=20) Number of size sampling points 
-                        (if logawidth set).
-        extrapolate   = If set to True, then if the wavelength grid lamcm goes
-                        out of the range of the wavelength grid of the 
-                        optical constants file, then it will make a suitable
-                        extrapolation: keeping the optical constants constant
-                        for lamcm < minimum, and extrapolating log-log for
-                        lamcm > maximum.
-    """
-
-    #TODO
-    # Write dustkappa_*.inp
-    write_radmc3d_kappa_file(opacity,optconst)
-
-    # Write dustopac.inp
-
-    """
-    # Now make the dustopac.inp-file. (Hard coded for one dust specie).            #
-    #                                                                              #
-    np.savetxt('dustopac.inp',[],header = str(2)\
-                                    +'\n'+ str(nrspec)\
-                                    +'\n'+'-----------------------------'\
-                                    +'\n'+ str(1)\
-                                    +'\n'+ str(0)\
-                                    +'\n'+ str(optconst)\
-                                    +'\n'+'-----------------------------',comments='')
-    """
+        # Write dustkappa_*.inp
+        write_radmc3d_kappa_file(opacity,f'{optconst}_{agrainum}')
 
 
 
-    # Move kappaabs and opac-file to subfolder of simulation folder
-    os.system(f'mv dustkappa_{optconst}.inp ../r3dsims/opacities/')
-    #os.system(f'mv dustopac.inp .../r3dsims/opacities')
+        #TODO
+        # Write dustopac.inp
+
+        # 2
+        # n spec
+        # ---
+        # 1
+        # 0
+        # species-filename
+        # ---
+
+        with open('dustopac.inp','w') as f:
+            f.write('blabla')
+
+
+
+
+        """
+        # Now make the dustopac.inp-file. (Hard coded for one dust specie).            #
+        #                                                                              #
+        np.savetxt('dustopac.inp',[],header = str(2)\
+                                        +'\n'+ str(nrspec)\
+                                        +'\n'+'-----------------------------'\
+                                        +'\n'+ str(1)\
+                                        +'\n'+ str(0)\
+                                        +'\n'+ str(optconst)\
+                                        +'\n'+'-----------------------------',comments='')
+        """
+
+
+
+        # Move kappaabs and opac-file to subfolder of simulation folder
+        os.system(f'mv dustkappa_{optconst}_{agrainum}.inp ../r3dsims/opacities/')
+        #os.system(f'mv dustopac.inp .../r3dsims/opacities')
 
 
 
