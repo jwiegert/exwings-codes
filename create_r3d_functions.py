@@ -4,6 +4,7 @@
 import sys
 import numpy as np
 import scipy as s
+from scipy.integrate import quad
 from datetime import datetime
 
 # Might be used later
@@ -773,7 +774,7 @@ def create_spheredensity(
     )
     # check if outradius is smaller than larges radial griddistances, if not, set outradius to max griddistance
     if outradius > np.max(griddistances[:,0]):
-        outradius = griddistances[:,0]
+        outradius = np.max(griddistances[:,0])
 
     # Load grid cell sizes
     cellsizes = a3d.load_cellsizes(
@@ -786,19 +787,21 @@ def create_spheredensity(
     # Number of dust species
     nrspec = len(optconstlist)*len(agrainlist)
 
-
     # Compute normalization density (ie zero density)
     # TODO this is the same for all dust species, allow for different morphs? Ie different
     # radii and radial dependence later?
     # TODO check the math here, why r^(2+inputvalue)? Is it due to some derivative?
+    # TODO this devides the zero density equally between dust species and grain sizes
     radiusintegral = s.integrate.quad(lambda x: x**(2+densitypower), inradius, outradius)
-    zerodensity = totaldustmass * inradius**densitypower / (4.*np.pi * radiusintegral[0])
+    zerodensity = totaldustmass / nrspec * inradius**densitypower / (4.*np.pi * radiusintegral[0])
 
 
     # Create density distribution
     # ns, species, choses grain sizes and chemical compositions
 
     print('Writing dust_density.inp')
+
+    totaldustmass = 0
 
     # Open density file
     with open('../dust_density.inp','w') as f:
@@ -808,12 +811,22 @@ def create_spheredensity(
 
         # Add densities
         for ns in range(nrspec):
-            for nn,griddistance in enumerate(griddistances):
+            for nn,griddistance in enumerate(griddistances[:,0]):
+
                 if griddistance >= inradius and griddistance <= outradius:
                     density = zerodensity * (griddistance/inradius)**densitypower
                     f.write(f'{density}\n')
 
+                    # Compute real total dust mass
+                    totaldustmass += density*cellsizes[nn]**3
+                else:
+                    f.write(f'0.0\n')
+
     print('Finished dust_density.inp')
+    print(f'Total dust mass is {totaldustmass} g ({totaldustmass/Msol} Msol)')
+
+    
+
 
     # For each radial distance, round grainsize to nearest 1/10 of max grainsize.
     # No, round to the nearest value in the grainsizelist that should be inputed also
@@ -826,3 +839,5 @@ def create_spheredensity(
 
 
     print('create_spheredensity: Done')
+
+    # TODO create opacity files directly here?
