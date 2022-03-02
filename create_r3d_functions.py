@@ -11,7 +11,13 @@ from datetime import datetime
 #import scipy as s
 #from scipy.integrate import quad
 
+# My own functions
 import analyze_r3d_functions as a3d
+
+# Basic definitions
+AUcm = 1.49598e13 # cm
+Msol = 1.989e33 # g
+Rsol = 6.955e10 # cm
 
 # ------------------------------------------------------------ #
 # Shorter simpler functions
@@ -78,7 +84,6 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
     """
 
     # Basic definitions
-    AUcm = 1.49598e13
     nrefines = len(refinementlist)
 
     if nrefines > 4:
@@ -618,11 +623,6 @@ def create_duststar(
     function.
     """
 
-    # Useful units
-    AUcm = 1.49598e13 # cm
-    Msol = 1.989e33 # g
-    Rsol = 6.955e10 # cm
-
     # Change units of stellar props
     Mstar *= Msol # star mass in g
     Rstar *= Rsol # star radius in cm
@@ -761,7 +761,6 @@ def create_spheredensity(
     """
 
     # Change units to cgs
-    AUcm = 1.49598e13
     inradius *= AUcm
     outradius *= AUcm
 
@@ -800,11 +799,6 @@ def create_spheredensity(
     # ns, species, choses grain sizes and chemical compositions
 
     print('Writing dust_density.inp')
-
-    # Declare arrays and various counters
-    densitymatrix = np.zeros(nrspec*nleafs)
-    #nbig,nx,ny,nz = 0,0,0,0
-    #counter1,counter2,counter3 = 0,0,0
 
     # Open density file
     with open('../dust_density.inp','w') as f:

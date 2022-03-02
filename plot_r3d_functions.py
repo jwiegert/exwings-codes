@@ -4,7 +4,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-import create_r3d_functions as c3d
+# My own functions
 import analyze_r3d_functions as a3d
 
 # Basic definitions
@@ -133,8 +133,14 @@ def plot_grid(
     fig.tight_layout()
     fig.show()
 
+
+# TODO
 # Plot the densities as function of radial distance from centrum of star
 # def plot_radialdensity()
+# for each dust specie and grain size (skip all zero-grid points)
+
+
+
 
 # ------------------------------------------------------------ #
 # Plots of output
