@@ -679,6 +679,7 @@ def create_duststar(
         # Add temperatures
         for temperature in temperatures:
             f.write(f'{temperature}\n')
+    print('Finished dust_temperature_star.dat')
 
     # Constants in SI-units
     c = 2.998e8
@@ -742,6 +743,7 @@ def create_spheredensity(
 
         optconstlist:list=['mg2sio4'],
         agrainlist:list=[0.1],
+        totaldustmass:float=1.989e33,
         densitypower:float=-2,
         inradius:float=3,
         outradius:float=100
@@ -750,14 +752,20 @@ def create_spheredensity(
 
     INPUTS
     ------
-    total mass of dust cloud
+    total mass of dust cloud in gram: default: 1Msun
     radial density parameter: rho ~ r^k
     inner radius (in au)
     outer radius (in au)
     grainsizelist, agrainlist, list of all grainsizes in um
     optconstlist, list of optical constants-names
     """
+
+    # Change units to cgs
     AUcm = 1.49598e13
+    inradius *= AUcm
+    outradius *= AUcm
+
+
     
     # Load grid distances (radial, x,y,z distances)
     griddistances = a3d.load_griddistances(
@@ -765,7 +773,7 @@ def create_spheredensity(
         amrpath='../r3dsims/amr_grid.inp'
     )
     # check if outradius is smaller than larges radial griddistances, if not, set outradius to max griddistance
-    if outradius*AUcm > np.max(griddistances[:,0]):
+    if outradius > np.max(griddistances[:,0]):
         outradius = griddistances[:,0]
 
     # Load grid cell sizes
@@ -781,22 +789,46 @@ def create_spheredensity(
 
 
     # Compute normalization density (ie zero density)
-    zerodensity = 0
-
+    # TODO this is the same for all dust species, allow for different morphs? Ie different
+    # radii and radial dependence later?
+    # TODO check the math here, why r^(2+inputvalue)? Is it due to some derivative?
     radiusintegral = s.integrate.quad(lambda x: x**(2+densitypower), inradius, outradius)
+    zerodensity = totaldustmass * inradius**densitypower / (4.*np.pi * radiusintegral[0])
 
-    
+
+    # Create density distribution
+    # ns, species, choses grain sizes and chemical compositions
+
+    print('Writing dust_density.inp')
+
+    # Declare arrays and various counters
+    densitymatrix = np.zeros(nrspec*nleafs)
+    #nbig,nx,ny,nz = 0,0,0,0
+    #counter1,counter2,counter3 = 0,0,0
+
+    # Open density file
+    with open('../dust_density.inp','w') as f:
+
+        # Write header
+        f.write(f'1\n{nleafs}\n{nrspec}\n')
+
+        # Add densities
+        for ns in range(nrspec):
+            for nn,griddistance in enumerate(griddistances):
+                if griddistance >= inradius and griddistance <= outradius:
+                    density = zerodensity * (griddistance/inradius)**densitypower
+                    f.write(f'{density}\n')
+
+    print('Finished dust_density.inp')
+
+    # For each radial distance, round grainsize to nearest 1/10 of max grainsize.
+    # No, round to the nearest value in the grainsizelist that should be inputed also
+
+
     # Output also the REAL total dust mass with the help of cellsizes array since
     # the sphere might well be cut in the outer parts of the grid
     # also because the sphere is in a cubic grid
 
 
 
-    # For each radial distance, round grainsize to nearest 1/10 of max grainsize.
-    # No, round to the nearest value in the grainsizelist that should be inputed also
-
-    # save in its own file, create new density array for each agrain-bin
-
-
-
-    return 'hej'
+    print('create_spheredensity: Done')
