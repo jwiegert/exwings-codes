@@ -22,6 +22,9 @@ def create_kappaabs(
     # Change units from um to cm and change list to np.array
     wavelengths = np.array([wavelength*1e-4 for wavelength in wavelengths])
 
+    # Logarithmic spread parameter TODO not tested yet! works fine for 10 sizes
+    logawidth = max(agrainlist)/len(agrainlist)
+
     # Go through the different dust species
     for optconst in optconstlist:
 
@@ -40,7 +43,7 @@ def create_kappaabs(
                 matdens=matdens,
                 agraincm=agraincm,
                 lamcm = wavelengths,
-                logawidth=0.1,
+                logawidth=logawidth,
                 wfact=3,
                 na=20,
                 extrapolate=True,

@@ -3,6 +3,7 @@
 # Various useful packages
 import sys
 import numpy as np
+import scipy as s
 from datetime import datetime
 
 # Might be used later
@@ -733,24 +734,69 @@ def create_duststar(
 
 
 
+
 # TODO
+# Function to create proof-of-concept, sphere with rho ~ r^-2 and agrain ~ r^k (k>0, see Darwin-papers)
 
-"""
-def create_spheredensity():
+def create_spheredensity(
 
-    # Load grid (should perhaps be its own function)
+        optconstlist:list=['mg2sio4'],
+        agrainlist:list=[0.1],
+        densitypower:float=-2,
+        inradius:float=3,
+        outradius:float=100
+    ):
+    """
+
+    INPUTS
+    ------
+    total mass of dust cloud
+    radial density parameter: rho ~ r^k
+    inner radius (in au)
+    outer radius (in au)
+    grainsizelist, agrainlist, list of all grainsizes in um
+    optconstlist, list of optical constants-names
+    """
+    AUcm = 1.49598e13
+    
+    # Load grid distances (radial, x,y,z distances)
+    griddistances = a3d.load_griddistances(
+        gridpath='../r3dsims/grid_distances.csv',
+        amrpath='../r3dsims/amr_grid.inp'
+    )
+    # check if outradius is smaller than larges radial griddistances, if not, set outradius to max griddistance
+    if outradius*AUcm > np.max(griddistances[:,0]):
+        outradius = griddistances[:,0]
+
+    # Load grid cell sizes
+    cellsizes = a3d.load_cellsizes(
+        sizepath='../r3dsims/grid_cellsizes.csv',
+        amrpath='../r3dsims/amr_grid.inp'
+    )
+    # Note: both returns np.arrays
+    nleafs = np.size(cellsizes)
+
+    # Number of dust species
+    nrspec = len(optconstlist)*len(agrainlist)
+
 
     # Compute normalization density (ie zero density)
-    # 
+    zerodensity = 0
+
+    radiusintegral = s.integrate.quad(lambda x: x**(2+densitypower), inradius, outradius)
+
+    
+    # Output also the REAL total dust mass with the help of cellsizes array since
+    # the sphere might well be cut in the outer parts of the grid
+    # also because the sphere is in a cubic grid
 
 
-    # Function to create proof-of-concept, sphere with rho ~ r^-2 and agrain ~ r^k (k>0, see Darwin-papers)
 
     # For each radial distance, round grainsize to nearest 1/10 of max grainsize.
+    # No, round to the nearest value in the grainsizelist that should be inputed also
 
     # save in its own file, create new density array for each agrain-bin
 
 
 
     return 'hej'
-""";
