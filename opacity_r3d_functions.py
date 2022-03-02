@@ -1,15 +1,10 @@
-
 import analyze_r3d_functions as a3d
 import numpy as np
 import os
 
-
 # Import BH-codes
-# See manual for RADMC3D for sources on these codes.
+# See manual for RADMC3D for references on these codes.
 from bhmie.makedustopac import *
-
-
-# TODO loop through all unique grain sizes in grainsize-spatial-grid-file
 
 def create_kappaabs(
         wavelengthpath:str='../wavelength_micron.inp',
@@ -49,11 +44,10 @@ def create_kappaabs(
                 wfact=3,
                 na=20,
                 extrapolate=True,
-                verbose=True
+                verbose=False
             )
 
-            # TODO remove these comments after everything works correctly
-
+            # Example code and info from makedustopac and bhmie for reference here
             #compute_opac_mie(optconst_file,matdens,agraincm,lamcm,
             #                     theta=None,logawidth=None,wfact=3.0,na=20,
             #                     chopforward=0.0,errtol=0.01,verbose=False,
@@ -90,52 +84,19 @@ def create_kappaabs(
             # Write dustkappa_*.inp
             write_radmc3d_kappa_file(opacity,f'{optconst}_{agrainum}')
 
+            # Move kappaabs files
+            os.system(f'mv dustkappa_{optconst}_{agrainum}.inp ../r3dsims/opacities/')
 
-
-        #TODO
-        # Write dustopac.inp
-
-        # 2
-        # n spec
-        # ---
-        # 1
-        # 0
-        # species-filename
-        # ---
-
+    # Write dustopac.inp, list of all species and names
     with open('dustopac.inp','w') as f:
 
         # Write header
         f.write(f'2\n{nrspec}\n-----------------------------\n')
 
         # Write each species and grain size
-        for agrainum in agrainlist:
-            for optconst in optconstlist:
+        for optconst in optconstlist:
+            for agrainum in agrainlist:
                 f.write(f'1\n0\n{optconst}_{agrainum}\n-----------------------------\n')
 
-
-
-
-
-                """
-                # Now make the dustopac.inp-file. (Hard coded for one dust specie).            #
-                #                                                                              #
-                np.savetxt('dustopac.inp',[],header = str(2)\
-                                                +'\n'+ str(nrspec)\
-                                                +'\n'+'-----------------------------'\
-                                                +'\n'+ str(1)\
-                                                +'\n'+ str(0)\
-                                                +'\n'+ str(optconst)\
-                                                +'\n'+'-----------------------------',comments='')
-                """
-
-
-
-        # Move kappaabs and opac-file to subfolder of simulation folder
-        os.system(f'mv dustkappa_{optconst}_{agrainum}.inp ../r3dsims/opacities/')
-        #os.system(f'mv dustopac.inp .../r3dsims/opacities')
-
-
-
-
-
+    # Move opac-file to subfolder of simulation folder
+    os.system(f'mv dustopac.inp ../r3dsims/opacities')
