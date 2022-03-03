@@ -775,7 +775,7 @@ def create_spheredensity(
     # check if outradius is smaller than larges radial griddistances, if not, set outradius to max griddistance
     if outradius > np.max(griddistances[:,0]):
         outradius = np.max(griddistances[:,0])
-
+    
     # Load grid cell sizes
     cellsizes = a3d.load_cellsizes(
         sizepath='../r3dsims/grid_cellsizes.csv',
@@ -784,14 +784,22 @@ def create_spheredensity(
     # Note: both returns np.arrays
     nleafs = np.size(cellsizes)
 
+    # Number of grainsizes
+    Nagrain = len(agrainlist)
+
     # Number of dust species
-    nrspec = len(optconstlist)*len(agrainlist)
+    nrspec = len(optconstlist)*Nagrain
+
+    # Minimum grain size
+    agrainmin = min(agrainlist)
+
+
 
     # Compute normalization density (ie zero density)
     # TODO this is the same for all dust species, allow for different morphs? Ie different
     # radii and radial dependence later?
-    # TODO check the math here, why r^(2+inputvalue)? Is it due to some derivative?
-    # TODO this devides the zero density equally between dust species and grain sizes
+    # TODO check the math here, why r^(2+inputvalue)? Is it due to some derivative? No, due to spherical coordinates!
+    # TODO this divides the zero density equally between dust species and grain sizes
     radiusintegral = s.integrate.quad(lambda x: x**(2+densitypower), inradius, outradius)
     zerodensity = totaldustmass / nrspec * inradius**densitypower / (4.*np.pi * radiusintegral[0])
 
@@ -802,6 +810,34 @@ def create_spheredensity(
     print('Writing dust_density.inp')
 
     totaldustmass = 0
+    densitymatrix = np.zeros(nrspec*nleafs)
+
+    #setted_list = [2,9,6,20,15]
+    #value_chosen = 17
+    #min(setted_list, key=lambda x:abs(x-value_chosen)) > gives nearest value
+
+    # settedlist: agrainlist
+    # valuechosen: agrain(R) [something simple for now]: min(agrainlist) * R/inradius
+
+    # Add densities
+    for ns in range(len(optconstlist)):
+        for nn,griddistance in enumerate(griddistances[:,0]):
+            if griddistance >= inradius and griddistance <= outradius:
+                
+                # Find which grainsize is closest to radial grainsize relation
+                grainsize = min(agrainlist, key=lambda x:abs(x-(agrainmin*griddistance/inradius)))
+                ngrain = np.where(np.array(agrainlist) == grainsize)[0][0]
+
+                print(agrainmin*griddistance/inradius,grainsize,ngrain)
+
+                # Allocate densities to bins of grain sizes, and for each grain chemical specie
+                densitymatrix[nn + ngrain*nleafs + ns*nleafs*Nagrain] = zerodensity * (griddistance/inradius)**densitypower
+
+
+                # Compute real total dust mass
+                totaldustmass += densitymatrix[nn + ngrain*nleafs + ns*nleafs*Nagrain]*cellsizes[nn]**3
+
+
 
     # Open density file
     with open('../dust_density.inp','w') as f:
@@ -809,18 +845,7 @@ def create_spheredensity(
         # Write header
         f.write(f'1\n{nleafs}\n{nrspec}\n')
 
-        # Add densities
-        for ns in range(nrspec):
-            for nn,griddistance in enumerate(griddistances[:,0]):
-
-                if griddistance >= inradius and griddistance <= outradius:
-                    density = zerodensity * (griddistance/inradius)**densitypower
-                    f.write(f'{density}\n')
-
-                    # Compute real total dust mass
-                    totaldustmass += density*cellsizes[nn]**3
-                else:
-                    f.write(f'0.0\n')
+        # Add densitymatrixloop here
 
     print('Finished dust_density.inp')
     print(f'Total dust mass is {totaldustmass} g ({totaldustmass/Msol} Msol)')
