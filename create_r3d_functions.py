@@ -56,7 +56,7 @@ def movecoordinates(nxyz,nx,ny,nz):
 
 # ------------------------------------------------------------ #
 
-def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str='y'):
+def create_grid(gridedge:float, nxyz:int, refinementlist:list, savegrid:str='y'):
     """
     Creates grid for Radmc3D simulations and related informaton 
     files used for analysis and creating dust envelopes. Grid is 
@@ -66,6 +66,8 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
     
     INPUTS
     ------
+    gridedge: total size of the grid side (in AU)
+
     basecubesize: length of side of base cells in AU (these are cubes) [int or float]
     
     nxyz: number of base cells along one side of the whole grid [even number, int]
@@ -92,13 +94,13 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
 
     # Info text
     print('Creating amr_grid with octree refinement.')
-    print(f'Size of base cell: {basecubesize} AU')
+    print(f'Length of total side of whole grid: {gridedge} AU')
     print(f'Number of base cells along one side of the grid: {nxyz}')
-    print(f'Distances to refinement limits: {refinementlist} AU')
+    print(f'Distances to refinement limits from centrum: {refinementlist} AU')
     print(f'Number refinements: {nrefines}')
 
     # Change units to cm
-    basecubesize *= AUcm
+    gridedge *= AUcm
     refinementlist = [dist*AUcm for dist in refinementlist]
 
     # Make sure the nxyz is even, if not warn and change:
@@ -112,9 +114,7 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
     # gridcourners : coordinates of base grid courners
     #     griddist : list of distances to center of grid (not for R3D)
     nbasecubes     = int(nxyz * nxyz * nxyz)
-    gridedge       = nxyz * basecubesize
     gridcourners   = np.linspace(-gridedge*0.5,gridedge*0.5,nxyz+1)
-    print(f'Length of total side of whole grid: {gridedge/AUcm:.2f} AU')
 
     griddist       = np.zeros(nxyz)
     for nn in range(nxyz):
@@ -124,6 +124,7 @@ def create_grid(basecubesize:float, nxyz:int, refinementlist:list, savegrid:str=
 
     # Base cube size
     basecubesize   = gridcourners[1] - gridcourners[0]
+    print(f'Size of base cell: {basecubesize/AUcm} AU')
 
     # Children cube sizes
     smallcubesize = []
