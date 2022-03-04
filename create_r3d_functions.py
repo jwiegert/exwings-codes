@@ -622,6 +622,8 @@ def create_duststar(
     IMPORTANT: all create stellar input-functions should simultaneously
     create the wavelength grid. The wavelengthfunc is more of a suplementary
     function.
+    OR I could design this so that one has to run wavelengthfunc first before creating
+    stellar models? And this just loads the wavelength grid and all other already made data?
     """
 
     # Change units of stellar props
