@@ -1,6 +1,24 @@
 # functions and tools for loading and analyzing output
 # from co5bold.
 
+# Import various libraries
+import numpy as np
+from scipy.io.idl import readsav
+
+# My own libraries
+import create_r3d_functions as c3d
+
+# Define useful numbers
+AUcm = 1.49598e13 # cm
+
+
+def load_co5boldgrid(
+        savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
+    ):
+    
+    
+    
+    return 'hej'
 
 
 
