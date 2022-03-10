@@ -28,6 +28,7 @@ AUcm = cython.declare(cython.float ,1.49598e13) # cm
 
 
 # Load co5bold grid
+@cython.cfunc
 def load_co5boldgrid(
         savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
     ):
@@ -71,14 +72,29 @@ def load_co5boldgrid(
     return c5dgrid
 
 
-# Extract and translate c5d densities to r3d densities
 
+# Compare grids and return corresponding cell identity
+@cython.cfunc
+@cython.locals(
+    c5dx = cython.double,
+    c5dy = cython.double,
+    c5dz = cython.double
+)
+def compare_grids(
+    c5dx,c5dy,c5dz,
+    r3dgrid
+    ):
 
+    nr = cython.declare(cython.int, 0)
 
+    # Find c5d cells are close to r3d cells
+    nr = np.argmin(
+        (r3dgrid[:,1] - c5dx)**2 + \
+        (r3dgrid[:,2] - c5dy)**2 + \
+        (r3dgrid[:,3] - c5dz)**2
+    )
 
-
-
-
+    return nr
 
 
 
