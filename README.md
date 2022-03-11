@@ -83,3 +83,44 @@ Where 1 is the dust specie you want to visualise.
 Press apply. For just a grid, chose e.g. Representation Wireframe.
 
 For a density file, press apply, and chose "threshold" (button, top left area). Chose some limit (increase minimum) and look around. Remember that R3D sets som 1e-80 ish g/cm3 i all grid cells since it can't be zero. So you have to increase the lower limit to see past all zero-density cells.
+
+# Cython notes
+
+### Pure Python with Cython
+
+Examples:
+
+Locals-decorator declares class of input variables
+
+cython.declare to declare class of variables inside function
+
+```py
+import cython
+@cython.cfunc
+@cython.locals(
+    c5dx = cython.double,
+    c5dy = cython.double,
+    c5dz = cython.double
+)
+def function_name(c5dx,c5dy,c5dz):
+    nr = cython.declare(cython.int,0)
+    foovariable1 = cython.declare(cython.double)
+    foovariable2 = cython.declare(cython.float)
+
+    # Here be dragons
+
+    return 'something'
+```
+
+### Links
+
+http://docs.cython.org/en/latest/src/tutorial/pure.html
+
+https://cython.readthedocs.io/en/latest/src/userguide/language_basics.html
+
+https://www.infoworld.com/article/3648539/
+
+faster-python-made-easier-with-cythons-pure-python-mode.html
+
+https://pandas.pydata.org/pandas-docs/stable/user_guide/enhancingperf.html
+

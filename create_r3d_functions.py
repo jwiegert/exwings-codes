@@ -56,7 +56,12 @@ def movecoordinates(nxyz,nx,ny,nz):
 
 # ------------------------------------------------------------ #
 
-def create_grid(gridedge:float, nxyz:int, refinementlist:list, savegrid:str='y'):
+def create_grid(
+        gridedge:float, 
+        nxyz:int, 
+        refinementlist:list, 
+        savegrid:str=True
+    ):
     """
     Creates grid for Radmc3D simulations and related informaton 
     files used for analysis and creating dust envelopes. Grid is 
@@ -95,7 +100,6 @@ def create_grid(gridedge:float, nxyz:int, refinementlist:list, savegrid:str='y')
     # Info text
     print('Creating amr_grid with octree refinement.')
     print(f'Length of total side of whole grid: {gridedge} AU')
-    print(f'Number of base cells along one side of the grid: {nxyz}')
     print(f'Distances to refinement limits from centrum: {refinementlist} AU')
     print(f'Number refinements: {nrefines}')
 
@@ -103,11 +107,15 @@ def create_grid(gridedge:float, nxyz:int, refinementlist:list, savegrid:str='y')
     gridedge *= AUcm
     refinementlist = [dist*AUcm for dist in refinementlist]
 
+    # Make sure nxyz is an integer
+    nxyz = int(round(nxyz))
+
     # Make sure the nxyz is even, if not warn and change:
     if nxyz%2 != 0:
         nxyz += 1
-        print(f'Warning, number of base cells is not even, it is now {nxyz}.')
-    
+        print(f'Warning, number of base cells was not even, correcting.')
+    print(f'Number of base cells along one side of the grid: {nxyz}')
+
     # Create basic parameters of the grid
     #   nbasecubes : total number of base cells
     #     gridedge : total size of the grid side
@@ -369,7 +377,7 @@ def create_grid(gridedge:float, nxyz:int, refinementlist:list, savegrid:str='y')
     
     # Print grid_distances.csv and grid_cellsizes.csv
 
-    if savegrid == 'y' or savegrid == 'yes' or savegrid == 'Y':
+    if savegrid == True:
         print('Writing grid_distances.csv and grid_cellsizes.csv\n(Not necessary for Radmc3d, but useful for pre/portprocessing of your model. They have the same order as dust_densities.inp)')
 
         # Declare an array for the distances to the centre of each cell
