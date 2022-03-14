@@ -97,9 +97,25 @@ def create_grid(
     if nrefines > 4:
         sys.exit(f'ERROR: this is hard coded to allow a maximum of 4 grid refinements. You specified {nrefines} refinements. STOPPING')
 
+    # Make sure the nxyz is integer
+    if nxyz - int(nxyz) != 0:
+
+        oldnxyz = nxyz
+
+        # Change nxyz to integer
+        nxyz = int(round(nxyz))
+
+    # Make sure nxyz is even
+    if nxyz%2 != 0:
+        nxyz += 1
+
+    # Calculate new gridedge based on new nxyz
+    gridedge *= nxyz/oldnxyz
+
     # Info text
     print('Creating amr_grid with octree refinement.')
-    print(f'Length of total side of whole grid: {gridedge} AU')
+    print(f'Final length of total side of whole grid: {gridedge} AU')
+    print(f'Number of base cells along one side of the grid: {nxyz}')
     print(f'Distances to refinement limits from centrum: {refinementlist} AU')
     print(f'Number refinements: {nrefines}')
 
@@ -107,23 +123,13 @@ def create_grid(
     gridedge *= AUcm
     refinementlist = [dist*AUcm for dist in refinementlist]
 
-    # Make sure nxyz is an integer
-    nxyz = int(round(nxyz))
-
-    # Make sure the nxyz is even, if not warn and change:
-    if nxyz%2 != 0:
-        nxyz += 1
-        print(f'Warning, number of base cells was not even, correcting.')
-    print(f'Number of base cells along one side of the grid: {nxyz}')
-
     # Create basic parameters of the grid
     #   nbasecubes : total number of base cells
     #     gridedge : total size of the grid side
     # gridcourners : coordinates of base grid courners
     #     griddist : list of distances to center of grid (not for R3D)
-    nbasecubes     = int(nxyz * nxyz * nxyz)
+    nbasecubes     = int(nxyz**3)
     gridcourners   = np.linspace(-gridedge*0.5,gridedge*0.5,nxyz+1)
-
     griddist       = np.zeros(nxyz)
     for nn in range(nxyz):
         griddist[nn]  = 0.5 * (gridcourners[nn] + gridcourners[nn+1])
