@@ -100,6 +100,7 @@ def create_grid(
     # Make sure the nxyz is integer
     if nxyz - int(nxyz) != 0:
 
+        # Save the input nxyz-value for later
         oldnxyz = nxyz
 
         # Change nxyz to integer
@@ -109,7 +110,7 @@ def create_grid(
     if nxyz%2 != 0:
         nxyz += 1
 
-    # Calculate new gridedge based on new nxyz
+    # Calculate new gridedge based on ratio between new and input nxyz
     gridedge *= nxyz/oldnxyz
 
     # Info text
