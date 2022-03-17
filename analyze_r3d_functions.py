@@ -46,7 +46,9 @@ def load_gridprops(amrpath:str='../amr_grid.inp'):
                 if nn == 7:
                     nxyz = int(line.split(' ')[0])
 
-                # Number of refinements, number of cells (nleafs), number of branches
+                # Number of refinements,
+                # number of cells (nleafs),
+                # number of branches
                 if nn == 9:
                     nrefines = int(line.split(' ')[0])
                     nleafs = int(line.split(' ')[1])
