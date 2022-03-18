@@ -97,21 +97,20 @@ def create_grid(
     if nrefines > 4:
         sys.exit(f'ERROR: this is hard coded to allow a maximum of 4 grid refinements. You specified {nrefines} refinements. STOPPING')
 
+    # Save the input nxyz-value for later
+    oldnxyz = nxyz
+    
     # Make sure the nxyz is integer
     if nxyz - int(nxyz) != 0:
-
-        # Save the input nxyz-value for later
-        oldnxyz = nxyz
-
-        # Change nxyz to integer
         nxyz = int(round(nxyz))
-
+        
     # Make sure nxyz is even
     if nxyz%2 != 0:
         nxyz += 1
 
     # Calculate new gridedge based on ratio between new and input nxyz
-    gridedge *= nxyz/oldnxyz
+    if nxyz != oldnxyz:
+        gridedge *= nxyz/oldnxyz
 
     # Info text
     print('Creating amr_grid with octree refinement.')
