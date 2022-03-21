@@ -10,7 +10,7 @@ c = 2.998e8 # speed of light in m/s
 pc = 30.857e15 # 1 parsec in m
 
 # ------------------------------------------------------------ #
-# Functions that load various stuff
+# Functions that load various r3d input data
 
 # TODO?
 # Both these below need the number of species?
@@ -166,7 +166,7 @@ def load_cellsizes(
         return f'ERROR: load_cellsizes can not find {sizepath}.'
 
 
-# Load output from R3D sims
+# Load R3d wavelength grid
 def load_wavelengthgrid(path:str='../wavelength_micron.inp'):
     """
     Ancillary function. Loads and extracts wavelengths from wavelength grid.
@@ -198,7 +198,7 @@ def load_wavelengthgrid(path:str='../wavelength_micron.inp'):
     return wavelengths,nwave
 
 # ------------------------------------------------------------ #
-# Load output - functions from R3D
+# Load output data from R3D
 
 # Load SED
 def load_spectrum(path:str='../r3dsims/spectrum.out',distance:float=1):
@@ -236,6 +236,24 @@ def load_spectrum(path:str='../r3dsims/spectrum.out',distance:float=1):
     # Return data
     return wavelengths,spectrum
 
+
+# ------------------------------------------------------------ #
+# Plot various details of input and output data of R3D
+
+
+def plot_onedensity_radius():
+
+    # Load and plots r3d density data for ONE dust specie
+
+    return 'hej'
+
+
+
+def plot_alldensity_radius():
+
+    # Load and plots r3d density data (of all dust species)
+
+    return 'hej'
 
 
 
