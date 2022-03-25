@@ -292,7 +292,16 @@ def load_spectrum(path:str='../r3dsims/spectrum.out',distance:float=1):
 # Plot various details of input and output data of R3D
 
 
-def plot_onedensity_radius():
+def plot_onedensity_radius(
+        density_path:str='../dust_density.inp',
+        grid_path:str='../grid_distances.csv',
+        numb_specie:int=1
+    ):
+
+    # TODO här är jag
+
+
+    # Load griddistances
 
     # load dust_density
 
