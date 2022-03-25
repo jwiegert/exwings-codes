@@ -197,6 +197,57 @@ def load_wavelengthgrid(path:str='../wavelength_micron.inp'):
             
     return wavelengths,nwave
 
+def load_dustdensity(
+        path:str='../dust_density.inp',
+        numb_specie:int=1
+    ):
+    """
+    Load and extracts densities of one dust specie of dust_density.inp
+
+    INPUT
+    -----
+    path: string with path and filename of density file
+    numb_specie: integer with number of the specie you want to load (default=1)
+    
+    OUTPUT
+    ------
+    Ncells: Number of cells in grid (nleafs)
+    Nspec: Number of species in dust_density file
+    dust_densities: np.array containing densities of all cells for specie numb_specie
+
+    """
+
+    # Read header
+    with open(path,'r') as f:
+        for nn,line in enumerate(f.readlines()):
+
+            # Number of cells
+            if nn == 1:
+                Ncells = int(line)
+
+            # Total number of species
+            if nn == 2:
+                Nspec = int(line)
+
+    # Check that the chosen number of specie exists
+    if numb_specie > Nspec:
+        print('\nERROR\nThis dust specie doesnt exist.\n')
+
+    else:
+        # Reduce specie number by 1 (index starts at 0)
+        numb_specie -= 1
+
+        # Create density np.array
+        dust_densities = np.zeros(Ncells)
+
+        # Extract dust densities
+        with open(path,'r') as f:
+            for nn,line in enumerate(f.readlines()):
+                if nn > 2+numb_specie*Ncells and nn < (numb_specie+1)*Ncells:
+                    dust_densities[nn] = float(line)
+
+        return Ncells,Nspec,dust_densities
+
 # ------------------------------------------------------------ #
 # Load output data from R3D
 
@@ -242,6 +293,9 @@ def load_spectrum(path:str='../r3dsims/spectrum.out',distance:float=1):
 
 
 def plot_onedensity_radius():
+
+    # load dust_density
+
 
     # Load and plots r3d density data for ONE dust specie
 
