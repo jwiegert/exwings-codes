@@ -4,10 +4,13 @@
 import os
 import csv
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import cm
 
 # Useful numbers
 c = 2.998e8 # speed of light in m/s
 pc = 30.857e15 # 1 parsec in m
+AUcm = 1.49598e13 # AU in cm
 
 # ------------------------------------------------------------ #
 # Functions that load various r3d input data
@@ -244,7 +247,7 @@ def load_dustdensity(
         with open(path,'r') as f:
             for nn,line in enumerate(f.readlines()):
                 if nn > 2+numb_specie*Ncells and nn < (numb_specie+1)*Ncells:
-                    dust_densities[nn] = float(line)
+                    dust_densities[nn-Ncells*numb_specie] = float(line)
 
         return Ncells,Nspec,dust_densities
 
@@ -252,7 +255,10 @@ def load_dustdensity(
 # Load output data from R3D
 
 # Load SED
-def load_spectrum(path:str='../r3dsims/spectrum.out',distance:float=1):
+def load_spectrum(
+        path:str='../r3dsims/spectrum.out',
+        distance:float=1
+    ):
     """
     Loads and returns SED and wavelength.
 
@@ -291,37 +297,130 @@ def load_spectrum(path:str='../r3dsims/spectrum.out',distance:float=1):
 # ------------------------------------------------------------ #
 # Plot various details of input and output data of R3D
 
-
 def plot_onedensity_radius(
         density_path:str='../dust_density.inp',
         grid_path:str='../grid_distances.csv',
+        amr_path:str='../amr_grid.inp',
         numb_specie:int=1
     ):
+    """
+    Plots one figure with radian density distribution of one dust species.
 
-    # TODO här är jag
+    INPUT
+    density_path: path to density.inp-file
+    grid_path: path to grid_distances.csv'
+    amr_path: path to amr_grid.inp
+    numb_specie: number of the dust specie you want to plot
 
+    OUTPUT
+    Shows figure
+    """
 
     # Load griddistances
+    griddistances = load_griddistances(
+        gridpath=grid_path,
+        amrpath=amr_path
+    )/AUcm
 
     # load dust_density
-
+    density = load_dustdensity(
+        path=density_path,
+        numb_specie=numb_specie
+    )[2]
 
     # Load and plots r3d density data for ONE dust specie
-
-    return 'hej'
-
-
-
-def plot_alldensity_radius():
-
-    # Load and plots r3d density data (of all dust species)
-
-    return 'hej'
-
-
-
+    fig, ax = plt.figure(), plt.axes()
+    ax.plot(
+        griddistances[:,0],density,
+        linestyle='',marker='.',markersize=1
+    )
+    ax.set(
+        ylabel=r'Density (g\,cm$^{-3}$)',
+        xlabel=r'Distance (AU)',
+        title=f'Dust species {numb_specie}'
+    )
+    fig.show()
 
 
+
+
+def plot_alldensity_radius(
+        density_path:str='../dust_density.inp',
+        grid_path:str='../grid_distances.csv',
+        amr_path:str='../amr_grid.inp',
+    ):
+    """
+    Plots one figure with radial density distribution of all dust species.
+
+    INPUT
+    density_path: path to density.inp-file
+    grid_path: path to grid_distances.csv'
+    amr_path: path to amr_grid.inp
+
+    OUTPUT
+    Shows figure
+    """
+
+    # Get info on number of dust species in 
+
+    # Load griddistances
+    griddistances = load_griddistances(
+        gridpath=grid_path,
+        amrpath=amr_path
+    )/AUcm
+
+    # load first dust_density
+    Ncells,Nspec,density = load_dustdensity(
+        path=density_path,
+        numb_specie=1
+    )
+    densities = [density]
+
+    # Load the rest of the dust densities and put them in a list of np.arrays
+    if Nspec > 1:
+        for nn in range(2,Nspec+1):
+            densities.append(
+                load_dustdensity(
+                    path=density_path,
+                    numb_specie=nn
+                )[2]
+            )
+
+    # Control colours of each density distribution
+    colour = cm.rainbow(np.linspace(0, 1, Nspec))
+
+    # Set objects for plot with all in the same figure
+    fig, ax = plt.figure(), plt.axes()
+    
+    for nn, c in enumerate(colour):
+        ax.plot(
+            griddistances[:,0],densities[nn],
+            markeredgecolor=c,
+            linestyle='',marker='.',markersize=1
+        )
+    ax.set(
+        ylabel=r'Density (g\,cm$^{-3}$)',
+        xlabel=r'Distance (AU)',
+        title=f'Dust species 1 to {Nspec}'
+    )
+    fig.show()
+
+    # Set objects for subplots (two columns, increasing number of rows)
+    # ax[rows,columns]
+    fig,ax = plt.subplots((-(-Nspec//2)),2)
+
+    for nn, c in enumerate(colour):
+        ax.ravel()[nn].plot(
+            griddistances[:,0],densities[nn],
+            markeredgecolor=c,
+            linestyle='',marker='.',markersize=1
+        )
+        ax.ravel()[nn].set(
+            ylabel=r'Density (g\,cm$^{-3}$)',
+            xlabel=r'Distance (AU)',
+            title=f'Dust specie {nn+1}'
+        )
+    fig.show()
 
 # ------------------------------------------------------------ #
 # Compute different storheter
