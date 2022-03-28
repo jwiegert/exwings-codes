@@ -128,6 +128,9 @@ def load_star_densities(
 
 # TODO
 # Extract co5bold densities to r3d grid
+# create grid in this function also? NO - just use the pre-made function
+# But also create a function that gives numbers from c5d-grid that can
+# be used for r3d
 @cython.cfunc
 def create_star():
 
