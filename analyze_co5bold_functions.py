@@ -8,6 +8,7 @@ from scipy.io.idl import readsav
 
 # My own libraries
 import create_r3d_functions as c3d
+import analyze_r3d_functions as a3d
 
 # Define useful numbers
 AUcm = cython.declare(cython.float ,1.49598e13) # cm
@@ -131,21 +132,110 @@ def load_star_densities(
 # create grid in this function also? NO - just use the pre-made function
 # But also create a function that gives numbers from c5d-grid that can
 # be used for r3d
-@cython.cfunc
-def create_star():
+
+
+# nc5dedge = np.size(c5dgrid[:,0])
+# c5dstar_densities = a5d.load_star_densities()
+
+
+def create_star(
+        # All necessary inputs
+        # path to 
+    ):
+
+
+    # Load R3D grid
+    print('Loading R3D grid')
+    # amrpath:str='../amr_grid.inp'
+    nxyz,nrefines,nleafs,nbranch,gridedge = a3d.load_gridprops()
+    # gridpath:str='../grid_distances.csv',
+    # amrpath:str='../amr_grid.inp',
+    r3ddistances = a3d.load_griddistances()
+    # sizepath:str='../grid_cellsizes.csv',
+    # amrpath:str='../amr_grid.inp',
+    r3dcellsizes = a3d.load_cellsizes()
+
+    # Load C5D grid
+    print('Loading C5D grid properties')
+    # savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
+    # perhaps also the name of the dict-parameter
+    c5dcellsize,c5dcourners = load_grid_cellsizes()
+    # savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
+    c5dgrid = load_grid_coordinates()
+    nc5dedge = np.size(c5dgrid[:,0])
+
+    # Load C5D densities
+    print('Loading C5D star-densities')
+    # savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
+    c5dstar_densities = load_star_densities()
+
+
+    # Start working :)
+    print('Translating C5D data to R3D data')
+
+    # Declare stuff for the loops
+    stararray = np.zeros(nleafs)
+    #startemperature = np.zeros(nleafs) # not used yet, next step
+    progbar = 0
+
+    # Adaptive range used for when cellsizes are similar or equal - fixes
+    # bug where I got a lot of zero-cells
+    adaptive_range = c5dcellsize/r3dcellsizes.min() * 1.2
+
+    # Check so that the the c5dcells are not larger than the r3d's smallest cells
+    if r3dcellsizes.min() < c5dcellsize:
+        print('\nERROR')
+        print('    R3D grid resolution is higher than C5D grid, stopping')
+        print('    No output is given. Change your R3D grid cells to something larger.\n')
+    
+    else:
+        # Otherwise loop over r3d grid
+        for nr3d in range(nleafs):
+
+            # Extract size range for current r3dcell
+            r3dxrange = [
+                r3ddistances[nr3d,1]-0.5*r3dcellsizes[nr3d],
+                r3ddistances[nr3d,1]+0.5*r3dcellsizes[nr3d]
+            ]
+            r3dyrange = [
+                r3ddistances[nr3d,2]-0.5*r3dcellsizes[nr3d],
+                r3ddistances[nr3d,2]+0.5*r3dcellsizes[nr3d]
+            ]
+            r3dzrange = [
+                r3ddistances[nr3d,3]-0.5*r3dcellsizes[nr3d],
+                r3ddistances[nr3d,3]+0.5*r3dcellsizes[nr3d]
+            ]   
+
+            # Extract indeces of all c5dcells within current r3dcell
+            c5dxrange = np.argwhere(r3dxrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,0] <= r3dxrange[1]),0])[:,0]
+            c5dyrange = np.argwhere(r3dyrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,1] <= r3dyrange[1]),1])[:,0]
+            c5dzrange = np.argwhere(r3dzrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,2] <= r3dzrange[1]),2])[:,0]
+
+            # Number of c5dcells within r3dcell
+            nchildcells = c5dxrange.size*c5dyrange.size*c5dzrange.size
+
+        # TODO HÄR ÄR JAG
+
+
+
+
+
+
+
 
     # Extract and create input data with
-    # duststar densities
-    # duststar temperatures
-    # duststar opacities
+    # TODO duststar densities
+    # TODO duststar temperatures
+    # TODO duststar opacities
 
     return 'hej'
 
 
 
-
+# @cython.cfunc
 # this decorator when declaring what's included in the functions
 # @cython.locals(a=cython.int)
+#
 
 
 
