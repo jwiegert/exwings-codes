@@ -165,6 +165,7 @@ def create_star(
     OUTPUT
     ------
     R3D density file: dust_density_star.inp
+    TODO: star's temperature file and opacities
     """
 
     # Load R3D grid
@@ -229,7 +230,7 @@ def create_star(
             nchildcells = c5dxrange.size*c5dyrange.size*c5dzrange.size
 
             # Check so that there are any c5dcells within r3dcell
-            if nchildcells < 0:
+            if nchildcells < 1:
 
                 # When r3dcellsize ~ c5dcellsize the loop misses the c5dcells inside r3dcells
                 # due to numerical errors. So here I increase the spatial range to loop through
