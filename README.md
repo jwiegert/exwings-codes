@@ -70,11 +70,13 @@ For grid only run
 
 > radmc3d vtk_grid
 
-For density run
+For density run, where 1 is the dust specie you want to visualise.
 
 > radmc3d vtk_dust_density 1
 
-Where 1 is the dust specie you want to visualise.
+For dust temperature run
+
+> radmc3d vtk_dust_temperature 1
 
 - Check vtk-data with paraview
 

@@ -102,10 +102,15 @@ def load_grid_cellsizes(
 
 
 # Extract co5bold densities into a separate array
+# TODO
+# Perhaps I should add temperature and opacities here also?
 @cython.cfunc
 def load_star_densities(
         savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
     ):
+    """
+    TODO info
+    """
     
     # Load sav-file
     c5ddata = readsav(savpath)
@@ -181,6 +186,12 @@ def create_star(
     c5dgrid = load_grid_coordinates(savpath=savpath)
 
     # Load C5D densities
+
+    # TODO: instead of loading data in arrays
+    # just load the specific sav-file and then loop in that array
+    # then I only need one loop instead of one per data plus
+    # these that loads it into the data here below?
+    # or that could be slower since now I work with nparrays...
     print('Loading C5D star-densities')
     c5dstar_densities = load_star_densities(savpath=savpath)
 
@@ -287,7 +298,7 @@ def create_star(
             for nr3d in range(nleafs):
                 f.write(f'{stararray[nr3d]}\n')
 
-    print('C5D Dust star: done.\n')
+    print('C5D Dust-star: done.\n')
 
 
 
