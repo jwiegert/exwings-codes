@@ -246,13 +246,60 @@ def load_dustdensity(
         # Extract dust densities
         with open(path,'r') as f:
             for nn,line in enumerate(f.readlines()):
-                if nn > 2+numb_specie*Ncells and nn < (numb_specie+1)*Ncells:
-                    dust_densities[nn-Ncells*numb_specie] = float(line)
+                if nn > 2+numb_specie*Ncells and nn <= 2+(numb_specie+1)*Ncells:
+                    dust_densities[nn-3-Ncells*numb_specie] = float(line)
 
         return Ncells,Nspec,dust_densities
 
 # ------------------------------------------------------------ #
 # Load output data from R3D
+
+# Load dust_detmperature-file
+
+
+# TODO
+def load_dusttemperature(
+        path:str='../dust_temperature.dat',
+    ):
+    """
+    Load and extracts temperatures in output file dust_temperature.dat
+
+    INPUT
+    -----
+    path: string with path and filename of temperature file
+    
+    OUTPUT
+    ------
+    Ncells: Number of cells in grid (nleafs)
+    dust_temperatures: np.array containing temperatures in grid
+    """
+
+    # Read header
+    with open(path,'r') as f:
+        for nn,line in enumerate(f.readlines()):
+
+            # Number of cells
+            if nn == 1:
+                Ncells = int(line)
+
+
+
+    # Create density np.array
+    dust_temperatures = np.zeros(Ncells)
+
+    # Extract dust densities
+    with open(path,'r') as f:
+        for nn,line in enumerate(f.readlines()):
+            if nn > 2:
+                dust_temperatures[nn-3] = float(line)
+
+    return Ncells,dust_temperatures
+
+
+
+
+
+
 
 # Load SED
 def load_spectrum(
@@ -342,8 +389,6 @@ def plot_onedensity_radius(
     fig.show()
 
 
-
-
 def plot_alldensity_radius(
         density_path:str='../dust_density.inp',
         grid_path:str='../grid_distances.csv',
@@ -421,6 +466,52 @@ def plot_alldensity_radius(
             title=f'Dust specie {nn+1}'
         )
     fig.show()
+
+
+def plot_temperature_radius(
+        temperature_path:str='../dust_temperature.dat',
+        grid_path:str='../grid_distances.csv',
+        amr_path:str='../amr_grid.inp',
+    ):
+    """
+    Plots one figure with radial temperature distribution.
+
+    INPUT
+    temperature_path: path to dust_temperature.dat
+    grid_path: path to grid_distances.csv'
+    amr_path: path to amr_grid.inp
+
+    OUTPUT
+    Shows figure
+    """
+
+    # Load griddistances
+    griddistances = load_griddistances(
+        gridpath=grid_path,
+        amrpath=amr_path
+    )/AUcm
+
+    # load dust_temperature
+    # TODO
+    #temperature = 
+    
+
+    # Load and plots r3d density data for ONE dust specie
+    fig, ax = plt.figure(), plt.axes()
+    ax.plot(
+        griddistances[:,0],temperature,
+        linestyle='',marker='.',markersize=1
+    )
+    ax.set(
+        ylabel=r'Density (g\,cm$^{-3}$)',
+        xlabel=r'Distance (AU)',
+        title='Grid temperatures'
+    )
+    fig.show()
+
+
+
+
 
 # ------------------------------------------------------------ #
 # Compute different storheter
