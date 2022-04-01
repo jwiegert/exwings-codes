@@ -254,10 +254,7 @@ def load_dustdensity(
 # ------------------------------------------------------------ #
 # Load output data from R3D
 
-# Load dust_detmperature-file
-
-
-# TODO
+# Load dust_temperature-file
 def load_dusttemperature(
         path:str='../dust_temperature.dat',
     ):
@@ -294,11 +291,6 @@ def load_dusttemperature(
                 dust_temperatures[nn-3] = float(line)
 
     return Ncells,dust_temperatures
-
-
-
-
-
 
 
 # Load SED
@@ -494,7 +486,9 @@ def plot_temperature_radius(
     # load dust_temperature
     # TODO
     #temperature = 
-    
+    #def load_dusttemperature(
+    #    path:str='../dust_temperature.dat',
+    #):
 
     # Load and plots r3d density data for ONE dust specie
     fig, ax = plt.figure(), plt.axes()
