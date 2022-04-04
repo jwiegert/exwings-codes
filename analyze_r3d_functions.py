@@ -279,8 +279,6 @@ def load_dusttemperature(
             if nn == 1:
                 Ncells = int(line)
 
-
-
     # Create density np.array
     dust_temperatures = np.zeros(Ncells)
 
@@ -484,16 +482,12 @@ def plot_temperature_radius(
     )/AUcm
 
     # load dust_temperature
-    # TODO
-    #temperature = 
-    #def load_dusttemperature(
-    #    path:str='../dust_temperature.dat',
-    #):
+    temperatures = load_dusttemperature(path=temperature_path)[1]
 
     # Load and plots r3d density data for ONE dust specie
     fig, ax = plt.figure(), plt.axes()
     ax.plot(
-        griddistances[:,0],temperature,
+        griddistances[:,0],temperatures,
         linestyle='',marker='.',markersize=1
     )
     ax.set(
