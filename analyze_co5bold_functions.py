@@ -183,52 +183,52 @@ def create_star(
     r3ddistances = a3d.load_griddistances(amrpath=amrpath,gridpath=gridpath)
     r3dcellsizes = a3d.load_cellsizes(amrpath=amrpath,sizepath=sizepath)
 
-    # Load C5D grid
+    # Load C5D grid -  TODO perhaps also the name of the dict-parameter
     print('Loading C5D grid properties')
-    # TODO perhaps also the name of the dict-parameter
     c5dcellsize = load_grid_cellsizes(savpath=savpath)[0]
     c5dgrid = load_grid_coordinates(savpath=savpath)
 
-    # Load C5D densities
+    # Check so that the the c5dcells are not larger than the r3d's smallest cells
+    if r3dcellsizes.min() <= c5dcellsize:
+        print('\nERROR')
+        print('    R3D grid resolution is higher than C5D grid, stopping')
+        print('    No output is given. Change your R3D grid cells to something larger.\n')
 
-    # TODO: instead of loading data in arrays
-    # just load the specific sav-file and then loop in that array
-    # then I only need one loop instead of one per data plus
-    # these that loads it into the data here below?
-    # or that could be slower since now I work with nparrays...
-    print('Loading C5D star properties (density, temperature, opacity)')
-    c5dstar_densities,c5dstar_temperatures = load_star_properties(savpath=savpath)
+    else:
+        # Load C5D densities
 
-    # Start working :)
-    print('Translating C5D data to R3D data')
+        # TODO: instead of loading data in arrays
+        # just load the specific sav-file and then loop in that array
+        # then I only need one loop instead of one per data plus
+        # these that loads it into the data here below?
+        # or that could be slower since now I work with nparrays...
+        print('Loading C5D star properties (density, temperature, opacity)')
+        c5dstar_densities,c5dstar_temperatures = load_star_properties(savpath=savpath)
 
-    # Declare stuff for the loops
-    r3d_densities = 0
-    r3d_temperatures = 0
-    progbar = 0
+        # Start working :)
+        print('Translating C5D data to R3D data')
 
-    # Adaptive range used for when cellsizes are similar or equal - fixes
-    # bug where I got a lot of zero-cells
-    adaptive_range = c5dcellsize/r3dcellsizes.min() * 1.2
+        # Declare stuff for the loops
+        r3d_densities = 0
+        r3d_temperatures = 0
+        progbar = 0
 
-    # Open r3d data files
-    with open('../dust_density_star.inp', 'w') as fdensity, open('../dust_temperature_star.dat', 'w') as ftemperature:
+        # Adaptive range used for when cellsizes are too similar - fixes bug 
+        # where I got a lot of zero-cells because my loop misses the c5dcells inside
+        # the current r3dcell
+        adaptive_range = c5dcellsize/r3dcellsizes.min() * 1.1
 
-        # Write headers:
-        # 1
-        # nleafs
-        # number dust species
-        fdensity.write(f'1\n{int(nleafs)}\n1\n')
-        ftemperature.write(f'1\n{int(nleafs)}\n1\n')
+        # Open r3d data files
+        with open('../dust_density_star.inp', 'w') as fdensity, open('../dust_temperature_star.dat', 'w') as ftemperature:
 
-        # Check so that the the c5dcells are not larger than the r3d's smallest cells
-        if r3dcellsizes.min() < c5dcellsize:
-            print('\nERROR')
-            print('    R3D grid resolution is higher than C5D grid, stopping')
-            print('    No output is given. Change your R3D grid cells to something larger.\n')
-        
-        else:
-            # Otherwise loop over r3d grid
+            # Write headers:
+            # 1
+            # nleafs
+            # number dust species
+            fdensity.write(f'1\n{int(nleafs)}\n1\n')
+            ftemperature.write(f'1\n{int(nleafs)}\n1\n')
+
+            # Loop over r3d grid
             for nr3d in range(nleafs):
 
                 # Extract size range for current r3dcell
@@ -256,9 +256,8 @@ def create_star(
                 # Check so that there are any c5dcells within r3dcell
                 if nchildcells < 1:
 
-                    # When r3dcellsize ~ c5dcellsize the loop misses the c5dcells inside r3dcells
-                    # due to numerical errors. So here I increase the spatial range to loop through
-                    # otherwise I get a lot of zero-cells.
+                    # When r3dcellsize approx c5dcellsize the loop misses the c5dcells inside r3dcells
+                    # due to numerical errors. So here I increase the spatial range to loop.
                     temprange = [r3dxrange[0]*adaptive_range,r3dxrange[1]*adaptive_range]
                     c5dxrange = np.argwhere(temprange[0] <= c5dgrid[np.argwhere(c5dgrid[:,0] < temprange[1]),0])[:,0]
                     temprange = [r3dyrange[0]*adaptive_range,r3dyrange[1]*adaptive_range]
@@ -306,7 +305,4 @@ def create_star(
                     print('Finished 75 per cent of the grid.')
 
     print('C5D Dust-star: done.\n')
-
-
-
 

@@ -379,10 +379,7 @@ def create_grid(
         for gridc in refinearraysave:
             f.write(f'{int(gridc)}\n')
     
-    print('Finished amr_grid.inp')
-    
     # Print grid_distances.csv and grid_cellsizes.csv
-
     if savegrid == True:
         print('Writing grid_distances.csv and grid_cellsizes.csv\n(Not necessary for Radmc3d, but useful for pre/portprocessing of your model. They have the same order as dust_densities.inp)')
 
@@ -513,7 +510,6 @@ def create_grid(
             f.write('# ----------\n')
             for gridc in griddistances:
                 f.write(f'{gridc[0]},{gridc[1]},{gridc[2]},{gridc[3]}\n')
-        print('Finished grid_distances.csv')
 
         # Save sizes of grid cells
         # This also has the same order as the dust_densities files
@@ -522,7 +518,6 @@ def create_grid(
             f.write('# ----------\n')
             for gridsize in gridsizes:
                 f.write(f'{gridsize}\n')
-        print('Finished grid_cellsizes.csv')
     
     # Print grid_info-file, text file with summary o grid info in readable form
     print('Writing grid_info.txt')
@@ -542,8 +537,6 @@ def create_grid(
 
         for nn,cellsize in enumerate(smallcubesize):
             f.write(f'Child cell size {nn+1}: {smallcubesize[nn]/AUcm} AU\n')
-
-    print('Finished grid_info.txt')
 
     # Finish function
     print('Create grid: done.\n')
@@ -682,8 +675,6 @@ def create_duststar(
         for density in densities:
             f.write(f'{density}\n')
 
-    print('Finished dust_density_star.inp')
-
     # Write dust_temperature
     print('Writing dust_temperature_star.dat') # TODO: check the correct filenames!
     with open('../dust_temperature_star.dat', 'w') as f:
@@ -697,8 +688,8 @@ def create_duststar(
         # Add temperatures
         for temperature in temperatures:
             f.write(f'{temperature}\n')
-    print('Finished dust_temperature_star.dat')
 
+    print('Writing dustkappa_star.inp')
     # Constants in SI-units
     c = 2.998e8
     kb = 1.3806503e-23
