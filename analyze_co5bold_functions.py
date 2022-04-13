@@ -54,6 +54,9 @@ def load_grid_coordinates(
 def load_grid_cellsizes(
         savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
     ):
+    """
+    TODO: info    
+    """
     
     # Load sav-file
     c5ddata = readsav(savpath)
@@ -93,9 +96,8 @@ def load_grid_cellsizes(
     cellcourners[-1,2] = c5ddata['Z'][0][0][31][-1][0][0]
 
     # Extract minimum grid size
-    # TODO change this later to lists/arrays with cell sizes instead
-    # might not be necessary, it depends on the style of the larger
-    # c5d grids
+    # TODO change this later to lists/arrays with cell sizes instead?
+    # might not be necessary if I only need to use minimum c5dcellsize
     cellsize = (min(cellsizesx) + min(cellsizesy) + min(cellsizesz))/3
 
     return cellsize,cellcourners
@@ -188,7 +190,7 @@ def create_star(
     c5dcellsize = load_grid_cellsizes(savpath=savpath)[0]
     c5dgrid = load_grid_coordinates(savpath=savpath)
 
-    # Check so that the the c5dcells are not larger than the r3d's smallest cells
+    # Check so that the smallest c5dcells are not larger than the r3d's smallest cells
     if r3dcellsizes.min() <= c5dcellsize:
         print('\nERROR')
         print('    R3D grid resolution is higher than C5D grid, stopping')
