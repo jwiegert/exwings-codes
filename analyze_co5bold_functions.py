@@ -319,3 +319,166 @@ def create_star(
 # and the data are in number densities cm^-3
 # Mass density in each cell = 4/3 pi agrain**3 * rhograin * numberdensity
 # So another input based on what I used for dustkappa for each specie
+# Also:
+# str(teststar['Z'][0][0][40+3*nspecie+2])[4:-1]
+# gives a string with the name of the specie!
+# so this can also print the dustkappa-list-file for r3d!
+
+def create_dust_files(
+        savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        amrpath:str='../amr_grid.inp',
+        gridpath:str='../grid_distances.csv',
+        sizepath:str='../grid_cellsizes.csv',
+        Nspecies:int=1,
+        grainsizecm=1,
+        graindensity=1
+    ):
+    """
+    grainsizecm & graindensity should be lists, one for each specie
+    """
+
+    # Load R3D grid
+    print('Loading R3D grid')
+    nleafs = a3d.load_gridprops(amrpath=amrpath)[2]
+    r3ddistances = a3d.load_griddistances(amrpath=amrpath,gridpath=gridpath)
+    r3dcellsizes = a3d.load_cellsizes(amrpath=amrpath,sizepath=sizepath)
+
+    # Load C5D grid -  TODO perhaps also the name of the dict-parameter
+    print('Loading C5D grid properties')
+    c5dcellsize = load_grid_cellsizes(savpath=savpath)[0]
+    c5dgrid = load_grid_coordinates(savpath=savpath)
+
+    # Load C5D data in general
+    c5ddata = readsav(savpath)
+    c5ddata = c5ddata['ful']
+
+    # Number of dust species in data:
+    Nc5dspecies = int((len(c5ddata['Z'][0][0]) - 40)/3)
+
+    # Check so that the smallest c5dcells are not larger than the r3d's smallest cells
+    if r3dcellsizes.min() <= c5dcellsize:
+        print('\nERROR')
+        print('    R3D grid resolution is higher than C5D grid, stopping')
+        print('    No output is given. Change your R3D grid cells to something larger.\n')
+    
+    # Check so that the number of dust species declared is not larger than available
+    elif Nspecies > Nc5dspecies:
+        print('\nERROR')
+        print('    You asked for more dust species than available in C5D-data')
+        print(f'    Number of dust species in C5D-data: {Nc5dspecies}')
+
+    else:
+        # Declare stuff for the loops
+        r3d_density = 0
+        progbar = 0
+
+        # Adaptive range used for when cellsizes are too similar - fixes bug 
+        # where I got a lot of zero-cells because my loop misses the c5dcells inside
+        # the current r3dcell
+        adaptive_range = c5dcellsize/r3dcellsizes.min() * 1.1
+
+        # Open r3d data files
+        with open('../dust_density_dust.inp', 'w') as fdensity, open('../dustopac_dust.inp', 'w') as fopac:
+
+            # Write headers:
+            # Density:
+            # 1
+            # nleafs
+            # number dust species
+            fdensity.write(f'1\n{int(nleafs)}\n1\n')
+
+            # dustopac:
+            # 2
+            # Number of species
+            # -----------------------
+            fopac.write(f'2\n{int(Nspecies)}\n-----------------------------\n')
+
+            # Loop through the number of species you want to include
+            for nspecies in range(Nspecies):
+
+                # Write the dust specie for dustopac
+                # 1
+                # 0
+                # name
+                # ---------------
+                fopac.write(f"1\n0\n{str(c5ddata['Z'][0][0][42+3*nspecies])[4:-1]}\n-----------------------------\n")
+
+                for nr3d in range(nleafs):
+                    
+                    # Move to 
+                    #nnr3d = nr3d + nspecies*nleafs
+
+                    # Extract size range for current r3dcell
+                    r3dxrange = [
+                        r3ddistances[nr3d,1]-0.5*r3dcellsizes[nr3d],
+                        r3ddistances[nr3d,1]+0.5*r3dcellsizes[nr3d]
+                    ]
+                    r3dyrange = [
+                        r3ddistances[nr3d,2]-0.5*r3dcellsizes[nr3d],
+                        r3ddistances[nr3d,2]+0.5*r3dcellsizes[nr3d]
+                    ]
+                    r3dzrange = [
+                        r3ddistances[nr3d,3]-0.5*r3dcellsizes[nr3d],
+                        r3ddistances[nr3d,3]+0.5*r3dcellsizes[nr3d]
+                    ]   
+
+                    # Extract indeces of all c5dcells within current r3dcell
+                    c5dxrange = np.argwhere(r3dxrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,0] < r3dxrange[1]),0])[:,0]
+                    c5dyrange = np.argwhere(r3dyrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,1] < r3dyrange[1]),1])[:,0]
+                    c5dzrange = np.argwhere(r3dzrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,2] < r3dzrange[1]),2])[:,0]
+
+                    # Number of c5dcells within r3dcell
+                    nchildcells = c5dxrange.size*c5dyrange.size*c5dzrange.size
+
+                    # Check so that there are any c5dcells within r3dcell
+                    if nchildcells < 1:
+
+                        # When r3dcellsize approx c5dcellsize the loop misses the c5dcells inside r3dcells
+                        # due to numerical errors. So here I increase the spatial range to loop.
+                        temprange = [r3dxrange[0]*adaptive_range,r3dxrange[1]*adaptive_range]
+                        c5dxrange = np.argwhere(temprange[0] <= c5dgrid[np.argwhere(c5dgrid[:,0] < temprange[1]),0])[:,0]
+                        temprange = [r3dyrange[0]*adaptive_range,r3dyrange[1]*adaptive_range]
+                        c5dyrange = np.argwhere(temprange[0] <= c5dgrid[np.argwhere(c5dgrid[:,1] < temprange[1]),1])[:,0]
+                        temprange = [r3dzrange[0]*adaptive_range,r3dzrange[1]*adaptive_range]
+                        c5dzrange = np.argwhere(temprange[0] <= c5dgrid[np.argwhere(c5dgrid[:,2] < temprange[1]),2])[:,0]
+
+                        # New number of c5dcells within r3dcell
+                        nchildcells = c5dxrange.size*c5dyrange.size*c5dzrange.size
+
+                    # Then loop through c5dcells within r3dcell
+                    for nnz in c5dzrange:
+                        for nny in c5dyrange:
+                            for nnx in c5dxrange:
+
+                                # Sum all densities
+                                r3d_density += c5ddata['Z'][0][0][40+3*nspecies][nnx][nny][nnz]
+
+                    # Average the density of each r3dcell by number of c5dcells
+                    r3d_density /= nchildcells
+
+                    # TODO
+                    # Recalculate number density to mass density
+                    # 4/3 pi agrain**3 * rhograin * numberdensity
+                    #r3d_density *= 4.1887902047863905 * grainsizecm[nspecies]**3 * graindensity[nspecies]
+
+
+                    # Write data to r3d files
+                    fdensity.write(f'{r3d_density}\n')
+
+                    # Reset data
+                    r3d_density = 0
+
+                    # Some progress bar info
+                    if int(nr3d/nleafs*100) == 25 and progbar == 0:
+                        progbar += 1
+                        print('Finished 25 per cent of the grid.')
+
+                    if int(nr3d/nleafs*100) == 50 and progbar == 1:
+                        progbar += 1
+                        print('Finished 50 per cent of the grid.')
+
+                    if int(nr3d/nleafs*100) == 75 and progbar == 2:
+                        progbar += 1
+                        print('Finished 75 per cent of the grid.')
+
+    print('C5D Dust-data: done.\n')
