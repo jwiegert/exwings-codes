@@ -23,10 +23,16 @@ AUcm = cython.declare(cython.float ,1.49598e13) # cm
 
 # ============================================================
 
-# Load co5bold grid cell coordinates
-def load_grid_coordinates(
+
+# Load c5d grid properties
+@cython.cfunc
+def load_grid_properties(
         savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
     ):
+    """
+    TODO INFO
+    outputorder: c5dgrid,cellcourners,cellsize
+    """
     
     # Load sav-file
     c5ddata = readsav(savpath)
@@ -35,10 +41,17 @@ def load_grid_coordinates(
     c5ddata = c5ddata['ful']
 
     # Get number of gridcells from co5bold data
-    nc5dedge = np.size(c5ddata['Z'][0][0][16])
+    nc5dedge = cython.declare(cython.int, np.size(c5ddata['Z'][0][0][16]))
 
-    # Declare output array
+    # Declare output arrays
     c5dgrid = np.zeros((nc5dedge,3))
+    cellcourners = np.zeros((nc5dedge,3))
+    cellsizesx = []
+    cellsizesy = []
+    cellsizesz = []
+
+    # Declare variables
+    nn = cython.declare(cython.int)
 
     for nn in range(nc5dedge):
 
@@ -47,65 +60,47 @@ def load_grid_coordinates(
         c5dgrid[nn,1] = c5ddata['Z'][0][0][19][0][nn][0]
         c5dgrid[nn,2] = c5ddata['Z'][0][0][22][nn][0][0]
 
-    return c5dgrid
-
-
-# Load co5bold grid cell courners and cell sizes
-def load_grid_cellsizes(
-        savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
-    ):
-    """
-    TODO: info    
-    """
-    
-    # Load sav-file
-    c5ddata = readsav(savpath)
-
-    # Extract data - TODO MAY HAVE TO CHOSE THIS MANUALLY DEPENDING ON FILE
-    c5ddata = c5ddata['ful']
-
-    # Get number of gridcells from co5bold data
-    nc5dedge = np.size(c5ddata['Z'][0][0][16])
-
-    # Declare array for cellcourners
-    cellcourners = np.zeros((nc5dedge,3))
-    
-    # And lists for cellsizes
-    cellsizesx = []
-    cellsizesy = []
-    cellsizesz = []
-
-    for nn in range(nc5dedge):
-        cellsizesx.append(
-            (c5ddata['Z'][0][0][25][0][0][nn+1] - c5ddata['Z'][0][0][25][0][0][nn])
-        )
-        cellsizesy.append(
-            (c5ddata['Z'][0][0][28][0][nn+1] - c5ddata['Z'][0][0][28][0][nn])[0]
-        )
-        cellsizesz.append(
-            (c5ddata['Z'][0][0][31][nn+1] - c5ddata['Z'][0][0][31][nn])[0][0]
-        )
-
+        # Save coordinates of cell courners
         cellcourners[nn,0] = c5ddata['Z'][0][0][25][0][0][nn]
         cellcourners[nn,1] = c5ddata['Z'][0][0][28][0][nn][0]
         cellcourners[nn,2] = c5ddata['Z'][0][0][31][nn][0][0]
-    
+
+
+        # Extract cell sizes
+        if nn > 0:
+            cellsizesx.append(
+                (cellcourners[nn,0] - cellcourners[nn-1,0])
+            )
+            cellsizesy.append(
+                (cellcourners[nn,1] - cellcourners[nn-1,1])
+            )
+            cellsizesz.append(
+                (cellcourners[nn,2] - cellcourners[nn-1,2])
+            )
+
     # Add final grid courner
     cellcourners[-1,0] = c5ddata['Z'][0][0][25][0][0][-1]
     cellcourners[-1,1] = c5ddata['Z'][0][0][28][0][-1][0]
     cellcourners[-1,2] = c5ddata['Z'][0][0][31][-1][0][0]
 
+    cellsizesx.append(
+        (cellcourners[-1,0] - cellcourners[-2,0])
+    )
+    cellsizesy.append(
+        (cellcourners[-1,1] - cellcourners[-2,1])
+    )
+    cellsizesz.append(
+        (cellcourners[-1,2] - cellcourners[-2,2])
+    )
+
     # Extract minimum grid size
-    # TODO change this later to lists/arrays with cell sizes instead?
-    # might not be necessary if I only need to use minimum c5dcellsize
     cellsize = (min(cellsizesx) + min(cellsizesy) + min(cellsizesz))/3
 
-    return cellsize,cellcourners
+    return c5dgrid,cellcourners,cellsize
 
-# TODO extract all props in here instead, it's prbably fast in the long run
-# and if I need some specific thingie some time I can just chose that with an
-# index or write separatate functions for that later
-# Extract co5bold densities into a separate array
+
+# Extract co5bold densities into a separate array 
+# - note this is probably faster than loading it in the r3d-file-writing functions
 @cython.cfunc
 def load_star_properties(
         savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
@@ -142,15 +137,58 @@ def load_star_properties(
     return c5dstar_densities, c5dstar_temperatures
 
 
-
-
-
-
-
-
-
 # Extract and create input data with
 # TODO duststar opacities
+
+
+
+# Function for loading one dust specie from c5d-data
+@cython.cfunc
+@cython.locals(nspecies=cython.int)
+def load_dust_density(
+        savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        nspecies:int=0
+    ):
+    """
+    TODO instructions
+    
+    """
+
+    # Load sav-file
+    c5ddata = readsav(savpath)
+
+    # Extract data - TODO MAY HAVE TO CHOSE THIS MANUALLY DEPENDING ON FILE
+    c5ddata = c5ddata['ful']
+
+    # Get number of gridcells from co5bold data
+    nc5dedge = cython.declare(cython.int, np.size(c5ddata['Z'][0][0][16]))
+
+    # Declare variables
+    nx = cython.declare(cython.int)
+    ny = cython.declare(cython.int)
+    nz = cython.declare(cython.int)
+
+    # Declare np.array
+    c5ddust_densities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+    c5ddust_temperatures = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+
+
+    # r3d_density += c5ddata['Z'][0][0][40+3*nspecies][nnx][nny][nnz]
+
+
+    # Extract densities - This can take time, some 2min per property
+    for nx in range(nc5dedge):
+        for ny in range(nc5dedge):
+            for nz in range(nc5dedge):
+                c5ddust_densities[nx,ny,nz] = c5ddata['Z'][0][0][40+3*nspecies][nx][ny][nz]
+
+                # TODO: find the dust temperature in the c5d-data
+                #c5ddust_temperatures[nx,ny,nz] = c5ddata['EOS'][0][0][1][nx][ny][nz]
+    
+    return c5ddust_densities, c5ddust_temperatures
+
+
+
 
 
 
@@ -185,10 +223,9 @@ def create_star(
     r3ddistances = a3d.load_griddistances(amrpath=amrpath,gridpath=gridpath)
     r3dcellsizes = a3d.load_cellsizes(amrpath=amrpath,sizepath=sizepath)
 
-    # Load C5D grid -  TODO perhaps also the name of the dict-parameter
+    # Load C5D grid
     print('Loading C5D grid properties')
-    c5dcellsize = load_grid_cellsizes(savpath=savpath)[0]
-    c5dgrid = load_grid_coordinates(savpath=savpath)
+    c5dgrid, c5dcellcourners, c5dcellsize = load_grid_properties(savpath=savpath)
 
     # Check so that the smallest c5dcells are not larger than the r3d's smallest cells
     if r3dcellsizes.min() <= c5dcellsize:
@@ -311,6 +348,8 @@ def create_star(
 
 
 
+
+
 # Extract and construct dust_density-files from C5D-data
 # uses ['Z'][0][0][40][x][y][z] and ['Z'][0][0][43][x][y][z]
 # or rather use
@@ -330,8 +369,8 @@ def create_dust_files(
         gridpath:str='../grid_distances.csv',
         sizepath:str='../grid_cellsizes.csv',
         Nspecies:int=1,
-        grainsizecm=1,
-        graindensity=1
+        grainsizecm:list=[1e-4],
+        graindensity:list=[2]
     ):
     """
     grainsizecm & graindensity should be lists, one for each specie
@@ -343,12 +382,11 @@ def create_dust_files(
     r3ddistances = a3d.load_griddistances(amrpath=amrpath,gridpath=gridpath)
     r3dcellsizes = a3d.load_cellsizes(amrpath=amrpath,sizepath=sizepath)
 
-    # Load C5D grid -  TODO perhaps also the name of the dict-parameter
+    # Load C5D grid
     print('Loading C5D grid properties')
-    c5dcellsize = load_grid_cellsizes(savpath=savpath)[0]
-    c5dgrid = load_grid_coordinates(savpath=savpath)
+    c5dgrid, c5dcellcourners, c5dcellsize = load_grid_properties(savpath=savpath)
 
-    # Load C5D data in general
+    # Load C5D data
     c5ddata = readsav(savpath)
     c5ddata = c5ddata['ful']
 
@@ -396,17 +434,24 @@ def create_dust_files(
             # Loop through the number of species you want to include
             for nspecies in range(Nspecies):
 
-                # Write the dust specie for dustopac
+                # Output species-number, species name, grain size and grain mass density
+                speciesname = str(c5ddata['Z'][0][0][42+3*nspecies])[4:-1]
+                print(f'Loading dust species number {nspecies+1}:')
+                print(f'    {speciesname}')
+                print(f'    Grain size: {grainsizecm[nspecies]*1e4} um')
+                print(f'    Grain mass density: {graindensity[nspecies]} g cm-3')
+
+                # Load c5d-dust densities and temperatures
+                c5ddensities, c5dtemperatures = load_dust_density(savpath=savpath, nspecies=nspecies)
+
+                # Write the dustopac file
                 # 1
                 # 0
                 # name
                 # ---------------
-                fopac.write(f"1\n0\n{str(c5ddata['Z'][0][0][42+3*nspecies])[4:-1]}\n-----------------------------\n")
+                fopac.write(f"1\n0\n{speciesname}\n-----------------------------\n")
 
                 for nr3d in range(nleafs):
-                    
-                    # Move to 
-                    #nnr3d = nr3d + nspecies*nleafs
 
                     # Extract size range for current r3dcell
                     r3dxrange = [
@@ -449,18 +494,16 @@ def create_dust_files(
                     for nnz in c5dzrange:
                         for nny in c5dyrange:
                             for nnx in c5dxrange:
-
                                 # Sum all densities
-                                r3d_density += c5ddata['Z'][0][0][40+3*nspecies][nnx][nny][nnz]
+                                r3d_density += c5ddensities[nnx,nny,nnz]
 
                     # Average the density of each r3dcell by number of c5dcells
                     r3d_density /= nchildcells
 
-                    # TODO
                     # Recalculate number density to mass density
                     # 4/3 pi agrain**3 * rhograin * numberdensity
-                    #r3d_density *= 4.1887902047863905 * grainsizecm[nspecies]**3 * graindensity[nspecies]
-
+                    # Where units are in cgs.
+                    r3d_density *= 4.1887902047863905 * grainsizecm[nspecies]**3 * graindensity[nspecies]
 
                     # Write data to r3d files
                     fdensity.write(f'{r3d_density}\n')
