@@ -157,7 +157,7 @@ def load_dust_density(
     # Load sav-file
     c5ddata = readsav(savpath)
 
-    # Extract data - TODO MAY HAVE TO CHOSE THIS MANUALLY DEPENDING ON FILE
+    # Extract data
     c5ddata = c5ddata['ful']
 
     # Get number of gridcells from co5bold data
@@ -168,15 +168,11 @@ def load_dust_density(
     ny = cython.declare(cython.int)
     nz = cython.declare(cython.int)
 
-    # Declare np.array
+    # Declare np.arrays, tmeperature is a placeholder here TODO
     c5ddust_densities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
-    c5ddust_temperatures = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+    c5ddust_temperatures = 0# np.zeros((nc5dedge,nc5dedge,nc5dedge))
 
-
-    # r3d_density += c5ddata['Z'][0][0][40+3*nspecies][nnx][nny][nnz]
-
-
-    # Extract densities - This can take time, some 2min per property
+    # Extract densities - This can take some time
     for nx in range(nc5dedge):
         for ny in range(nc5dedge):
             for nz in range(nc5dedge):
@@ -442,7 +438,7 @@ def create_dust_files(
                 print(f'    Grain mass density: {graindensity[nspecies]} g cm-3')
 
                 # Load c5d-dust densities and temperatures
-                c5ddensities, c5dtemperatures = load_dust_density(savpath=savpath, nspecies=nspecies)
+                #c5ddensities, c5dtemperatures = load_dust_density(savpath=savpath, nspecies=nspecies)
 
                 # Write the dustopac file
                 # 1
@@ -495,7 +491,8 @@ def create_dust_files(
                         for nny in c5dyrange:
                             for nnx in c5dxrange:
                                 # Sum all densities
-                                r3d_density += c5ddensities[nnx,nny,nnz]
+                                #r3d_density += c5ddensities[nnx,nny,nnz]
+                                r3d_density += c5ddata['Z'][0][0][40+3*nspecies][nnx][nny][nnz]
 
                     # Average the density of each r3dcell by number of c5dcells
                     r3d_density /= nchildcells
