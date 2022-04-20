@@ -595,7 +595,7 @@ def create_wavelength(
 
 # ------------------------------------------------------------ #
 
-# Creates a dust blog that imitates an AGB-star in the centrum of the grid
+# Creates a spherical dust blob that imitates an AGB-star in the centrum of the grid
 def create_duststar(
         Mstar:float = 1,
         Rstar:float = 100,
@@ -874,3 +874,80 @@ def create_spheredensity(
     print('create_spheredensity: Done')
 
     # TODO create opacity files directly here?
+
+
+# TODO a function that merges a couple of dust density files
+
+def merge_dustdensities(
+        file_names:list=['dust_density.inp']
+    ):
+    """
+    TODO info here
+    will take a few input dust-density-files (state filenames in input) and marge them
+    """
+
+    Nfiles = len(file_names)
+
+    if Nfiles < 2:
+        print(f"Number of input files are {Nfiles}. There's nothing to merge")
+    else:
+        print(f"Merging {Nfiles} dust_density_*.inp files.")
+        
+        densitylist = []
+        nleafslist = []
+        Nspeclist = []
+
+        # Open new dust_density:
+        with open('../dust_density_total.inp','w') as f_dust:
+
+
+            for nf,file_name in enumerate(file_names):
+
+                with open(f'../{file_name}', 'r') as f_read:
+
+                    # read lines, jump line 0, check line 1 for nleafs, line 2 for Nspecies
+                    # lines 3 to nleafs+3 are densities for spec1
+                    # lines nspecie*(nleafs+3) to (nspecie+1)*(nleafs+3) are for species n
+
+                    for nl,line in enumerate(f_read.readlines()):
+                        if nl == 1:
+                            nleafslist.append(int(line))
+                        if nl == 2:
+                            Nspeclist.append(int(line))
+                        
+                        if nl > 2:
+                            densitylist.append(float(line))
+
+            # Find total number of species
+            Nspecies = sum(Nspeclist)
+
+            # Check number of cells and that these are correct
+            if nleafslist[0] != sum(nleafslist)/len(file_names):
+                print(f'Number of cells (nleafs) varies: {nleafslist}')
+                nleafs = 0
+
+            else:
+                # Number of leafs are correct then continue here
+                nleafs = nleafslist[0]
+
+                # Write total dust_density-file:
+
+                # Write header
+                # 1
+                # nleafs
+                # number dust species
+                f_dust.write(f'1\n{int(nleafs)}\n{int(Nspecies)}\n')
+
+                for density in densitylist:
+                    f_dust.write(f'{density}\n')
+                
+        # Also write new dustopac-file, this is after all the correct list of species
+
+        
+        # check number of species and save data into arrays
+        # or lists in lists? easier since they can grow? I'm not doing any artihmetic
+        # anyway.
+
+        
+
+

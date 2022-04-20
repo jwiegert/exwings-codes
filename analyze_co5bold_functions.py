@@ -365,7 +365,7 @@ def create_dust_files(
         gridpath:str='../grid_distances.csv',
         sizepath:str='../grid_cellsizes.csv',
         Nspecies:int=1,
-        grainsizecm:list=[1e-4],
+        grainsizeum:list=[0.1],
         graindensity:list=[2]
     ):
     """
@@ -402,10 +402,6 @@ def create_dust_files(
         print(f'    Number of dust species in C5D-data: {Nc5dspecies}')
 
     else:
-        # Declare stuff for the loops
-        r3d_density = 0
-        progbar = 0
-
         # Adaptive range used for when cellsizes are too similar - fixes bug 
         # where I got a lot of zero-cells because my loop misses the c5dcells inside
         # the current r3dcell
@@ -419,7 +415,7 @@ def create_dust_files(
             # 1
             # nleafs
             # number dust species
-            fdensity.write(f'1\n{int(nleafs)}\n1\n')
+            fdensity.write(f'1\n{int(nleafs)}\n{int(Nspecies)}\n')
 
             # dustopac:
             # 2
@@ -430,11 +426,17 @@ def create_dust_files(
             # Loop through the number of species you want to include
             for nspecies in range(Nspecies):
 
+                # Declare stuff for the loops
+                r3d_density = 0
+                progbar = 0
+
                 # Output species-number, species name, grain size and grain mass density
                 speciesname = str(c5ddata['Z'][0][0][42+3*nspecies])[4:-1]
-                print(f'Loading dust species number {nspecies+1}:')
+                grainsizecm = grainsizeum[nspecies]*1e-4
+
+                print(f'Writing dust specie number {nspecies+1}:')
                 print(f'    {speciesname}')
-                print(f'    Grain size: {grainsizecm[nspecies]*1e4} um')
+                print(f'    Grain size: {grainsizecm*1e4} um')
                 print(f'    Grain mass density: {graindensity[nspecies]} g cm-3')
 
                 # Load c5d-dust densities and temperatures
@@ -495,12 +497,13 @@ def create_dust_files(
                                 r3d_density += c5ddata['Z'][0][0][40+3*nspecies][nnx][nny][nnz]
 
                     # Average the density of each r3dcell by number of c5dcells
-                    r3d_density /= nchildcells
-
+                    # and
                     # Recalculate number density to mass density
                     # 4/3 pi agrain**3 * rhograin * numberdensity
-                    # Where units are in cgs.
-                    r3d_density *= 4.1887902047863905 * grainsizecm[nspecies]**3 * graindensity[nspecies]
+                    # Units are in cgs.
+                    r3d_density *= \
+                        4.1887902047863905 * grainsizecm**3 * graindensity[nspecies] / nchildcells
+                    # TODO: solve why my ass is crazy high...
 
                     # Write data to r3d files
                     fdensity.write(f'{r3d_density}\n')
@@ -520,5 +523,8 @@ def create_dust_files(
                     if int(nr3d/nleafs*100) == 75 and progbar == 2:
                         progbar += 1
                         print('Finished 75 per cent of the grid.')
+
+                    if int(nr3d/nleafs*100) > 99 and progbar == 3:
+                        print('Finished 99 per cent of the grid.')
 
     print('C5D Dust-data: done.\n')
