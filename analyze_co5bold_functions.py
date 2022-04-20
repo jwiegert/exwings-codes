@@ -191,7 +191,7 @@ def load_dust_density(
 def create_star(
         # All necessary inputs
         # paths!
-        savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav',
+        savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
         amrpath:str='../amr_grid.inp',
         gridpath:str='../grid_distances.csv',
         sizepath:str='../grid_cellsizes.csv'
@@ -314,11 +314,15 @@ def create_star(
                             # Sum all temperatures
                             r3d_temperatures += c5dstar_temperatures[nnx,nny,nnz]
 
-                # Average the data of each r3dcell by number of c5dcells
-                r3d_densities /= nchildcells
-                r3d_temperatures /= nchildcells
+                # Check again if there are any c5dcells within r3dcell
+                # If not, then your r3dgrid is probably larger than the c5dgrid
+                # and then you can keep the density and temperature at zero
+                if nchildcells > 0:
+                    # Otherwise average the data of each r3dcell by number of c5dcells
+                    r3d_densities /= nchildcells
+                    r3d_temperatures /= nchildcells
 
-                # Write data to r3d files
+                # Then write data to r3d files
                 fdensity.write(f'{r3d_densities}\n')
                 ftemperature.write(f'{r3d_temperatures}\n')
 
@@ -524,7 +528,7 @@ def create_dust_files(
                         progbar += 1
                         print('Finished 75 per cent of the grid.')
 
-                    if int(nr3d/nleafs*100) > 99 and progbar == 3:
+                    if int(nr3d/nleafs*100) == 99 and progbar == 3:
                         print('Finished 99 per cent of the grid.')
 
     print('C5D Dust-data: done.\n')
