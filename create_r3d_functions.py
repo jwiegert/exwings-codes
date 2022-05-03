@@ -111,17 +111,22 @@ def create_grid(
     # Calculate new gridedge based on ratio between new and input nxyz
     if nxyz != oldnxyz:
         gridedge *= nxyz/oldnxyz
+    
+    # Calculate inner refinements around centrum of grid
+    innerrefinements = [0.2*(nref+1)*refinementlist[-1] for nref in range(nrefines)]
 
     # Info text
     print('Creating amr_grid with octree refinement.')
     print(f'Final length of total side of whole grid: {gridedge} AU')
     print(f'Number of base cells along one side of the grid: {nxyz}')
-    print(f'Distances to refinement limits from centrum: {refinementlist} AU')
+    print(f'Distances to outer refinement limits from centrum: {refinementlist} AU')
+    print(f'Distances to inner refinement limits from centrum: {innerrefinements} AU')
     print(f'Number refinements: {nrefines}')
 
     # Change units to cm
     gridedge *= AUcm
     refinementlist = [dist*AUcm for dist in refinementlist]
+    innerrefinements = [dist*AUcm for dist in innerrefinements]
 
     # Create basic parameters of the grid
     #   nbasecubes : total number of base cells
@@ -165,7 +170,6 @@ def create_grid(
     # Define refinement arrays
     # I.e. add refinements within a list of radii
     # I need to fix this to something neater, ie recurring functions instead
-
     if nrefines > 0:
 
         # Add first refinement:
@@ -181,7 +185,7 @@ def create_grid(
                 griddist[nx]**2 + griddist[ny]**2 + griddist[nz]**2)
 
             # Add ones for each refined cell
-            if refdistance < refinementlist[0]:
+            if refdistance < refinementlist[0] and refdistance >= innerrefinements[0]:
                 refinearray0[nn] = 1
 
             # Move coordinates
@@ -213,7 +217,7 @@ def create_grid(
                             (griddist[nz] + gridcorrz[0][child1])**2
                         )
 
-                        if refdistance < refinementlist[1]:
+                        if refdistance < refinementlist[1] and refdistance >= innerrefinements[1]:
                             refinearray1[nn + sum(counter)*8 + child1+1] = 2
                     
                 # Update counter
@@ -257,7 +261,7 @@ def create_grid(
                                     )
 
                                     # Add 3s to the refined cells
-                                    if refdistance < refinementlist[2]:
+                                    if refdistance < refinementlist[2]  and refdistance >= innerrefinements[2]:
                                         refinearray2[nn + sum(counter)*8 +child1+child2+2] = 3
                                 
                             counter[1] += 1
@@ -302,7 +306,7 @@ def create_grid(
                                                     (griddist[nz] + gridcorrz[0][child1] + gridcorrz[1][child2] + gridcorrz[2][child3])**2
                                                 )
 
-                                                if refdistance < refinementlist[3]:
+                                                if refdistance < refinementlist[3]  and refdistance >= innerrefinements[3]:
                                                     refinearray3[nn + sum(counter)*8 + child1+child2+child3+3] = 4
                                         
                                         # Update counters
@@ -883,7 +887,7 @@ def merge_dustdensities(
     ):
     """
     TODO info here
-    will take a few input dust-density-files (state filenames in input) and marge them
+    will take a few input dust-density-files (state filenames in input) and merge them
     """
 
     Nfiles = len(file_names)
@@ -942,8 +946,21 @@ def merge_dustdensities(
                     f_dust.write(f'{density}\n')
                 
         # Also write new dustopac-file, this is after all the correct list of species
+        # Wait with this, then I also need all the dustopac-files that exists
+        # I should instead load them and then write the species!
+        """
+        # Open new dustopac_file
+        with open('../dustopac_total.inp','w') as f_opac:
 
-        
+            # Write header
+            f_opac.write(f'2\n{Nspecies}\n-----------------------------\n')
+
+            # Write list of species
+            for nspec in range(Nspecies):
+                f_opac.write(f'1\n0\n{name}\n-----------------------------\n')
+        """
+
+
         # check number of species and save data into arrays
         # or lists in lists? easier since they can grow? I'm not doing any artihmetic
         # anyway.
