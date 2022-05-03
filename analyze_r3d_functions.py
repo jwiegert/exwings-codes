@@ -520,6 +520,50 @@ def plot_sed(
     )
     fig.show()
 
+# Plot images
+def plot_images(
+        path:str='../',
+        images:list=['image.out']
+    ):
+
+    Nimages = len(images)
+
+    # load all images
+    
+    
+    
+    # row 6 onward: pixels
+    for image in images:
+        with open(path+image, 'r') as f:
+            for nl,line in enumerate(f.readlines()):
+                
+                # row 1: pixels by pixels
+                if nl == 1:
+                    npixels = int(line.split()[0])
+                
+                # row 3: pixel size in cm, divide by AUcm for AU
+                if nl == 3:
+                    pixelsize_au = float(line.split()[0])/AUcm
+                
+                # row 4: wavelenght in um
+                if nl == 4:
+                    wavelength = float(line)
+                
+                # row 6 onward: pixels
+                if nl > 5:
+                    # TODO
+                    # comapre with plotimageout.py from bulgestars
+
+
+
+
+        print(wavelength)
+
+
+    # plot all images
+
+
+
 
 
 # ------------------------------------------------------------ #
