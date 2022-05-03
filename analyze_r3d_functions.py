@@ -3,9 +3,10 @@
 # Useful packages
 import os
 import csv
+from turtle import distance
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import cm
+from matplotlib.pyplot import cm, xscale, yscale
 
 # Useful numbers
 c = 2.998e8 # speed of light in m/s
@@ -498,6 +499,26 @@ def plot_temperature_radius(
     fig.show()
 
 
+# Plot SED
+def plot_sed(
+        path:str='../spectrum.out',
+        distance:float=1
+    ):
+
+    wavelengths,spectrum = load_spectrum(path=path,distance=distance)
+    
+    # Load and plots r3d density data for ONE dust specie
+    fig, ax = plt.figure(), plt.axes()
+    ax.plot(
+        wavelengths,spectrum,'b'
+    )
+    ax.set(
+        ylabel=f'Flux density (Jy at {distance} pc)',
+        xlabel=r'Wavelength ($\mu$m)',
+        title='Output SED',
+        xscale='log',yscale='log'
+    )
+    fig.show()
 
 
 
