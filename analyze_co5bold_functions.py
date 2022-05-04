@@ -106,7 +106,17 @@ def load_star_properties(
         savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
     ):
     """
-    TODO info
+    Loads c5d-star's densities, temperatures, and opacities, and puts them into 3D-arrays
+
+    INPUT
+    savpath: path to sav-file
+    nbins: number of bins to put the opacities in, ie number of duststar-species for the star
+
+    OUTPUT
+    c5dstar_densities: 3D array with star's densities
+    c5dstar_temperatures: 3D array with star's temperatures 
+    TODO (is this the same as dust temperatures?)
+    c5dstar_opacities: 3D array with star's opacities
     """
     
     # Load sav-file
@@ -126,6 +136,7 @@ def load_star_properties(
     # Declare np.array
     c5dstar_densities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
     c5dstar_temperatures = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+    c5dstar_opacities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
 
     # Extract densities - This can take time, some 2min per property
     for nx in range(nc5dedge):
@@ -133,13 +144,9 @@ def load_star_properties(
             for nz in range(nc5dedge):
                 c5dstar_densities[nx,ny,nz] = c5ddata['Z'][0][0][34][nx][ny][nz]
                 c5dstar_temperatures[nx,ny,nz] = c5ddata['EOS'][0][0][1][nx][ny][nz]
+                c5dstar_opacities[nx,ny,nz] = c5ddata['OPA'][0][0][0][nx][ny][nz]
     
-    return c5dstar_densities, c5dstar_temperatures
-
-
-# Extract and create input data with
-# TODO duststar opacities
-
+    return c5dstar_densities, c5dstar_temperatures, c5dstar_opacities
 
 
 # Function for loading one dust specie from c5d-data
@@ -238,7 +245,7 @@ def create_star(
         # these that loads it into the data here below?
         # or that could be slower since now I work with nparrays...
         print('Loading C5D star properties (density, temperature, opacity)')
-        c5dstar_densities,c5dstar_temperatures = load_star_properties(savpath=savpath)
+        c5dstar_densities,c5dstar_temperatures,c5dstar_opacities = load_star_properties(savpath=savpath)
 
         # Start working :)
         print('Translating C5D data to R3D data')
@@ -246,6 +253,7 @@ def create_star(
         # Declare stuff for the loops
         r3d_densities = 0
         r3d_temperatures = 0
+        r3d_opacities = 0
         progbar = 0
 
         # Adaptive range used for when cellsizes are too similar - fixes bug 
@@ -254,7 +262,7 @@ def create_star(
         adaptive_range = c5dcellsize/r3dcellsizes.min() * 1.1
 
         # Open r3d data files
-        with open('../dust_density_star.inp', 'w') as fdensity, open('../dust_temperature_star.dat', 'w') as ftemperature:
+        with open('../dust_density_star.inp', 'w') as fdensity, open('../dust_temperature_star.dat', 'w') as ftemperature, open('../star_opacities.dat', 'w') as fopacity:
 
             # Write headers:
             # 1
@@ -262,6 +270,7 @@ def create_star(
             # number dust species
             fdensity.write(f'1\n{int(nleafs)}\n1\n')
             ftemperature.write(f'1\n{int(nleafs)}\n1\n')
+            fopacity.write('# List of c5d-opacities translated to r3d-spatial grid.\n# Use as input when separating one-specie-density_star-file into several species\n# and creating dust-star opacity files.')
 
             # Loop over r3d grid
             for nr3d in range(nleafs):
@@ -314,6 +323,9 @@ def create_star(
                             # Sum all temperatures
                             r3d_temperatures += c5dstar_temperatures[nnx,nny,nnz]
 
+                            # Sum all opacities
+                            r3d_opacities += c5dstar_opacities[nnx,nny,nnz]
+
                 # Check again if there are any c5dcells within r3dcell
                 # If not, then your r3dgrid is probably larger than the c5dgrid
                 # and then you can keep the density and temperature at zero
@@ -321,14 +333,17 @@ def create_star(
                     # Otherwise average the data of each r3dcell by number of c5dcells
                     r3d_densities /= nchildcells
                     r3d_temperatures /= nchildcells
+                    r3d_opacities /= nchildcells
 
                 # Then write data to r3d files
                 fdensity.write(f'{r3d_densities}\n')
                 ftemperature.write(f'{r3d_temperatures}\n')
+                fopacity.write(f'{r3d_opacities}\n')
 
                 # Reset data
                 r3d_densities = 0
                 r3d_temperatures = 0
+                r3d_opacities = 0
 
                 # Some progress bar info
                 if int(nr3d/nleafs*100) == 25 and progbar == 0:
@@ -344,6 +359,34 @@ def create_star(
                     print('Finished 75 per cent of the grid.')
 
     print('C5D Dust-star: done.\n')
+
+
+# TODO
+# create function that loads one-specie-stardustdensity file and opacity file and
+# translates this to several species with a set number of bins for the opacity.
+# 
+# grey body or not?
+
+def create_staropacity():
+
+    # load denstiy_star
+
+    # load opacity.dat
+
+    with open('../star_opacities.dat', 'r') as fopacity:
+        fopacity.readline()
+
+
+    # load wavelengthgrid
+    wavelengths,Nwave = a3d.load_wavelengthgrid(path='../wavelength_micron.inp')
+
+
+
+    #load_wavelengthgrid(path:str='../wavelength_micron.inp'):
+    # return wavelengths,nwave
+
+
+    return 'hej'
 
 
 

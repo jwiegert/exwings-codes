@@ -6,7 +6,7 @@ import csv
 from turtle import distance
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import cm, xscale, yscale
+from matplotlib.pyplot import cm, xlabel, xscale, yscale
 
 # Useful numbers
 c = 2.998e8 # speed of light in m/s
@@ -523,17 +523,28 @@ def plot_sed(
 # Plot images
 def plot_images(
         path:str='../',
-        images:list=['image.out']
+        images:list=['image.out'],
+        distance:float=1
     ):
+    """
+    Plots list of images
 
-    Nimages = len(images)
+    INPUT
+    path: path to folder containing images
+    images: list of image-file names inside your folder
+    distance: distance to source in pc (default 1 pc)
 
-    # load all images
-    
-    
-    
-    # row 6 onward: pixels
+    OUTPUT
+    Figure with 2 subplots, linear and logarithmic scales.
+    """
+
+    # Loop through all images
     for image in images:
+
+        # Declare list
+        image1d = []
+
+        # Load images
         with open(path+image, 'r') as f:
             for nl,line in enumerate(f.readlines()):
                 
@@ -546,28 +557,75 @@ def plot_images(
                     pixelsize_au = float(line.split()[0])/AUcm
                 
                 # row 4: wavelenght in um
+                # TODO might be useful also :)
                 if nl == 4:
                     wavelength = float(line)
                 
                 # row 6 onward: pixels
                 if nl > 5:
-                    # TODO
-                    # comapre with plotimageout.py from bulgestars
+                    # Some rows are empty (and they contain space and \n, so strip them lines)
+                    if len(line.strip()) > 0:
+                        image1d.append(float(line.strip()))
+
+        # Extract some useful quantities
+        # pixel size in mas
+        pixelsize_mas = pixelsize_au / distance
+        
+        # Size of whole image in AU
+        size_au = pixelsize_au * npixels
+        axisplot  = [0.5*size_au,-0.5*size_au,-0.5*size_au,0.5*size_au]
+
+        # Flux min and max in Jy at declared distance
+        fluxmin = min(image1d) * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
+        fluxmax = max(image1d) * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
+
+        # Create 2D arrays
+        image2d = np.zeros((npixels,npixels))
+        image2dlog = np.zeros((npixels,npixels))
+        nx,ny = 0,0
+
+        for flux in image1d:
+            image2d[nx,ny] = flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
+            image2dlog[nx,ny] = np.log10(flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2)
+
+            # Move nx and ny
+            nx = nx + 1
+            if nx == npixels:
+                nx = 0
+                ny = ny + 1
+
+        # Create vectors for the axes
 
 
+        # Plot each image (one in linear and one log)
+        fig, ax = plt.subplots(1,2, dpi=150, num=image)
+        
+        im0 = ax[0].imshow(
+            image2d, origin='lower', extent=axisplot
+        )
+        ax[0].set(
+            title=f"{image.replace('image_', '').replace('.out', '')} (Lin)", 
+            xlabel='Offset (AU)',
+            ylabel='Offset (AU)'
+        )
+                
+        ax[1].imshow(
+            image2dlog, origin='lower', extent=axisplot
+        )
+        ax[1].set(
+            title=f"{image.replace('image_', '').replace('.out', '')} (Log)", 
+            xlabel='Offset (AU)',
+        )
 
+        cb0 = plt.colorbar(im0, orientation = 'vertical',shrink=0.6,pad=0.15)
+        cb0.set_label(label = rf'Flux at {distance} pc (Jy/asec$^2$)',fontsize= 10)
 
-        print(wavelength)
-
-
-    # plot all images
-
-
-
+        fig.tight_layout()
+        fig.show()
 
 
 # ------------------------------------------------------------ #
-# Compute different storheter
+# Compute different quantities
 
 def compute_luminosity(path:str='../r3dsims/spectrum.out',distance:float=1):
     """
