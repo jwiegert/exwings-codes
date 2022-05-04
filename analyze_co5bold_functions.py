@@ -270,7 +270,7 @@ def create_star(
             # number dust species
             fdensity.write(f'1\n{int(nleafs)}\n1\n')
             ftemperature.write(f'1\n{int(nleafs)}\n1\n')
-            fopacity.write('# List of c5d-opacities translated to r3d-spatial grid.\n# Use as input when separating one-specie-density_star-file into several species\n# and creating dust-star opacity files.')
+            fopacity.write('# List of c5d-opacities translated to r3d-spatial grid.\n# Use as input when separating one-specie-density_star-file into several species\n# and creating dust-star opacity files.\n')
 
             # Loop over r3d grid
             for nr3d in range(nleafs):
@@ -367,18 +367,25 @@ def create_star(
 # 
 # grey body or not?
 
-def create_staropacity():
+def create_staropacity(
+        pathopacity:str='../star_opacities.dat',
+        bins:int=5
+    ):
 
     # load denstiy_star
 
     # load opacity.dat
+    opacity = []
 
-    with open('../star_opacities.dat', 'r') as fopacity:
-        fopacity.readline()
+    with open(pathopacity, 'r') as fopacity:
+
+        for nn,line in enumerate(fopacity.readlines()):
+            if line[0] != '#':
+                opacity.append(float(line))
 
 
     # load wavelengthgrid
-    wavelengths,Nwave = a3d.load_wavelengthgrid(path='../wavelength_micron.inp')
+    #wavelengths,Nwave = a3d.load_wavelengthgrid(path='../wavelength_micron.inp')
 
 
 
@@ -386,7 +393,7 @@ def create_staropacity():
     # return wavelengths,nwave
 
 
-    return 'hej'
+    return opacity
 
 
 
@@ -551,6 +558,9 @@ def create_dust_files(
                     r3d_density *= \
                         4.1887902047863905 * grainsizecm**3 * graindensity[nspecies] / nchildcells
                     # TODO: solve why my ass is crazy high...
+
+                    # Mg2SiO4: 2*24.305u + 28.085u + 4*15.999u = 140.69u = 2.3362e-22 gram
+
 
                     # Write data to r3d files
                     fdensity.write(f'{r3d_density}\n')
