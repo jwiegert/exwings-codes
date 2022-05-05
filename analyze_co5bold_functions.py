@@ -369,31 +369,78 @@ def create_star(
 
 def create_staropacity(
         pathopacity:str='../star_opacities.dat',
-        bins:int=5
+        pathstardensity:str='../dust_density_star.inp',
+        nbins:int=5
     ):
+    """
+    nbins = number of species the star will consist of
+    """
 
-    # load denstiy_star
+    # load denstiy_star.inp
+    Ncells,Nspec,star_densities = a3d.load_dustdensity(path=pathstardensity,numb_specie=1)
 
     # load opacity.dat
     opacity = []
-
     with open(pathopacity, 'r') as fopacity:
-
-        for nn,line in enumerate(fopacity.readlines()):
+        for line in fopacity.readlines():
             if line[0] != '#':
                 opacity.append(float(line))
 
-
-    # load wavelengthgrid
+    # Load wavelengthgrid
     #wavelengths,Nwave = a3d.load_wavelengthgrid(path='../wavelength_micron.inp')
-
-
-
     #load_wavelengthgrid(path:str='../wavelength_micron.inp'):
     # return wavelengths,nwave
 
 
-    return opacity
+
+    # Bin the opacities
+    print(f'Binning star-opacities to {nbins} species.')
+    # Take all bins from histogram above the average bin-height
+    # Only take one from those below (change later to some value dependant on the range?)
+    # Adapt length (number bins) until the chosen number of bins are achieved
+
+    valuestemp_length = 0
+    bins = 0
+
+    while valuestemp_length < nbins-1:
+        bins += 1
+
+        # Extract bins from histogram
+        histvalues = np.histogram(opacity, range=(1,max(opacity)), bins=bins)
+
+        # Take bins of those larger than average
+        valuestemp = [
+            histvalues[1][nn] for nn in np.where(histvalues[0] > np.mean(histvalues[0]))
+        ]
+        valuestemp_length = len(valuestemp[0])
+
+    # Take out one value of those below average
+    valuestemp.append(np.mean(histvalues[1][np.where(histvalues[0] < np.mean(histvalues[0]))]))
+    values = [value for value in valuestemp[0]]
+    values.append(valuestemp[-1])
+    values = np.array(values)
+
+    # Bin the opacities to those that are nearest the bins
+    opacitybins = np.zeros(len(opacity))
+    for no,opac in enumerate(opacity):
+        nn = (np.abs(values - opac)).argmin()
+        opacitybins[no] = values[nn]
+
+    # TODO print opacitybins to star_opacities_bins.dat
+
+
+
+    # Create new density file with densities separated by species decided by the binning
+    # of the opacities of the star
+    new_densities = np.zeros(nbins*Ncells)
+    for nn in range(Ncells):
+        for no,opac in enumerate(values):
+            if opacitybins[nn] == opac:
+                new_densities[nn + Ncells*no] = star_densities[nn]
+
+
+
+    return opacitybins,new_densities,star_densities
 
 
 
