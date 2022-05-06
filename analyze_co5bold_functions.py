@@ -446,14 +446,14 @@ def create_staropacity(
 
 
 
-
+# TODO change so that this gets the density from monomer-masses
 # Extract and construct dust_density-files from C5D-data
 # uses ['Z'][0][0][40][x][y][z] and ['Z'][0][0][43][x][y][z]
 # or rather use
 # ['Z'][0][0][40+3*nspecie][x][y][z]
 # where nspecie is 0, 1, 2 ... up until (number of dust species)-1
 # and the data are in number densities cm^-3
-# Mass density in each cell = 4/3 pi agrain**3 * rhograin * numberdensity
+# Mass density in each cell = 4/3 pi agrain**3 * rhograin * numberdensity < NO
 # So another input based on what I used for dustkappa for each specie
 # Also:
 # str(teststar['Z'][0][0][40+3*nspecie+2])[4:-1]

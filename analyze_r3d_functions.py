@@ -518,7 +518,7 @@ def plot_sed(
         title='Output SED',
         xscale='log',yscale='log'
     )
-    fig.show()
+    fig.show();
 
 # Plot images
 def plot_images(
