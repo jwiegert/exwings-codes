@@ -629,7 +629,11 @@ def plot_images(
 
 def compute_luminosity(path:str='../r3dsims/spectrum.out',distance:float=1):
     """
-    INFO HERE
+    Insert a spectrum.out from r3d and get the bolometric luminosity in Watt
+    INPUT
+    path = path to spectrum-file including file name
+    OUTPUT
+    luminosity in Watt
     """
 
     # Load spectrum

@@ -370,78 +370,113 @@ def create_star(
 def create_staropacity(
         pathopacity:str='../star_opacities.dat',
         pathstardensity:str='../dust_density_star.inp',
+        pathwavelength:str='../wavelength_micron.inp',
         nbins:int=5
     ):
     """
     nbins = number of species the star will consist of
     """
 
-    # load denstiy_star.inp
-    Ncells,Nspec,star_densities = a3d.load_dustdensity(path=pathstardensity,numb_specie=1)
+    if nbins > 20:
+        return 'WARNING too many files! Stopping'
 
-    # load opacity.dat
-    opacity = []
-    with open(pathopacity, 'r') as fopacity:
-        for line in fopacity.readlines():
-            if line[0] != '#':
-                opacity.append(float(line))
+    else:
+        # load denstiy_star.inp
+        Ncells,Nspec,star_densities = a3d.load_dustdensity(path=pathstardensity,numb_specie=1)
 
-    # Load wavelengthgrid
-    #wavelengths,Nwave = a3d.load_wavelengthgrid(path='../wavelength_micron.inp')
-    #load_wavelengthgrid(path:str='../wavelength_micron.inp'):
-    # return wavelengths,nwave
+        # load opacity.dat
+        opacity = []
+        with open(pathopacity, 'r') as fopacity:
+            for line in fopacity.readlines():
+                if line[0] != '#':
+                    opacity.append(float(line))
 
+        # Load wavelengthgrid
+        wavelengths,Nwave = a3d.load_wavelengthgrid(path=pathwavelength)
 
+        # Bin the opacities
+        print(f'Binning star-opacities to {nbins} species.')
+        # Take all bins from histogram above the average bin-height
+        # Only take one from those below (change later to some value dependant on the range?)
+        # Adapt length (number bins) until the chosen number of bins are achieved
 
-    # Bin the opacities
-    print(f'Binning star-opacities to {nbins} species.')
-    # Take all bins from histogram above the average bin-height
-    # Only take one from those below (change later to some value dependant on the range?)
-    # Adapt length (number bins) until the chosen number of bins are achieved
+        # TODO solve why the smallest opacity is 1 and not like 1e-2 or 1e-1
+        # TODO add temperature-binning-thingie, 0K where the specie is not
 
-    valuestemp_length = 0
-    bins = 0
+        valuestemp_length = 0
+        bins = 0
 
-    while valuestemp_length < nbins-1:
-        bins += 1
+        while valuestemp_length < nbins-1:
+            bins += 1
 
-        # Extract bins from histogram
-        histvalues = np.histogram(opacity, range=(1,max(opacity)), bins=bins)
+            # Extract bins from histogram
+            histvalues = np.histogram(opacity, range=(1,max(opacity)), bins=bins)
 
-        # Take bins of those larger than average
-        valuestemp = [
-            histvalues[1][nn] for nn in np.where(histvalues[0] > np.mean(histvalues[0]))
-        ]
-        valuestemp_length = len(valuestemp[0])
+            # Take bins of those larger than average
+            valuestemp = [
+                histvalues[1][nn] for nn in np.where(histvalues[0] > np.mean(histvalues[0]))
+            ]
+            valuestemp_length = len(valuestemp[0])
 
-    # Take out one value of those below average
-    valuestemp.append(np.mean(histvalues[1][np.where(histvalues[0] < np.mean(histvalues[0]))]))
-    values = [value for value in valuestemp[0]]
-    values.append(valuestemp[-1])
-    values = np.array(values)
+        # Take out one value of those below average
+        valuestemp.append(np.mean(histvalues[1][np.where(histvalues[0] < np.mean(histvalues[0]))]))
+        values = [value for value in valuestemp[0]]
+        values.append(valuestemp[-1])
+        values = np.array(values)
 
-    # Bin the opacities to those that are nearest the bins
-    opacitybins = np.zeros(len(opacity))
-    for no,opac in enumerate(opacity):
-        nn = (np.abs(values - opac)).argmin()
-        opacitybins[no] = values[nn]
+        # Bin the opacities to those that are nearest the bins
+        opacitybins = np.zeros(len(opacity))
+        for no,opac in enumerate(opacity):
+            nn = (np.abs(values - opac)).argmin()
+            opacitybins[no] = values[nn]
 
-    # TODO print opacitybins to star_opacities_bins.dat
+        print('Creating new density array and file, and binned opacity file in same order as density file (not necessary, use for double checking your data).')
+        # Create new density file with densities separated by species decided by the binning
+        # of the opacities of the star
+        new_densities = np.zeros(nbins*Ncells)
+        for nn in range(Ncells):
+            for no,opac in enumerate(values):
+                if opacitybins[nn] == opac:
+                    new_densities[nn + Ncells*no] = star_densities[nn]
 
+        # Print new star-density file
+        with open('../dust_density_star_opabins.inp', 'w') as fdensity, open('../star_opacities_bins.dat', 'w') as fopacity:
+            
+            # Write headers
+            fdensity.write(f'1\n{int(Ncells)}\n{int(nbins)}\n')
+            fopacity.write('# Binned opacities for the star(dust) distributions.\n# In same order as density file.\n# For reference and quality checks.\n')
 
+            # Write densities
+            for nn,dens in enumerate(new_densities):
+                fdensity.write(f'{dens}\n')
+                fopacity.write(f'{opacitybins}\n')
 
-    # Create new density file with densities separated by species decided by the binning
-    # of the opacities of the star
-    new_densities = np.zeros(nbins*Ncells)
-    for nn in range(Ncells):
+        # Print new dustopac_starbins.inp file
+        print('Writing opacity files for the binned star.')
+        with open('../dustopac_starbins.inp', 'w') as fopac:
+
+            # Print header
+            fopac.write(f'2\n{nbins}\n-----------------------------\n')
+
+            # Print star's opacity / species names
+            for nn in range(nbins):
+                fopac.write(f'1\n0\nstar{nn+1}\n-----------------------------\n')
+
+        # Print opacity files, star-kappa-files
+        # TODO perhaps add a factor to compensate since this kappa is just some constant number
         for no,opac in enumerate(values):
-            if opacitybins[nn] == opac:
-                new_densities[nn + Ncells*no] = star_densities[nn]
+            with open(f'../dustkappa_star{no+1}.inp', 'w') as fopac:
 
+                # Write header (1 for no scattering in this and number of wavelengths)
+                fopac.write(f'1\n{Nwave}\n')
 
+                # Write wavelength, abscoeff, scattercoeff
+                for wave in wavelengths:
+                    fopac.write(f'{wave}    {opac}    0.0\n')
+        
+        # TODO also load and rewrite the temperaturefile to all new species?
 
-    return opacitybins,new_densities,star_densities
-
+        return 'Done with: dust_density_star_opabins.inp, star_opacities_bins.dat, dustopac_starbins.inp, dustkappa_starX.inp'
 
 
 
