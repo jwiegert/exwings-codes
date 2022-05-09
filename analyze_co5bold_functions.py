@@ -371,6 +371,7 @@ def create_staropacity(
         pathopacity:str='../star_opacities.dat',
         pathstardensity:str='../dust_density_star.inp',
         pathwavelength:str='../wavelength_micron.inp',
+        pathtemperature:str='../dust_temperature.dat',
         nbins:int=5
     ):
     """
@@ -381,8 +382,11 @@ def create_staropacity(
         return 'WARNING too many files! Stopping'
 
     else:
-        # load denstiy_star.inp
+        # Load denstiy_star.inp
         Ncells,Nspec,star_densities = a3d.load_dustdensity(path=pathstardensity,numb_specie=1)
+
+        # Load temperature_star
+        Ncells,temperatures = a3d.load_temperature(path=pathtemperature)
 
         # load opacity.dat
         opacity = []
@@ -430,26 +434,35 @@ def create_staropacity(
             nn = (np.abs(values - opac)).argmin()
             opacitybins[no] = values[nn]
 
-        print('Creating new density array and file, and binned opacity file in same order as density file (not necessary, use for double checking your data).')
+        print('Creating new density, temperature and binned opacity files.')
         # Create new density file with densities separated by species decided by the binning
         # of the opacities of the star
         new_densities = np.zeros(nbins*Ncells)
+        new_temperatures = np.zeros(nbins*Ncells)
         for nn in range(Ncells):
             for no,opac in enumerate(values):
                 if opacitybins[nn] == opac:
                     new_densities[nn + Ncells*no] = star_densities[nn]
+                    new_temperatures[nn + Ncells*no] = temperatures[nn]
 
         # Print new star-density file
-        with open('../dust_density_star_opabins.inp', 'w') as fdensity, open('../star_opacities_bins.dat', 'w') as fopacity:
+        with open('../dust_density_star_opabins.inp', 'w') as fdensity,\
+             open('../dust_temperature_star_opabins.dat', 'w') as ftemperature,\
+             open('../star_opacities_bins.dat', 'w') as fopacity:
             
             # Write headers
             fdensity.write(f'1\n{int(Ncells)}\n{int(nbins)}\n')
+            ftemperature.write(f'1\n{int(Ncells)}\n{int(nbins)}\n')
             fopacity.write('# Binned opacities for the star(dust) distributions.\n# In same order as density file.\n# For reference and quality checks.\n')
 
-            # Write densities
+            # Write densities and temperatures
             for nn,dens in enumerate(new_densities):
                 fdensity.write(f'{dens}\n')
-                fopacity.write(f'{opacitybins}\n')
+                ftemperature.write(f'{new_temperatures[nn]}\n')
+
+                # And opacity bins, not necessary for simulations but useful for checking input data later
+                if nn < Ncells:
+                    fopacity.write(f'{opacitybins[nn]}\n')
 
         # Print new dustopac_starbins.inp file
         print('Writing opacity files for the binned star.')
@@ -474,9 +487,7 @@ def create_staropacity(
                 for wave in wavelengths:
                     fopac.write(f'{wave}    {opac}    0.0\n')
         
-        # TODO also load and rewrite the temperaturefile to all new species?
-
-        return 'Done with: dust_density_star_opabins.inp, star_opacities_bins.dat, dustopac_starbins.inp, dustkappa_starX.inp'
+        return 'Done with: dust_density_star_opabins.inp, dust_temperature_star_opabins.inp, star_opacities_bins.dat, dustopac_starbins.inp, dustkappa_starX.inp'
 
 
 
