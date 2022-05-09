@@ -360,13 +360,9 @@ def create_star(
 
     print('C5D Dust-star: done.\n')
 
-
-# TODO
-# create function that loads one-specie-stardustdensity file and opacity file and
-# translates this to several species with a set number of bins for the opacity.
-# 
-# grey body or not?
-
+# Takes the stellar data from c5d-data that has been translated to r3d but as one specie, and
+# transforms it into separate species on a chosen number of bins of opacities as given by the
+# c5d-data.
 def create_staropacity(
         pathopacity:str='../star_opacities.dat',
         pathstardensity:str='../dust_density_star.inp',
@@ -400,16 +396,13 @@ def create_staropacity(
 
         # Bin the opacities
         print(f'Binning star-opacities to {nbins} species.')
+
         # Take all bins from histogram above the average bin-height
         # Only take one from those below (change later to some value dependant on the range?)
-        # Adapt length (number bins) until the chosen number of bins are achieved
-
-        # TODO solve why the smallest opacity is 1 and not like 1e-2 or 1e-1
-        # TODO add temperature-binning-thingie, 0K where the specie is not
-
+        # Adapt length (number bins) until the chosen number of bins-1 are achieved (done here with while)
+        # The last bin is the average of the rest.
         valuestemp_length = 0
         bins = 0
-
         while valuestemp_length < nbins-1:
             bins += 1
 
@@ -422,11 +415,22 @@ def create_staropacity(
             ]
             valuestemp_length = len(valuestemp[0])
 
-        # Take out one value of those below average
-        valuestemp.append(np.mean(histvalues[1][np.where(histvalues[0] < np.mean(histvalues[0]))]))
-        values = [value for value in valuestemp[0]]
-        values.append(valuestemp[-1])
-        values = np.array(values)
+        # Save the average value of each bin
+        values = np.zeros(nbins)
+
+        values[0] = np.array(opacity)[
+            np.where(opacity < histvalues[1][1])[0]
+        ].mean()
+
+        for nn in range(1, nbins-1):
+            values[nn] = np.array(opacity)[np.where(
+                (opacity > histvalues[1][nn]) & (opacity < histvalues[1][nn+1])
+            )[0]].mean()
+
+        # For the last bin, take one average of all higher values
+        values[-1] = np.array(opacity)[
+            np.where(opacity > histvalues[1][nbins])[0]
+        ].mean()
 
         # Bin the opacities to those that are nearest the bins
         opacitybins = np.zeros(len(opacity))
@@ -487,7 +491,7 @@ def create_staropacity(
                 for wave in wavelengths:
                     fopac.write(f'{wave}    {opac}    0.0\n')
         
-        return 'Done with: dust_density_star_opabins.inp, dust_temperature_star_opabins.inp, star_opacities_bins.dat, dustopac_starbins.inp, dustkappa_starX.inp'
+        print('Done with: dust_density_star_opabins.inp, dust_temperature_star_opabins.inp, star_opacities_bins.dat, dustopac_starbins.inp, dustkappa_starX.inp')
 
 
 

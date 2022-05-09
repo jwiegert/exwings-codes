@@ -536,7 +536,10 @@ def plot_images(
 
     OUTPUT
     Figure with 2 subplots, linear and logarithmic scales.
+    Total flux of images in Jy at chosen distance
     """
+
+    fluxtotal = []
 
     # Loop through all images
     for image in images:
@@ -575,9 +578,8 @@ def plot_images(
         size_au = pixelsize_au * npixels
         axisplot  = [0.5*size_au,-0.5*size_au,-0.5*size_au,0.5*size_au]
 
-        # Flux min and max in Jy at declared distance
-        fluxmin = min(image1d) * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
-        fluxmax = max(image1d) * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
+        # Total flux density of the image
+        fluxtotal.append(sum(image1d) * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2)
 
         # Create 2D arrays
         image2d = np.zeros((npixels,npixels))
@@ -593,9 +595,6 @@ def plot_images(
             if nx == npixels:
                 nx = 0
                 ny = ny + 1
-
-        # Create vectors for the axes
-
 
         # Plot each image (one in linear and one log)
         fig, ax = plt.subplots(1,2, dpi=150, num=image)
@@ -622,6 +621,8 @@ def plot_images(
 
         fig.tight_layout()
         fig.show()
+
+    return fluxtotal
 
 
 # ------------------------------------------------------------ #
