@@ -519,9 +519,7 @@ def plot_onetemperature_radius(
     )
     fig.show()
 
-
-
-
+# Plot all temperatures
 def plot_alltemperature_radius(
         temperature_path:str='../dust_temperature.dat',
         grid_path:str='../grid_distances.csv',
@@ -599,6 +597,47 @@ def plot_alltemperature_radius(
     fig.tight_layout()
     fig.show()
 
+# Plot absorption, scattering, and angles of the various species
+
+# load by name or load by specie-number? or both?
+
+def plot_onekappa(
+        specie_name:str='',
+        specie_number:int=0,
+        path:str='../'
+    ):
+
+    if specie_number != 0:
+        # Extract name from dustopac-file
+        with open(f'{path}dustopac.inp', 'r') as f:
+
+            # line number 1+specie_number*4
+
+
+
+
+        # specie_name = blabla
+        print(f'Extracting species number {specie_number}: {specie_name}')
+
+
+
+    elif len(specie_name) != 0:
+        # Or just extract species by given name
+        print(f'Extracting species {specie_name}')
+    
+    else:
+        # Nothing is given, print error
+        print('ERROR: no species number nor name is given.')
+    
+    with open(f'{path}dustkappa_{specie_name}.inp', 'r') as f:
+        print('blabla')
+
+
+
+
+
+
+    return 'hej'
 
 
 
