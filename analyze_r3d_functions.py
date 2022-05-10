@@ -607,11 +607,17 @@ def plot_onekappa(
         path:str='../'
     ):
 
+    # TODO this doesn't work!
+    if path[-1] != '/':
+        path.append('/')
+
     if specie_number != 0:
         # Extract name from dustopac-file
         with open(f'{path}dustopac.inp', 'r') as f:
-
-            # line number 1+specie_number*4
+            for nn,line in enumerate(f.readlines()):
+                # Specie-names are on line numbers 1+specie_number*4
+                if nn == 1+specie_number*4:
+                    specie_name = line
 
 
 
@@ -628,9 +634,14 @@ def plot_onekappa(
     else:
         # Nothing is given, print error
         print('ERROR: no species number nor name is given.')
-    
-    with open(f'{path}dustkappa_{specie_name}.inp', 'r') as f:
-        print('blabla')
+
+    print(specie_name)
+
+    # TODO extract and plot kappas, also return kappas
+
+
+    #with open(f'{path}dustkappa_{specie_name}.inp', 'r') as f:
+    #    print('blabla')
 
 
 
