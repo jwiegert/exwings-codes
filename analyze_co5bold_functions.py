@@ -20,7 +20,6 @@ AUcm = cython.declare(cython.float ,1.49598e13) # cm
 # AUcm = cython.declare(cython.float ,1.49598e13) # cm
 
 
-
 # ============================================================
 
 
@@ -115,7 +114,6 @@ def load_star_properties(
     OUTPUT
     c5dstar_densities: 3D array with star's densities
     c5dstar_temperatures: 3D array with star's temperatures 
-    TODO (is this the same as dust temperatures?)
     c5dstar_opacities: 3D array with star's opacities
     """
     
@@ -152,7 +150,7 @@ def load_star_properties(
 # Function for loading one dust specie from c5d-data
 @cython.cfunc
 @cython.locals(nspecies=cython.int)
-def load_dust_density(
+def load_dustdensity(
         savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
         nspecies:int=0
     ):
@@ -496,30 +494,30 @@ def create_staropacity(
 
 
 
-# TODO change so that this gets the density from monomer-masses
 # Extract and construct dust_density-files from C5D-data
 # uses ['Z'][0][0][40][x][y][z] and ['Z'][0][0][43][x][y][z]
 # or rather use
 # ['Z'][0][0][40+3*nspecie][x][y][z]
 # where nspecie is 0, 1, 2 ... up until (number of dust species)-1
-# and the data are in number densities cm^-3
-# Mass density in each cell = 4/3 pi agrain**3 * rhograin * numberdensity < NO
-# So another input based on what I used for dustkappa for each specie
+# and the data are in number densities cm^-3 of monomers
+# so the mass density is the number density * mass of dust forming molecule
+
 # Also:
 # str(teststar['Z'][0][0][40+3*nspecie+2])[4:-1]
 # gives a string with the name of the specie!
 # so this can also print the dustkappa-list-file for r3d!
 
-def create_dust_files(
+def create_dustfiles(
         savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
         amrpath:str='../amr_grid.inp',
         gridpath:str='../grid_distances.csv',
         sizepath:str='../grid_cellsizes.csv',
         Nspecies:int=1,
-        grainsizeum:list=[0.1],
-        graindensity:list=[2]
+        monomermasses:list=[2.3362e-22]
     ):
     """
+    #graindensity:list=[2],
+    #grainsizeum:list=[0.1],
     grainsizecm & graindensity should be lists, one for each specie
     """
 
@@ -583,15 +581,14 @@ def create_dust_files(
 
                 # Output species-number, species name, grain size and grain mass density
                 speciesname = str(c5ddata['Z'][0][0][42+3*nspecies])[4:-1]
-                grainsizecm = grainsizeum[nspecies]*1e-4
+                #grainsizecm = grainsizeum[nspecies]*1e-4
 
                 print(f'Writing dust specie number {nspecies+1}:')
                 print(f'    {speciesname}')
-                print(f'    Grain size: {grainsizecm*1e4} um')
-                print(f'    Grain mass density: {graindensity[nspecies]} g cm-3')
+                print(f'    Monomer mass: {monomermasses} g')
 
                 # Load c5d-dust densities and temperatures
-                #c5ddensities, c5dtemperatures = load_dust_density(savpath=savpath, nspecies=nspecies)
+                #c5ddensities, c5dtemperatures = load_dustdensity(savpath=savpath, nspecies=nspecies)
 
                 # Write the dustopac file
                 # 1
@@ -649,14 +646,14 @@ def create_dust_files(
 
                     # Average the density of each r3dcell by number of c5dcells
                     # and
-                    # Recalculate number density to mass density
+                    # Recalculate number density of monomers to mass density
                     # 4/3 pi agrain**3 * rhograin * numberdensity
                     # Units are in cgs.
-                    r3d_density *= \
-                        4.1887902047863905 * grainsizecm**3 * graindensity[nspecies] / nchildcells
-                    # TODO: solve why my ass is crazy high...
-
+                    #r3d_density *= \
+                    #    4.1887902047863905 * grainsizecm**3 * graindensity[nspecies] / nchildcells
+                    # TODO: add 
                     # Mg2SiO4: 2*24.305u + 28.085u + 4*15.999u = 140.69u = 2.3362e-22 gram
+                    r3d_density *= monomermasses[nspecies] / nchildcells
 
 
                     # Write data to r3d files

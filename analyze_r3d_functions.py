@@ -258,6 +258,7 @@ def load_dustdensity(
 # Load dust_temperature-file
 def load_temperature(
         path:str='../dust_temperature.dat',
+        numb_specie:int=1
     ):
     """
     Load and extracts temperatures in output file dust_temperature.dat
@@ -265,6 +266,7 @@ def load_temperature(
     INPUT
     -----
     path: string with path and filename of temperature file
+    nspecie: number of specie you want to load
     
     OUTPUT
     ------
@@ -279,17 +281,32 @@ def load_temperature(
             # Number of cells
             if nn == 1:
                 Ncells = int(line)
+            
+            # Number of species
+            if nn == 2:
+                Nspecies = int(line)
+    
+    # Check that specie number is correct
+    if numb_specie <= Nspecies and numb_specie > 0:
+        # Create density np.array
+        dust_temperatures = np.zeros(Ncells)
 
-    # Create density np.array
-    dust_temperatures = np.zeros(Ncells)
+        # Extract dust densities (reduce specie number by 1, since python starts at index=0)
+        ncounter = 0
+        numb_specie -= 1
 
-    # Extract dust densities
-    with open(path,'r') as f:
-        for nn,line in enumerate(f.readlines()):
-            if nn > 2:
-                dust_temperatures[nn-3] = float(line)
+        with open(path,'r') as f:
+            for nn,line in enumerate(f.readlines()):
+                if (2 + Ncells*numb_specie) < nn < (2+ Ncells*(numb_specie+1)):
+                    dust_temperatures[ncounter] = float(line)
+                    ncounter += 1
 
-    return Ncells,dust_temperatures
+        return Ncells,Nspecies,dust_temperatures
+    
+    else:
+        # Otherwise, return error message
+        print(f'ERROR: number of species in data is {Nspecies}, your specie-number was {numb_specie}')
+
 
 
 # Load SED
@@ -421,7 +438,7 @@ def plot_alldensity_radius(
                     numb_specie=nn
                 )[2]
             )
-
+    
     # Control colours of each density distribution
     colour = cm.rainbow(np.linspace(0, 1, Nspec))
 
@@ -435,7 +452,7 @@ def plot_alldensity_radius(
             linestyle='',marker='.',markersize=1
         )
     ax.set(
-        ylabel=r'Density (g\,cm$^{-3}$)',
+        ylabel=r'Density (g cm$^{-3}$)',
         xlabel=r'Distance (AU)',
         title=f'Dust species 1 to {Nspec}'
     )
@@ -452,20 +469,21 @@ def plot_alldensity_radius(
             linestyle='',marker='.',markersize=1
         )
         ax.ravel()[nn].set(
-            ylabel=r'Density (g\,cm$^{-3}$)',
+            ylabel=r'Density (g cm$^{-3}$)',
             xlabel=r'Distance (AU)',
             title=f'Dust specie {nn+1}'
         )
+    fig.tight_layout()
     fig.show()
 
-
-def plot_temperature_radius(
+def plot_onetemperature_radius(
         temperature_path:str='../dust_temperature.dat',
         grid_path:str='../grid_distances.csv',
         amr_path:str='../amr_grid.inp',
+        numb_specie:int=1
     ):
     """
-    Plots one figure with radial temperature distribution.
+    Plots one figure with radial temperature distribution of one specie.
 
     INPUT
     temperature_path: path to dust_temperature.dat
@@ -483,7 +501,10 @@ def plot_temperature_radius(
     )/AUcm
 
     # load dust_temperature
-    temperatures = load_temperature(path=temperature_path)[1]
+    temperatures = load_temperature(
+        path=temperature_path,
+        numb_specie=numb_specie
+    )[2]
 
     # Load and plots r3d density data for ONE dust specie
     fig, ax = plt.figure(), plt.axes()
@@ -492,11 +513,95 @@ def plot_temperature_radius(
         linestyle='',marker='.',markersize=1
     )
     ax.set(
-        ylabel=r'Density (g\,cm$^{-3}$)',
+        ylabel=r'Temperature (K)',
         xlabel=r'Distance (AU)',
-        title='Grid temperatures'
+        title='Grid cell temperatures'
     )
     fig.show()
+
+
+
+
+def plot_alltemperature_radius(
+        temperature_path:str='../dust_temperature.dat',
+        grid_path:str='../grid_distances.csv',
+        amr_path:str='../amr_grid.inp'
+    ):
+    """
+    Plots figures with radial temperature distribution of all species within temperature file.
+
+    INPUT
+    temperature_path: path to dust_temperature.dat
+    grid_path: path to grid_distances.csv'
+    amr_path: path to amr_grid.inp
+
+    OUTPUT
+    Shows figure
+    """
+
+    # Load griddistances
+    griddistances = load_griddistances(
+        gridpath=grid_path,
+        amrpath=amr_path
+    )/AUcm
+
+    # Load first dust_temperature
+    Ncells,Nspec,temperature = load_temperature(
+        path=temperature_path,
+        numb_specie=1
+    )
+    temperatures = [temperature]
+
+    # Load rest of temperatures
+    if Nspec > 1:
+        for numb_specie in range(2,Nspec+1):
+            temperatures.append(
+                load_temperature(
+                    path=temperature_path,
+                    numb_specie=numb_specie
+                )[2]
+            )
+    
+    # Control colours of each density distribution
+    colour = cm.rainbow(np.linspace(0, 1, Nspec))
+
+    # Set objects for plot with all in the same figure
+    fig, ax = plt.figure(), plt.axes()
+    
+    for nn, c in enumerate(colour):
+        ax.plot(
+            griddistances[:,0],temperatures[nn],
+            markeredgecolor=c,
+            linestyle='',marker='.',markersize=1
+        )
+    ax.set(
+        ylabel=r'Cell temperature (K)',
+        xlabel=r'Distance (AU)',
+        title=f'Dust species 1 to {Nspec}'
+    )
+    fig.show()
+
+    # Set objects for subplots (two columns, increasing number of rows)
+    # ax[rows,columns]
+    fig,ax = plt.subplots((-(-Nspec//2)),2)
+
+    for nn, c in enumerate(colour):
+        ax.ravel()[nn].plot(
+            griddistances[:,0],temperatures[nn],
+            markeredgecolor=c,
+            linestyle='',marker='.',markersize=1
+        )
+        ax.ravel()[nn].set(
+            ylabel=r'Cell temperature (K)',
+            xlabel=r'Distance (AU)',
+            title=f'Dust specie {nn+1}'
+        )
+    fig.tight_layout()
+    fig.show()
+
+
+
+
 
 
 # Plot SED
