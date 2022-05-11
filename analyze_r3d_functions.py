@@ -607,50 +607,79 @@ def plot_onekappa(
         path:str='../'
     ):
 
-    # TODO this doesn't work!
+    # Automatically add / to end of path if it's missing
     if path[-1] != '/':
-        path.append('/')
+        path += '/'
 
+    # Extract name from dustopac-file if a number is given
     if specie_number != 0:
-        # Extract name from dustopac-file
         with open(f'{path}dustopac.inp', 'r') as f:
             for nn,line in enumerate(f.readlines()):
                 # Specie-names are on line numbers 1+specie_number*4
                 if nn == 1+specie_number*4:
-                    specie_name = line
-
-
-
-
-        # specie_name = blabla
+                    specie_name = line.strip()
         print(f'Extracting species number {specie_number}: {specie_name}')
 
-
-
+    # Extract species by given name if name is given
     elif len(specie_name) != 0:
-        # Or just extract species by given name
         print(f'Extracting species {specie_name}')
     
+    # If nothing is given, print error
     else:
-        # Nothing is given, print error
         print('ERROR: no species number nor name is given.')
 
-    print(specie_name)
+    # Extract absorption, scattering and scattering angles
+    wavelengths = []
+    absorption = []
+    scattering = []
+    scattangle = []
+    nn = 0
+    with open(f'{path}dustkappa_{specie_name}.inp', 'r') as f:
+        for line in f.readlines():
 
-    # TODO extract and plot kappas, also return kappas
+            # Skip comments and header
+            if line[0] != '#':
+                # second line is number of wavelengths
+                if nn == 1:
+                    Nwave = int(line)
+                
+                # Rest are data:
+                if nn > 1 and nn < Nwave+2:
+                    templine = line.split()
+                    Nplots = len(templine) - 1
 
+                    wavelengths.append(float(templine[0]))
+                    absorption.append(float(templine[1]))
 
-    #with open(f'{path}dustkappa_{specie_name}.inp', 'r') as f:
-    #    print('blabla')
+                    if Nplots > 1:
+                        scattering.append(float(templine[2]))
+                    if Nplots > 2:
+                        scattangle.append(float(templine[3]))
+                
+                # Increase line counter
+                nn += 1
 
+    # Load and plots r3d density data for ONE dust specie
+    fig, ax = plt.figure(), plt.axes()
+    ax.plot(wavelengths,absorption,'b')
+    legendtext = ['Absorption']
 
+    if Nplots > 1:
+        ax.plot(wavelengths,scattering,'r')
+        legendtext.append('Scattering')
 
+    if Nplots > 2:
+        ax.plot(wavelengths,scattangle,'g')
+        legendtext.append(r'Scattering angle: $\left< \cos \theta \right>$')
 
-
-
-    return 'hej'
-
-
+    ax.legend(legendtext)
+    ax.set(
+        ylabel=r'$\kappa_{\rm abs}$, $\kappa_{\rm scat}$ (cm$^2$/g)',
+        xlabel=r'Wavelength ($\mu$m)',
+        title=f'Kappa of {specie_name}',
+        xscale='log',yscale='log'
+    )
+    fig.show();
 
 
 
@@ -660,9 +689,10 @@ def plot_sed(
         distance:float=1
     ):
 
+    # Load SED
     wavelengths,spectrum = load_spectrum(path=path,distance=distance)
     
-    # Load and plots r3d density data for ONE dust specie
+    # plot SED
     fig, ax = plt.figure(), plt.axes()
     ax.plot(
         wavelengths,spectrum,'b'
