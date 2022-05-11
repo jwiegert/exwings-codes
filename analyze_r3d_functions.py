@@ -258,6 +258,23 @@ def load_onekappa(
         specie_number:int=0,
         path:str='../'
     ):
+    """
+    Loads absorption/scattering/scattering angles of one dust specie
+    
+    INPUT
+    specie_name: a string
+    OR
+    specie_number: an integer
+    path: path to folder containing dustkappa and dustopac-files
+
+    OUTPUT
+    specie_name: a string
+    wavelenths: a list of wavelengths in micro meters
+    kappadata: a list with lsits containing 
+        [0] absorption in cm^2/g
+        [1] scattering in cm^2/g
+        [2] mean scattering angles in <cos theta>
+    """
 
     # Automatically add / to end of path if it's missing
     if path[-1] != '/':
@@ -311,11 +328,11 @@ def load_onekappa(
                 # Increase line counter
                 nn += 1
     if Ndata == 1:
-        return wavelengths,absorption
+        return specie_name,wavelengths,absorption
     if Ndata == 2:
-        return wavelengths,[absorption,scattering]
+        return specie_name,wavelengths,[absorption,scattering]
     if Ndata == 3:
-        return wavelengths,[absorption,scattering,scattangle]
+        return specie_name,wavelengths,[absorption,scattering,scattangle]
 
 
 # ------------------------------------------------------------ #
@@ -669,9 +686,21 @@ def plot_onekappa(
         specie_number:int=0,
         path:str='../'
     ):
+    """
+    Load and plots absorption/scattering/scattering angles of one dust specie
+    
+    INPUT
+    specie_name: a string
+    OR
+    specie_number: an integer
+    path: path to folder containing dustkappa and dustopac-files
+
+    OUTPUT
+    Figure.
+    """
 
     # Load abs-scat-data
-    wavelengths,kappadata = load_onekappa(
+    specie_name,wavelengths,kappadata = load_onekappa(
         specie_name=specie_name,
         specie_number=specie_number,
         path=path
@@ -699,6 +728,71 @@ def plot_onekappa(
     )
     fig.show();
 
+
+# Plot absorption, scattering, and angles of the various species
+def plot_allkappa(
+        path:str='../'
+    ):
+    """
+    Load and plots absorption/scattering/scattering angles of all species in dustopac at folder of path
+    
+    INPUT
+    path: path to folder containing dustkappa and dustopac-files
+
+    OUTPUT
+    Figure.
+    """
+
+    # Automatically add / to end of path if it's missing
+    if path[-1] != '/':
+        path += '/'
+
+    # Extract specie names from dustopac-file
+    counter = 5
+    specie_names = []
+    with open(f'{path}dustopac.inp', 'r') as f:
+        for nn,line in enumerate(f.readlines()):
+            
+            # Specie-names are on line numbers 1+specie_number*4
+            if nn == counter:
+                specie_names.append(line.strip())
+                counter +=4
+
+    # Extract all opacities
+    kappas = []
+    Nkappa = []
+    for specie_name in specie_names:
+        specie_name,wavelengths,kappadata = load_onekappa(
+            specie_name=specie_name,
+            path=path
+        )
+        # Save number of data in each dataset
+        Nkappa.append(len(kappadata))
+
+        # Save all data of each dataset
+        for kappa in kappadata:
+            kappas.append(kappa)
+    
+    # Plot all data in subplots
+    # One plot for absorption
+    # one for scattering
+    # and one final for scattering angles
+    figuretitles = ['Absorption', 'Scattering', 'Average scattering angle']
+    yaxislabels = [r'$\kappa_{\rm abs}$ (cm$^2$/g)',r'$\kappa_{\rm scat}$ (cm$^2$/g)',r'$\left< \cos \theta \right>$']
+    counter = 0
+    fig, ax = plt.subplots(1,max(Nkappa))
+    for nkappa in Nkappa:
+        for nn in range(nkappa):
+            ax[nn].plot(wavelengths,kappas[counter + nn])
+            ax[nn].set(
+                ylabel=yaxislabels[nn],
+                xlabel=r'Wavelength ($\mu$m)',
+                title=figuretitles[nn],
+                xscale='log',yscale='log'
+            )
+        counter += nkappa
+    fig.tight_layout()
+    fig.show();
 
 
 # Plot SED
