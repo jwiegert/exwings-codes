@@ -252,6 +252,72 @@ def load_dustdensity(
 
         return Ncells,Nspec,dust_densities
 
+# Load absorptionscattering data
+def load_onekappa(
+        specie_name:str='',
+        specie_number:int=0,
+        path:str='../'
+    ):
+
+    # Automatically add / to end of path if it's missing
+    if path[-1] != '/':
+        path += '/'
+
+    # Extract name from dustopac-file if a number is given
+    if specie_number != 0:
+        with open(f'{path}dustopac.inp', 'r') as f:
+            for nn,line in enumerate(f.readlines()):
+                # Specie-names are on line numbers 1+specie_number*4
+                if nn == 1+specie_number*4:
+                    specie_name = line.strip()
+        print(f'Extracting species number {specie_number}: {specie_name}')
+
+    # Extract species by given name if name is given
+    elif len(specie_name) != 0:
+        print(f'Extracting species {specie_name}')
+    
+    # If nothing is given, print error
+    else:
+        print('ERROR: no species number nor name is given.')
+
+    # Extract absorption, scattering and scattering angles
+    wavelengths = []
+    absorption = []
+    scattering = []
+    scattangle = []
+    nn = 0
+    with open(f'{path}dustkappa_{specie_name}.inp', 'r') as f:
+        for line in f.readlines():
+
+            # Skip comments and header
+            if line[0] != '#':
+                # second line is number of wavelengths
+                if nn == 1:
+                    Nwave = int(line)
+                
+                # Rest are data:
+                if nn > 1 and nn < Nwave+2:
+                    templine = line.split()
+                    Ndata = len(templine) - 1
+
+                    wavelengths.append(float(templine[0]))
+                    absorption.append(float(templine[1]))
+
+                    if Ndata > 1:
+                        scattering.append(float(templine[2]))
+                    if Ndata > 2:
+                        scattangle.append(float(templine[3]))
+                
+                # Increase line counter
+                nn += 1
+    if Ndata == 1:
+        return wavelengths,absorption
+    if Ndata == 2:
+        return wavelengths,[absorption,scattering]
+    if Ndata == 3:
+        return wavelengths,[absorption,scattering,scattangle]
+
+
 # ------------------------------------------------------------ #
 # Load output data from R3D
 
@@ -598,78 +664,30 @@ def plot_alltemperature_radius(
     fig.show()
 
 # Plot absorption, scattering, and angles of the various species
-
-# load by name or load by specie-number? or both?
-
 def plot_onekappa(
         specie_name:str='',
         specie_number:int=0,
         path:str='../'
     ):
 
-    # Automatically add / to end of path if it's missing
-    if path[-1] != '/':
-        path += '/'
-
-    # Extract name from dustopac-file if a number is given
-    if specie_number != 0:
-        with open(f'{path}dustopac.inp', 'r') as f:
-            for nn,line in enumerate(f.readlines()):
-                # Specie-names are on line numbers 1+specie_number*4
-                if nn == 1+specie_number*4:
-                    specie_name = line.strip()
-        print(f'Extracting species number {specie_number}: {specie_name}')
-
-    # Extract species by given name if name is given
-    elif len(specie_name) != 0:
-        print(f'Extracting species {specie_name}')
-    
-    # If nothing is given, print error
-    else:
-        print('ERROR: no species number nor name is given.')
-
-    # Extract absorption, scattering and scattering angles
-    wavelengths = []
-    absorption = []
-    scattering = []
-    scattangle = []
-    nn = 0
-    with open(f'{path}dustkappa_{specie_name}.inp', 'r') as f:
-        for line in f.readlines():
-
-            # Skip comments and header
-            if line[0] != '#':
-                # second line is number of wavelengths
-                if nn == 1:
-                    Nwave = int(line)
-                
-                # Rest are data:
-                if nn > 1 and nn < Nwave+2:
-                    templine = line.split()
-                    Nplots = len(templine) - 1
-
-                    wavelengths.append(float(templine[0]))
-                    absorption.append(float(templine[1]))
-
-                    if Nplots > 1:
-                        scattering.append(float(templine[2]))
-                    if Nplots > 2:
-                        scattangle.append(float(templine[3]))
-                
-                # Increase line counter
-                nn += 1
+    # Load abs-scat-data
+    wavelengths,kappadata = load_onekappa(
+        specie_name=specie_name,
+        specie_number=specie_number,
+        path=path
+    )
 
     # Load and plots r3d density data for ONE dust specie
     fig, ax = plt.figure(), plt.axes()
-    ax.plot(wavelengths,absorption,'b')
+    ax.plot(wavelengths,kappadata[0],'b')
     legendtext = ['Absorption']
 
-    if Nplots > 1:
-        ax.plot(wavelengths,scattering,'r')
+    if len(kappadata) > 1:
+        ax.plot(wavelengths,kappadata[1],'r')
         legendtext.append('Scattering')
 
-    if Nplots > 2:
-        ax.plot(wavelengths,scattangle,'g')
+    if len(kappadata) > 2:
+        ax.plot(wavelengths,kappadata[2],'g')
         legendtext.append(r'Scattering angle: $\left< \cos \theta \right>$')
 
     ax.legend(legendtext)
