@@ -955,7 +955,9 @@ def compute_luminosity(path:str='../r3dsims/spectrum.out',distance:float=1):
 def compute_opticalthick(
         path:str='../',
     ):
-
+    """
+    INFO
+    """
 
     # Automatically add / to end of path if it's missing
     if path[-1] != '/':
