@@ -602,6 +602,7 @@ def plot_onetemperature_radius(
     )
     fig.show()
 
+
 # Plot all temperatures
 def plot_alltemperature_radius(
         temperature_path:str='../dust_temperature.dat',
@@ -679,6 +680,7 @@ def plot_alltemperature_radius(
         )
     fig.tight_layout()
     fig.show()
+
 
 # Plot absorption, scattering, and angles of the various species
 def plot_onekappa(
@@ -947,3 +949,68 @@ def compute_luminosity(path:str='../r3dsims/spectrum.out',distance:float=1):
     luminosity = 4.*np.pi*(distance*pc)**2. * sedintegral
 
     return luminosity
+
+
+# TODO
+def compute_opticalthick(
+        path:str='../',
+    ):
+
+
+    # Automatically add / to end of path if it's missing
+    if path[-1] != '/':
+        path += '/'
+
+    # Load densities (first one and then the rest to get the Nspecies)
+    Ncells, Nspecies, density = load_dustdensity(
+        path=path+'dust_density.inp',
+        numb_specie=1,
+    )
+    densities = np.zeros((Ncells,Nspecies))
+    densities[:,0] = density
+    for nspecie in range(1,Nspecies):
+        Ncells, Nspecies, density = load_dustdensity(
+            path=path+'dust_density.inp',
+            numb_specie=nspecie,
+        )
+        densities[:,nspecie] = density
+
+    # Load Absorptions
+    kappas = []
+    Nkappa = []
+    for nspecie in range(Nspecies):
+        specie_name,wavelengths,kappadata = load_onekappa(
+            specie_number=nspecie+1,
+            path=path
+        )
+        # Save number of data (ie abs, scat, angle) for each specie
+        Nkappa.append(len(kappadata))
+
+        # Save all data of each dataset
+        for kappa in kappadata:
+            kappas.append(kappa)
+
+    # Load griddistances [radial,x,y,z]
+    grid_distances = load_griddistances(
+        gridpath=path+'grid_distances.csv',
+        amrpath=path+'amr_grid.inp'
+    )
+
+    # Compute optical thickness-variation for all dust species and cells
+    # i.e. : dtau/dx = -kappa_opac * density
+    dtaudx = np.zeros(Ncells)
+
+    for nspecie in range(Nspecies):
+
+        # Take the maximum of the combination of the abs and scat
+        kappa_opac = max(
+            np.array(kappas[nspecie*Nkappa[nspecie]]) + np.array(kappas[nspecie*Nkappa[nspecie]+1])
+        )
+
+        for nn in range(Ncells):
+            dtaudx[nn] += kappa_opac * densities[nn,nspecie]
+    # plot vs radius
+
+    # TODO compute LOS-opticalthickness vs LOS-length
+
+    return 'hej'
