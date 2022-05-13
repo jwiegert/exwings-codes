@@ -73,8 +73,6 @@ def create_grid(
     ------
     gridedge: total size of the grid side (in AU)
 
-    basecubesize: length of side of base cells in AU (these are cubes) [int or float]
-    
     nxyz: number of base cells along one side of the whole grid [even number, int]
     
     refinementlist: list of radial distances in AU to each level of refinement [float,float], no more than 4 numbers!

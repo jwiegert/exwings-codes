@@ -120,7 +120,7 @@ def load_star_properties(
     # Load sav-file
     c5ddata = readsav(savpath)
 
-    # Extract data - TODO MAY HAVE TO CHOSE THIS MANUALLY DEPENDING ON FILE
+    # Extract data
     c5ddata = c5ddata['ful']
 
     # Get number of gridcells from co5bold data
@@ -188,11 +188,9 @@ def load_dustdensity(
     
     return c5ddust_densities, c5ddust_temperatures
 
-
-
-
-
-
+# ==========================================================================
+# Functions to create r3d-data from c5d-data
+# Extract data on star and create r3d-files from it
 def create_star(
         # All necessary inputs
         # paths!
@@ -215,7 +213,6 @@ def create_star(
     ------
     R3D density file: dust_density_star.inp
     R3D temperature file: dust_temperature_star.dat
-    TODO: star's  opacities
     """
 
     # Load R3D grid
@@ -358,6 +355,7 @@ def create_star(
 
     print('C5D Dust-star: done.\n')
 
+
 # Takes the stellar data from c5d-data that has been translated to r3d but as one specie, and
 # transforms it into separate species on a chosen number of bins of opacities as given by the
 # c5d-data.
@@ -370,6 +368,13 @@ def create_staropacity(
     ):
     """
     nbins = number of species the star will consist of
+
+    OUTPUT
+    dust_density_star_opabins.inp
+    dust_temperature_star_opabins.dat
+    star_opacities_bins.dat
+    dustopac_starbins.inp
+    dustkappa_star{no+1}.inp
     """
 
     if nbins > 20:
@@ -493,6 +498,8 @@ def create_staropacity(
 
 
 
+# ====================================================================
+# Funcs to load and create dusty envelope
 
 # Extract and construct dust_density-files from C5D-data
 # uses ['Z'][0][0][40][x][y][z] and ['Z'][0][0][43][x][y][z]

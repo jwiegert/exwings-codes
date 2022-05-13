@@ -3,7 +3,7 @@
 # Useful packages
 import os
 import csv
-from turtle import distance
+#from turtle import distance
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm, xlabel, xscale, yscale
@@ -15,9 +15,6 @@ AUcm = 1.49598e13 # AU in cm
 
 # ------------------------------------------------------------ #
 # Functions that load various r3d input data
-
-# TODO?
-# Both these below need the number of species?
 
 # Load grid properties
 def load_gridprops(amrpath:str='../amr_grid.inp'):
@@ -120,6 +117,7 @@ def load_griddistances(
     else:
         return f'ERROR: load_griddistances can not find {gridpath}.'
 
+
 # Load list of grid cell sizes
 def load_cellsizes(
         sizepath:str='../grid_cellsizes.csv',
@@ -201,6 +199,8 @@ def load_wavelengthgrid(path:str='../wavelength_micron.inp'):
             
     return wavelengths,nwave
 
+
+# Load one density
 def load_dustdensity(
         path:str='../dust_density.inp',
         numb_specie:int=1
@@ -251,6 +251,7 @@ def load_dustdensity(
                     dust_densities[nn-3-Ncells*numb_specie] = float(line)
 
         return Ncells,Nspec,dust_densities
+
 
 # Load absorptionscattering data
 def load_onekappa(
@@ -389,7 +390,6 @@ def load_temperature(
     else:
         # Otherwise, return error message
         print(f'ERROR: number of species in data is {Nspecies}, your specie-number was {numb_specie}')
-
 
 
 # Load SED
