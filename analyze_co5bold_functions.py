@@ -654,14 +654,8 @@ def create_dustfiles(
                     # Average the density of each r3dcell by number of c5dcells
                     # and
                     # Recalculate number density of monomers to mass density
-                    # 4/3 pi agrain**3 * rhograin * numberdensity
-                    # Units are in cgs.
-                    #r3d_density *= \
-                    #    4.1887902047863905 * grainsizecm**3 * graindensity[nspecies] / nchildcells
-                    # TODO: add 
                     # Mg2SiO4: 2*24.305u + 28.085u + 4*15.999u = 140.69u = 2.3362e-22 gram
                     r3d_density *= monomermasses[nspecies] / nchildcells
-
 
                     # Write data to r3d files
                     fdensity.write(f'{r3d_density}\n')
