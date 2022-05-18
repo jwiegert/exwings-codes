@@ -364,6 +364,7 @@ def create_staropacity(
         pathstardensity:str='../dust_density_star.inp',
         pathwavelength:str='../wavelength_micron.inp',
         pathtemperature:str='../dust_temperature.dat',
+        effective_temperature:int=3000,
         nbins:int=5
     ):
     """
@@ -385,7 +386,7 @@ def create_staropacity(
         Ncells,Nspec,star_densities = a3d.load_dustdensity(path=pathstardensity,numb_specie=1)
 
         # Load temperature_star
-        Ncells,temperatures = a3d.load_temperature(path=pathtemperature)
+        Ncells,Nspec,temperatures = a3d.load_temperature(path=pathtemperature)
 
         # load opacity.dat
         opacity = []
@@ -398,61 +399,59 @@ def create_staropacity(
         wavelengths,Nwave = a3d.load_wavelengthgrid(path=pathwavelength)
 
         # Bin the opacities
-        print(f'Binning star-opacities to {nbins} species.')
 
-        # Take all bins from histogram above the average bin-height
-        # Only take one from those below (change later to some value dependant on the range?)
-        # Adapt length (number bins) until the chosen number of bins-1 are achieved (done here with while)
-        # The last bin is the average of the rest.
-        valuestemp_length = 0
-        bins = 0
-        while valuestemp_length < nbins-1:
-            bins += 1
+        # Bin by temperatures instead! Take the effective T of the star, 
+        # only one bin above, and then several below
+        # Can I automatically find the effective temperature?
+        # or use some input value? It's never above eg 5000K
 
-            # Extract bins from histogram
-            histvalues = np.histogram(opacity, range=(1,max(opacity)), bins=bins)
+        # 1. set up temperature ranges
+        # 2. extract all cells with these temperatures
+        # 3. take the average opac of these cells and set these as the specie-opac's
+        # 4. save new opac-files, density file, temperature file
 
-            # Take bins of those larger than average
-            valuestemp = [
-                histvalues[1][nn] for nn in np.where(histvalues[0] > np.mean(histvalues[0]))
-            ]
-            valuestemp_length = len(valuestemp[0])
+        # effective_temperature
 
-        # Save the average value of each bin
-        values = np.zeros(nbins)
 
-        values[0] = np.array(opacity)[
-            np.where(opacity < histvalues[1][1])[0]
-        ].mean()
-
-        for nn in range(1, nbins-1):
-            values[nn] = np.array(opacity)[np.where(
-                (opacity > histvalues[1][nn]) & (opacity < histvalues[1][nn+1])
-            )[0]].mean()
-
-        # For the last bin, take one average of all higher values
-        values[-1] = np.array(opacity)[
-            np.where(opacity > histvalues[1][nbins])[0]
-        ].mean()
-
-        # Bin the opacities to those that are nearest the bins
-        opacitybins = np.zeros(len(opacity))
-        for no,opac in enumerate(opacity):
-            nn = (np.abs(values - opac)).argmin()
-            opacitybins[no] = values[nn]
-
-        print('Creating new density, temperature and binned opacity files.')
         # Create new density file with densities separated by species decided by the binning
         # of the opacities of the star
-        new_densities = np.zeros(nbins*Ncells)
-        new_temperatures = np.zeros(nbins*Ncells)
-        for nn in range(Ncells):
-            for no,opac in enumerate(values):
-                if opacitybins[nn] == opac:
-                    new_densities[nn + Ncells*no] = star_densities[nn]
-                    new_temperatures[nn + Ncells*no] = temperatures[nn]
 
-        # Print new star-density file
+
+        print(f'Binning star to {nbins} species.')
+        if np.min(temperatures) == 0:
+            temperature_bins = np.linspace(effective_temperature,np.sort(temperatures)[1],nbins)
+        else: 
+            temperature_bins = np.linspace(effective_temperature,np.min(temperatures),nbins)
+        print(f'Temperature bin-ranges are: {temperature_bins}')
+
+        new_temperatures = np.zeros(nbins*Ncells)
+        new_densities = np.zeros(nbins*Ncells)
+        opacitybins = np.zeros(nbins*Ncells)
+
+        for nn in range(Ncells):
+
+            # First bin is inside the star
+            if temperatures[nn] > temperature_bins[0]:
+                new_temperatures[nn] = temperatures[nn]
+                new_densities[nn] = star_densities[nn]
+                opacitybins[nn] = opacity[nn]
+
+            # Remaining bins are outside and within these ranges
+            for nbin in range(1,nbins):
+                if temperature_bins[nbin-1] > temperatures[nn] > temperature_bins[nbin]:
+                    new_temperatures[nn + Ncells*nbin] = temperatures[nn]
+                    new_densities[nn + Ncells*nbin] = star_densities[nn]
+                    opacitybins[nn + Ncells*nbin] = opacity[nn]
+                
+        # Create new opacities from these limits
+        opacityvalues = np.zeros(nbins)
+        for nbin in range(1,nbins+1):
+            opacityvalues[nbin-1] = np.mean(opacitybins[Ncells*(nbin-1):Ncells*nbin])
+            print(f'{nbin}: {Ncells*(nbin-1)}:{Ncells*nbin} OPAC: {opacityvalues[nbin-1]}')
+            
+        # Print new star-density, temperature and opacitybin-files
+        print('Writing new radmc3d-files')
+
         with open('../dust_density_star_opabins.inp', 'w') as fdensity,\
              open('../dust_temperature_star_opabins.dat', 'w') as ftemperature,\
              open('../star_opacities_bins.dat', 'w') as fopacity:
@@ -484,7 +483,7 @@ def create_staropacity(
 
         # Print opacity files, star-kappa-files
         # TODO perhaps add a factor to compensate since this kappa is just some constant number
-        for no,opac in enumerate(values):
+        for no,opac in enumerate(opacityvalues):
             with open(f'../dustkappa_star{no+1}.inp', 'w') as fopac:
 
                 # Write header (1 for no scattering in this and number of wavelengths)
