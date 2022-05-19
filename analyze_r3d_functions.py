@@ -355,6 +355,7 @@ def load_temperature(
     OUTPUT
     ------
     Ncells: Number of cells in grid (nleafs)
+    Nspecies: number of species in data
     dust_temperatures: np.array containing temperatures in grid
     """
 
@@ -899,7 +900,7 @@ def plot_images(
         fig, ax = plt.subplots(1,2, dpi=150, num=image)
         
         im0 = ax[0].imshow(
-            image2d, origin='lower', extent=axisplot
+            image2d, origin='lower', extent=axisplot, cmap=plt.get_cmap('hot')
         )
         ax[0].set(
             title=f"{image.replace('image_', '').replace('.out', '')} (Lin)", 
@@ -908,7 +909,7 @@ def plot_images(
         )
                 
         ax[1].imshow(
-            image2dlog, origin='lower', extent=axisplot
+            image2dlog, origin='lower', extent=axisplot, cmap=plt.get_cmap('hot')
         )
         ax[1].set(
             title=f"{image.replace('image_', '').replace('.out', '')} (Log)", 
@@ -952,6 +953,14 @@ def compute_luminosity(path:str='../r3dsims/spectrum.out',distance:float=1):
 
 
 # TODO
+
+
+#> ta medelvärdet av alla dtaudx vid samma radier (binna över radier), sen kan du summera baklänges (utifrån) inåt mot mitten - eftersom jag tar medelvärden blir det ju mera av vad man skulle se längs LOS o jag borde inte behöva nåt sfäriskt element och integral eller så va? - det blir ju medel-LOS'en så att säga
+#> skriv ut ekvation som kopplar densitet/stjärnmassa & opacity med när stjärnan blir optiskt tjock - med densiteten så kan du på det viset anpassa opaciteten så att stjärnan blir optisk tjock vid effektiva radien, och då får rätt radie på den. Det kan du göra mha att du har densitet(radie)
+#> jag kan plotta rumsderiavatan av optisk tjocklek för varje cell, och plotta mot radiellt avstånd till centrum 
+#> jag kan ta ut LOS-avståndet utifrån och se hur tau ökar med
+
+
 def compute_opticalthick(
         path:str='../',
     ):

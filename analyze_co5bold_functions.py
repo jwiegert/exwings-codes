@@ -364,7 +364,7 @@ def create_staropacity(
         pathstardensity:str='../dust_density_star.inp',
         pathwavelength:str='../wavelength_micron.inp',
         pathtemperature:str='../dust_temperature.dat',
-        effective_temperature:int=3000,
+        effective_temperature:int=4000,
         nbins:int=5
     ):
     """
@@ -443,10 +443,20 @@ def create_staropacity(
                     new_densities[nn + Ncells*nbin] = star_densities[nn]
                     opacitybins[nn + Ncells*nbin] = opacity[nn]
                 
+
+
+        # TODO FIXA DETTA!
+        # medelvärden blir jäkla weightat mot noll, ska bara ta medelvärdet av alla ickenollvärden
+
         # Create new opacities from these limits
         opacityvalues = np.zeros(nbins)
         for nbin in range(1,nbins+1):
-            opacityvalues[nbin-1] = np.mean(opacitybins[Ncells*(nbin-1):Ncells*nbin])
+            opacityvalues[nbin-1] = np.mean(
+                    opacitybins[
+                        Ncells*(nbin-1) + np.where(opacitybins[Ncells*(nbin-1):Ncells*nbin] > 0)[0]
+                    ]
+                )
+            #print(opacitybins[Ncells*(nbin-1) + np.where(opacitybins[Ncells*(nbin-1):Ncells*nbin] > 0)[0]])
             print(f'{nbin}: {Ncells*(nbin-1)}:{Ncells*nbin} OPAC: {opacityvalues[nbin-1]}')
             
         # Print new star-density, temperature and opacitybin-files
@@ -465,10 +475,7 @@ def create_staropacity(
             for nn,dens in enumerate(new_densities):
                 fdensity.write(f'{dens}\n')
                 ftemperature.write(f'{new_temperatures[nn]}\n')
-
-                # And opacity bins, not necessary for simulations but useful for checking input data later
-                if nn < Ncells:
-                    fopacity.write(f'{opacitybins[nn]}\n')
+                fopacity.write(f'{opacitybins[nn]}\n')
 
         # Print new dustopac_starbins.inp file
         print('Writing opacity files for the binned star.')
