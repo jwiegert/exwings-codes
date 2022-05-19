@@ -442,11 +442,6 @@ def create_staropacity(
                     new_temperatures[nn + Ncells*nbin] = temperatures[nn]
                     new_densities[nn + Ncells*nbin] = star_densities[nn]
                     opacitybins[nn + Ncells*nbin] = opacity[nn]
-                
-
-
-        # TODO FIXA DETTA!
-        # medelvärden blir jäkla weightat mot noll, ska bara ta medelvärdet av alla ickenollvärden
 
         # Create new opacities from these limits
         opacityvalues = np.zeros(nbins)

@@ -955,12 +955,6 @@ def compute_luminosity(path:str='../r3dsims/spectrum.out',distance:float=1):
 # TODO
 
 
-#> ta medelvärdet av alla dtaudx vid samma radier (binna över radier), sen kan du summera baklänges (utifrån) inåt mot mitten - eftersom jag tar medelvärden blir det ju mera av vad man skulle se längs LOS o jag borde inte behöva nåt sfäriskt element och integral eller så va? - det blir ju medel-LOS'en så att säga
-#> skriv ut ekvation som kopplar densitet/stjärnmassa & opacity med när stjärnan blir optiskt tjock - med densiteten så kan du på det viset anpassa opaciteten så att stjärnan blir optisk tjock vid effektiva radien, och då får rätt radie på den. Det kan du göra mha att du har densitet(radie)
-#> jag kan plotta rumsderiavatan av optisk tjocklek för varje cell, och plotta mot radiellt avstånd till centrum 
-#> jag kan ta ut LOS-avståndet utifrån och se hur tau ökar med
-
-
 def compute_opticalthick(
         path:str='../',
     ):
@@ -984,22 +978,34 @@ def compute_opticalthick(
             path=path+'dust_density.inp',
             numb_specie=nspecie,
         )
+        # Add all densities to one 2D array
         densities[:,nspecie] = density
 
     # Load Absorptions
-    kappas = []
-    Nkappa = []
+    kappa = 0
+    kappas = np.zeros(Ncells)
     for nspecie in range(Nspecies):
         specie_name,wavelengths,kappadata = load_onekappa(
             specie_number=nspecie+1,
             path=path
         )
-        # Save number of data (ie abs, scat, angle) for each specie
-        Nkappa.append(len(kappadata))
+        kappadata = np.array(kappadata)
 
-        # Save all data of each dataset
-        for kappa in kappadata:
-            kappas.append(kappa)
+        # Save maximum opacity of each specie
+        kappa = np.max(np.array(kappadata[0] + kappadata[1]))
+
+        # Create an Ncells long array with the opacities of each specie at correct cell index
+        # For this I can use the densities
+        specieindeces = np.where(densities[:,nspecie] > 0)
+        kappas[specieindeces] = kappa
+
+    return kappas
+
+
+
+    """
+    # Multiply kappa with densities
+    kappas = kappas * densities
 
     # Load griddistances [radial,x,y,z]
     grid_distances = load_griddistances(
@@ -1007,21 +1013,37 @@ def compute_opticalthick(
         amrpath=path+'amr_grid.inp'
     )
 
-    # Compute optical thickness-variation for all dust species and cells
-    # i.e. : dtau/dx = -kappa_opac * density
-    dtaudx = np.zeros(Ncells)
+    # Set up arrays for final optical depth computations
+    dxarray = np.linspace(0,np.max(grid_distances[:,0]),100)
+    dtauarray = np.zeros(100)
 
-    for nspecie in range(Nspecies):
+    for nx in range(np.shape(dxarray)[0]-1):
 
-        # Take the maximum of the combination of the abs and scat
-        kappa_opac = max(
-            np.array(kappas[nspecie*Nkappa[nspecie]]) + np.array(kappas[nspecie*Nkappa[nspecie]+1])
+        # Extract indeces for each bin
+        binindeces = np.where(
+            (dxarray[nx] < grid_distances[:,0]) & (grid_distances[:,0] < dxarray[nx+1])
         )
 
-        for nn in range(Ncells):
-            dtaudx[nn] += kappa_opac * densities[nn,nspecie]
-    # plot vs radius
+        # Average optical depth difference for each bin is then
+        dtauarray[nx] = np.mean(kappas[binindeces]) * (dxarray[nx+1] - dxarray[nx])
 
-    # TODO compute LOS-opticalthickness vs LOS-length
+        # Optical depth along line of sight is then
+        dtauarray = np.cumsum(dtauarray[::-1])[::-1]"""
 
-    return 'hej'
+    #return dtauarray,dxarray
+
+
+
+#> ta medelvärdet av alla dtaudx vid samma radier (binna över radier), sen kan du summera baklänges
+#  (utifrån) inåt mot mitten - eftersom jag tar medelvärden blir det ju mera av vad man skulle se
+#  längs LOS o jag borde inte behöva nåt sfäriskt element och integral eller så va? - det blir ju
+#  medel-LOS'en så att säga
+
+#> skriv ut ekvation som kopplar densitet/stjärnmassa & opacity med när stjärnan blir optiskt tjock
+#  - med densiteten så kan du på det viset anpassa opaciteten så att stjärnan blir optisk tjock vid
+#  effektiva radien, och då får rätt radie på den. Det kan du göra mha att du har densitet(radie)
+
+#> jag kan plotta rumsderiavatan av optisk tjocklek för varje cell, och plotta mot radiellt avstånd
+#  till centrum 
+#> jag kan ta ut LOS-avståndet utifrån och se hur tau ökar med
+
