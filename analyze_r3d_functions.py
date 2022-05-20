@@ -221,36 +221,39 @@ def load_dustdensity(
 
     """
 
-    # Read header
-    with open(path,'r') as f:
-        for nn,line in enumerate(f.readlines()):
-
-            # Number of cells
-            if nn == 1:
-                Ncells = int(line)
-
-            # Total number of species
-            if nn == 2:
-                Nspec = int(line)
-
-    # Check that the chosen number of specie exists
-    if numb_specie > Nspec:
-        print('\nERROR\nThis dust specie doesnt exist.\n')
-
+    if numb_specie == 0:
+        print(f'ERROR numb of specie cant be 0')
     else:
-        # Reduce specie number by 1 (index starts at 0)
-        numb_specie -= 1
-
-        # Create density np.array
-        dust_densities = np.zeros(Ncells)
-
-        # Extract dust densities
+        # Read header
         with open(path,'r') as f:
             for nn,line in enumerate(f.readlines()):
-                if nn > 2+numb_specie*Ncells and nn <= 2+(numb_specie+1)*Ncells:
-                    dust_densities[nn-3-Ncells*numb_specie] = float(line)
 
-        return Ncells,Nspec,dust_densities
+                # Number of cells
+                if nn == 1:
+                    Ncells = int(line)
+
+                # Total number of species
+                if nn == 2:
+                    Nspec = int(line)
+
+        # Check that the chosen number of specie exists
+        if numb_specie > Nspec:
+            print('\nERROR\nThis dust specie doesnt exist.\n')
+
+        else:
+            # Reduce specie number by 1 (index starts at 0)
+            numb_specie -= 1
+
+            # Create density np.array
+            dust_densities = np.zeros(Ncells)
+
+            # Extract dust densities
+            with open(path,'r') as f:
+                for nn,line in enumerate(f.readlines()):
+                    if nn > 2+numb_specie*Ncells and nn <= 2+(numb_specie+1)*Ncells:
+                        dust_densities[nn-3-Ncells*numb_specie] = float(line)
+
+            return Ncells,Nspec,dust_densities
 
 
 # Load absorptionscattering data
@@ -482,9 +485,7 @@ def plot_onedensity_radius(
 
 
 def plot_alldensity_radius(
-        density_path:str='../dust_density.inp',
-        grid_path:str='../grid_distances.csv',
-        amr_path:str='../amr_grid.inp',
+        path:str='../'
     ):
     """
     Plots one figure with radial density distribution of all dust species.
@@ -498,6 +499,15 @@ def plot_alldensity_radius(
     Shows figure
     """
 
+    # Automatically add / to end of path if it's missing
+    if path[-1] != '/':
+        path += '/'
+
+    # Get paths to necessary files
+    density_path = path+'dust_density.inp'
+    grid_path = path+'grid_distances.csv'
+    amr_path = path+'amr_grid.inp'
+    
     # Get info on number of dust species in 
 
     # Load griddistances
@@ -606,9 +616,7 @@ def plot_onetemperature_radius(
 
 # Plot all temperatures
 def plot_alltemperature_radius(
-        temperature_path:str='../dust_temperature.dat',
-        grid_path:str='../grid_distances.csv',
-        amr_path:str='../amr_grid.inp'
+        path:str='../'
     ):
     """
     Plots figures with radial temperature distribution of all species within temperature file.
@@ -621,6 +629,15 @@ def plot_alltemperature_radius(
     OUTPUT
     Shows figure
     """
+
+    # Automatically add / to end of path if it's missing
+    if path[-1] != '/':
+        path += '/'
+
+    # Get paths to necessary files
+    temperature_path = path+'dust_temperature.dat'
+    grid_path = path+'grid_distances.csv'
+    amr_path = path+'amr_grid.inp'
 
     # Load griddistances
     griddistances = load_griddistances(
@@ -976,7 +993,7 @@ def compute_opticalthick(
     for nspecie in range(1,Nspecies):
         Ncells, Nspecies, density = load_dustdensity(
             path=path+'dust_density.inp',
-            numb_specie=nspecie,
+            numb_specie=nspecie+1,
         )
         # Add all densities to one 2D array
         densities[:,nspecie] = density
@@ -984,6 +1001,7 @@ def compute_opticalthick(
     # Load Absorptions
     kappa = 0
     kappas = np.zeros(Ncells)
+    specieindeces = []
     for nspecie in range(Nspecies):
         specie_name,wavelengths,kappadata = load_onekappa(
             specie_number=nspecie+1,
@@ -995,42 +1013,38 @@ def compute_opticalthick(
         kappa = np.max(np.array(kappadata[0] + kappadata[1]))
 
         # Create an Ncells long array with the opacities of each specie at correct cell index
-        # For this I can use the densities
-        specieindeces = np.where(densities[:,nspecie] > 0)
-        kappas[specieindeces] = kappa
-
-    return kappas
-
-
-
-    """
-    # Multiply kappa with densities
-    kappas = kappas * densities
+        # For this I can use the densities (where they are not 0)
+        specieindeces.append(np.where(densities[:,nspecie] > 0)[0])
+        
+        # Save kappa-values and multiply with corresponding densities
+        kappas[specieindeces[nspecie]] = kappa * densities[[specieindeces[nspecie]],nspecie]
 
     # Load griddistances [radial,x,y,z]
-    grid_distances = load_griddistances(
+    griddistances = load_griddistances(
         gridpath=path+'grid_distances.csv',
         amrpath=path+'amr_grid.inp'
     )
 
     # Set up arrays for final optical depth computations
-    dxarray = np.linspace(0,np.max(grid_distances[:,0]),100)
+    dxarray = np.linspace(0,np.max(griddistances[:,0]),100)
     dtauarray = np.zeros(100)
+
 
     for nx in range(np.shape(dxarray)[0]-1):
 
         # Extract indeces for each bin
         binindeces = np.where(
-            (dxarray[nx] < grid_distances[:,0]) & (grid_distances[:,0] < dxarray[nx+1])
+            (dxarray[nx] < griddistances[:,0]) & (griddistances[:,0] < dxarray[nx+1])
         )
 
         # Average optical depth difference for each bin is then
         dtauarray[nx] = np.mean(kappas[binindeces]) * (dxarray[nx+1] - dxarray[nx])
 
         # Optical depth along line of sight is then
-        dtauarray = np.cumsum(dtauarray[::-1])[::-1]"""
-
-    #return dtauarray,dxarray
+        dtauarray = np.cumsum(dtauarray[::-1])[::-1]
+    
+    #return kappas,specieindeces
+    return dtauarray,dxarray
 
 
 
