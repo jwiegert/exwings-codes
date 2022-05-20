@@ -1026,11 +1026,13 @@ def compute_opticalthick(
     )
 
     # Set up arrays for final optical depth computations
-    dxarray = np.linspace(0,np.max(griddistances[:,0]),100)
-    dtauarray = np.zeros(100)
+    # The distance array is tighter on the outer parts of the grid
+    #dxarray = -1*np.logspace(np.log10(np.max(griddistances[:,0])),0,100)+np.max(griddistances[:,0])
+    dxarray = np.linspace(0,np.max(griddistances[:,0]),10)
+    dtauarray = np.zeros(10)
 
-
-    for nx in range(np.shape(dxarray)[0]-1):
+    for nx in range(2,np.shape(dxarray)[0]+1):
+        nx *= -1
 
         # Extract indeces for each bin
         binindeces = np.where(
@@ -1039,25 +1041,13 @@ def compute_opticalthick(
 
         # Average optical depth difference for each bin is then
         dtauarray[nx] = np.mean(kappas[binindeces]) * (dxarray[nx+1] - dxarray[nx])
-
-        # Optical depth along line of sight is then
-        dtauarray = np.cumsum(dtauarray[::-1])[::-1]
     
-    #return kappas,specieindeces
+    # Optical depth along line of sight is then the sum of all outer values
+    dtauarray[-1] = dtauarray[-2]
+    for nx in range(1,np.shape(dxarray)[0]+1):
+        nx *= -1
+        dtauarray[nx] += dtauarray[nx+1]
+
     return dtauarray,dxarray
 
-
-
-#> ta medelvärdet av alla dtaudx vid samma radier (binna över radier), sen kan du summera baklänges
-#  (utifrån) inåt mot mitten - eftersom jag tar medelvärden blir det ju mera av vad man skulle se
-#  längs LOS o jag borde inte behöva nåt sfäriskt element och integral eller så va? - det blir ju
-#  medel-LOS'en så att säga
-
-#> skriv ut ekvation som kopplar densitet/stjärnmassa & opacity med när stjärnan blir optiskt tjock
-#  - med densiteten så kan du på det viset anpassa opaciteten så att stjärnan blir optisk tjock vid
-#  effektiva radien, och då får rätt radie på den. Det kan du göra mha att du har densitet(radie)
-
-#> jag kan plotta rumsderiavatan av optisk tjocklek för varje cell, och plotta mot radiellt avstånd
-#  till centrum 
-#> jag kan ta ut LOS-avståndet utifrån och se hur tau ökar med
 

@@ -364,11 +364,13 @@ def create_staropacity(
         pathstardensity:str='../dust_density_star.inp',
         pathwavelength:str='../wavelength_micron.inp',
         pathtemperature:str='../dust_temperature.dat',
-        effective_temperature:int=4000,
+        temperaturelimit:int=7000,
         nbins:int=5
     ):
     """
+    INPUT
     nbins = number of species the star will consist of
+    temperaturelimit = some limit on where the inner inner part of the star is
 
     OUTPUT
     dust_density_star_opabins.inp
@@ -398,31 +400,13 @@ def create_staropacity(
         # Load wavelengthgrid
         wavelengths,Nwave = a3d.load_wavelengthgrid(path=pathwavelength)
 
-        # Bin the opacities
-
-        # Bin by temperatures instead! Take the effective T of the star, 
-        # only one bin above, and then several below
-        # Can I automatically find the effective temperature?
-        # or use some input value? It's never above eg 5000K
-
-        # 1. set up temperature ranges
-        # 2. extract all cells with these temperatures
-        # 3. take the average opac of these cells and set these as the specie-opac's
-        # 4. save new opac-files, density file, temperature file
-
-        # effective_temperature
-
-
-        # Create new density file with densities separated by species decided by the binning
-        # of the opacities of the star
-
-
+        # Bin the opacities by temperature ranges, the stellar surface is never above eg 5000k
         print(f'Binning star to {nbins} species.')
         if np.min(temperatures) == 0:
-            temperature_bins = np.linspace(effective_temperature,np.sort(temperatures)[1],nbins)
+            temperature_bins = np.linspace(temperaturelimit,np.sort(temperatures)[1],nbins)
         else: 
-            temperature_bins = np.linspace(effective_temperature,np.min(temperatures),nbins)
-        print(f'Temperature bin-ranges are: {temperature_bins}')
+            temperature_bins = np.linspace(temperaturelimit,np.min(temperatures),nbins)
+        print(f'Temperature bin-ranges are (K): {temperature_bins}')
 
         new_temperatures = np.zeros(nbins*Ncells)
         new_densities = np.zeros(nbins*Ncells)
@@ -451,8 +435,7 @@ def create_staropacity(
                         Ncells*(nbin-1) + np.where(opacitybins[Ncells*(nbin-1):Ncells*nbin] > 0)[0]
                     ]
                 )
-            #print(opacitybins[Ncells*(nbin-1) + np.where(opacitybins[Ncells*(nbin-1):Ncells*nbin] > 0)[0]])
-            print(f'{nbin}: {Ncells*(nbin-1)}:{Ncells*nbin} OPAC: {opacityvalues[nbin-1]}')
+            #print(f'{nbin}: {Ncells*(nbin-1)}:{Ncells*nbin} OPAC: {opacityvalues[nbin-1]}')
             
         # Print new star-density, temperature and opacitybin-files
         print('Writing new radmc3d-files')
