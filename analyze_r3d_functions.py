@@ -532,7 +532,7 @@ def plot_alldensity_radius(
                     numb_specie=nn
                 )[2]
             )
-    
+        
     # Control colours of each density distribution
     colour = cm.rainbow(np.linspace(0, 1, Nspec))
 
@@ -540,10 +540,12 @@ def plot_alldensity_radius(
     fig, ax = plt.figure(), plt.axes()
     
     for nn, c in enumerate(colour):
+
+        density = np.array(densities[nn])
+
         ax.plot(
-            griddistances[:,0],densities[nn],
-            markeredgecolor=c,
-            linestyle='',marker='.',markersize=1
+            griddistances[np.where(density > 0)[0],0],density[np.where(density > 0)[0]],
+            markeredgecolor=c,linestyle='',marker='.',markersize=1
         )
     ax.set(
         ylabel=r'Density (g cm$^{-3}$)',
@@ -557,10 +559,12 @@ def plot_alldensity_radius(
     fig,ax = plt.subplots((-(-Nspec//2)),2)
 
     for nn, c in enumerate(colour):
+
+        density = np.array(densities[nn])
+
         ax.ravel()[nn].plot(
-            griddistances[:,0],densities[nn],
-            markeredgecolor=c,
-            linestyle='',marker='.',markersize=1
+            griddistances[np.where(density > 0)[0],0],density[np.where(density > 0)[0]],
+            markeredgecolor=c,linestyle='',marker='.',markersize=1
         )
         ax.ravel()[nn].set(
             ylabel=r'Density (g cm$^{-3}$)',
@@ -669,10 +673,17 @@ def plot_alltemperature_radius(
     fig, ax = plt.figure(), plt.axes()
     
     for nn, c in enumerate(colour):
+
+        temperature = np.array(temperatures[nn])
+
+
         ax.plot(
-            griddistances[:,0],temperatures[nn],
-            markeredgecolor=c,
-            linestyle='',marker='.',markersize=1
+            griddistances[
+                np.where(temperature > 0)[0],0
+            ],temperature[
+                np.where(temperature > 0)[0]
+            ],
+            markeredgecolor=c,linestyle='',marker='.',markersize=1
         )
     ax.set(
         ylabel=r'Cell temperature (K)',
@@ -686,10 +697,16 @@ def plot_alltemperature_radius(
     fig,ax = plt.subplots((-(-Nspec//2)),2)
 
     for nn, c in enumerate(colour):
+
+        temperature = np.array(temperatures[nn])
+
         ax.ravel()[nn].plot(
-            griddistances[:,0],temperatures[nn],
-            markeredgecolor=c,
-            linestyle='',marker='.',markersize=1
+            griddistances[
+                np.where(temperature > 0)[0],0
+            ],temperature[
+                np.where(temperature > 0)[0]
+            ],
+            markeredgecolor=c,linestyle='',marker='.',markersize=1
         )
         ax.ravel()[nn].set(
             ylabel=r'Cell temperature (K)',
@@ -781,6 +798,7 @@ def plot_allkappa(
     # Extract all opacities
     kappas = []
     Nkappa = []
+
     for specie_name in specie_names:
         specie_name,wavelengths,kappadata = load_onekappa(
             specie_name=specie_name,
@@ -792,6 +810,7 @@ def plot_allkappa(
         # Save all data of each dataset
         for kappa in kappadata:
             kappas.append(kappa)
+    
     
     # Plot all data in subplots
     # One plot for absorption
