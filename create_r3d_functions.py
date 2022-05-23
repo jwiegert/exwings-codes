@@ -678,7 +678,7 @@ def create_duststar(
             f.write(f'{density}\n')
 
     # Write dust_temperature
-    print('Writing dust_temperature_star.dat') # TODO: check the correct filenames!
+    print('Writing dust_temperature_star.dat')
     with open('../dust_temperature_star.dat', 'w') as f:
 
         # Header of dust_temperature (and dusttemperature)
