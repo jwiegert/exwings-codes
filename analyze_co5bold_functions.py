@@ -213,6 +213,7 @@ def create_star(
     ------
     R3D density file: dust_density_star.inp
     R3D temperature file: dust_temperature_star.dat
+    Useful file with list of extracted opacities 'kappa': star_opacities.dat
     """
 
     # Load R3D grid
@@ -257,7 +258,7 @@ def create_star(
         adaptive_range = c5dcellsize/r3dcellsizes.min() * 1.1
 
         # Open r3d data files
-        with open('../dust_density_star.inp', 'w') as fdensity, open('../dust_temperature_star.dat', 'w') as ftemperature, open('../star_opacities.dat', 'w') as fopacity:
+        with open('../dust_density_onestar.inp', 'w') as fdensity, open('../dust_temperature_onestar.dat', 'w') as ftemperature, open('../star_opacities.dat', 'w') as fopacity:
 
             # Write headers:
             # 1
