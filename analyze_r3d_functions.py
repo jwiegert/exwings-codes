@@ -552,6 +552,7 @@ def plot_alldensity_radius(
         xlabel=r'Distance (AU)',
         title=f'Dust species 1 to {Nspec}'
     )
+    fig.tight_layout()
     fig.show()
 
     # Set objects for subplots (two columns, increasing number of rows)
@@ -690,6 +691,7 @@ def plot_alltemperature_radius(
         xlabel=r'Distance (AU)',
         title=f'Dust species 1 to {Nspec}'
     )
+    fig.tight_layout()
     fig.show()
 
     # Set objects for subplots (two columns, increasing number of rows)

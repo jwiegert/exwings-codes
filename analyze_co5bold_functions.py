@@ -354,7 +354,7 @@ def create_star(
                     progbar += 1
                     print('Finished 75 per cent of the grid.')
 
-    print('C5D Dust-star: done.\n')
+    print('C5D Dust-star:\n    dust_density_onestar.inp\n    dust_temperature_onestar.dat\n    star_opacities.dat\nDONE\n')
 
 
 # Takes the stellar data from c5d-data that has been translated to r3d but as one specie, and
@@ -374,8 +374,8 @@ def create_staropacity(
     temperaturelimit = some limit on where the inner inner part of the star is
 
     OUTPUT
-    dust_density_star_opabins.inp
-    dust_temperature_star_opabins.dat
+    dust_density_starbins.inp
+    dust_temperature_starbins.dat
     star_opacities_bins.dat
     dustopac_starbins.inp
     dustkappa_star{no+1}.inp
@@ -441,8 +441,8 @@ def create_staropacity(
         # Print new star-density, temperature and opacitybin-files
         print('Writing new radmc3d-files')
 
-        with open('../dust_density_star_opabins.inp', 'w') as fdensity,\
-             open('../dust_temperature_star_opabins.dat', 'w') as ftemperature,\
+        with open('../dust_density_starbins.inp', 'w') as fdensity,\
+             open('../dust_temperature_starbins.dat', 'w') as ftemperature,\
              open('../star_opacities_bins.dat', 'w') as fopacity:
             
             # Write headers
@@ -479,7 +479,7 @@ def create_staropacity(
                 for wave in wavelengths:
                     fopac.write(f'{wave}    {opac}    0.0\n')
         
-        print('Done with: dust_density_star_opabins.inp, dust_temperature_star_opabins.inp, star_opacities_bins.dat, dustopac_starbins.inp, dustkappa_starX.inp')
+        print('C5D create star opacities:\n    dust_density_starbins.inp\n    dust_temperature_starbins.inp\n    star_opacities_bins.dat\n    dustopac_starbins.inp\n    dustkappa_starN.inp\nDONE\n')
 
 
 
