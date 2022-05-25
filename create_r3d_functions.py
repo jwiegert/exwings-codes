@@ -59,7 +59,8 @@ def movecoordinates(nxyz,nx,ny,nz):
 def create_grid(
         gridedge:float, 
         nxyz:int, 
-        refinementlist:list, 
+        refinementlist:list,
+        inrefine:str=0.2,
         savegrid:str=True
     ):
     """
@@ -82,11 +83,10 @@ def create_grid(
     OUTPUTS
     -------
     amr_grid.inp : grid file for R3D-simulations
-
-    Optional: 
+    OPTIONAL
     grid_distances.csv : array of radial, x, y, and z distances to each grid cell in cm
     grid_cellsizes.csv : array of sizes of each grid cell in cm
-    (both have same order as in dust_density.inp and dust_temperature)
+    (two last files have same order as in dust_density.inp and dust_temperature)
     """
 
     # Basic definitions
@@ -111,7 +111,7 @@ def create_grid(
         gridedge *= nxyz/oldnxyz
     
     # Calculate inner refinements around centrum of grid
-    innerrefinements = [0.2*(nref+1)*refinementlist[-1] for nref in range(nrefines)]
+    innerrefinements = [inrefine*(nref+1)*refinementlist[-1] for nref in range(nrefines)]
 
     # Info text
     print('Creating amr_grid with octree refinement.')
@@ -534,14 +534,17 @@ def create_grid(
         ])
 
         for nn,refdist in enumerate(refinementlist):
-            f.write(f'Radial distance to refinement {nn+1}: {refdist/AUcm} AU\n')
+            f.write(f'Radial distances to refinement {nn+1}: {innerrefinements[nn]/AUcm} - {refdist/AUcm} AU\n')
         f.write('\n')
 
         for nn,cellsize in enumerate(smallcubesize):
             f.write(f'Child cell size {nn+1}: {smallcubesize[nn]/AUcm} AU\n')
 
     # Finish function
-    print('Create grid: done.\n')
+    print('Create grid:\n    amr_grid.inp\n     grid_info.txt')
+    if savegrid == True:
+        print('    grid_distances.csv\n    grid_cellsizes.csv')
+    print('DONE\n')
 
 # ------------------------------------------------------------ #
 

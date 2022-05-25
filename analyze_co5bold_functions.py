@@ -211,8 +211,8 @@ def create_star(
 
     OUTPUT
     ------
-    R3D density file: dust_density_star.inp
-    R3D temperature file: dust_temperature_star.dat
+    R3D density file: dust_density_onestar.inp
+    R3D temperature file: dust_temperature_onestar.dat
     Useful file with list of extracted opacities 'kappa': star_opacities.dat
     """
 
