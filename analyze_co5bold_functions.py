@@ -189,8 +189,7 @@ def load_dustdensity(
     
     return c5ddust_densities, c5ddust_temperatures
 
-
-# TODO !!
+# Plot c5d opacities (in r3d-grid)
 def plot_opakappa(
         path:str='../'
     ):
@@ -220,7 +219,7 @@ def plot_opakappa(
     )
 
     # Load and plots r3d density data for ONE dust specie
-    fig, ax = plt.subplots(2,1, dpi=150)
+    fig, ax = plt.subplots(2,1)
 
     
     ax[0].plot(
@@ -228,16 +227,17 @@ def plot_opakappa(
         linestyle='',marker='.',markersize=1
     )
     ax[0].set(
-        ylabel=r'Kappa (cm$^2$/g)',
+        ylabel=r'$\kappa_{\rm abs}$ (cm$^2$/g)',
         xlabel=r'Distance (AU)',
-    )#title='Grid cell OPA'
+        title='Grid cell OPA'
+    )
 
     ax[1].plot(
         griddistances[:,0],opacity,
         linestyle='',marker='.',markersize=1
     )
     ax[1].set(
-        ylabel=r'Kappa (cm$^2$/g)',
+        ylabel=r'$\kappa_{\rm abs}$ (cm$^2$/g)',
         xlabel=r'Distance (AU)',
         yscale='log'
     )
