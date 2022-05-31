@@ -5,6 +5,7 @@
 import cython
 import numpy as np
 from scipy.io.idl import readsav
+import matplotlib.pyplot as plt
 
 # My own libraries
 import create_r3d_functions as c3d
@@ -188,6 +189,61 @@ def load_dustdensity(
     
     return c5ddust_densities, c5ddust_temperatures
 
+
+# TODO !!
+def plot_opakappa(
+        path:str='../'
+    ):
+    """
+    Plots star_opacity.dat
+    I.e. the kappa per r3dgridcell as given by c5d.
+    Input: 
+    path to folder of your r3d-model where amr_grid.inp, grid_distcances.csv, 
+    and star_opacities.dat are included.
+    """
+
+    # Automatically add / to end of path if it's missing
+    if path[-1] != '/':
+        path += '/'
+
+    # load opacity.dat
+    opacity = []
+    with open(path+'star_opacities.dat', 'r') as fopacity:
+        for line in fopacity.readlines():
+            if line[0] != '#':
+                opacity.append(float(line))
+
+    # load grid
+    griddistances = a3d.load_griddistances(
+        amrpath=path+'amr_grid.inp',
+        gridpath=path+'grid_distances.csv'
+    )
+
+    # Load and plots r3d density data for ONE dust specie
+    fig, ax = plt.subplots(2,1, dpi=150)
+
+    
+    ax[0].plot(
+        griddistances[:,0],opacity,
+        linestyle='',marker='.',markersize=1
+    )
+    ax[0].set(
+        ylabel=r'Kappa (cm$^2$/g)',
+        xlabel=r'Distance (AU)',
+    )#title='Grid cell OPA'
+
+    ax[1].plot(
+        griddistances[:,0],opacity,
+        linestyle='',marker='.',markersize=1
+    )
+    ax[1].set(
+        ylabel=r'Kappa (cm$^2$/g)',
+        xlabel=r'Distance (AU)',
+        yscale='log'
+    )
+
+    fig.show()
+
 # ==========================================================================
 # Functions to create r3d-data from c5d-data
 # Extract data on star and create r3d-files from it
@@ -365,7 +421,7 @@ def create_staropacity(
         pathstardensity:str='../dust_density_star.inp',
         pathwavelength:str='../wavelength_micron.inp',
         pathtemperature:str='../dust_temperature.dat',
-        temperaturelimit:int=7000,
+        temperaturelimit:int=3000,
         nbins:int=5
     ):
     """
@@ -383,6 +439,46 @@ def create_staropacity(
 
     if nbins > 20:
         return 'WARNING too many files! Stopping'
+    
+    elif nbins == 1:
+        print('Only one bin, will only create r3d-opacity files, use *_onestar.inp files for density etc')
+        
+        # load opacity.dat
+        opacity = []
+        with open(pathopacity, 'r') as fopacity:
+            for line in fopacity.readlines():
+                if line[0] != '#':
+                    opacity.append(float(line))
+
+        # Load wavelengthgrid
+        wavelengths,Nwave = a3d.load_wavelengthgrid(path=pathwavelength)
+
+        # Take a SINGLE average of ALL opacity in c5d opacity-data
+        opacityvalue = np.mean(np.array(opacity))
+
+        # Save as constant as function of wavelength/frequency
+
+        # Print new dustopac_starbins.inp file
+        print('Writing opacity files for the star.')
+        with open('../dustopac_starbins.inp', 'w') as fopac:
+
+            # Print header
+            fopac.write(f'2\n1\n-----------------------------\n')
+
+            # Print star's opacity / species names
+            fopac.write(f'1\n0\nstar\n-----------------------------\n')
+
+        # Print opacity file, star-kappa-file
+        with open(f'../dustkappa_star.inp', 'w') as fopac:
+
+            # Write header (1 for no scattering in this and number of wavelengths)
+            fopac.write(f'1\n{Nwave}\n')
+
+            # Write wavelength, abscoeff, scattercoeff
+            for wave in wavelengths:
+                fopac.write(f'{wave}    {opacityvalue}    0.0\n')
+
+        print('C5D create star opacities:\n    dustopac_starbins.inp\n    dustkappa_star.inp\nDONE\n')
 
     else:
         # Load denstiy_star.inp
@@ -468,7 +564,6 @@ def create_staropacity(
                 fopac.write(f'1\n0\nstar{nn+1}\n-----------------------------\n')
 
         # Print opacity files, star-kappa-files
-        # TODO perhaps add a factor to compensate since this kappa is just some constant number
         for no,opac in enumerate(opacityvalues):
             with open(f'../dustkappa_star{no+1}.inp', 'w') as fopac:
 

@@ -841,9 +841,21 @@ def plot_sed(
         path:str='../spectrum.out',
         distance:float=1
     ):
+    """
+    Input:
+    path: path to spectrum.out
+    distance: distance to sources in pc
+
+    Output:
+    SED-figure
+    fluxmax, wavemax: maximum flux in Jy and corresponding wavelength in micrometer    
+    """
 
     # Load SED
     wavelengths,spectrum = load_spectrum(path=path,distance=distance)
+
+    # Extract maximum flux and wavelength
+    maxindex = np.argmax(spectrum)
     
     # plot SED
     fig, ax = plt.figure(), plt.axes()
@@ -857,6 +869,8 @@ def plot_sed(
         xscale='log',yscale='log'
     )
     fig.show();
+
+    return spectrum[maxindex],wavelengths[maxindex]
 
 # Plot images
 def plot_images(
