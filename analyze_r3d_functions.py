@@ -996,9 +996,11 @@ def compute_luminosity(path:str='../r3dsims/spectrum.out',distance:float=1):
     # Integrate the SED (using trapezoidal method, and change units to SI units)
     sedintegral = 0
     for nn in range(nwave-1):
-        sedintegral += 0.5*(spectrum[nn] + spectrum[nn+1])*1e-26 * (c/wavelengths[nn] - c/wavelengths[nn+1])*1e6
+        # 1.499e-12 = 0.5 * 1e-26 * 1e6 * c which are the corrections for units and the trapezoid-half.
+        # Wavelength is summed in reversed order because its a sum over frequency
+        sedintegral += (spectrum[nn] + spectrum[nn+1]) * (1/wavelengths[nn] - 1/wavelengths[nn+1])*1.499e-12
 
-    # Compute bolometric luminosity(?)
+    # Compute bolometric luminosity
     luminosity = 4.*np.pi*(distance*pc)**2. * sedintegral
 
     return luminosity
