@@ -6,6 +6,7 @@ import cython
 import numpy as np
 from scipy.io.idl import readsav
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import cm, xlabel, xscale, yscale
 
 # My own libraries
 import create_r3d_functions as c3d
@@ -190,7 +191,7 @@ def load_dustdensity(
     return c5ddust_densities, c5ddust_temperatures
 
 # Plot c5d opacities (in r3d-grid)
-def plot_opakappa(
+def plot_opakapparadius(
         path:str='../'
     ):
     """
@@ -217,13 +218,14 @@ def plot_opakappa(
         amrpath=path+'amr_grid.inp',
         gridpath=path+'grid_distances.csv'
     )
+    radiusau = griddistances[:,0]/AUcm
 
     # Load and plots r3d density data for ONE dust specie
     fig, ax = plt.subplots(2,1)
 
     
     ax[0].plot(
-        griddistances[:,0],opacity,
+        radiusau,opacity,
         linestyle='',marker='.',markersize=1
     )
     ax[0].set(
@@ -233,7 +235,7 @@ def plot_opakappa(
     )
 
     ax[1].plot(
-        griddistances[:,0],opacity,
+        radiusau,opacity,
         linestyle='',marker='.',markersize=1
     )
     ax[1].set(
@@ -242,6 +244,65 @@ def plot_opakappa(
         yscale='log'
     )
 
+    fig.show()
+
+# Plot c5d-OPA vs r3d-temperature
+def plot_opakappatemperature(
+        path:str='../'
+    ):
+
+    # Automatically add / to end of path if it's missing
+    if path[-1] != '/':
+        path += '/'
+
+    # Load opacity.dat
+    opacity = []
+    with open(path+'star_opacities.dat', 'r') as fopacity:
+        for line in fopacity.readlines():
+            if line[0] != '#':
+                opacity.append(float(line))
+    opacity = np.array(opacity)
+
+    # Load dust_temperature.dat
+    temperature_path = path+'dust_temperature.dat'
+    # Load first dust_temperature
+    Ncells,Nspec,temperature = a3d.load_temperature(
+        path=temperature_path,
+        numb_specie=1
+    )
+    temperatures = [temperature]
+
+    # Load rest of temperatures
+    if Nspec > 1:
+        for numb_specie in range(2,Nspec+1):
+            temperatures.append(
+                a3d.load_temperature(
+                    path=temperature_path,
+                    numb_specie=numb_specie
+                )[2]
+            )
+    
+    # Control colours of each density distribution
+    colour = cm.rainbow(np.linspace(0, 1, Nspec))
+
+    # Set objects for plot with all in the same figure
+    fig, ax = plt.figure(), plt.axes()
+    
+    for nn, c in enumerate(colour):
+
+        temperature = np.array(temperatures[nn])
+
+        ax.plot(
+            temperature[np.where(temperature > 0)[0]],
+            opacity[np.where(temperature > 0)[0]],
+            markeredgecolor=c,linestyle='',marker='.',markersize=1
+        )
+    ax.set(
+        xlabel=r'Cell temperature (K)',
+        ylabel=r'$\kappa_{\rm abs}$ (cm$^2$/g)',
+        title=f'Dust species 1 to {Nspec}'
+    )
+    fig.tight_layout()
     fig.show()
 
 # ==========================================================================
@@ -421,8 +482,7 @@ def create_staropacity(
         pathstardensity:str='../dust_density_star.inp',
         pathwavelength:str='../wavelength_micron.inp',
         pathtemperature:str='../dust_temperature.dat',
-        temperaturelimit:int=3000,
-        nbins:int=5
+        temperaturebins:list=[],
     ):
     """
     INPUT
@@ -437,10 +497,12 @@ def create_staropacity(
     dustkappa_star{no+1}.inp
     """
 
+    nbins = len(temperaturebins)
+
     if nbins > 20:
         return 'WARNING too many files! Stopping'
     
-    elif nbins == 1:
+    elif nbins == 0:
         print('Only one bin, will only create r3d-opacity files, use *_onestar.inp files for density etc')
         
         # load opacity.dat
@@ -497,13 +559,14 @@ def create_staropacity(
         # Load wavelengthgrid
         wavelengths,Nwave = a3d.load_wavelengthgrid(path=pathwavelength)
 
+        # Add lowest temperature to temperature list, change to array and update nbins
+        temperaturebins.append(np.min(temperatures))
+        temperature_bins = np.array(temperaturebins)
+        nbins = np.size(temperature_bins)
+        print(f'Temperature bin-ranges are (K): {temperature_bins}')
+
         # Bin the opacities by temperature ranges, the stellar surface is never above eg 5000k
         print(f'Binning star to {nbins} species.')
-        if np.min(temperatures) == 0:
-            temperature_bins = np.linspace(temperaturelimit,np.sort(temperatures)[1],nbins)
-        else: 
-            temperature_bins = np.linspace(temperaturelimit,np.min(temperatures),nbins)
-        print(f'Temperature bin-ranges are (K): {temperature_bins}')
 
         new_temperatures = np.zeros(nbins*Ncells)
         new_densities = np.zeros(nbins*Ncells)

@@ -593,7 +593,7 @@ def create_wavelength(
         for wavelength in wavelengths:
             f.write(f'{wavelength}\n')
     
-    print('Wavelength grid: done.\n')
+    print('Wavelength grid:\n    wavelength_micron.inp\nDONE.\n')
 
     # Return the wavelength grid or useage also
     return wavelengths
