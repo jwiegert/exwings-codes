@@ -300,6 +300,7 @@ def plot_opakappatemperature(
     ax.set(
         xlabel=r'Cell temperature (K)',
         ylabel=r'$\kappa_{\rm abs}$ (cm$^2$/g)',
+        yscale='log',
         title=f'Dust species 1 to {Nspec}'
     )
     fig.tight_layout()
@@ -479,9 +480,9 @@ def create_star(
 # c5d-data.
 def create_staropacity(
         pathopacity:str='../star_opacities.dat',
-        pathstardensity:str='../dust_density_star.inp',
+        pathstardensity:str='../dust_density_onestarstar.inp',
         pathwavelength:str='../wavelength_micron.inp',
-        pathtemperature:str='../dust_temperature.dat',
+        pathtemperature:str='../dust_temperature_onestar.dat',
         temperaturebins:list=[],
     ):
     """
@@ -555,17 +556,45 @@ def create_staropacity(
             for line in fopacity.readlines():
                 if line[0] != '#':
                     opacity.append(float(line))
+        opacity = np.array(opacity)
 
         # Load wavelengthgrid
         wavelengths,Nwave = a3d.load_wavelengthgrid(path=pathwavelength)
 
         # Add lowest temperature to temperature list, change to array and update nbins
-        temperaturebins.append(np.min(temperatures))
+        # The lowest temperature is not 0, this if statements makes sure it's the smallest
+        # real temperature that is saved.
+        if np.min(temperatures) == 0:
+            temperaturebins.append(np.sort(temperatures)[1])
+        else: 
+            temperaturebins.append(np.min(temperatures))
+
         temperature_bins = np.array(temperaturebins)
         nbins = np.size(temperature_bins)
-        print(f'Temperature bin-ranges are (K): {temperature_bins}')
+        print('Temperature bin-ranges are (K):')
+        for temp in temperature_bins:
+            print(f'        {temp}')
 
-        # Bin the opacities by temperature ranges, the stellar surface is never above eg 5000k
+        # Define opacity bins, no more than one per order of magnitude
+        # Minimum opacity bin is the minimum value of opacity
+        opamin = np.log10(min(opacity))
+
+        # Maximum opacity is defined from above the highest tmeperature limit
+        opamax = np.log10(np.mean(
+            opacity[ np.where(temperatures > temperature_bins[0])[0]]
+        ))
+        
+        opabins = np.logspace(opamin,opamax,int(np.round(opamax-opamin)))
+        print(f'Opacity bin-ranges are (cm2/g):')
+        for opa in opabins:
+            print(f'        {opa}')
+
+        # TODO incorporate species for each T-range + opa-range.
+
+
+
+        # Bin the opacities by temperature ranges (the stellar surface is never above eg 5000k)
+        # and by opacity range
         print(f'Binning star to {nbins} species.')
 
         new_temperatures = np.zeros(nbins*Ncells)
