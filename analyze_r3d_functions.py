@@ -505,7 +505,7 @@ def plot_alldensity_radius(
 
     # Get paths to necessary files
     density_path = path+'dust_density.inp'
-    grid_path = path+'grid_distances.csv'
+    grid_path = path+'../grid_distances.csv'
     amr_path = path+'amr_grid.inp'
     
     # Get info on number of dust species in 
@@ -641,7 +641,7 @@ def plot_alltemperature_radius(
 
     # Get paths to necessary files
     temperature_path = path+'dust_temperature.dat'
-    grid_path = path+'grid_distances.csv'
+    grid_path = path+'../grid_distances.csv'
     amr_path = path+'amr_grid.inp'
 
     # Load griddistances

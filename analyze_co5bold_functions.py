@@ -263,6 +263,33 @@ def plot_opakappatemperature(
                 opacity.append(float(line))
     opacity = np.array(opacity)
 
+
+    # Load all opacities as given for R3D
+
+    # First extract specie names from dustopac-file
+    counter = 5
+    specie_names = []
+    with open(f'{path}dustopac.inp', 'r') as f:
+        for nn,line in enumerate(f.readlines()):
+            
+            # Specie-names are on line numbers 1+specie_number*4
+            if nn == counter:
+                specie_names.append(line.strip())
+                counter +=4
+
+    # Extract all opacities
+    kappas = []
+
+    for specie_name in specie_names:
+        specie_name,wavelengths,kappadata = a3d.load_onekappa(
+            specie_name=specie_name,
+            path=path
+        )
+
+        # Save kappa from each specie
+        kappas.append(np.mean(np.array(kappadata[0])))
+
+
     # Load dust_temperature.dat
     temperature_path = path+'dust_temperature.dat'
     # Load first dust_temperature
@@ -297,6 +324,17 @@ def plot_opakappatemperature(
             opacity[np.where(temperature > 0)[0]],
             markeredgecolor=c,linestyle='',marker='.',markersize=1
         )
+
+        # Plot kappa of each bin
+        ax.plot(
+            [
+                np.min(temperature[np.where(temperature > 0)[0]]),
+                np.max(temperature[np.where(temperature > 0)[0]])
+            ],
+            [kappas[nn],kappas[nn]],
+            'k-'
+        )
+
     ax.set(
         xlabel=r'Cell temperature (K)',
         ylabel=r'$\kappa_{\rm abs}$ (cm$^2$/g)',
@@ -484,6 +522,7 @@ def create_staropacity(
         pathwavelength:str='../wavelength_micron.inp',
         pathtemperature:str='../dust_temperature_onestar.dat',
         temperaturebins:list=[],
+        N_opabins:int=2
     ):
     """
     INPUT
@@ -585,8 +624,12 @@ def create_staropacity(
             opacity[ np.where(temperatures > temperature_bins[0])[0]]
         ))
         
-        Obins = int(np.round(opamax-opamin))
-        opabins = np.logspace(opamax,opamin,Obins)
+        # Array with OPA-bin-limits (numb of limits are one more)
+        if N_opabins < 1:
+            N_opabins = 1
+        Obins = N_opabins + 1
+        opabins = np.logspace(opamax, opamin, Obins)
+
         print(f'Opacity bin-ranges are (cm2/g):')
         for opa in opabins:
             print(f'        {opa}')
@@ -594,7 +637,7 @@ def create_staropacity(
         # Bin the opacities by temperature ranges (the stellar surface is never above eg 5000k)
         # and by opacity range
 
-        # Figure out number of bins (at least one always)
+        # Figure out number of bins (at least one bin always)
         nbin = 0
         nbins = 1
         listbins = np.zeros(Tbins*Obins)
@@ -623,7 +666,6 @@ def create_staropacity(
 
         # Start binning
         print(f'Binning to {nbins} species.')
-        print(listbins)
 
         new_temperatures = np.zeros(nbins*Ncells)
         new_densities = np.zeros(nbins*Ncells)
@@ -711,6 +753,7 @@ def create_staropacity(
                 for wave in wavelengths:
                     fopac.write(f'{wave}    {opac}    0.0\n')
         
+        # TODO Write info-file with data on how the binning is done! stellarbinning_info.txt
         print('C5D create star opacities:\n    dust_density_starbins.inp\n    dust_temperature_starbins.inp\n    star_opacities_bins.dat\n    dustopac_starbins.inp\n    dustkappa_starN.inp\nDONE\n')
 
 
