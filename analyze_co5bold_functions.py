@@ -216,7 +216,7 @@ def plot_opakapparadius(
     # load grid
     griddistances = a3d.load_griddistances(
         amrpath=path+'amr_grid.inp',
-        gridpath=path+'grid_distances.csv'
+        gridpath=path+'../grid_distances.csv'
     )
     radiusau = griddistances[:,0]/AUcm
 
@@ -526,8 +526,12 @@ def create_staropacity(
     ):
     """
     INPUT
-    nbins = number of species the star will consist of
-    temperaturelimit = some limit on where the inner inner part of the star is
+    pathopacity: path to star_opacities.dat',
+    pathstardensity: path to dust_density_onestarstar.inp',
+    pathwavelength: path to wavelength_micron.inp',
+    pathtemperature: path to dust_temperature_onestar.dat',
+    temperaturebins: list of temperature range bins (it adds lowest and higehst temperature automatically)
+    N_opabins: number of kappa-bins spread logarithimically between min and max
 
     OUTPUT
     dust_density_starbins.inp
@@ -755,6 +759,109 @@ def create_staropacity(
         
         # TODO Write info-file with data on how the binning is done! stellarbinning_info.txt
         print('C5D create star opacities:\n    dust_density_starbins.inp\n    dust_temperature_starbins.inp\n    star_opacities_bins.dat\n    dustopac_starbins.inp\n    dustkappa_starN.inp\nDONE\n')
+
+
+# Takes the stellar density data and opacity data from c5d
+# creates a density_star-file where the "density" depends on each cell's mass density
+# and the opacity-kappa of each cell as given by c5d.
+# Creates ONE kappa_star that is only = 1 over all wavelengths.
+def create_staropadensity(
+        pathopacity:str='../star_opacities.dat',
+        pathstardensity:str='../dust_density_onestarstar.inp',
+        pathwavelength:str='../wavelength_micron.inp',
+        corrfact:float=1.0
+    ):
+    """
+    INPUT
+    pathopacity: path to star_opacities.dat',
+    pathstardensity: path to dust_density_onestarstar.inp',
+    pathwavelength: path to wavelength_micron.inp',
+
+    OUTPUT
+    dust_density_opastar.inp
+    dustopac_star.inp
+    dustkappa_opastar.inp
+    """
+
+    print('Loading density, opaity, wavelengths')
+
+    # Load star densities (in r3d-grid)
+    Ncells,Nspec,star_densities = a3d.load_dustdensity(path=pathstardensity,numb_specie=1)
+
+    # load star opacities (in r3d-grid)
+    opacity = []
+    with open(pathopacity, 'r') as fopacity:
+        for line in fopacity.readlines():
+            if line[0] != '#':
+                opacity.append(float(line))
+    opacity = np.array(opacity)
+
+    # Load wavelengthgrid
+    wavelengths,Nwave = a3d.load_wavelengthgrid(path=pathwavelength)
+
+    print('Change density to kappa * density')
+
+    # Assume
+    # r3dopacity * r3ddensity = c5dopacity * c5ddensity
+    #
+    # Opacity file is set to 1 for all wavelengths
+    # r3dopacity = 1
+    # This means that
+    # r3ddensity = c5dopacity * c5ddensity
+    # for each cell
+    #
+    # Thus we obtain a simple grey body model for the opacity for all cells without having
+    # to add hundreds and hundreds of opacity files.
+
+    opacity_densities = np.zeros(Ncells)
+
+    for nn in range(Ncells):
+        opacity_densities[nn] = star_densities[nn] * opacity[nn] * corrfact
+
+    # Print new star-opacity-density file
+    print('Writing new radmc3d-files')
+
+    with open('../dust_density_opastar.inp', 'w') as fdensity:
+        
+        # Write headers
+        fdensity.write(f'1\n{int(Ncells)}\n1\n')
+
+        # Write densities and temperatures
+        for nn,dens in enumerate(opacity_densities):
+            fdensity.write(f'{dens}\n')
+
+    # Print new dustopac_starbins.inp file
+    print('Writing opacity files for the binned star.')
+    with open('../dustopac_star.inp', 'w') as fopac:
+
+        # Print header
+        fopac.write(f'2\n1\n-----------------------------\n')
+        # Print specie name
+        fopac.write(f'1\n0\nopastar\n-----------------------------\n')
+
+    with open(f'../dustkappa_opastar.inp', 'w') as fopac:
+
+        # Write header (1 for no scattering in this and number of wavelengths)
+        fopac.write(f'1\n{Nwave}\n')
+
+        # Write wavelength, abscoeff, scattercoeff
+        for wave in wavelengths:
+            fopac.write(f'{wave}    1.0    0.0\n')
+    
+    print('C5D create star opacities densities:\n    dust_density_opastar.inp\n    dustopac_star.inp\n    dustkappa_opastar.inp\nDONE\n')
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
