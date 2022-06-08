@@ -1006,7 +1006,7 @@ def compute_luminosity(path:str='../r3dsims/spectrum.out',distance:float=1):
     return luminosity
 
 
-# TODO
+# TODO compute optical thickness
 
 
 def compute_opticalthick(

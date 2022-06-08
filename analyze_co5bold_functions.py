@@ -768,8 +768,10 @@ def create_staropacity(
 def create_staropadensity(
         pathopacity:str='../star_opacities.dat',
         pathstardensity:str='../dust_density_onestarstar.inp',
+        pathtemperature:str='../dust_temperature_onestar.dat',
         pathwavelength:str='../wavelength_micron.inp',
-        corrfact:float=1.0
+        Teff:float=2800,
+        kramer_exponent:float=3.5
     ):
     """
     INPUT
@@ -783,7 +785,7 @@ def create_staropadensity(
     dustkappa_opastar.inp
     """
 
-    print('Loading density, opaity, wavelengths')
+    print('Loading density, opacity, wavelengths')
 
     # Load star densities (in r3d-grid)
     Ncells,Nspec,star_densities = a3d.load_dustdensity(path=pathstardensity,numb_specie=1)
@@ -796,8 +798,16 @@ def create_staropadensity(
                 opacity.append(float(line))
     opacity = np.array(opacity)
 
+    # Load temperature_star
+    Ncells,Nspec,temperatures = a3d.load_temperature(path=pathtemperature)
+
     # Load wavelengthgrid
     wavelengths,Nwave = a3d.load_wavelengthgrid(path=pathwavelength)
+    wavelengths = np.array(wavelengths)
+
+    # Create gas opacity
+    #kappa = corrfact * np.median(wavelengths) / wavelengths
+
 
     print('Change density to kappa * density')
 
@@ -814,9 +824,16 @@ def create_staropadensity(
     # to add hundreds and hundreds of opacity files.
 
     opacity_densities = np.zeros(Ncells)
+    mintemperature = np.min(temperatures)
+    meandensity = np.mean(star_densities)
 
     for nn in range(Ncells):
-        opacity_densities[nn] = star_densities[nn] * opacity[nn] * corrfact
+        #opacity_densities[nn] = opacity[nn] * star_densities[nn]
+
+        if temperatures[nn] == 0:
+            opacity_densities[nn] = opacity[nn] * star_densities[nn] * mintemperature**(-kramer_exponent)*Teff**(kramer_exponent)
+        else:
+            opacity_densities[nn] = opacity[nn] * star_densities[nn] * temperatures[nn]**(-kramer_exponent)*Teff**(kramer_exponent)
 
     # Print new star-opacity-density file
     print('Writing new radmc3d-files')
@@ -845,7 +862,7 @@ def create_staropadensity(
         fopac.write(f'1\n{Nwave}\n')
 
         # Write wavelength, abscoeff, scattercoeff
-        for wave in wavelengths:
+        for nn,wave in enumerate(wavelengths):
             fopac.write(f'{wave}    1.0    0.0\n')
     
     print('C5D create star opacities densities:\n    dust_density_opastar.inp\n    dustopac_star.inp\n    dustkappa_opastar.inp\nDONE\n')
