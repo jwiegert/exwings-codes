@@ -771,7 +771,8 @@ def create_staropadensity(
         pathtemperature:str='../dust_temperature_onestar.dat',
         pathwavelength:str='../wavelength_micron.inp',
         Teff:float=2800,
-        kramer_exponent:float=3.5
+        kramer_exponent:float=3.5,
+        corrfac:float=1.0
     ):
     """
     INPUT
@@ -808,9 +809,6 @@ def create_staropadensity(
     # Create gas opacity
     #kappa = corrfact * np.median(wavelengths) / wavelengths
 
-
-    print('Change density to kappa * density')
-
     # Assume
     # r3dopacity * r3ddensity = c5dopacity * c5ddensity
     #
@@ -823,17 +821,25 @@ def create_staropadensity(
     # Thus we obtain a simple grey body model for the opacity for all cells without having
     # to add hundreds and hundreds of opacity files.
 
+    print(f'Change density to densityr3d = {corrfac} * kappac5d * densityc5d * (T/Teff)^{kramer_exponent}')
+    #print(f'Change density to densityr3d = kappac5d^{kramer_exponent} * densityc5d')
+
     opacity_densities = np.zeros(Ncells)
     mintemperature = np.min(temperatures)
-    meandensity = np.mean(star_densities)
+    #meandensity = np.mean(star_densities)
 
     for nn in range(Ncells):
-        #opacity_densities[nn] = opacity[nn] * star_densities[nn]
+
+        #opacity_densities[nn] = opacity[nn]**kramer_exponent * star_densities[nn]
 
         if temperatures[nn] == 0:
-            opacity_densities[nn] = opacity[nn] * star_densities[nn] * mintemperature**(-kramer_exponent)*Teff**(kramer_exponent)
+            opacity_densities[nn] = \
+                corrfac * opacity[nn] * star_densities[nn] * \
+                    mintemperature**(kramer_exponent)*Teff**(-kramer_exponent)
         else:
-            opacity_densities[nn] = opacity[nn] * star_densities[nn] * temperatures[nn]**(-kramer_exponent)*Teff**(kramer_exponent)
+            opacity_densities[nn] = \
+                corrfac * opacity[nn] * star_densities[nn] * \
+                    temperatures[nn]**(kramer_exponent)*Teff**(-kramer_exponent)
 
     # Print new star-opacity-density file
     print('Writing new radmc3d-files')

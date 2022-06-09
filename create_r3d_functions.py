@@ -541,7 +541,7 @@ def create_grid(
             f.write(f'Child cell size {nn+1}: {smallcubesize[nn]/AUcm} AU\n')
 
     # Finish function
-    print('Create grid:\n    amr_grid.inp\n     grid_info.txt')
+    print('Create grid:\n    amr_grid.inp\n    grid_info.txt')
     if savegrid == True:
         print('    grid_distances.csv\n    grid_cellsizes.csv')
     print('DONE\n')
