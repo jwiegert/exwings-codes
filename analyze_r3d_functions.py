@@ -555,6 +555,26 @@ def plot_alldensity_radius(
     fig.tight_layout()
     fig.show()
 
+    # Plot of all species in same figure logarithmic yscale
+    fig, ax = plt.figure(), plt.axes()
+    
+    for nn, c in enumerate(colour):
+
+        density = np.array(densities[nn])
+
+        ax.plot(
+            griddistances[np.where(density > 0)[0],0],density[np.where(density > 0)[0]],
+            markeredgecolor=c,linestyle='',marker='.',markersize=1
+        )
+    ax.set(
+        ylabel=r'Density (g cm$^{-3}$)',
+        xlabel=r'Distance (AU)',
+        yscale='log',
+        title=f'Dust species 1 to {Nspec}'
+    )
+    fig.tight_layout()
+    fig.show()
+
     # Set objects for subplots (two columns, increasing number of rows)
     # ax[rows,columns]
     fig,ax = plt.subplots((-(-Nspec//2)),2)
@@ -975,6 +995,131 @@ def plot_images(
         fig.show()
 
     return fluxtotal
+
+
+def plot_imagecrosssections(
+        path:str='../',
+        images:list=['image.out'],
+        distance:float=1
+    ):
+    """
+    Plots cross sections through center along x and y-axes of images
+
+    INPUT
+    path: path to folder containing images
+    images: list of image-file names inside your folder
+    distance: distance to source in pc (default 1 pc)
+
+    OUTPUT
+    Figure with 4 subplots, 2 linear and 2 logarithmic scales.
+    """
+
+    fluxtotal = []
+
+    # Loop through all images
+    for image in images:
+
+        # Declare list
+        image1d = []
+
+        # Load images
+        with open(path+image, 'r') as f:
+            for nl,line in enumerate(f.readlines()):
+                
+                # row 1: pixels by pixels
+                if nl == 1:
+                    npixels = int(line.split()[0])
+                
+                # row 3: pixel size in cm, divide by AUcm for AU
+                if nl == 3:
+                    pixelsize_au = float(line.split()[0])/AUcm
+                
+                # row 4: wavelenght in um
+                # TODO might be useful also :)
+                if nl == 4:
+                    wavelength = float(line)
+                
+                # row 6 onward: pixels
+                if nl > 5:
+                    # Some rows are empty (and they contain space and \n, so strip them lines)
+                    if len(line.strip()) > 0:
+                        image1d.append(float(line.strip()))
+
+        # Extract some useful quantities
+        # pixel size in mas
+        pixelsize_mas = pixelsize_au / distance
+        
+        # Size of whole image in AU
+        size_au = pixelsize_au * npixels
+        axisplot  = np.linspace(0.5*size_au,-0.5*size_au,npixels)
+
+        # Total flux density of the image
+        fluxtotal.append(sum(image1d) * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2)
+
+        # Create 2D arrays
+        image2d = np.zeros((npixels,npixels))
+        image2dlog = np.zeros((npixels,npixels))
+        nx,ny = 0,0
+
+        for flux in image1d:
+            image2d[nx,ny] = flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
+            image2dlog[nx,ny] = np.log10(flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2)
+
+            # Move nx and ny
+            nx = nx + 1
+            if nx == npixels:
+                nx = 0
+                ny = ny + 1
+
+        half_npixels = int(np.round(0.5*npixels))
+
+        # Plot each image (one in linear and one log)
+
+        # Along X-axis
+        fig, ax = plt.subplots(2,2, dpi=150)
+
+        ax[0][0].plot(
+            axisplot,image2d[:,half_npixels]
+        )
+        ax[0][0].set(
+            title=f"X-cross at {image.replace('image_', '').replace('.out', '')} (Lin)", 
+            xlabel='Offset (AU)',
+            ylabel='Flux density (Jy at 1 pc)'
+        )
+
+        ax[0][1].plot(
+            axisplot,image2d[:,half_npixels]
+        )
+        ax[0][1].set(
+            title=f"X-cross at {image.replace('image_', '').replace('.out', '')} (Log)", 
+            yscale='log',
+            xlabel='Offset (AU)',
+            ylabel='Flux density (Jy at 1 pc)'
+        )
+
+        # Along Y-axis
+        ax[1][0].plot(
+            axisplot,image2d[half_npixels,:]
+        )
+        ax[1][0].set(
+            title=f"Y-cross at {image.replace('image_', '').replace('.out', '')} (Lin)", 
+            xlabel='Offset (AU)',
+            ylabel='Flux density (Jy at 1 pc)'
+        )
+
+        ax[1][1].plot(
+            axisplot,image2d[half_npixels,:]
+        )
+        ax[1][1].set(
+            title=f"Y-cross at {image.replace('image_', '').replace('.out', '')} (Log)", 
+            yscale='log',
+            xlabel='Offset (AU)',
+            ylabel='Flux density (Jy at 1 pc)'
+        )
+
+        fig.tight_layout()
+        fig.show()
+
 
 
 # ------------------------------------------------------------ #
