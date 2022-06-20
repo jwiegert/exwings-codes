@@ -706,6 +706,9 @@ def plot_alltemperature_radius(
             ],
             markeredgecolor=c,linestyle='',marker='.',markersize=1
         )
+    ax.plot(
+        1.65,2800,'r*'
+    )
     ax.set(
         ylabel=r'Cell temperature (K)',
         xlabel=r'Distance (AU)',
@@ -732,7 +735,7 @@ def plot_alltemperature_radius(
         )
         ax.ravel()[nn].set(
             ylabel=r'Cell temperature (K)',
-            xlabel=r'Distance (AU)',
+            xlabel=r'Radius (AU)',
             title=f'Dust specie {nn+1}'
         )
     fig.tight_layout()
@@ -1203,26 +1206,30 @@ def compute_opticalthick(
 
     # Load griddistances [radial,x,y,z]
     griddistances = load_griddistances(
-        gridpath=path+'grid_distances.csv',
-        amrpath=path+'amr_grid.inp'
+        gridpath=path+'../grid_distances.csv',
+        amrpath=path+'../amr_grid.inp'
     )
 
     # Set up arrays for final optical depth computations
     # The distance array is tighter on the outer parts of the grid
     #dxarray = -1*np.logspace(np.log10(np.max(griddistances[:,0])),0,100)+np.max(griddistances[:,0])
-    dxarray = np.linspace(0,np.max(griddistances[:,0]),10)
-    dtauarray = np.zeros(10)
+    Nradius = 100
+    dxarray = np.linspace(0,np.max(griddistances[:,0]),Nradius)
+    dtauarray = np.zeros(Nradius)
 
     for nx in range(2,np.shape(dxarray)[0]+1):
         nx *= -1
 
         # Extract indeces for each bin
         binindeces = np.where(
-            (dxarray[nx] < griddistances[:,0]) & (griddistances[:,0] < dxarray[nx+1])
+            (dxarray[nx] < griddistances[:,0]) & (griddistances[:,0] <= dxarray[nx+1])
         )
 
         # Average optical depth difference for each bin is then
-        dtauarray[nx] = np.mean(kappas[binindeces]) * (dxarray[nx+1] - dxarray[nx])
+        if np.isnan(np.mean(kappas[binindeces])) == True:
+            dtauarray[nx] = 0
+        else:
+            dtauarray[nx] = np.mean(kappas[binindeces]) * (dxarray[nx+1] - dxarray[nx])
     
     # Optical depth along line of sight is then the sum of all outer values
     dtauarray[-1] = dtauarray[-2]
@@ -1230,6 +1237,35 @@ def compute_opticalthick(
         nx *= -1
         dtauarray[nx] += dtauarray[nx+1]
 
-    return dtauarray,dxarray
+    # Extract surface of star
+    star_surface_index = np.where(dtauarray < 1)[0][0]
+    star_surface = 0.5* (dxarray[star_surface_index-1] + dxarray[star_surface_index])
+
+    # Plot average optical thickness along LOS
+    fig, ax = plt.figure(), plt.axes()
+
+    # Optical thickness
+    ax.plot(
+        dxarray/AUcm,dtauarray,'b.'
+    )
+
+    # Stellar radius
+    ax.plot(
+        [star_surface/AUcm,star_surface/AUcm],[dtauarray[0],dtauarray[-1]],'r'
+    )
+    ax.plot(
+        [dxarray[star_surface_index-1]/AUcm,dxarray[star_surface_index]/AUcm],[1,1],'r'
+    )
+
+    ax.set(
+        ylabel=r'$\tau$',
+        xlabel=r'Radius (AU)',
+        title='Average optical thickness along LOS',
+        yscale='log'
+    )
+    fig.tight_layout()
+    fig.show();
+
+    return star_surface
 
 
