@@ -23,7 +23,7 @@ AUcm = cython.declare(cython.float ,1.49598e13) # cm
 
 
 # ============================================================
-
+# Functions that load C5D-data and saves them in arrays
 
 # Load c5d grid properties
 @cython.cfunc
@@ -190,6 +190,9 @@ def load_dustdensity(
     
     return c5ddust_densities, c5ddust_temperatures
 
+# ==========================================================================
+# Plot c5d-data (but in r3d-grid)
+
 # Plot c5d opacities (in r3d-grid)
 def plot_opakapparadius(
         path:str='../'
@@ -346,6 +349,7 @@ def plot_opakappatemperature(
 
 # ==========================================================================
 # Functions to create r3d-data from c5d-data
+
 # Extract data on star and create r3d-files from it
 def create_star(
         # All necessary inputs
@@ -389,13 +393,7 @@ def create_star(
         print('    No output is given. Change your R3D grid cells to something larger.\n')
 
     else:
-        # Load C5D densities
-
-        # TODO: instead of loading data in arrays
-        # just load the specific sav-file and then loop in that array
-        # then I only need one loop instead of one per data plus
-        # these that loads it into the data here below?
-        # or that could be slower since now I work with nparrays...
+        # Load C5D star densities, temperatures and opacities
         print('Loading C5D star properties (density, temperature, opacity)')
         c5dstar_densities,c5dstar_temperatures,c5dstar_opacities = load_star_properties(savpath=savpath)
 
@@ -403,15 +401,16 @@ def create_star(
         print('Translating C5D data to R3D data')
 
         # Declare stuff for the loops
-        r3d_densities = 0
-        r3d_temperatures = 0
-        r3d_opacities = 0
-        progbar = 0
+        r3d_densities = []
+        r3d_density = 0
 
-        # Adaptive range used for when cellsizes are too similar - fixes bug 
-        # where I got a lot of zero-cells because my loop misses the c5dcells inside
-        # the current r3dcell
-        adaptive_range = c5dcellsize/r3dcellsizes.min() * 1.1
+        r3d_temperatures = []
+        r3d_temperature = 0
+
+        r3d_opacities = []
+        r3d_opacity = 0
+
+        progbar = 0
 
         # Open r3d data files
         with open('../dust_density_onestar.inp', 'w') as fdensity, open('../dust_temperature_onestar.dat', 'w') as ftemperature, open('../star_opacities.dat', 'w') as fopacity:
@@ -449,53 +448,42 @@ def create_star(
                 # Number of c5dcells within r3dcell
                 nchildcells = c5dxrange.size*c5dyrange.size*c5dzrange.size
 
-                # Check so that there are any c5dcells within r3dcell
-                if nchildcells < 1:
-
-                    # When r3dcellsize approx c5dcellsize the loop misses the c5dcells inside r3dcells
-                    # due to numerical errors. So here I increase the spatial range to loop.
-                    temprange = [r3dxrange[0]*adaptive_range,r3dxrange[1]*adaptive_range]
-                    c5dxrange = np.argwhere(temprange[0] <= c5dgrid[np.argwhere(c5dgrid[:,0] < temprange[1]),0])[:,0]
-                    temprange = [r3dyrange[0]*adaptive_range,r3dyrange[1]*adaptive_range]
-                    c5dyrange = np.argwhere(temprange[0] <= c5dgrid[np.argwhere(c5dgrid[:,1] < temprange[1]),1])[:,0]
-                    temprange = [r3dzrange[0]*adaptive_range,r3dzrange[1]*adaptive_range]
-                    c5dzrange = np.argwhere(temprange[0] <= c5dgrid[np.argwhere(c5dgrid[:,2] < temprange[1]),2])[:,0]
-
-                    # New number of c5dcells within r3dcell
-                    nchildcells = c5dxrange.size*c5dyrange.size*c5dzrange.size
-
                 # Then loop through c5dcells within r3dcell
                 for nnz in c5dzrange:
                     for nny in c5dyrange:
                         for nnx in c5dxrange:
 
-                            # Sum all densities
-                            r3d_densities += c5dstar_densities[nnx,nny,nnz]
+                            # Save all c5d-data for each r3d-cell in lists
+                            r3d_densities.append(c5dstar_densities[nnx,nny,nnz])
+                            r3d_temperatures.append(c5dstar_temperatures[nnx,nny,nnz])
+                            r3d_opacities.append(c5dstar_opacities[nnx,nny,nnz])
 
-                            # Sum all temperatures
-                            r3d_temperatures += c5dstar_temperatures[nnx,nny,nnz]
-
-                            # Sum all opacities
-                            r3d_opacities += c5dstar_opacities[nnx,nny,nnz]
-
-                # Check again if there are any c5dcells within r3dcell
-                # If not, then your r3dgrid is probably larger than the c5dgrid
-                # and then you can keep the density and temperature at zero
+                # Check if there actually are any c5dcells within r3dcell
+                # If not, then your r3dgrid is probably smaller than the c5dgrid
+                # and then the density and temperature will be zero for some cells
+                # Should probably take the average of surrounding cells instead in that case
+                # but this shouldn't happen since I have the if statement earlier that breaks
+                # this function would that happen
                 if nchildcells > 0:
-                    # Otherwise average the data of each r3dcell by number of c5dcells
-                    r3d_densities /= nchildcells
-                    r3d_temperatures /= nchildcells
-                    r3d_opacities /= nchildcells
+                    # Otherwise save the median of the c5d-data of each r3dcell
+                    r3d_density = np.median(np.array(r3d_densities))
+                    r3d_temperature = np.median(np.array(r3d_temperatures))
+                    r3d_opacity = np.median(np.array(r3d_opacities))
 
                 # Then write data to r3d files
-                fdensity.write(f'{r3d_densities}\n')
-                ftemperature.write(f'{r3d_temperatures}\n')
-                fopacity.write(f'{r3d_opacities}\n')
+                fdensity.write(f'{r3d_density}\n')
+                ftemperature.write(f'{r3d_temperature}\n')
+                fopacity.write(f'{r3d_opacity}\n')
 
                 # Reset data
-                r3d_densities = 0
-                r3d_temperatures = 0
-                r3d_opacities = 0
+                r3d_densities = []
+                r3d_density = 0
+
+                r3d_temperatures = []
+                r3d_temperature = 0
+
+                r3d_opacities = []
+                r3d_opacity = 0
 
                 # Some progress bar info
                 if int(nr3d/nleafs*100) == 25 and progbar == 0:
