@@ -357,7 +357,8 @@ def create_star(
         savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
         amrpath:str='../amr_grid.inp',
         gridpath:str='../grid_distances.csv',
-        sizepath:str='../grid_cellsizes.csv'
+        sizepath:str='../grid_cellsizes.csv',
+        Teff:float=2800
     ):
     """
     Extracts data from Co5bold sav-files and creates a dust_star for Radmc3d.
@@ -435,21 +436,18 @@ def create_star(
                 ]   
 
                 # Extract indeces of all c5dcells within current r3dcell
-                c5dxrange = np.argwhere(r3dxrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,0] < r3dxrange[1]),0])[:,0]
-                c5dyrange = np.argwhere(r3dyrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,1] < r3dyrange[1]),1])[:,0]
-                c5dzrange = np.argwhere(r3dzrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,2] < r3dzrange[1]),2])[:,0]
+                c5dxrange = np.argwhere(r3dxrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,0] <= r3dxrange[1]),0])[:,0]
+                c5dyrange = np.argwhere(r3dyrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,1] <= r3dyrange[1]),1])[:,0]
+                c5dzrange = np.argwhere(r3dzrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,2] <= r3dzrange[1]),2])[:,0]
 
-                # Number of c5dcells within r3dcell
+                # Number of c5dcells within r3dcell (which is faster?)
                 #nchildcells = c5dxrange.size*c5dyrange.size*c5dzrange.size
-
                 nchildcells = 0
 
-                # TODO explain this relatively cumbersome method
-
                 # Then loop through c5dcells within r3dcell
-                for nnz in range(c5dzrange[0],c5dzrange[-1]+1):
-                    for nny in range(c5dyrange[0],c5dyrange[-1]+1):
-                        for nnx in range(c5dxrange[0],c5dxrange[-1]+1):
+                for nnz in c5dzrange:
+                    for nny in c5dyrange:
+                        for nnx in c5dxrange:
 
                             # Save sum of all c5d-data for each r3d-cell
                             r3d_densities += c5dstar_densities[nnx,nny,nnz]
@@ -462,21 +460,28 @@ def create_star(
                 # Check if there actually are any c5dcells within r3dcell
                 # If not, then your r3dgrid is probably smaller than the c5dgrid
                 # and then the density and temperature will be zero for some cells
-                # Should probably take the average of surrounding cells instead in that case
-                # but this shouldn't happen since I have the if statement earlier that breaks
+                # This shouldn't happen since I have the if statement earlier that breaks
                 # this function would that happen
-                
                 if nchildcells > 0:
                     # Otherwise save the average of the c5d-data of each r3dcell
                     r3d_densities /= nchildcells
                     r3d_temperatures /= nchildcells
                     r3d_opacities /= nchildcells
+
                 else:
                     r3d_densities = c5dstar_densities[c5dxrange[0],c5dyrange[0],c5dzrange[0]]
                     r3d_temperatures = c5dstar_temperatures[c5dxrange[0],c5dyrange[0],c5dzrange[0]]
                     r3d_opacities = c5dstar_opacities[c5dxrange[0],c5dyrange[0],c5dzrange[0]]
                     print(f'nchildcells = {nchildcells}')
 
+                # TODO TESTs
+                # Cap the cell-temperatures at 2*Teff - Done, yes makes a difference
+                # Not a good way to do it though
+                #if r3d_temperatures > 2*Teff:
+                #    r3d_temperatures = 2*Teff
+                # TODO test to not have fine gridcells inside the stellar surface.
+                # TODO or reverse? have more fine grid cells inside the star? - anything to "cover"
+                # them with cells that are "normal" temperature
 
                 # Then write data to r3d files
                 fdensity.write(f'{r3d_densities}\n')
