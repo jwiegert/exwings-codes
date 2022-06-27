@@ -756,10 +756,7 @@ def create_staropacity(
 def create_staropadensity(
         pathopacity:str='../star_opacities.dat',
         pathstardensity:str='../dust_density_onestarstar.inp',
-        pathtemperature:str='../dust_temperature_onestar.dat',
         pathwavelength:str='../wavelength_micron.inp',
-        Teff:float=2800,
-        kramer_exponent:float=3.5,
         corrfac:float=1.0
     ):
     """
@@ -787,9 +784,6 @@ def create_staropadensity(
                 opacity.append(float(line))
     opacity = np.array(opacity)
 
-    # Load temperature_star
-    Ncells,Nspec,temperatures = a3d.load_temperature(path=pathtemperature)
-
     # Load wavelengthgrid
     wavelengths,Nwave = a3d.load_wavelengthgrid(path=pathwavelength)
     wavelengths = np.array(wavelengths)
@@ -809,25 +803,14 @@ def create_staropadensity(
     # Thus we obtain a simple grey body model for the opacity for all cells without having
     # to add hundreds and hundreds of opacity files.
 
-    print(f'Change density to densityr3d = {corrfac} * kappac5d * densityc5d * (T/Teff)^{kramer_exponent}')
+    print(f'Change density to densityr3d = {corrfac} * kappac5d * densityc5d')
     #print(f'Change density to densityr3d = kappac5d^{kramer_exponent} * densityc5d')
 
     opacity_densities = np.zeros(Ncells)
-    mintemperature = np.min(temperatures)
     #meandensity = np.mean(star_densities)
 
     for nn in range(Ncells):
-
-        #opacity_densities[nn] = opacity[nn]**kramer_exponent * star_densities[nn]
-
-        if temperatures[nn] == 0:
-            opacity_densities[nn] = \
-                corrfac * opacity[nn] * star_densities[nn] * \
-                    mintemperature**(kramer_exponent)*Teff**(-kramer_exponent)
-        else:
-            opacity_densities[nn] = \
-                corrfac * opacity[nn] * star_densities[nn] * \
-                    temperatures[nn]**(kramer_exponent)*Teff**(-kramer_exponent)
+        opacity_densities[nn] = corrfac * opacity[nn] * star_densities[nn]
 
     # Print new star-opacity-density file
     print('Writing new radmc3d-files')
@@ -877,6 +860,8 @@ def smooth_temperature(
     # load temperature
     Ncells,Nspecies,temperatures = a3d.load_temperature(path=path)
 
+    counter = 0
+
     # Loop over eventual species
     for nspecie in range(Nspecies):
         
@@ -887,10 +872,14 @@ def smooth_temperature(
             nn = ncell + Ncells*nspecie
 
             # Average temperature surrounding cell nn
-            mean_temperature = 0.25 * (temperatures[nn-2] + temperatures[nn-1] + temperatures[nn+1] +temperatures[nn+2])
+            #mean_temperature = 0.25 * (temperatures[nn-2] + temperatures[nn-1] + temperatures[nn+1] +temperatures[nn+2])
+            mean_temperature = 0.5 * (temperatures[nn-2] + temperatures[nn+2])
 
             if temperatures[nn] > smooth_tolerance * mean_temperature:
                 temperatures[nn] = mean_temperature
+                counter += 1
+
+    print(f'Number of smoothed cells: {counter}')
 
     # Print new temperature file
     with open('../dust_temperature_smoothed.dat', 'w') as ftemperature:
