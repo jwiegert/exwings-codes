@@ -474,15 +474,6 @@ def create_star(
                     r3d_opacities = c5dstar_opacities[c5dxrange[0],c5dyrange[0],c5dzrange[0]]
                     print(f'nchildcells = {nchildcells}')
 
-                # TODO TESTs
-                # Cap the cell-temperatures at 2*Teff - Done, yes makes a difference
-                # Not a good way to do it though
-                #if r3d_temperatures > 2*Teff:
-                #    r3d_temperatures = 2*Teff
-                # TODO test to not have fine gridcells inside the stellar surface.
-                # TODO or reverse? have more fine grid cells inside the star? - anything to "cover"
-                # them with cells that are "normal" temperature
-
                 # Then write data to r3d files
                 fdensity.write(f'{r3d_densities}\n')
                 ftemperature.write(f'{r3d_temperatures}\n')
@@ -871,8 +862,48 @@ def create_staropadensity(
     print('C5D create star opacities densities:\n    dust_density_opastar.inp\n    dustopac_star.inp\n    dustkappa_opastar.inp\nDONE\n')
 
 
+# TODO Function that smooths the temperature
+def smooth_temperature(
+        path:str='../dust_temperature.dat',
+        smooth_tolerance:float=1.5
+    ):
+    """
+    Remove outlier cells with high temperatures
 
+    TODO write more info
+    
+    """
 
+    # load temperature
+    Ncells,Nspecies,temperatures = a3d.load_temperature(path=path)
+
+    # Loop over eventual species
+    for nspecie in range(Nspecies):
+        
+        # Loop over grid cells of each specie
+        for ncell in range(2,Ncells-2):
+
+            # Index of cell in total list
+            nn = ncell + Ncells*nspecie
+
+            # Average temperature surrounding cell nn
+            mean_temperature = 0.25 * (temperatures[nn-2] + temperatures[nn-1] + temperatures[nn+1] +temperatures[nn+2])
+
+            if temperatures[nn] > smooth_tolerance * mean_temperature:
+                temperatures[nn] = mean_temperature
+
+    # Print new temperature file
+    with open('../dust_temperature_smoothed.dat', 'w') as ftemperature:
+        # Write headers:
+        # 1
+        # nleafs
+        # number dust species
+        ftemperature.write(f'1\n{int(Ncells)}\n{Nspecies}\n')
+
+        for nn in range(Ncells*Nspecies):
+            ftemperature.write(f'{temperatures[nn]}\n')
+
+    print('C5D smooth temperatures:\n    dust_temperature_smoothed.dat\nDONE\n')
 
 
 

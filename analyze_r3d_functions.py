@@ -234,10 +234,10 @@ def load_dustdensity(
 
                 # Total number of species
                 if nn == 2:
-                    Nspec = int(line)
+                    Nspecies = int(line)
 
         # Check that the chosen number of specie exists
-        if numb_specie > Nspec:
+        if numb_specie > Nspecies:
             print('\nERROR\nThis dust specie doesnt exist.\n')
 
         else:
@@ -253,7 +253,7 @@ def load_dustdensity(
                     if nn > 2+numb_specie*Ncells and nn <= 2+(numb_specie+1)*Ncells:
                         dust_densities[nn-3-Ncells*numb_specie] = float(line)
 
-            return Ncells,Nspec,dust_densities
+            return Ncells,Nspecies,dust_densities
 
 
 # Load absorptionscattering data
@@ -1128,7 +1128,7 @@ def plot_imagecrosssections(
 # ------------------------------------------------------------ #
 # Compute different quantities
 
-def compute_luminosity(path:str='../r3dsims/spectrum.out',distance:float=1):
+def compute_sed_luminosity(path:str='../r3dsims/spectrum.out',distance:float=1):
     """
     Insert a spectrum.out from r3d and get the bolometric luminosity in Watt
     INPUT
@@ -1154,9 +1154,43 @@ def compute_luminosity(path:str='../r3dsims/spectrum.out',distance:float=1):
     return luminosity
 
 
-# TODO compute optical thickness
+def compute_luminosity(
+        wavelengths:list,
+        spectrum:list,
+        distance:float=1
+    ):
+    """
+    INPUT
+    wavelengthum: List of wavelengths in um
+    spectrum: List of flux densities in Jy
+    distance: distance to source in pc
+
+    OUTPUT
+    luminosity in Watt
+    """
+
+    nwave = len(wavelengths)
+
+    if nwave == len(spectrum):
+        # Integrate the SED (using trapezoidal method, and change units to SI units)
+        sedintegral = 0
+
+        for nn in range(nwave-1):
+            # 1.499e-12 = 0.5 * 1e-26 * 1e6 * c which are the corrections for units and the trapezoid-half.
+            # Wavelength is summed in reversed order because its a sum over frequency
+            sedintegral += (spectrum[nn] + spectrum[nn+1]) * (1/wavelengths[nn] - 1/wavelengths[nn+1])*1.499e-12
+
+        # Compute bolometric luminosity
+        luminosity = 4.*np.pi*(distance*pc)**2. * sedintegral
+
+        return luminosity
+
+    else:
+        print('ERROR, wavelengths and spectrum have different lengths')
 
 
+
+# TODO skriv in lite info
 def compute_opticalthick(
         path:str='../',
     ):
