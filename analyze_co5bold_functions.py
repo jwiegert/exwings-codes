@@ -190,6 +190,28 @@ def load_dustdensity(
     
     return c5ddust_densities, c5ddust_temperatures
 
+
+# ==========================================================================
+# Load c5d-specific-data that has already been translated to r3d-data
+
+def load_staropacities(
+        path:str = '../star_opacities.dat'
+    ):
+
+    # load opacity.dat
+    opacity = []
+    with open(path, 'r') as fopacity:
+        for line in fopacity.readlines():
+            if line[0] != '#':
+                opacity.append(float(line))
+
+    # Change to np.array
+    opacity = np.array(opacity)
+
+    return opacity
+
+
+
 # ==========================================================================
 # Plot c5d-data (but in r3d-grid)
 
@@ -210,11 +232,9 @@ def plot_opakapparadius(
         path += '/'
 
     # load opacity.dat
-    opacity = []
-    with open(path+'star_opacities.dat', 'r') as fopacity:
-        for line in fopacity.readlines():
-            if line[0] != '#':
-                opacity.append(float(line))
+    opacity = load_staropacities(
+        path = path+'star_opacities.dat'
+    )
 
     # load grid
     griddistances = a3d.load_griddistances(
@@ -845,7 +865,52 @@ def create_staropadensity(
     print('C5D create star opacities densities:\n    dust_density_opastar.inp\n    dustopac_star.inp\n    dustkappa_opastar.inp\nDONE\n')
 
 
-# TODO Function that smooths the temperature
+# Smooths the opacity file, removes spikes
+def smooth_opacity(
+        path:str='../star_opacities.dat',
+        smooth_tolerance_log:float = 1
+    ):
+    """
+    Remove outlier cells with large change in opacity
+
+    INPUT
+    Path: path to star_opacities.dat
+    smooth_tolerance_log: number of orders of magnitude to limit
+
+    OUTPUT
+    New file: star_opacities_smoothed.dat
+    """
+    print('Removing opacity spikes')
+
+    # Load opacity-file
+    opacity = load_staropacities(path = path)
+
+    # Declarations
+    Ncells = opacity.size
+    counter = 0
+
+    for nn in range(2,Ncells-2):
+        mean_opacity = 0.25 * (opacity[nn-2] + opacity[nn-1] + opacity[nn+1] + opacity[nn+2])
+
+        if opacity[nn] < 10**-smooth_tolerance_log or opacity[nn] > 10**smooth_tolerance_log:
+            opacity[nn] = mean_opacity
+            counter += 1
+    
+    print(f'Number of smoothed cells: {counter}')
+
+    # Write new file
+    with open('../star_opacities_smoothed.dat', 'w') as fopacity:
+
+        # Write header
+        fopacity.write('# List of c5d-opacities translated to r3d-spatial grid.\n# Use as input when separating one-specie-density_star-file into several species\n# and creating dust-star opacity files.\n')
+
+        # Write new data
+        for nn in range(Ncells):
+            fopacity.write(f'{opacity[nn]}\n')
+
+    print('C5D smooth opacities:\n    star_opacities_smoothed.dat\nDONE\n')
+
+# Smoothing, removing spikes in temperatures
 def smooth_temperature(
         path:str='../dust_temperature.dat',
         smooth_tolerance:float=1.5
@@ -856,6 +921,7 @@ def smooth_temperature(
     TODO write more info
     
     """
+    print('Removing temperature spikes')
 
     # load temperature
     Ncells,Nspecies,temperatures = a3d.load_temperature(path=path)
@@ -872,8 +938,7 @@ def smooth_temperature(
             nn = ncell + Ncells*nspecie
 
             # Average temperature surrounding cell nn
-            #mean_temperature = 0.25 * (temperatures[nn-2] + temperatures[nn-1] + temperatures[nn+1] +temperatures[nn+2])
-            mean_temperature = 0.5 * (temperatures[nn-2] + temperatures[nn+2])
+            mean_temperature = 0.25 * (temperatures[nn-2] + temperatures[nn-1] + temperatures[nn+1] +temperatures[nn+2])
 
             if temperatures[nn] > smooth_tolerance * mean_temperature:
                 temperatures[nn] = mean_temperature
