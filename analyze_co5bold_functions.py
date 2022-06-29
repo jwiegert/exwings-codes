@@ -868,7 +868,8 @@ def create_staropadensity(
 # Smooths the opacity file, removes spikes
 def smooth_opacity(
         path:str='../star_opacities.dat',
-        smooth_tolerance_log:float = 1
+        #smooth_tolerance_log:float = 1
+        smooth_tolerance_log:float = 0.1
     ):
     """
     Remove outlier cells with large change in opacity
@@ -891,22 +892,26 @@ def smooth_opacity(
 
 
     for nn in range(2,Ncells-2):
-        #mean_opacity = 0.25 * (opacity[nn-2] + opacity[nn-1] + opacity[nn+1] + opacity[nn+2])
 
+        ## Using mean opacity
+        #mean_opacity = 0.25 * (opacity[nn-2] + opacity[nn-1] + opacity[nn+1] + opacity[nn+2])
         #if opacity[nn] < 10**-smooth_tolerance_log * mean_opacity \
         #or opacity[nn] > 10**smooth_tolerance_log  * mean_opacity:
         #    opacity[nn] = mean_opacity
         #    counter += 1
     
-        # TODO Test median instead
+        # Test median instead
         median_opacity = np.median(np.array(
             [opacity[nn-2],opacity[nn-1],opacity[nn+1],opacity[nn+2]]
         ))
-
         if opacity[nn] < 10**-smooth_tolerance_log * median_opacity \
         or opacity[nn] > 10**smooth_tolerance_log  * median_opacity:
             opacity[nn] = median_opacity
             counter += 1
+        #if opacity[nn] < median_opacity - 10**-smooth_tolerance_log \
+        #or opacity[nn] > median_opacity + 10**smooth_tolerance_log:
+        #    opacity[nn] = median_opacity
+        #    counter += 1
 
     print(f'Number of smoothed OPAcells: {counter}')
 
@@ -926,8 +931,9 @@ def smooth_opacity(
 
 # Smoothing, removing spikes in temperatures
 def smooth_temperature(
-        path:str='../dust_temperature.dat',
-        smooth_tolerance:float=1.5
+        path:str = '../dust_temperature.dat',
+        #smooth_tolerance:float=1.5
+        smooth_tolerance:float = 600
     ):
     """
     Remove outlier cells with high temperatures
@@ -953,7 +959,6 @@ def smooth_temperature(
 
             ## Average temperature surrounding cell nn
             #mean_temperature = 0.25 * (temperatures[nn-2] + temperatures[nn-1] + temperatures[nn+1] + temperatures[nn+2])
-            #
             #if temperatures[nn] > smooth_tolerance * mean_temperature:
             #    temperatures[nn] = mean_temperature
             #    counter += 1
@@ -962,9 +967,13 @@ def smooth_temperature(
             median_temperature = np.median(np.array(
                 [temperatures[nn-2],temperatures[nn-1],temperatures[nn+1],temperatures[nn+2]]
             ))
-            if temperatures[nn] > smooth_tolerance * median_temperature:
+            #if temperatures[nn] > smooth_tolerance * median_temperature:
+            #    temperatures[nn] = median_temperature
+            #    counter += 1
+            if temperatures[nn] > smooth_tolerance + median_temperature:
                 temperatures[nn] = median_temperature
                 counter += 1
+
 
     print(f'Number of smoothed Tcells: {counter}')
 
