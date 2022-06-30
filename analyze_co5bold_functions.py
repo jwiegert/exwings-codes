@@ -868,7 +868,8 @@ def create_staropadensity(
 # Smooths the opacity file, removes spikes
 def smooth_opacity(
         path:str='../star_opacities.dat',
-        #smooth_tolerance_log:float = 1
+        smooth_out:int = 4,
+        smooth_in:int = 0,
         smooth_tolerance_log:float = 0.1
     ):
     """
@@ -891,7 +892,7 @@ def smooth_opacity(
     counter = 0
 
 
-    for nn in range(2,Ncells-2):
+    for nn in range(smooth_out,Ncells-smooth_out):
 
         ## Using mean opacity
         #mean_opacity = 0.25 * (opacity[nn-2] + opacity[nn-1] + opacity[nn+1] + opacity[nn+2])
@@ -900,20 +901,24 @@ def smooth_opacity(
         #    opacity[nn] = mean_opacity
         #    counter += 1
     
-        # Test median instead
-        median_opacity = np.median(np.array(
-            [opacity[nn-2],opacity[nn-1],opacity[nn+1],opacity[nn+2]]
-        ))
-        if opacity[nn] < 10**-smooth_tolerance_log * median_opacity \
-        or opacity[nn] > 10**smooth_tolerance_log  * median_opacity:
+        # Median of a range of numbers
+        # Extract indeces, all within range except current index
+        nindeces = [
+            nmedian for nmedian in range(nn-smooth_out,nn+smooth_out+1) if nmedian < (nn-smooth_in) or nmedian > (nn+smooth_in)
+        ]
+        median_list = []
+
+        for nmedian in nindeces:
+            median_list.append(opacity[nmedian])
+
+        median_opacity = np.median(np.array(median_list))
+
+        if opacity[nn] < 10**-smooth_tolerance_log * median_opacity :
             opacity[nn] = median_opacity
             counter += 1
-        #if opacity[nn] < median_opacity - 10**-smooth_tolerance_log \
-        #or opacity[nn] > median_opacity + 10**smooth_tolerance_log:
-        #    opacity[nn] = median_opacity
-        #    counter += 1
 
-    print(f'Number of smoothed OPAcells: {counter}')
+
+    print(f'{smooth_in}-{smooth_out}: Number of smoothed OPAcells: {counter}')
 
 
     # Write new file
@@ -932,8 +937,9 @@ def smooth_opacity(
 # Smoothing, removing spikes in temperatures
 def smooth_temperature(
         path:str = '../dust_temperature.dat',
-        #smooth_tolerance:float=1.5
-        smooth_tolerance:float = 600
+        smooth_out:int = 9,
+        smooth_in:int = 3,
+        smooth_tolerance:float=1.5
     ):
     """
     Remove outlier cells with high temperatures
@@ -952,30 +958,28 @@ def smooth_temperature(
     for nspecie in range(Nspecies):
         
         # Loop over grid cells of each specie
-        for ncell in range(2,Ncells-2):
+        for ncell in range(smooth_out,Ncells-smooth_out):
 
             # Index of cell in total list
             nn = ncell + Ncells*nspecie
 
-            ## Average temperature surrounding cell nn
-            #mean_temperature = 0.25 * (temperatures[nn-2] + temperatures[nn-1] + temperatures[nn+1] + temperatures[nn+2])
-            #if temperatures[nn] > smooth_tolerance * mean_temperature:
-            #    temperatures[nn] = mean_temperature
-            #    counter += 1
+            nindeces = [
+                nmedian for nmedian in range(nn-smooth_out,nn+smooth_out+1) if nmedian < (nn-smooth_in) or nmedian > (nn+smooth_in)
+            ]
+            median_list = []
 
-            # Median temperature surrounding cell nn
-            median_temperature = np.median(np.array(
-                [temperatures[nn-2],temperatures[nn-1],temperatures[nn+1],temperatures[nn+2]]
-            ))
-            #if temperatures[nn] > smooth_tolerance * median_temperature:
-            #    temperatures[nn] = median_temperature
-            #    counter += 1
-            if temperatures[nn] > smooth_tolerance + median_temperature:
+            for nmedian in nindeces:
+                median_list.append(temperatures[nmedian])
+
+            median_temperature = np.median(np.array(median_list))
+
+
+            if temperatures[nn] > smooth_tolerance * median_temperature:
                 temperatures[nn] = median_temperature
                 counter += 1
 
 
-    print(f'Number of smoothed Tcells: {counter}')
+    print(f'{smooth_in}-{smooth_out}: Number of smoothed Tcells: {counter}')
 
     # Print new temperature file
     with open('../dust_temperature_smoothed.dat', 'w') as ftemperature:
