@@ -995,7 +995,66 @@ def smooth_temperature(
     print('C5D smooth temperatures:\n    dust_temperature_smoothed.dat\nDONE\n')
 
 
+# Smooth density
 
+#    Ncells,Nspec,star_densities = a3d.load_dustdensity(path=pathstardensity,numb_specie=1)
+
+def smooth_density(
+        path:str = '../dust_density.inp',
+        smooth_out:int = 9,
+        smooth_in:int = 3,
+        smooth_tolerance:float=1.5
+    ):
+    """
+    Remove outlier cells with high densities
+
+    TODO add negative spikes?
+
+    TODO write more info
+    
+    """
+    print('Removing density spikes')
+
+    # load density
+    Ncells,Nspecies,densities = a3d.load_dustdensity(path=path,numb_specie=1)
+
+    counter = 0
+
+        
+    # Loop over grid cells of each specie
+    for nn in range(smooth_out,Ncells-smooth_out):
+
+
+        nindeces = [
+            nmedian for nmedian in range(nn-smooth_out,nn+smooth_out+1) if nmedian < (nn-smooth_in) or nmedian > (nn+smooth_in)
+        ]
+        median_list = []
+
+        for nmedian in nindeces:
+            median_list.append(densities[nmedian])
+
+        median_densities = np.median(np.array(median_list))
+
+
+        if densities[nn] > smooth_tolerance * median_densities:
+            densities[nn] = median_densities
+            counter += 1
+
+
+    print(f'{smooth_in}-{smooth_out}: Number of smoothed Density cells: {counter}')
+
+    # Print new temperature file
+    with open('../dust_density_smoothed.inp', 'w') as fdensity:
+        # Write headers:
+        # 1
+        # nleafs
+        # number dust species
+        fdensity.write(f'1\n{int(Ncells)}\n{Nspecies}\n')
+
+        for nn in range(Ncells*Nspecies):
+            fdensity.write(f'{densities[nn]}\n')
+
+    print('C5D smooth densities:\n    dust_density_smoothed.inp\nDONE\n')
 
 
 
