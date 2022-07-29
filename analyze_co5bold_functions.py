@@ -878,6 +878,7 @@ def smooth_opacity(
     INPUT
     Path: path to star_opacities.dat
     smooth_tolerance_log: number of orders of magnitude to limit
+    Higher smooth tolerance > more tolerant for spikes
 
     OUTPUT
     New file: star_opacities_smoothed.dat
@@ -937,12 +938,14 @@ def smooth_opacity(
 # Smoothing, removing spikes in temperatures
 def smooth_temperature(
         path:str = '../dust_temperature.dat',
-        smooth_out:int = 9,
+        smooth_out:int = 10,
         smooth_in:int = 3,
         smooth_tolerance:float=1.5
     ):
     """
     Remove outlier cells with high temperatures
+
+    Higher smooth_tolerance > more tolerant for spikes
 
     TODO write more info
     
@@ -1008,6 +1011,7 @@ def smooth_density(
     """
     Remove outlier cells with high densities
 
+    Smaller smooth_tolerance > more tolerant for spikes
     TODO add negative spikes?
 
     TODO write more info
@@ -1024,7 +1028,6 @@ def smooth_density(
     # Loop over grid cells of each specie
     for nn in range(smooth_out,Ncells-smooth_out):
 
-
         nindeces = [
             nmedian for nmedian in range(nn-smooth_out,nn+smooth_out+1) if nmedian < (nn-smooth_in) or nmedian > (nn+smooth_in)
         ]
@@ -1036,7 +1039,7 @@ def smooth_density(
         median_densities = np.median(np.array(median_list))
 
 
-        if densities[nn] > smooth_tolerance * median_densities:
+        if densities[nn] < smooth_tolerance * median_densities:
             densities[nn] = median_densities
             counter += 1
 
