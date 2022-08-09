@@ -41,6 +41,56 @@ def movecoordinates(nxyz,nx,ny,nz):
         nz += 1
     return nx,ny,nz
 
+# Write runcommand-files
+# TODO finish this
+def write_r3d_runscripts(
+        path='../r3dresults/st28gm06n056/',
+        phases = [140,141,142],
+        sed_inclinations = [0],
+        image_wavelengths = [1],
+        image_inclinations = [0],
+        image_sizeau = 7.4,
+        image_npix = 128,
+    ):
+
+
+    if len(image_inclinations) < 1:
+        image_inclinations = [0]
+
+
+    with open('../runcommand.sh', 'w') as fr3d:
+
+        # SED-simulation-lines
+
+        if len(sed_inclinations) > 0:
+            for inclination in sed_inclinations:
+
+                fr3d.write(f'radmc3d sed incl {inclination}\n')
+                fr3d.write(f'mv spectrum.out specumtr_i_{inclination}.out\n')
+
+        # Empty line
+        fr3d.write('\n')
+
+
+        # Image-simulation lines
+        
+        if len(image_wavelengths) > 0:
+
+            for wavelength in image_wavelengths:
+                for inclination in image_inclinations:
+                
+                    fr3d.write(f'radmc3d image nostar incl {inclination} lambda {wavelength} npix {image_npix} sizeau {image_sizeau}\n')
+                    # TODO add more variables in image file name
+                    fr3d.write(f'mv image.out image_{wavelength}um.out')
+
+
+    print('Finished writing runcommand.sh')
+
+
+
+
+
+
 # TODO
 # function that combines different dust-specie density files into one
 # def merge_dustdensity():
@@ -52,6 +102,16 @@ def movecoordinates(nxyz,nx,ny,nz):
 # TODO
 # function that combines different dust tmeperature files
 # def merge_dusttemperature():
+
+
+
+
+
+
+
+
+
+
 
 
 # ------------------------------------------------------------ #

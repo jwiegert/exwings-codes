@@ -7,6 +7,7 @@ import numpy as np
 from scipy.io.idl import readsav
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm, xlabel, xscale, yscale
+import os
 
 # My own libraries
 import create_r3d_functions as c3d
@@ -863,6 +864,67 @@ def create_staropadensity(
             fopac.write(f'{wave}    1.0    0.0\n')
     
     print('C5D create star opacities densities:\n    dust_density_opastar.inp\n    dustopac_star.inp\n    dustkappa_opastar.inp\nDONE\n')
+
+# Smoothing of data-functions ----------------------------------------------------
+# The c5d-data contains various cells in/near the surface of the star which gives
+# very high luminosity and temperature. I smooth the r3d-data files to remove this.
+# 
+# There are functions for smoothin density, opacity and temperatures but the main
+# function only does this for the opacity and density since the temperature 
+# smoothing gives sketchy results and I don't trust them. Too many artifacts with
+# very little smoothing in the r3d-data, and not much changes in luminosity.
+
+def smooth_stellardata(
+        path = '../r3dresults/st28gm06n056/',
+        phases = [140,141,142]
+    ):
+    """
+    path = string with path to data folders
+    phases = list of phases
+
+    Smooths and creates new opacity and density files
+    ...
+    combines c5d-opacity and density into the r3d-density and creates a standard opa=1
+    opacity file for r3d
+    """
+
+    for phase in phases:
+
+
+        # Smooth a5d-Opacity, remove neg spikes
+        smooth_opacity(
+            path = f'{path}{phase}/star_opacities.dat',
+            smooth_out = 7,
+            smooth_in = 6,
+            smooth_tolerance_log = 0
+        )
+        os.system(f'mv ../star_opacities_smoothed.dat {path}{phase}/')
+    
+
+        # Smooth a5d-densities, remove negative spikes
+        smooth_density(
+            path = f'{path}{phase}/dust_density_onestar.inp',
+            smooth_out = 36,
+            smooth_in = 35,
+            smooth_tolerance = 0.2
+        )
+        os.system(f'mv ../dust_density_smoothed.inp {path}{phase}/dust_density_onestar_smoothed.inp')
+
+        # Combine c5d-density and opacity into one and save in r3d-density file
+        create_staropadensity(
+            pathopacity = f'{path}{phase}/star_opacities_smoothed.dat',
+            pathstardensity = f'{path}{phase}/dust_density_onestar_smoothed.inp',
+            pathwavelength = f'{path}wavelength_micron.inp',
+            corrfac = 1.0
+        )
+
+
+    print('All done')
+
+
+
+
+
 
 
 # Smooths the opacity file, removes spikes
