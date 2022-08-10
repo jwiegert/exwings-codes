@@ -6,9 +6,9 @@ import numpy as np
 import scipy as s
 from scipy.integrate import quad
 from datetime import datetime
+import os
 
 # Might be used later
-#import os
 #import scipy as s
 #from scipy.integrate import quad
 
@@ -44,45 +44,63 @@ def movecoordinates(nxyz,nx,ny,nz):
 # Write runcommand-files
 # TODO finish this
 def write_r3d_runscripts(
-        path='../r3dresults/st28gm06n056/',
-        phases = [140,141,142],
-        sed_inclinations = [0],
-        image_wavelengths = [1],
-        image_inclinations = [0],
+        path = '../r3dresults/st28gm06n056/',
+        phase_list = [140,141,142],
+        sed_inclination_list = [0],
+        image_wavelength_list = [1],
+        image_inclination_list = [0],
         image_sizeau = 7.4,
         image_npix = 128,
     ):
 
-
-    if len(image_inclinations) < 1:
-        image_inclinations = [0]
-
-
-    with open('../runcommand.sh', 'w') as fr3d:
-
-        # SED-simulation-lines
-
-        if len(sed_inclinations) > 0:
-            for inclination in sed_inclinations:
-
-                fr3d.write(f'radmc3d sed incl {inclination}\n')
-                fr3d.write(f'mv spectrum.out specumtr_i_{inclination}.out\n')
-
-        # Empty line
-        fr3d.write('\n')
+    # Automatically add / to end of path if it's missing
+    if path[-1] != '/':
+        path += '/'
 
 
-        # Image-simulation lines
-        
-        if len(image_wavelengths) > 0:
+    if len(image_inclination_list) < 1:
+        image_inclination_list = [0]
 
-            for wavelength in image_wavelengths:
-                for inclination in image_inclinations:
-                
-                    fr3d.write(f'radmc3d image nostar incl {inclination} lambda {wavelength} npix {image_npix} sizeau {image_sizeau}\n')
-                    # TODO add more variables in image file name
-                    fr3d.write(f'mv image.out image_{wavelength}um.out')
 
+    for phase in phase_list:
+
+
+        with open('../runcommand.sh', 'w') as fr3d:
+
+            # SED-simulation-lines
+
+            if len(sed_inclination_list) > 0:
+                for inclination in sed_inclination_list:
+
+                    fr3d.write(f'radmc3d sed incl {inclination}\n')
+                    fr3d.write(f'mv spectrum.out spectrum_i{inclination}.out\n')
+
+            # Empty line
+            fr3d.write('\n')
+
+
+            # Image-simulation lines
+            
+            if len(image_wavelength_list) > 0:
+
+                for wavelength in image_wavelength_list:
+                    for inclination in image_inclination_list:
+                    
+                        fr3d.write(f'radmc3d image nostar incl {inclination} lambda {wavelength} npix {image_npix} sizeau {image_sizeau}\n')
+                        # TODO add more variables in image file name
+                        fr3d.write(f'mv image.out image_i{inclination}_{wavelength}um.out\n')
+
+        # TODO
+
+        # os.system: give file chmod +x
+        os.system(
+            'chmod +x ../runcommand.sh'
+        )
+
+        # os.system: mv to various folders
+        os.system(
+            f'mv ../runcommand.sh {path}{phase}/'
+        )
 
     print('Finished writing runcommand.sh')
 

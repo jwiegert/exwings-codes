@@ -888,6 +888,11 @@ def smooth_stellardata(
     opacity file for r3d
     """
 
+    # Automatically add / to end of path if it's missing
+    if path[-1] != '/':
+        path += '/'
+
+
     for phase in phases:
 
 
@@ -917,7 +922,13 @@ def smooth_stellardata(
             pathwavelength = f'{path}wavelength_micron.inp',
             corrfac = 1.0
         )
-
+    
+        # Move/copy all files to correct places
+        # TODO when I join the dust, change this! Or remove this! and handle it when merging data instead
+        os.system(f'cp {path}{phase}/dust_temperature_onestar.dat {path}{phase}/dust_temperature.dat')
+        os.system(f'mv ../dust_density_opastar.inp {path}{phase}/dust_density.inp')
+        os.system(f'mv ../dustkappa_opastar.inp {path}{phase}/')
+        os.system(f'mv ../dustopac_star.inp {path}{phase}/dustopac.inp')
 
     print('All done')
 
