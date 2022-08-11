@@ -21,6 +21,70 @@ Msol = 1.989e33 # g
 Rsol = 6.955e10 # cm
 
 # ------------------------------------------------------------ #
+# List of functions
+#
+# Simpler functions
+# -----------------
+#
+# movecoordinates(nxyz,nx,ny,nz)
+#
+# write_r3d_runscripts(
+#    path = '../r3dresults/st28gm06n056/',
+#    phase_list = [140,141,142],
+#    sed_inclination_list = [0],
+#    image_wavelength_list = [1],
+#    image_inclination_list = [0],
+#    image_sizeau = 7.4,
+#    image_npix = 128,
+# )   
+#
+# TODO More to come here
+#    
+# 
+# Grid functions
+# --------------
+#
+# create_grid(
+#    gridedge:float, 
+#    nxyz:int, 
+#    refinementlist:list,
+#    inrefine:str=0.2,
+#    savegrid:str=True
+# )
+# 
+# create_wavelength(
+#    wavelengthstart:float=0.1,
+#    wavelengthend:float=2000.0,
+#    nwave:int=100,
+#    logscale:str='y'
+# )
+# 
+# 
+# Create simple R3D-data-functions
+# --------------------------------
+#
+# create_duststar(
+#    Mstar:float = 1,
+#    Rstar:float = 100,
+#    Teff:float = 2700
+# )
+# 
+# TODO Not finished!
+# create_spheredensity(
+#    optconstlist:list=['mg2sio4'],
+#    agrainlist:list=[0.1],
+#    totaldustmass:float=1.989e33,
+#    densitypower:float=-2,
+#    inradius:float=3,
+#    outradius:float=100
+# )
+# 
+# TODO Not finished!
+# merge_dustdensities(
+#    file_names:list=['dust_density.inp']
+# )
+#
+# ------------------------------------------------------------ #
 # Shorter simpler functions
 
 # Move base cell coordinates
@@ -43,13 +107,13 @@ def movecoordinates(nxyz,nx,ny,nz):
 
 # Write runcommand-files, one for each phase and one main file that runs them in paralell
 def write_r3d_runscripts(
-        path = '../r3dresults/st28gm06n056/',
-        phase_list = [140,141,142],
-        sed_inclination_list = [0],
-        image_wavelength_list = [1],
-        image_inclination_list = [0],
-        image_sizeau = 7.4,
-        image_npix = 128,
+        path:str = '../r3dresults/st28gm06n056/',
+        phase_list:list = [140,141,142],
+        sed_inclination_list:list = [0],
+        image_wavelength_list:list = [1],
+        image_inclination_list:list = [0],
+        image_sizeau:float = 7.4,
+        image_npix:int = 128,
     ):
     """
     Creates runcommand-files, one for each phase and one main file that runs them in paralell
@@ -153,6 +217,7 @@ def write_r3d_runscripts(
 
 
 # ------------------------------------------------------------ #
+# Grid functions
 
 def create_grid(
         gridedge:float, 
@@ -644,7 +709,8 @@ def create_grid(
         print('    grid_distances.csv\n    grid_cellsizes.csv')
     print('DONE\n')
 
-# ------------------------------------------------------------ #
+
+
 
 # Write wavelengthgrid
 def create_wavelength(
@@ -697,6 +763,7 @@ def create_wavelength(
     return wavelengths
 
 # ------------------------------------------------------------ #
+# Create simple R3D-data-functions
 
 # Creates a spherical dust blob that imitates an AGB-star in the centrum of the grid
 def create_duststar(
