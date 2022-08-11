@@ -41,8 +41,7 @@ def movecoordinates(nxyz,nx,ny,nz):
         nz += 1
     return nx,ny,nz
 
-# Write runcommand-files
-# TODO finish this
+# Write runcommand-files, one for each phase and one main file that runs them in paralell
 def write_r3d_runscripts(
         path = '../r3dresults/st28gm06n056/',
         phase_list = [140,141,142],
@@ -52,35 +51,50 @@ def write_r3d_runscripts(
         image_sizeau = 7.4,
         image_npix = 128,
     ):
+    """
+    Creates runcommand-files, one for each phase and one main file that runs them in paralell
+    
+    TODO: add lists for second viewing angle
+
+    INPUT
+    path = path from code-folder to main data folder (ie below the phase-folders, see example)
+    phase_list = list of all phases for this model-star
+    sed_inclination_list = list of inclination angles for the SED-simulations
+    image_wavelength_list = list of image wavelengths in micrometres
+    image_inclination_list = list of inclination angles for images
+    image_sizeau = size of image-side in AU
+    image_npix = number of pixels per side of images
+    """
 
     # Automatically add / to end of path if it's missing
     if path[-1] != '/':
         path += '/'
 
 
+    # Automatically adds 0 as inclination angle if none is given
     if len(image_inclination_list) < 1:
         image_inclination_list = [0]
 
 
+    # Loop through phase-list
     for phase in phase_list:
 
+        # Write run-scripts for each phase
+        with open(f'{path}runcommand{phase}.sh', 'w') as fr3d:
 
-        with open('../runcommand.sh', 'w') as fr3d:
+            # Enter phase-folder
+            fr3d.write(f'cd {phase}\n\n')
 
-            # SED-simulation-lines
-
+            # Write SED-simulation-lines
             if len(sed_inclination_list) > 0:
                 for inclination in sed_inclination_list:
-
                     fr3d.write(f'radmc3d sed incl {inclination}\n')
                     fr3d.write(f'mv spectrum.out spectrum_i{inclination}.out\n')
 
-            # Empty line
+            # Add empty line
             fr3d.write('\n')
 
-
-            # Image-simulation lines
-            
+            # Write image-simulation lines (if any are given)
             if len(image_wavelength_list) > 0:
 
                 for wavelength in image_wavelength_list:
@@ -90,19 +104,25 @@ def write_r3d_runscripts(
                         # TODO add more variables in image file name
                         fr3d.write(f'mv image.out image_i{inclination}_{wavelength}um.out\n')
 
-        # TODO
-
-        # os.system: give file chmod +x
+        # Make phase-script-files executables
         os.system(
-            'chmod +x ../runcommand.sh'
+            f'chmod +x {path}runcommand{phase}.sh'
         )
 
-        # os.system: mv to various folders
-        os.system(
-            f'mv ../runcommand.sh {path}{phase}/'
-        )
+        # Write main script that runs all phases in paralell
+        with open(f'{path}runcommand_main.sh', 'a') as fmain:
+            fmain.write(f'./runcommand{phase}.sh &\n')
 
-    print('Finished writing runcommand.sh')
+    # Make main script executable
+    os.system(
+        f'chmod +x {path}runcommand_main.sh'
+    )
+
+    print('Finished writing run-r3d-scripts:\n    runcommand[PHASE].sh\n    runcommand_main.sh\n')
+
+
+
+
 
 
 
