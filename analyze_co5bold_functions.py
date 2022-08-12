@@ -127,6 +127,7 @@ AUcm = cython.declare(cython.float ,1.49598e13) # cm
 # Funcs to load and create dusty envelope
 # ---------------------------------------
 #
+# TODO to finish this, load dust density and temperature is not finished yet
 # create_dustfiles(
 #    savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
 #    amrpath:str='../amr_grid.inp',
@@ -136,9 +137,7 @@ AUcm = cython.declare(cython.float ,1.49598e13) # cm
 #    monomermasses:list=[2.3362e-22]
 # )
 #
-
-
-
+#
 # ============================================================
 # Functions that load C5D-data and saves them in arrays
 
@@ -274,13 +273,20 @@ def load_star_properties(
 # Function for loading one dust specie from c5d-data
 @cython.cfunc
 @cython.locals(nspecies=cython.int)
-def load_dustdensity(
-        savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
-        nspecies:int=0
+def load_dust_densitytemperature(
+        savpath:str = '../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        nspecies:int = 0
     ):
     """
-    TODO instructions
-    
+    Loads c5d-data and extracts dust density and dust temperature
+
+    INPUT
+    savpath:str = path to sav-file
+    nspecies:int = number of the specie to extract
+
+    OUTPUT
+    c5ddust_densities: array with monomer number density in the c5d-grid
+    c5ddust_temperatures: array with dust temperatures within c5d-grid NOT FINISHED
     """
 
     # Load sav-file
@@ -1242,6 +1248,7 @@ def smooth_density(
 # gives a string with the name of the specie!
 # so this can also print the dustkappa-list-file for r3d!
 
+# TODO to finish this, load dust density and temperature is not finished yet
 def create_dustfiles(
         savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
         amrpath:str='../amr_grid.inp',
@@ -1323,7 +1330,7 @@ def create_dustfiles(
                 print(f'    Monomer mass: {monomermasses} g')
 
                 # Load c5d-dust densities and temperatures
-                #c5ddensities, c5dtemperatures = load_dustdensity(savpath=savpath, nspecies=nspecies)
+                #c5ddensities, c5dtemperatures = load_dust_densitytemperature(savpath=savpath, nspecies=nspecies)
 
                 # Write the dustopac file
                 # 1
