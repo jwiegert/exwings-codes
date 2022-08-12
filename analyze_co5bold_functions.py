@@ -33,6 +33,12 @@ AUcm = cython.declare(cython.float ,1.49598e13) # cm
 #    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
 # )
 #
+#
+# TODO
+# function that outputs star's props, but instead lum, mass, temperature, radius
+#
+#
+#
 # load_star_properties(
 #    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
 # ) 
@@ -41,15 +47,6 @@ AUcm = cython.declare(cython.float ,1.49598e13) # cm
 # load_dustdensity(
 #    savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
 #    nspecies:int=0
-# )
-#
-#
-# Load purely-c5d-data that has been translated to r3d-grid
-# ---------------------------------------------------------
-#
-# TODO perhaps move this to a3d? Or o3d?
-# load_staropacities(
-#    path:str = '../star_opacities.dat'
 # )
 #
 #
@@ -316,24 +313,6 @@ def load_dustdensity(
     return c5ddust_densities, c5ddust_temperatures
 
 
-# ==========================================================================
-# Load c5d-specific-data that has already been translated to r3d-data
-
-def load_staropacities(
-        path:str = '../star_opacities.dat'
-    ):
-
-    # load opacity.dat
-    opacity = []
-    with open(path, 'r') as fopacity:
-        for line in fopacity.readlines():
-            if line[0] != '#':
-                opacity.append(float(line))
-
-    # Change to np.array
-    opacity = np.array(opacity)
-
-    return opacity
 
 
 
@@ -357,7 +336,7 @@ def plot_opakapparadius(
         path += '/'
 
     # load opacity.dat
-    opacity = load_staropacities(
+    opacity = c3d.load_staropacities(
         path = path+'star_opacities.dat'
     )
 
@@ -1083,7 +1062,7 @@ def smooth_opacity(
     print('Removing opacity spikes')
 
     # Load opacity-file
-    opacity = load_staropacities(path = path)
+    opacity = c3d.load_staropacities(path = path)
 
     # Declarations
     Ncells = opacity.size
