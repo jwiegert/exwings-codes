@@ -84,6 +84,15 @@ Rsol = 6.955e10 # cm
 #    file_names:list=['dust_density.inp']
 # )
 #
+# TODO
+# Merge dustopac-files-function
+#
+# TODO
+# Merge dust_temperature-files
+#
+
+
+#
 # ------------------------------------------------------------ #
 # Shorter simpler functions
 
@@ -1047,6 +1056,8 @@ def create_spheredensity(
 
 
 # TODO a function that merges a couple of dust density files
+
+# Give a list of dust_density-file-names to merge into one
 
 def merge_dustdensities(
         file_names:list=['dust_density.inp']

@@ -24,10 +24,121 @@ AUcm = cython.declare(cython.float ,1.49598e13) # cm
 
 # ------------------------------------------------------------ #
 # List of functions
+# 
 #
-# TODO!
-
-
+# Load C5D-data and saves in arrays
+# ---------------------------------
+#
+# load_grid_properties(
+#    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
+# )
+#
+# load_star_properties(
+#    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
+# ) 
+#
+# TODO Not finished yet
+# load_dustdensity(
+#    savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+#    nspecies:int=0
+# )
+#
+#
+# Load purely-c5d-data that has been translated to r3d-grid
+# ---------------------------------------------------------
+#
+# TODO perhaps move this to a3d? Or o3d?
+# load_staropacities(
+#    path:str = '../star_opacities.dat'
+# )
+#
+#
+# Plot c5d-data in r3d-grid
+# -------------------------
+#
+# plot_opakapparadius(
+#    path:str='../'
+# )
+#
+# plot_opakappatemperature(
+#    path:str='../'
+# )
+#
+#
+# Functions to create r3d-data from c5d-data
+# ------------------------------------------
+#
+# create_star(
+#    savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+#    amrpath:str='../amr_grid.inp',
+#    gridpath:str='../grid_distances.csv',
+#    sizepath:str='../grid_cellsizes.csv',
+# )
+#
+# NOTE Old function! I instead incorprorate Rosseland Opacity in Density file
+# create_staropacity(
+#    pathopacity:str='../star_opacities.dat',
+#    pathstardensity:str='../dust_density_onestarstar.inp',
+#    pathwavelength:str='../wavelength_micron.inp',
+#    pathtemperature:str='../dust_temperature_onestar.dat',
+#    temperaturebins:list=[],
+#    N_opabins:int=2
+# )
+#
+# NOTE New function, combines star's density and Rosseland Opacity into R3D-density
+#      Star's Opacity is then 1 for all Wavelengths
+# TODO Change the opacity later to some normalized function that varies realistically
+#      to reproduce the star's SED more than as a BB/Grey body
+# create_staropadensity(
+#    pathopacity:str='../star_opacities.dat',
+#    pathstardensity:str='../dust_density_onestarstar.inp',
+#    pathwavelength:str='../wavelength_micron.inp',
+#    corrfac:float=1.0
+# )
+#
+#
+# Smoothing of stellar data
+# -------------------------
+#
+# smooth_stellardata(
+#    path = '../r3dresults/st28gm06n056/',
+#    phases = [140,141,142]
+# )
+#
+# smooth_opacity(
+#    path:str='../star_opacities.dat',
+#    smooth_out:int = 4,
+#    smooth_in:int = 0,
+#    smooth_tolerance_log:float = 0.1
+# )
+#
+# smooth_temperature(
+#    path:str = '../dust_temperature.dat',
+#    smooth_out:int = 10,
+#    smooth_in:int = 3,
+#    smooth_tolerance:float=1.5
+# )
+#
+# smooth_density(
+#    path:str = '../dust_density.inp',
+#    smooth_out:int = 9,
+#    smooth_in:int = 3,
+#    smooth_tolerance:float=1.5
+# )
+#
+#
+# Funcs to load and create dusty envelope
+# ---------------------------------------
+#
+# create_dustfiles(
+#    savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+#    amrpath:str='../amr_grid.inp',
+#    gridpath:str='../grid_distances.csv',
+#    sizepath:str='../grid_cellsizes.csv',
+#    Nspecies:int=1,
+#    monomermasses:list=[2.3362e-22]
+# )
+#
 
 
 
@@ -107,6 +218,11 @@ def load_grid_properties(
     cellsize = (min(cellsizesx) + min(cellsizesy) + min(cellsizesz))/3
 
     return c5dgrid,cellcourners,cellsize
+
+
+# TODO
+# function that outputs star's props, but instead lum, mass, temperature, radius
+
 
 
 # Extract co5bold densities into a separate array 
@@ -381,13 +497,10 @@ def plot_opakappatemperature(
 
 # Extract data on star and create r3d-files from it
 def create_star(
-        # All necessary inputs
-        # paths!
         savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
         amrpath:str='../amr_grid.inp',
         gridpath:str='../grid_distances.csv',
         sizepath:str='../grid_cellsizes.csv',
-        Teff:float=2800
     ):
     """
     Extracts data from Co5bold sav-files and creates a dust_star for Radmc3d.
@@ -530,6 +643,10 @@ def create_star(
     print('C5D Dust-star:\n    dust_density_onestar.inp\n    dust_temperature_onestar.dat\n    star_opacities.dat\nDONE\n')
 
 
+# OLD FUNCTION
+# Not used any more since I instead incorporate the Rosseland opacity in the density file
+# for the star.
+#
 # Takes the stellar data from c5d-data that has been translated to r3d but as one specie, and
 # transforms it into separate species on a chosen number of bins of opacities as given by the
 # c5d-data.
@@ -874,6 +991,7 @@ def create_staropadensity(
     print('C5D create star opacities densities:\n    dust_density_opastar.inp\n    dustopac_star.inp\n    dustkappa_opastar.inp\nDONE\n')
 
 # Smoothing of data-functions ----------------------------------------------------
+#
 # The c5d-data contains various cells in/near the surface of the star which gives
 # very high luminosity and temperature. I smooth the r3d-data files to remove this.
 # 
@@ -882,6 +1000,9 @@ def create_staropadensity(
 # smoothing gives sketchy results and I don't trust them. Too many artifacts with
 # very little smoothing in the r3d-data, and not much changes in luminosity.
 
+
+# Main stellar-data-smoothing function, smooths opacity and density from negative spikes
+# using the optimal settings I wound after a few weeks of exploring :P
 def smooth_stellardata(
         path = '../r3dresults/st28gm06n056/',
         phases = [140,141,142]
@@ -903,7 +1024,6 @@ def smooth_stellardata(
 
     for phase in phases:
 
-
         # Smooth a5d-Opacity, remove neg spikes
         smooth_opacity(
             path = f'{path}{phase}/star_opacities.dat',
@@ -912,7 +1032,6 @@ def smooth_stellardata(
             smooth_tolerance_log = 0
         )
         os.system(f'mv ../star_opacities_smoothed.dat {path}{phase}/')
-    
 
         # Smooth a5d-densities, remove negative spikes
         smooth_density(
@@ -932,18 +1051,15 @@ def smooth_stellardata(
         )
     
         # Move/copy all files to correct places
-        # TODO when I join the dust, change this! Or remove this! and handle it when merging data instead
+        # TODO when I add the dust, change this! Or remove this! and handle it when merging data instead
+        #      since I will have to merge stellar and dust data into same R3D-data
+        #      which can be done with the _onestar-files I produce here.
         os.system(f'cp {path}{phase}/dust_temperature_onestar.dat {path}{phase}/dust_temperature.dat')
         os.system(f'mv ../dust_density_opastar.inp {path}{phase}/dust_density.inp')
         os.system(f'mv ../dustkappa_opastar.inp {path}{phase}/')
         os.system(f'mv ../dustopac_star.inp {path}{phase}/dustopac.inp')
 
     print('All done')
-
-
-
-
-
 
 
 # Smooths the opacity file, removes spikes
@@ -954,11 +1070,11 @@ def smooth_opacity(
         smooth_tolerance_log:float = 0.1
     ):
     """
-    Remove outlier cells with large change in opacity
+    Remove outlier cells with large negative change in opacity
 
     INPUT
     Path: path to star_opacities.dat
-    smooth_tolerance_log: number of orders of magnitude to limit
+    smooth_tolerance_log: Limit in order of number of negative orders of magnitude from median
     Higher smooth tolerance > more tolerant for spikes
 
     OUTPUT
@@ -972,7 +1088,6 @@ def smooth_opacity(
     # Declarations
     Ncells = opacity.size
     counter = 0
-
 
     for nn in range(smooth_out,Ncells-smooth_out):
 
@@ -999,9 +1114,7 @@ def smooth_opacity(
             opacity[nn] = median_opacity
             counter += 1
 
-
     print(f'{smooth_in}-{smooth_out}: Number of smoothed OPAcells: {counter}')
-
 
     # Write new file
     with open('../star_opacities_smoothed.dat', 'w') as fopacity:
@@ -1062,7 +1175,6 @@ def smooth_temperature(
                 temperatures[nn] = median_temperature
                 counter += 1
 
-
     print(f'{smooth_in}-{smooth_out}: Number of smoothed Tcells: {counter}')
 
     # Print new temperature file
@@ -1080,9 +1192,6 @@ def smooth_temperature(
 
 
 # Smooth density
-
-#    Ncells,Nspec,star_densities = a3d.load_dustdensity(path=pathstardensity,numb_specie=1)
-
 def smooth_density(
         path:str = '../dust_density.inp',
         smooth_out:int = 9,
@@ -1090,13 +1199,11 @@ def smooth_density(
         smooth_tolerance:float=1.5
     ):
     """
-    Remove outlier cells with high densities
+    Remove outlier cells with low densities, ie remove negative spikes
 
-    Smaller smooth_tolerance > more tolerant for spikes
-    TODO add negative spikes?
+    Smaller smooth_tolerance > more tolerant for spikes (is this correct?)
 
     TODO write more info
-    
     """
     print('Removing density spikes')
 
@@ -1104,7 +1211,6 @@ def smooth_density(
     Ncells,Nspecies,densities = a3d.load_dustdensity(path=path,numb_specie=1)
 
     counter = 0
-
         
     # Loop over grid cells of each specie
     for nn in range(smooth_out,Ncells-smooth_out):
@@ -1139,13 +1245,6 @@ def smooth_density(
             fdensity.write(f'{densities[nn]}\n')
 
     print('C5D smooth densities:\n    dust_density_smoothed.inp\nDONE\n')
-
-
-
-
-
-
-
 
 
 # ====================================================================
