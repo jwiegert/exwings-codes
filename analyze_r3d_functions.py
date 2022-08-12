@@ -658,11 +658,11 @@ def plot_grid(
     """
 
     # Load data
-    griddistances = a3d.load_griddistances(gridpath,amrpath)
-    gridsizes = a3d.load_cellsizes(sizepath,amrpath)
+    griddistances = load_griddistances(gridpath,amrpath)
+    gridsizes = load_cellsizes(sizepath,amrpath)
     
     # Load some grid props
-    nleafs = a3d.load_grid_properties()[2]
+    nleafs = load_grid_properties()[2]
     ncellsizes = np.size(np.unique(gridsizes))
 
     # Change units to AU
