@@ -500,7 +500,7 @@ def create_star(
 
     # Load R3D grid
     print('Loading R3D grid')
-    nleafs = a3d.load_gridprops(amrpath=amrpath)[2]
+    nleafs = a3d.load_grid_properties(amrpath=amrpath)[2]
     r3ddistances = a3d.load_griddistances(amrpath=amrpath,gridpath=gridpath)
     r3dcellsizes = a3d.load_cellsizes(amrpath=amrpath,sizepath=sizepath)
 
@@ -1258,7 +1258,7 @@ def create_dustfiles(
 
     # Load R3D grid
     print('Loading R3D grid')
-    nleafs = a3d.load_gridprops(amrpath=amrpath)[2]
+    nleafs = a3d.load_grid_properties(amrpath=amrpath)[2]
     r3ddistances = a3d.load_griddistances(amrpath=amrpath,gridpath=gridpath)
     r3dcellsizes = a3d.load_cellsizes(amrpath=amrpath,sizepath=sizepath)
 

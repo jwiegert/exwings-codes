@@ -80,7 +80,7 @@ def plot_grid(
     gridsizes = a3d.load_cellsizes(sizepath,amrpath)
     
     # Load some grid props
-    nleafs = a3d.load_gridprops()[2]
+    nleafs = a3d.load_grid_properties()[2]
     ncellsizes = np.size(np.unique(gridsizes))
 
     # Change units to AU

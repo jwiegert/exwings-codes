@@ -14,10 +14,135 @@ pc = 30.857e15 # 1 parsec in m
 AUcm = 1.49598e13 # AU in cm
 
 # ------------------------------------------------------------ #
+# List of functions
+#
+#
+# Functions that load various r3d input data
+# ------------------------------------------
+#
+# load_grid_properties(
+#    amrpath:str='../amr_grid.inp'
+# )
+#
+# load_griddistances(
+#    gridpath:str='../grid_distances.csv',
+#    amrpath:str='../amr_grid.inp',
+# )
+#
+# load_cellsizes(
+#    sizepath:str='../grid_cellsizes.csv',
+#    amrpath:str='../amr_grid.inp',
+# )
+#
+# load_wavelengthgrid(
+#    path:str='../wavelength_micron.inp'
+# )
+#
+# load_dustdensity(
+#    path:str = '../dust_density.inp',
+#    numb_specie:int = 1
+# )
+#
+# load_onekappa(
+#    specie_name:str='',
+#    specie_number:int=0,
+#    path:str='../'
+# )
+#
+#
+# Load output data from R3D
+# -------------------------
+#
+# load_temperature(
+#    path:str='../dust_temperature.dat',
+#    numb_specie:int=1
+# )
+#
+# load_spectrum(
+#    path:str='../r3dsims/spectrum.out',
+#    distance:float=1
+# )
+#
+#
+# Plot various details of input and output data of R3D
+# ----------------------------------------------------
+#
+# plot_onedensity_radius(
+#    density_path:str='../dust_density.inp',
+#    grid_path:str='../grid_distances.csv',
+#    amr_path:str='../amr_grid.inp',
+#    numb_specie:int=1
+# )
+#
+# plot_alldensity_radius(
+#    path:str='../'
+# )
+#
+# plot_onetemperature_radius(
+#    temperature_path:str='../dust_temperature.dat',
+#    grid_path:str='../grid_distances.csv',
+#    amr_path:str='../amr_grid.inp',
+#    numb_specie:int=1
+# )
+#
+# plot_alltemperature_radius(
+#    path:str='../'
+# )
+#
+# plot_onekappa(
+#    specie_name:str = '',
+#    specie_number:int = 0,
+#    path:str = '../'
+# )
+#
+# plot_allkappa(
+#    path:str='../'
+# )
+#
+# plot_sed(
+#    path:str='../spectrum.out',
+#    distance:float=1
+# )
+#
+# plot_images(
+#    path:str='../',
+#    images:list=['image.out'],
+#    distance:float=1
+# )
+#
+# plot_imagecrosssections(
+#    path:str='../',
+#    images:list=['image.out'],
+#    distance:float=1
+# )
+#
+# plot_opticalthick(
+#    path:str = '../',
+# )
+#
+#
+# Compute different quantities
+# ----------------------------
+#
+# compute_sed_luminosity(
+#    path:str = '../r3dsims/spectrum.out',
+#    distance:float = 1
+# )
+#
+# compute_luminosity(
+#    wavelengths:list,
+#    spectrum:list,
+#    distance:float=1
+# )
+#
+#
+# ------------------------------------------------------------ #
 # Functions that load various r3d input data
 
 # Load grid properties
-def load_gridprops(amrpath:str='../amr_grid.inp'):
+def load_grid_properties(
+        amrpath:str='../amr_grid.inp'
+    ):
     """
     Loads basic proparties from amr_grid.inp
 
@@ -64,7 +189,7 @@ def load_gridprops(amrpath:str='../amr_grid.inp'):
         return nxyz,nrefines,nleafs,nbranch,gridedge
     
     else:
-        return f'ERROR: load_gridprops can not find {amrpath}.'
+        return f'ERROR: load_grid_properties can not find {amrpath}.'
 
 
 # Load griddistances
@@ -90,7 +215,7 @@ def load_griddistances(
     if os.path.exists(gridpath) == True:
 
         # Extract necessary info from amr_grid
-        nleafs = load_gridprops(amrpath)[2]
+        nleafs = load_grid_properties(amrpath)[2]
 
         # Create griddistances array
         griddistances = np.zeros((nleafs,4))
@@ -140,7 +265,7 @@ def load_cellsizes(
     if os.path.exists(sizepath) == True:
 
         # Extract necessary info from amr_grid
-        nleafs = load_gridprops(amrpath)[2]
+        nleafs = load_grid_properties(amrpath)[2]
 
         # Create griddistances array
         gridsizes = np.zeros(nleafs)
@@ -169,7 +294,9 @@ def load_cellsizes(
 
 
 # Load R3d wavelength grid
-def load_wavelengthgrid(path:str='../wavelength_micron.inp'):
+def load_wavelengthgrid(
+        path:str='../wavelength_micron.inp'
+    ):
     """
     Ancillary function. Loads and extracts wavelengths from wavelength grid.
     
@@ -202,8 +329,8 @@ def load_wavelengthgrid(path:str='../wavelength_micron.inp'):
 
 # Load one density
 def load_dustdensity(
-        path:str='../dust_density.inp',
-        numb_specie:int=1
+        path:str = '../dust_density.inp',
+        numb_specie:int = 1
     ):
     """
     Load and extracts densities of one dust specie of dust_density.inp
@@ -446,7 +573,8 @@ def plot_onedensity_radius(
         numb_specie:int=1
     ):
     """
-    Plots one figure with radian density distribution of one dust species.
+    Plots one figure with radial density distribution of one dust species of a 
+    dust_density-file of your choice.
 
     INPUT
     density_path: path to density.inp-file
@@ -488,7 +616,7 @@ def plot_alldensity_radius(
         path:str='../'
     ):
     """
-    Plots one figure with radial density distribution of all dust species.
+    Plots one figure with radial density distribution of all species in dust_density.inp
 
     INPUT
     density_path: path to density.inp-file
@@ -594,6 +722,7 @@ def plot_alldensity_radius(
         )
     fig.tight_layout()
     fig.show()
+
 
 def plot_onetemperature_radius(
         temperature_path:str='../dust_temperature.dat',
@@ -744,9 +873,9 @@ def plot_alltemperature_radius(
 
 # Plot absorption, scattering, and angles of the various species
 def plot_onekappa(
-        specie_name:str='',
-        specie_number:int=0,
-        path:str='../'
+        specie_name:str = '',
+        specie_number:int = 0,
+        path:str = '../'
     ):
     """
     Load and plots absorption/scattering/scattering angles of one dust specie
@@ -894,6 +1023,7 @@ def plot_sed(
     fig.show();
 
     return spectrum[maxindex],wavelengths[maxindex]
+
 
 # Plot images
 def plot_images(
@@ -1124,78 +1254,18 @@ def plot_imagecrosssections(
         fig.show()
 
 
-
-# ------------------------------------------------------------ #
-# Compute different quantities
-
-def compute_sed_luminosity(path:str='../r3dsims/spectrum.out',distance:float=1):
-    """
-    Insert a spectrum.out from r3d and get the bolometric luminosity in Watt
-    INPUT
-    path = path to spectrum-file including file name
-    OUTPUT
-    luminosity in Watt
-    """
-
-    # Load spectrum
-    wavelengths,spectrum = load_spectrum(path,1)
-    nwave = len(wavelengths)
-
-    # Integrate the SED (using trapezoidal method, and change units to SI units)
-    sedintegral = 0
-    for nn in range(nwave-1):
-        # 1.499e-12 = 0.5 * 1e-26 * 1e6 * c which are the corrections for units and the trapezoid-half.
-        # Wavelength is summed in reversed order because its a sum over frequency
-        sedintegral += (spectrum[nn] + spectrum[nn+1]) * (1/wavelengths[nn] - 1/wavelengths[nn+1])*1.499e-12
-
-    # Compute bolometric luminosity
-    luminosity = 4.*np.pi*(distance*pc)**2. * sedintegral
-
-    return luminosity
-
-
-def compute_luminosity(
-        wavelengths:list,
-        spectrum:list,
-        distance:float=1
+def plot_opticalthick(
+        path:str = '../',
     ):
     """
+    Plots optical thickness along an average line-of-sight and returns an estimate of
+    the average radius of the star.
+
     INPUT
-    wavelengthum: List of wavelengths in um
-    spectrum: List of flux densities in Jy
-    distance: distance to source in pc
+    path:str = path to folder containing all r3d-model-data.
 
     OUTPUT
-    luminosity in Watt
-    """
-
-    nwave = len(wavelengths)
-
-    if nwave == len(spectrum):
-        # Integrate the SED (using trapezoidal method, and change units to SI units)
-        sedintegral = 0
-
-        for nn in range(nwave-1):
-            # 1.499e-12 = 0.5 * 1e-26 * 1e6 * c which are the corrections for units and the trapezoid-half.
-            # Wavelength is summed in reversed order because its a sum over frequency
-            sedintegral += (spectrum[nn] + spectrum[nn+1]) * (1/wavelengths[nn] - 1/wavelengths[nn+1])*1.499e-12
-
-        # Compute bolometric luminosity
-        luminosity = 4.*np.pi*(distance*pc)**2. * sedintegral
-
-        return luminosity
-
-    else:
-        print('ERROR, wavelengths and spectrum have different lengths')
-
-
-
-# TODO skriv in lite info
-def compute_opticalthick(
-        path:str='../',
-    ):
-    """
-    INFO
+    star_surface:float = average radial distance to stellar surface in cm
     """
 
     # Automatically add / to end of path if it's missing
@@ -1245,8 +1315,6 @@ def compute_opticalthick(
     )
 
     # Set up arrays for final optical depth computations
-    # The distance array is tighter on the outer parts of the grid
-    #dxarray = -1*np.logspace(np.log10(np.max(griddistances[:,0])),0,100)+np.max(griddistances[:,0])
     Nradius = 100
     dxarray = np.linspace(0,np.max(griddistances[:,0]),Nradius)
     dtauarray = np.zeros(Nradius)
@@ -1302,4 +1370,76 @@ def compute_opticalthick(
 
     return star_surface
 
+
+
+
+
+
+# ------------------------------------------------------------ #
+# Compute different quantities
+
+def compute_sed_luminosity(
+        path:str = '../r3dsims/spectrum.out',
+        distance:float = 1
+    ):
+    """
+    Insert a spectrum.out from r3d and get the bolometric luminosity in Watt
+
+    INPUT
+    path = path to spectrum-file including file name
+
+    OUTPUT
+    luminosity in Watt
+    """
+
+    # Load spectrum
+    wavelengths,spectrum = load_spectrum(path,1)
+    nwave = len(wavelengths)
+
+    # Integrate the SED (using trapezoidal method, and change units to SI units)
+    sedintegral = 0
+    for nn in range(nwave-1):
+        # 1.499e-12 = 0.5 * 1e-26 * 1e6 * c which are the corrections for units and the trapezoid-half.
+        # Wavelength is summed in reversed order because its a sum over frequency
+        sedintegral += (spectrum[nn] + spectrum[nn+1]) * (1/wavelengths[nn] - 1/wavelengths[nn+1])*1.499e-12
+
+    # Compute bolometric luminosity
+    luminosity = 4.*np.pi*(distance*pc)**2. * sedintegral
+
+    return luminosity
+
+
+def compute_luminosity(
+        wavelengths:list,
+        spectrum:list,
+        distance:float = 1
+    ):
+    """
+    INPUT
+    wavelengthum: List of wavelengths in um
+    spectrum: List of flux densities in Jy
+    distance: distance to source in pc
+
+    OUTPUT
+    luminosity in Watt
+    """
+
+    nwave = len(wavelengths)
+
+    if nwave == len(spectrum):
+        # Integrate the SED (using trapezoidal method, and change units to SI units)
+        sedintegral = 0
+
+        for nn in range(nwave-1):
+            # 1.499e-12 = 0.5 * 1e-26 * 1e6 * c which are the corrections for units and the trapezoid-half.
+            # Wavelength is summed in reversed order because its a sum over frequency
+            sedintegral += (spectrum[nn] + spectrum[nn+1]) * (1/wavelengths[nn] - 1/wavelengths[nn+1])*1.499e-12
+
+        # Compute bolometric luminosity
+        luminosity = 4.*np.pi*(distance*pc)**2. * sedintegral
+
+        return luminosity
+
+    else:
+        print('ERROR, wavelengths and spectrum have different lengths')
 

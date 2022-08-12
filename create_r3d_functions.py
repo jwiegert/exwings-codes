@@ -962,7 +962,7 @@ def create_duststar(
     
     # Load griddistances and size of grid
     #           return nxyz,nrefines,nleafs,nbranch,gridedge
-    nleafs = a3d.load_gridprops()[2]
+    nleafs = a3d.load_grid_properties()[2]
     griddistances = a3d.load_griddistances()
   
     # Compute average density of star (R3d uses g/cm3)
