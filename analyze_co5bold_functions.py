@@ -8,13 +8,17 @@ from scipy.io.idl import readsav
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm, xlabel, xscale, yscale
 import os
+import re
 
 # My own libraries
 import create_r3d_functions as c3d
 import analyze_r3d_functions as a3d
 
-# Define useful numbers
+# Basic definitions (AU as cython due to slow funcs below)
 AUcm = cython.declare(cython.float ,1.49598e13) # cm
+Msol = 1.989e33 # g
+Rsol = 6.955e10 # cm
+Lsol = 3.828e26 # W
 
 # Cython info: might be needed later
 # @cython.cfunc
@@ -33,11 +37,10 @@ AUcm = cython.declare(cython.float ,1.49598e13) # cm
 #    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
 # )
 #
-#
-# TODO
 # function that outputs star's props, but instead lum, mass, temperature, radius
-#
-#
+# load_star_information(
+#    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav',
+# )
 #
 # load_star_properties(
 #    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
@@ -216,9 +219,38 @@ def load_grid_properties(
     return c5dgrid,cellcourners,cellsize
 
 
-# TODO
 # function that outputs star's props, but instead lum, mass, temperature, radius
+def load_star_information(
+        savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav',
+    ):
+    """
+    Returns and prints a string with the basic properties of the star in the c5d-sim.
 
+    INPUT
+    savpath:str = path to sav-file you want to work with
+
+    OUTPUT
+    Mstar in gram
+    Rstar in cm
+    Lstar in Watt
+    """
+
+    c5ddata = readsav(savpath)
+    c5ddata = c5ddata['ful']
+    c5ddata = str(c5ddata['PAR'][0][0][2][1])[1:]
+
+    print('Note this info:')
+    print(c5ddata)
+
+    # Extract all numbers in string
+    numbers = re.findall("[0-9]+", c5ddata)
+    
+    # Save and return mass, radius and luminosity in gram, cm, and Watt
+    Mstar = float(numbers[1]) * Msol
+    Rstar = float(numbers[2]) * Rsol
+    Lstar = float(numbers[3]) * Lsol
+
+    return Mstar,Rstar,Lstar
 
 
 # Extract co5bold densities into a separate array 
@@ -626,6 +658,60 @@ def create_star(
                     print('Finished 75 per cent of the grid.')
 
     print('C5D Dust-star:\n    dust_density_onestar.inp\n    dust_temperature_onestar.dat\n    star_opacities.dat\nDONE\n')
+
+
+# For when creating several stars/phases
+def create_stars(
+        modelnames:list = ['st28gm06n056'],
+        phases:list = [140,141,142]
+    ):
+    """
+    TODO
+    Blablabla
+    """
+
+    # modelnames
+    # phases
+
+    # modelnames = st28gm06n056
+    # phases = [140,141,142]
+
+    for modelname in modelnames:
+        for phase in phases:
+
+            print(f'Translating C5D model {modelname} and phase {phase} to R3D')
+
+            savpath = f'../co5bold_data/d{modelname}/{modelname}_{phase}.sav'
+            path = f'../r3dresults/{modelname}/'
+
+            create_star(
+                savpath = savpath,
+                amrpath = f'{path}amr_grid.inp',
+                gridpath = f'{path}grid_distances.csv',
+                sizepath = f'{path}grid_cellsizes.csv'
+            )
+
+            # Move files to specific folders
+            print('Moving files\n')
+
+            # Files from create star
+            os.system(
+                f'mv ../dust_density_onestar.inp {path}{phase}/'
+            )
+            os.system(
+                f'mv ../dust_temperature_onestar.dat {path}{phase}/'
+            )
+            os.system(
+                f'mv ../star_opacities.dat {path}{phase}/'
+            )
+
+            # Files from create grid-part above
+            os.system(
+                f'cp {path}amr_grid.inp {path}{phase}/'
+            )
+            os.system(
+                f'cp {path}wavelength_micron.inp {path}{phase}/'
+            )
 
 
 # OLD FUNCTION
