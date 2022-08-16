@@ -206,7 +206,7 @@ def write_r3d_runscripts(
         # Write main script that runs all phases in paralell
         with open(f'{path}runcommand_main.sh', 'a') as fmain:
             fmain.write(f'./runcommand{phase}.sh &\n')
-
+    
     # Make main script executable
     os.system(
         f'chmod +x {path}runcommand_main.sh'

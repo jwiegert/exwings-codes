@@ -239,8 +239,7 @@ def load_star_information(
     c5ddata = c5ddata['ful']
     c5ddata = str(c5ddata['PAR'][0][0][2][1])[1:]
 
-    print('Note this info:')
-    print(c5ddata)
+    print(f'Stellar info: {c5ddata}')
 
     # Extract all numbers in string
     numbers = re.findall("[0-9]+", c5ddata)
@@ -410,6 +409,7 @@ def plot_opakapparadius(
     )
 
     fig.show()
+
 
 # Plot c5d-OPA vs r3d-temperature
 def plot_opakappatemperature(
@@ -1076,7 +1076,9 @@ def create_staropadensity(
 # using the optimal settings I wound after a few weeks of exploring :P
 def smooth_stellardata(
         path = '../r3dresults/st28gm06n056/',
-        phases = [140,141,142]
+        phases = [140,141,142],
+        starradii:list=[1,1,1],
+        griddistances:list=[0],
     ):
     """
     path = string with path to data folders
@@ -1093,11 +1095,16 @@ def smooth_stellardata(
         path += '/'
 
 
-    for phase in phases:
+    for nphase,phase in enumerate(phases):
+
+        # Stellar radius is then
+        starradius = starradii[nphase]
 
         # Smooth a5d-Opacity, remove neg spikes
         smooth_opacity(
             path = f'{path}{phase}/star_opacities.dat',
+            starradius=starradius,
+            griddistances=griddistances,
             smooth_out = 7,
             smooth_in = 6,
             smooth_tolerance_log = 0
@@ -1107,6 +1114,8 @@ def smooth_stellardata(
         # Smooth a5d-densities, remove negative spikes
         smooth_density(
             path = f'{path}{phase}/dust_density_onestar.inp',
+            starradius=starradius,
+            griddistances=griddistances,
             smooth_out = 36,
             smooth_in = 35,
             smooth_tolerance = 0.2
@@ -1136,12 +1145,14 @@ def smooth_stellardata(
 # Smooths the opacity file, removes spikes
 def smooth_opacity(
         path:str='../star_opacities.dat',
+        starradius:float=1,
+        griddistances:list=[0],
         smooth_out:int = 4,
         smooth_in:int = 0,
         smooth_tolerance_log:float = 0.1
     ):
     """
-    Remove outlier cells with large negative change in opacity
+    Remove outlier cells with large negative change in opacity within the star's surface
 
     INPUT
     Path: path to star_opacities.dat
@@ -1160,30 +1171,34 @@ def smooth_opacity(
     Ncells = opacity.size
     counter = 0
 
+    # Loop over all cells (except the outermost cells)
     for nn in range(smooth_out,Ncells-smooth_out):
 
-        ## Using mean opacity
-        #mean_opacity = 0.25 * (opacity[nn-2] + opacity[nn-1] + opacity[nn+1] + opacity[nn+2])
-        #if opacity[nn] < 10**-smooth_tolerance_log * mean_opacity \
-        #or opacity[nn] > 10**smooth_tolerance_log  * mean_opacity:
-        #    opacity[nn] = mean_opacity
-        #    counter += 1
-    
-        # Median of a range of numbers
-        # Extract indeces, all within range except current index
-        nindeces = [
-            nmedian for nmedian in range(nn-smooth_out,nn+smooth_out+1) if nmedian < (nn-smooth_in) or nmedian > (nn+smooth_in)
-        ]
-        median_list = []
+        # Check if nn is inside the star (plus a small tolerance factor)
+        if griddistances[nn] < 1.01*starradius:
 
-        for nmedian in nindeces:
-            median_list.append(opacity[nmedian])
+            ## Using mean opacity
+            #mean_opacity = 0.25 * (opacity[nn-2] + opacity[nn-1] + opacity[nn+1] + opacity[nn+2])
+            #if opacity[nn] < 10**-smooth_tolerance_log * mean_opacity \
+            #or opacity[nn] > 10**smooth_tolerance_log  * mean_opacity:
+            #    opacity[nn] = mean_opacity
+            #    counter += 1
+        
+            # Median of a range of numbers
+            # Extract indeces, all within range except current index
+            nindeces = [
+                nmedian for nmedian in range(nn-smooth_out,nn+smooth_out+1) if nmedian < (nn-smooth_in) or nmedian > (nn+smooth_in)
+            ]
+            median_list = []
 
-        median_opacity = np.median(np.array(median_list))
+            for nmedian in nindeces:
+                median_list.append(opacity[nmedian])
 
-        if opacity[nn] < 10**-smooth_tolerance_log * median_opacity :
-            opacity[nn] = median_opacity
-            counter += 1
+            median_opacity = np.median(np.array(median_list))
+
+            if opacity[nn] < 10**-smooth_tolerance_log * median_opacity :
+                opacity[nn] = median_opacity
+                counter += 1
 
     print(f'{smooth_in}-{smooth_out}: Number of smoothed OPAcells: {counter}')
 
@@ -1203,6 +1218,8 @@ def smooth_opacity(
 # Smoothing, removing spikes in temperatures
 def smooth_temperature(
         path:str = '../dust_temperature.dat',
+        starradius:float=1,
+        griddistances:list=[0],
         smooth_out:int = 10,
         smooth_in:int = 3,
         smooth_tolerance:float=1.5
@@ -1225,26 +1242,29 @@ def smooth_temperature(
     # Loop over eventual species
     for nspecie in range(Nspecies):
         
-        # Loop over grid cells of each specie
+        # Loop over grid cells of each specie (except the outermost cells)
         for ncell in range(smooth_out,Ncells-smooth_out):
 
-            # Index of cell in total list
-            nn = ncell + Ncells*nspecie
+            # Check if nn is inside the star (plus a small tolerance factor)
+            if griddistances[ncell] < 1.01*starradius:
 
-            nindeces = [
-                nmedian for nmedian in range(nn-smooth_out,nn+smooth_out+1) if nmedian < (nn-smooth_in) or nmedian > (nn+smooth_in)
-            ]
-            median_list = []
+                # Index of cell in total list
+                nn = ncell + Ncells*nspecie
 
-            for nmedian in nindeces:
-                median_list.append(temperatures[nmedian])
+                nindeces = [
+                    nmedian for nmedian in range(nn-smooth_out,nn+smooth_out+1) if nmedian < (nn-smooth_in) or nmedian > (nn+smooth_in)
+                ]
+                median_list = []
 
-            median_temperature = np.median(np.array(median_list))
+                for nmedian in nindeces:
+                    median_list.append(temperatures[nmedian])
+
+                median_temperature = np.median(np.array(median_list))
 
 
-            if temperatures[nn] > smooth_tolerance * median_temperature:
-                temperatures[nn] = median_temperature
-                counter += 1
+                if temperatures[nn] > smooth_tolerance * median_temperature:
+                    temperatures[nn] = median_temperature
+                    counter += 1
 
     print(f'{smooth_in}-{smooth_out}: Number of smoothed Tcells: {counter}')
 
@@ -1264,13 +1284,17 @@ def smooth_temperature(
 
 # Smooth density
 def smooth_density(
-        path:str = '../dust_density.inp',
+        path:str = '../dust_density_onestar.inp',
+        starradius:float=1,
+        griddistances:list=[0],
         smooth_out:int = 9,
         smooth_in:int = 3,
         smooth_tolerance:float=1.5
     ):
     """
     Remove outlier cells with low densities, ie remove negative spikes
+
+    Only use _onestar-density file for this!
 
     Smaller smooth_tolerance > more tolerant for spikes (is this correct?)
 
@@ -1283,23 +1307,26 @@ def smooth_density(
 
     counter = 0
         
-    # Loop over grid cells of each specie
+    # Loop over grid cells (except outermost cells)
     for nn in range(smooth_out,Ncells-smooth_out):
 
-        nindeces = [
-            nmedian for nmedian in range(nn-smooth_out,nn+smooth_out+1) if nmedian < (nn-smooth_in) or nmedian > (nn+smooth_in)
-        ]
-        median_list = []
+        # Check if nn is inside the star (plus a small tolerance factor)
+        if griddistances[nn] < 1.01*starradius:
 
-        for nmedian in nindeces:
-            median_list.append(densities[nmedian])
+            nindeces = [
+                nmedian for nmedian in range(nn-smooth_out,nn+smooth_out+1) if nmedian < (nn-smooth_in) or nmedian > (nn+smooth_in)
+            ]
+            median_list = []
 
-        median_densities = np.median(np.array(median_list))
+            for nmedian in nindeces:
+                median_list.append(densities[nmedian])
+
+            median_densities = np.median(np.array(median_list))
 
 
-        if densities[nn] < smooth_tolerance * median_densities:
-            densities[nn] = median_densities
-            counter += 1
+            if densities[nn] < smooth_tolerance * median_densities:
+                densities[nn] = median_densities
+                counter += 1
 
 
     print(f'{smooth_in}-{smooth_out}: Number of smoothed Density cells: {counter}')

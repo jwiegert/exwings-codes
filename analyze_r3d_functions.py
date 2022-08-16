@@ -1215,7 +1215,7 @@ def plot_images(
                     pixelsize_au = float(line.split()[0])/AUcm
                 
                 # row 4: wavelenght in um
-                # TODO might be useful also :)
+                # NOTE might be useful also :)
                 if nl == 4:
                     wavelength = float(line)
                 
@@ -1252,13 +1252,17 @@ def plot_images(
                 ny = ny + 1
 
         # Plot each image (one in linear and one log)
-        fig, ax = plt.subplots(1,2, dpi=150, num=image)
+        fig, ax = plt.subplots(
+            1,2, 
+            dpi = 150, 
+            num = path+image
+        )
         
         im0 = ax[0].imshow(
             image2d, origin='lower', extent=axisplot, cmap=plt.get_cmap('hot')
         )
         ax[0].set(
-            title=f"{image.replace('image_', '').replace('.out', '')} (Lin)", 
+            title=f"{path[-4:-1]}: {image.replace('image_', '').replace('.out', '')} (Lin)", 
             xlabel='Offset (AU)',
             ylabel='Offset (AU)'
         )
@@ -1267,7 +1271,7 @@ def plot_images(
             image2dlog, origin='lower', extent=axisplot, cmap=plt.get_cmap('hot')
         )
         ax[1].set(
-            title=f"{image.replace('image_', '').replace('.out', '')} (Log)", 
+            title=f"{path[-4:-1]}: {image.replace('image_', '').replace('.out', '')} (Log)", 
             xlabel='Offset (AU)',
         )
 
@@ -1519,10 +1523,6 @@ def plot_opticalthick(
     fig.show();
 
     return star_surface
-
-
-
-
 
 
 # ------------------------------------------------------------ #
