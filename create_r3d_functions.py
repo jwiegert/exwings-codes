@@ -147,7 +147,6 @@ def write_r3d_runscripts(
     ):
     """
     Creates runcommand-files, one for each phase and one main file that runs them in paralell
-    
     TODO: add lists for second viewing angle
 
     INPUT
@@ -169,6 +168,9 @@ def write_r3d_runscripts(
     if len(image_inclination_list) < 1:
         image_inclination_list = [0]
 
+    # Reset main runcommand file
+    with open(f'{path}runcommand_main.sh', 'w') as fmain:
+        fmain.write(f'#! /bin/bash\n#\n')
 
     # Loop through phase-list
     for phase in phase_list:
@@ -207,6 +209,10 @@ def write_r3d_runscripts(
         with open(f'{path}runcommand_main.sh', 'a') as fmain:
             fmain.write(f'./runcommand{phase}.sh &\n')
     
+    # Add a working ending to main-script
+    with open(f'{path}runcommand_main.sh', 'a') as fmain:
+        fmain.write(f'wait\necho All done\n')
+
     # Make main script executable
     os.system(
         f'chmod +x {path}runcommand_main.sh'
