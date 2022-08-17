@@ -509,6 +509,78 @@ def plot_opakappatemperature(
     fig.tight_layout()
     fig.show()
 
+# Plot Density vs Temperature
+
+# Plot c5d-OPA vs r3d-temperature
+def plot_densitytemperature(
+        Teff:float=2700,
+        path:str='../r3dresults/st28gm06n056/140/',
+        nspecie=1
+    ):
+    """
+    Plots density vs temperature of a given model, given specie
+    """
+
+    # Automatically add / to end of path if it's missing
+    if path[-1] != '/':
+        path += '/'
+
+    # Get paths to necessary files
+    density_path = path+'dust_density.inp'
+    grid_path = path+'../grid_distances.csv'
+    amr_path = path+'amr_grid.inp'
+    
+    # Get info on number of dust species in 
+
+
+    # load dust_density of specie nspecie
+    Ncells,Nspec,density = a3d.load_dustdensity(
+        path=density_path,
+        numb_specie=nspecie
+    )
+
+
+    # Load dust_temperature of nspecie
+    temperature_path = path+'dust_temperature.dat'
+    Ncells,Nspec,temperature = a3d.load_temperature(
+        path=temperature_path,
+        numb_specie=nspecie
+    )
+
+
+    # Plot density vs temperature
+    fig, ax = plt.figure(), plt.axes()
+
+    ax.plot(
+        temperature[np.where(temperature > Teff)[0]],
+        density[np.where(temperature > Teff)[0]],
+        markeredgecolor='b',
+        linestyle='',marker='.',markersize=1
+    )
+
+    # Plot red dots inside the star
+
+    ax.plot(
+        temperature[np.where((temperature > 0) & (temperature < Teff))[0]],
+        density[np.where((temperature > 0) & (temperature < Teff))[0]],
+        markeredgecolor='r',
+        linestyle='',marker='.',markersize=1
+    )
+
+    # Set final settings
+    ax.set(
+        xlabel=r'Cell temperature (K)',
+        ylabel=r'$\rho$ (g cm$^{-3}$)',
+        yscale='log',
+        title=f'Dust species {nspecie}'
+    )
+    fig.tight_layout()
+    fig.show()
+
+
+
+
+
 # ==========================================================================
 # Functions to create r3d-data from c5d-data
 
