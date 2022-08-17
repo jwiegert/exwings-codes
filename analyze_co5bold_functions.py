@@ -1100,6 +1100,18 @@ def smooth_stellardata(
         # Stellar radius is then
         starradius = starradii[nphase]
 
+        # Smooth a5d-Temperatures, remove pos spikes
+        smooth_temperature(
+            path = f'{path}{phase}/dust_temperature_onestar.dat',
+            starradius = starradius,
+            griddistances = griddistances,
+            smooth_out = 10,
+            smooth_in = 3,
+            smooth_tolerance = 1.0
+        )
+        os.system(f'mv ../dust_temperature_smoothed.dat {path}{phase}/')
+    
+
         # Smooth a5d-Opacity, remove neg spikes
         smooth_opacity(
             path = f'{path}{phase}/star_opacities.dat',
@@ -1116,9 +1128,9 @@ def smooth_stellardata(
             path = f'{path}{phase}/dust_density_onestar.inp',
             starradius=starradius,
             griddistances=griddistances,
-            smooth_out = 36,
-            smooth_in = 35,
-            smooth_tolerance = 0.2
+            smooth_out = 37,
+            smooth_in = 36,
+            smooth_tolerance = 0.4
         )
         os.system(f'mv ../dust_density_smoothed.inp {path}{phase}/dust_density_onestar_smoothed.inp')
 
@@ -1131,10 +1143,10 @@ def smooth_stellardata(
         )
     
         # Move/copy all files to correct places
-        # TODO when I add the dust, change this! Or remove this! and handle it when merging data instead
+        # TODO when I add the dust, change this! Handle it when merging data instead
         #      since I will have to merge stellar and dust data into same R3D-data
-        #      which can be done with the _onestar-files I produce here.
-        os.system(f'cp {path}{phase}/dust_temperature_onestar.dat {path}{phase}/dust_temperature.dat')
+        #      which can be done with the _onestar/_smoothed-files I produce here.
+        os.system(f'cp {path}{phase}/dust_temperature_smoothed.dat {path}{phase}/dust_temperature.dat')
         os.system(f'mv ../dust_density_opastar.inp {path}{phase}/dust_density.inp')
         os.system(f'mv ../dustkappa_opastar.inp {path}{phase}/')
         os.system(f'mv ../dustopac_star.inp {path}{phase}/dustopac.inp')
