@@ -259,7 +259,7 @@ def create_grid(
         gridedge:float, 
         nxyz:int, 
         refinementlist:list,
-        inrefine:str=0.2,
+        inrefine:float=0.2,
         savegrid:str=True
     ):
     """
@@ -272,11 +272,9 @@ def create_grid(
     INPUTS
     ------
     gridedge: total size of the grid side (in AU)
-
     nxyz: number of base cells along one side of the whole grid [even number, int]
-    
     refinementlist: list of radial distances in AU to each level of refinement [float,float], no more than 4 numbers!
-    
+    inrefine: distance in AU between refinements inside the star
     savegrid: default set to 'y' [str]. If not 'y', then no grid_distances.csv or grid_cellsizes.csv will be saved. These are useful for analysing inputs and outputs of R3D!
 
     OUTPUTS
