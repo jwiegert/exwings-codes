@@ -170,13 +170,16 @@ def write_r3d_runscripts(
 
     # Reset main runcommand file
     with open(f'{path}runcommand_main.sh', 'w') as fmain:
-        fmain.write(f'#! /bin/bash\n#\n')
+        fmain.write(f'#! /bin/bash\n#\n\n')
 
     # Loop through phase-list
     for phase in phase_list:
 
         # Write run-scripts for each phase
         with open(f'{path}runcommand{phase}.sh', 'w') as fr3d:
+
+            # Enter bash-thingie
+            fr3d.write(f'#! /bin/bash\n\n')
 
             # Enter phase-folder
             fr3d.write(f'cd {phase}\n\n')
@@ -205,9 +208,9 @@ def write_r3d_runscripts(
             f'chmod +x {path}runcommand{phase}.sh'
         )
 
-        # Write main script that runs all phases in paralell
+        # Write main script that runs all phases in paralell # TODO TESTA!
         with open(f'{path}runcommand_main.sh', 'a') as fmain:
-            fmain.write(f'./runcommand{phase}.sh &\n')
+            fmain.write(f'rm r3doutput_{phase}.txt\ntouch r3doutput_{phase}.txt\n./runcommand{phase}.sh | cat > r3doutput_{phase}.txt &\n\n')
     
     # Add a working ending to main-script
     with open(f'{path}runcommand_main.sh', 'a') as fmain:
@@ -218,13 +221,7 @@ def write_r3d_runscripts(
         f'chmod +x {path}runcommand_main.sh'
     )
 
-    print('Finished writing run-r3d-scripts:\n    runcommand[PHASE].sh\n    runcommand_main.sh\n')
-
-
-
-
-
-
+    print('Finished writing run-r3d-scripts:\n    r3doutput_[PHASE].txt\n    runcommand[PHASE].sh\n    runcommand_main.sh\n')
 
 
 

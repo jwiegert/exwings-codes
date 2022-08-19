@@ -222,6 +222,7 @@ def load_grid_properties(
 # function that outputs star's props, but instead lum, mass, temperature, radius
 def load_star_information(
         savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav',
+        printoutput:str='y'
     ):
     """
     Returns and prints a string with the basic properties of the star in the c5d-sim.
@@ -239,7 +240,8 @@ def load_star_information(
     c5ddata = c5ddata['ful']
     c5ddata = str(c5ddata['PAR'][0][0][2][1])[1:]
 
-    print(f'Stellar info: {c5ddata}')
+    if printoutput == 'y':
+        print(f'Stellar info: {c5ddata}')
 
     # Extract all numbers in string
     numbers = re.findall("[0-9]+", c5ddata)
