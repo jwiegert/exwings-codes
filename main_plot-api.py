@@ -45,6 +45,7 @@ import base64
 # -------------------------------------------------------------------
 # Definitions
 path='../r3dresults/'
+imcounter = 0
 
 # List of models (folders) inside ../r3dresults
 modelnames = [
@@ -67,13 +68,13 @@ app = dash.Dash(__name__, external_stylesheets=stylesheets,
 # html.H1 = header 1, main title
 # html.H2 = header 2, sub title
 # html.P = paragraph
-# dropdown creates a dropdown manue, id is it's name (for later), value is
+# dropdown creates a dropdown manue, id is it's name, value is
 # its default value. Options is a list of what you can chose.
-# So value='' gives the default value for each dcc.
-# The objects in app.layout ends up on the page in the order we have them written here
 
 
 app.layout = dbc.Container([
+
+    html.H2('R3D results-plotter:'),
 
     # Menu of model names inside ../r3dresults/
     dcc.Dropdown(
@@ -92,8 +93,8 @@ app.layout = dbc.Container([
         placeholder='Chose a phase'
     ),
 
-
-    # Plot SED below here
+    html.Hr(),
+    # Plot singular SED below here
     html.P('SEDs:'),
 
     # Menu of SED-files
@@ -107,11 +108,12 @@ app.layout = dbc.Container([
     dcc.Graph(
         id='sed-plot-one'
     ),
+    html.P('SED-luminosity (Lsol):'),
+    html.Div(id='sed_luminosity'),
 
 
-
-
-    # Plot image here
+    html.Hr(),
+    # Plot singular image here
     html.P('Images:'),
 
     # Menu of image-files
@@ -125,6 +127,24 @@ app.layout = dbc.Container([
     html.Img(
         id='image-plot-one',
     ),
+
+    # Horisontal line, separator
+    html.Hr(),
+    html.P('Plots all SEDs on top of each other'),
+
+    # TODO
+    # ie plot all SED-inclinations
+    # add a choice, plot or not? if yes, plot all SEDs
+    # Or on top of each other?!
+    # Needs a new functions in a3d
+
+    # Horisontal line, separator
+    html.Hr(),
+    html.P('Plots all images  Inclination/Phase/Wavelength')
+
+    # TODO
+    # if nothing is chosen, show nothing
+    # how to do this?
 
 
 ])
@@ -191,12 +211,19 @@ def create_image_sed_dicts(modelname,phase):
 # Given model, phase and sed-file, plot this
 @app.callback(
     Output('sed-plot-one', 'figure'),
+    Output('sed_luminosity', 'children'),
     Input('model-dropdown', 'value'),
     Input('phase-dropdown', 'value'),
     Input('sed-dropdown', 'value'),
 )
 def plot_sed_one(modelname,phase,sed):
 
+    # Extract luminosity of SED
+    lum = a3d.compute_sed_luminosity(
+        path=f'{path}{modelname}/{phase}/{sed}'
+    )/3.828e26
+
+    # Extract image
     fig,ax,maxflux,maxwave = a3d.plot_sed(
         path=f'{path}{modelname}/{phase}/{sed}'
     )
@@ -207,23 +234,23 @@ def plot_sed_one(modelname,phase,sed):
         title_font_size=18,
         hoverlabel_font_size=18,
         plot_bgcolor='white',
-        yaxis = dict(
-            tickfont = dict(size=16)
-        ),
-        xaxis = dict(
-            tickfont = dict(size=16)
-        )
+        yaxis = dict(tickfont = dict(size=16)),
+        xaxis = dict(tickfont = dict(size=16))
     )
     plotly_fig.update_xaxes(
-        showgrid=True, gridwidth=1, gridcolor='grey',
-        ticks="outside", tickwidth=2, ticklen=10
+        titlefont_size=16,
+        showgrid=True, gridwidth=1, gridcolor='lightgrey',
+        ticks="outside", tickwidth=2, ticklen=10,
+        showline=True, linewidth=2, linecolor='black', mirror=False
     )
     plotly_fig.update_yaxes(
-        showgrid=True, gridwidth=1, gridcolor='grey',
-        ticks="outside", tickwidth=2, ticklen=10
+        titlefont_size=16,
+        showgrid=True, gridwidth=1, gridcolor='lightgrey',
+        ticks="outside", tickwidth=2, ticklen=10,
+        showline=True, linewidth=2, linecolor='black', mirror=False
     )
 
-    return plotly_fig
+    return plotly_fig, lum
 
 
 # Given model, phase and image-file, plot this
@@ -235,7 +262,9 @@ def plot_sed_one(modelname,phase,sed):
 )
 def plot_image_one(modelname,phase,image):
 
-    os.system('rm temp.png')
+    # If image already exists, remove it so that the image updates
+    if os.path.exists('temp.png') == True:
+        os.system('rm temp.png')
 
     # Change image to list
     image = [image]
