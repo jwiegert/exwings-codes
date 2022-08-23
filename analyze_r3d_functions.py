@@ -1149,7 +1149,7 @@ def plot_sed(
     distance: distance to sources in pc
 
     Output:
-    SED-figure
+    SED-figure and ax-objects
     fluxmax, wavemax: maximum flux in Jy and corresponding wavelength in micrometer    
     """
 
@@ -1170,9 +1170,8 @@ def plot_sed(
         title='Output SED',
         xscale='log',yscale='log'
     )
-    fig.show();
 
-    return spectrum[maxindex],wavelengths[maxindex]
+    return fig,ax,spectrum[maxindex],wavelengths[maxindex]
 
 
 # Plot images
@@ -1278,10 +1277,7 @@ def plot_images(
         cb0 = plt.colorbar(im0, orientation = 'vertical',shrink=0.6,pad=0.15)
         cb0.set_label(label = rf'Flux at {distance} pc (Jy/asec$^2$)',fontsize= 10)
 
-        fig.tight_layout()
-        fig.show()
-
-    return fluxtotal
+    return fig, ax, fluxtotal
 
 
 def plot_imagecrosssections(
