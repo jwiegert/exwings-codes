@@ -9,19 +9,6 @@
 #
 
 
-
-#    API't ska automatiskt lista alla kataloger i r3dresults, sen alla i den man väljer där, och sen alla sed-filer, spectrum*.out och alla bildfiler, image*.out
-#    Patherna innehåller info om modell, fas, inclination och våglängder
-#    Plotta alla bilder med samma inklination, plotta alla bilder med samma våglängd
-#    Plotta alla SEDer med samma inklination i samma figur
-#        os.listdir(path='../r3dresults/st28gm06n056/140/')    
-#    eller
-#        import glob
-#        glob.glob('../r3dresults/st28gm06n056/140/image*.out')
-#    och för kataloger
-#        glob.glob('../r3dresults/st28gm06n056/*/')
-#    Ger då listor som kan vara inputs till mina menyer
-
 # Standard (important) packages
 import os
 
@@ -128,15 +115,45 @@ app.layout = dbc.Container([
         id='image-plot-one',
     ),
 
+
     # Horisontal line, separator
     html.Hr(),
     html.P('Plots all SEDs on top of each other'),
 
-    # TODO
-    # ie plot all SED-inclinations
-    # add a choice, plot or not? if yes, plot all SEDs
-    # Or on top of each other?!
-    # Needs a new functions in a3d
+
+
+
+    # TODO  finish this below!
+    # Chose between which to plot all of (all on top of each other in the same figure)
+    # - Phases (all Inclinations)
+    # - Inclinations (all Phases)
+    #
+    # Need new function to create this figure-object
+    # Convert to plotly-figure
+
+
+    # SED-plotter-choice
+    dcc.RadioItems(
+        id='sed-picker', 
+        value='',
+        options=[
+            {'label':'All phases (constant inclination)', 'value':'allphases'},
+            {'label':'All inclinations (constant phase)', 'value':'allincls'}
+        ],
+        labelStyle={'display': 'block'}
+    ),
+
+    # Plot all chosen SEDs
+    dcc.Graph(
+        id='sed-plot-all'
+    ),
+    html.P('SED-luminosity (Lsol):'),
+    html.Div(id='sed_luminosity_average'),
+
+
+
+
+
 
     # Horisontal line, separator
     html.Hr(),
@@ -145,6 +162,16 @@ app.layout = dbc.Container([
     # TODO
     # if nothing is chosen, show nothing
     # how to do this?
+    #
+    # Chose between keeping 2 of 3 constant
+    # - Phases and Inclinations (all Wavelengths)
+    # - Phases and Wavelengths (all Inclinations)
+    # - Inclinations and Wavelenths (all Phases)
+    #
+    # Need new function that plots these as subplots and creates this figure
+    # Change to tempsubplots.png in a callback and convert to base64 in a callback here
+
+
 
 
 ])
@@ -275,13 +302,65 @@ def plot_image_one(modelname,phase,image):
         images = image,
         distance = 1
     )
-    plt.savefig('temp.png', dpi=120, bbox_inches='tight')
+    plt.savefig(
+        'temp.png', dpi=120, bbox_inches='tight'
+    )
 
     # Change to base64-encoding that html.Img can read
     tempbase64 = base64.b64encode(open('temp.png', 'rb').read()).decode('ascii')
     impath = 'data:image/png;base64,{}'.format(tempbase64)
 
     return impath
+
+
+
+# TODO finish this!
+# Given model, phase and all phases or all inclinations, plot all seds of choice
+@app.callback(
+    Input('model-dropdown', 'value'),
+    Input('phase-dropdown', 'value'),
+    Input('sed-picker', 'value')
+)
+def plot_sed_all(modelname,phase,choice):
+
+
+
+
+    # Create SED figure
+    fig,ax = a3d.plot_sedsmany(
+        pathlist=pathlist,
+        legendlist=legendlist,
+        distance=1
+    )
+    plotly_fig = tls.mpl_to_plotly(fig)
+
+    # TODO compute average luminosity of chosen SEDs
+
+
+
+    # Change some settings on the plotly plot
+    plotly_fig.update_layout(
+        title_font_size=18,
+        hoverlabel_font_size=18,
+        plot_bgcolor='white',
+        yaxis = dict(tickfont = dict(size=16)),
+        xaxis = dict(tickfont = dict(size=16))
+    )
+    plotly_fig.update_xaxes(
+        titlefont_size=16,
+        showgrid=True, gridwidth=1, gridcolor='lightgrey',
+        ticks="outside", tickwidth=2, ticklen=10,
+        showline=True, linewidth=2, linecolor='black', mirror=False
+    )
+    plotly_fig.update_yaxes(
+        titlefont_size=16,
+        showgrid=True, gridwidth=1, gridcolor='lightgrey',
+        ticks="outside", tickwidth=2, ticklen=10,
+        showline=True, linewidth=2, linecolor='black', mirror=False
+    )
+
+    return plotly_fig
+
 
 
 

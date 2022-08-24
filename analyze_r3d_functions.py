@@ -3,7 +3,7 @@
 # Useful packages
 import os
 import csv
-#from turtle import distance
+import re
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm, xlabel, xscale, yscale
@@ -1172,6 +1172,64 @@ def plot_sed(
     )
 
     return fig,ax,spectrum[maxindex],wavelengths[maxindex]
+
+
+# TODO
+# Chose between which to plot all of (all on top of each other in the same figure)
+# - Phases (all Inclinations)
+# - Inclinations (all Phases)
+#
+# Need new function to create this figure-object
+# Convert to plotly-figure
+# Plot a list of SED-files in the same figure
+
+
+
+
+def plot_sedsmany(
+        pathlist:list=['../spectrum.out'],
+        legendlist:list=['spectrum1'],
+        distance:float=1
+    ):
+    """
+    Input:
+    pathlist: list of paths to all spectrum.out files
+    distance: distance to source in pc
+
+    Output:
+    SED-figure and ax-objects
+    """
+
+    fig, ax = plt.figure(), plt.axes()
+
+    for path in pathlist:
+
+        # Load SED
+        wavelengths,spectrum = load_spectrum(path=path,distance=distance)
+
+        # plot SED
+        ax.plot(
+            wavelengths,spectrum
+        )
+
+        # Define labels for legend
+        #legendlist.append(re.findall('spectrum.*out', path)[0][9:-4])
+
+    ax.set(
+        ylabel=f'Flux density (Jy at {distance} pc)',
+        xlabel=r'Wavelength ($\mu$m)',
+        title='Output SEDs',
+        xscale='log',yscale='log'
+    )
+    ax.legend(legendlist)
+
+    return fig,ax
+
+
+
+
+
+
 
 
 # Plot images
