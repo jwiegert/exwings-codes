@@ -126,10 +126,28 @@ AUcm = 1.49598e13 # AU in cm
 #    distance:float=1
 # )
 #
+# plot_sedsmany(
+#    pathlist:list=['../spectrum.out'],
+#    legendlist:list=['spectrum1'],
+#    distance:float=1
+# )
+#
+#prepare_images(
+#    path:str='../',
+#    image:str='image.out',
+#    distance:float=1
+# )
+#
 # plot_images(
 #    path:str='../',
 #    images:list=['image.out'],
 #    distance:float=1
+# )
+#
+# TODO update info here to correct final function
+# plot_imagesubplots(
+#    imagelist:list=['../image.out'],
+#    scale:str='lin'
 # )
 #
 # plot_imagecrosssections(
@@ -1174,18 +1192,7 @@ def plot_sed(
     return fig,ax,spectrum[maxindex],wavelengths[maxindex]
 
 
-# TODO
-# Chose between which to plot all of (all on top of each other in the same figure)
-# - Phases (all Inclinations)
-# - Inclinations (all Phases)
-#
-# Need new function to create this figure-object
-# Convert to plotly-figure
-# Plot a list of SED-files in the same figure
-
-
-
-
+# Function to plot a list of SEDs ontop of eachother in the same plot
 def plot_sedsmany(
         pathlist:list=['../spectrum.out'],
         legendlist:list=['spectrum1'],
@@ -1223,10 +1230,67 @@ def plot_sedsmany(
     return fig,ax
 
 
+# Prepare image data for plots
+def prepare_images(
+        path:str='../',
+        image:str='image.out',
+        distance:float=1
+    ):
+
+    # Declare lists
+    image1d = []
+
+    # Load images
+    with open(path+image, 'r') as f:
+        for nl,line in enumerate(f.readlines()):
+            
+            # row 1: pixels by pixels
+            if nl == 1:
+                npixels = int(line.split()[0])
+            
+            # row 3: pixel size in cm, divide by AUcm for AU
+            if nl == 3:
+                pixelsize_au = float(line.split()[0])/AUcm
+            
+            # NOTE might be useful later, commented out for now
+            # row 4: wavelenght in um
+            #if nl == 4:
+            #    wavelength = float(line)
+
+            # row 6 onward: pixels
+            if nl > 5:
+                # Some rows are empty (and they contain space and \n, so strip them lines)
+                if len(line.strip()) > 0:
+                    image1d.append(float(line.strip()))
+
+    # Extract some useful quantities
+    # pixel size in mas
+    pixelsize_mas = pixelsize_au / distance
+    
+    # Size of whole image in AU
+    size_au = pixelsize_au * npixels
+    axisplot  = [0.5*size_au,-0.5*size_au,-0.5*size_au,0.5*size_au]
+
+    # Total flux density of the image
+    flux = sum(image1d) * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
+
+    # Create 2D arrays
+    image2d = np.zeros((npixels,npixels))
+    image2dlog = np.zeros((npixels,npixels))
+    nx,ny = 0,0
+
+    for flux in image1d:
+        image2d[nx,ny] = flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
+        image2dlog[nx,ny] = np.log10(flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2)
+
+        # Move nx and ny
+        nx = nx + 1
+        if nx == npixels:
+            nx = 0
+            ny = ny + 1
 
 
-
-
+    return image2d,image2dlog,flux,axisplot
 
 
 # Plot images
@@ -1253,57 +1317,14 @@ def plot_images(
     # Loop through all images
     for image in images:
 
-        # Declare list
-        image1d = []
+        image2d,image2dlog,flux,axisplot = prepare_images(
+            path=path,
+            image=image,
+            distance=distance
+        )
 
-        # Load images
-        with open(path+image, 'r') as f:
-            for nl,line in enumerate(f.readlines()):
-                
-                # row 1: pixels by pixels
-                if nl == 1:
-                    npixels = int(line.split()[0])
-                
-                # row 3: pixel size in cm, divide by AUcm for AU
-                if nl == 3:
-                    pixelsize_au = float(line.split()[0])/AUcm
-                
-                # row 4: wavelenght in um
-                # NOTE might be useful also :)
-                if nl == 4:
-                    wavelength = float(line)
-                
-                # row 6 onward: pixels
-                if nl > 5:
-                    # Some rows are empty (and they contain space and \n, so strip them lines)
-                    if len(line.strip()) > 0:
-                        image1d.append(float(line.strip()))
+        fluxtotal.append(flux)
 
-        # Extract some useful quantities
-        # pixel size in mas
-        pixelsize_mas = pixelsize_au / distance
-        
-        # Size of whole image in AU
-        size_au = pixelsize_au * npixels
-        axisplot  = [0.5*size_au,-0.5*size_au,-0.5*size_au,0.5*size_au]
-
-        # Total flux density of the image
-        fluxtotal.append(sum(image1d) * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2)
-
-        # Create 2D arrays
-        image2d = np.zeros((npixels,npixels))
-        image2dlog = np.zeros((npixels,npixels))
-        nx,ny = 0,0
-
-        for flux in image1d:
-            image2d[nx,ny] = flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
-            image2dlog[nx,ny] = np.log10(flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2)
-
-            # Move nx and ny
-            nx = nx + 1
-            if nx == npixels:
-                nx = 0
-                ny = ny + 1
 
         # Plot each image (one in linear and one log)
         fig, ax = plt.subplots(
@@ -1333,6 +1354,31 @@ def plot_images(
         cb0.set_label(label = rf'Flux at {distance} pc (Jy/asec$^2$)',fontsize= 10)
 
     return fig, ax, fluxtotal
+
+
+# TODO finish this!
+
+def plot_imagesubplots(
+        imagelist:list=['../image.out'],
+        scale:str='lin'
+    ):
+
+    # Number of plots
+    Nplots = len(imagelist)
+
+    # Loop over imagelist, separate it into path and image-file-names
+    #
+    # input image-file-names into prepare-images
+    #
+    # Info for image title, phase, inclination and wavelength, also add "lin/log" there
+    # also add colourbar like before, so copy a a fair bit
+
+
+
+    fig,ax=0,0
+    return fig, ax
+
+
 
 
 def plot_imagecrosssections(
@@ -1373,9 +1419,9 @@ def plot_imagecrosssections(
                     pixelsize_au = float(line.split()[0])/AUcm
                 
                 # row 4: wavelenght in um
-                # TODO might be useful also :)
-                if nl == 4:
-                    wavelength = float(line)
+                # NOTE might be useful also :)
+                #if nl == 4:
+                #    wavelength = float(line)
                 
                 # row 6 onward: pixels
                 if nl > 5:

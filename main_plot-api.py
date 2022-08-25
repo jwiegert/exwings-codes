@@ -23,6 +23,7 @@ import dash
 import dash_bootstrap_components as dbc
 
 # Image specific packages
+# https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -36,6 +37,7 @@ import base64
 # Definitions
 path='../r3dresults/'
 imcounter = 0
+Lsol = 3.828e26 # W
 
 # List of models (folders) inside ../r3dresults
 modelnames = [
@@ -155,8 +157,7 @@ app.layout = dbc.Container([
         id='sed-plot-all'
     ),
     html.P('SED-luminosity (Lsol):'),
-    # TODO
-    #html.Div(id='sed_luminosity_average'),
+    html.Div(id='sed_luminosity_average'),
 
 
 
@@ -165,7 +166,7 @@ app.layout = dbc.Container([
 
     # Horisontal line, separator
     html.Hr(),
-    html.P('Plots all images  Inclination/Phase/Wavelength')
+    html.P('Plots all images  Inclination/Phase/Wavelength'),
 
     # TODO
     # if nothing is chosen, show nothing
@@ -178,7 +179,35 @@ app.layout = dbc.Container([
     #
     # Need new function that plots these as subplots and creates this figure
     # Change to tempsubplots.png in a callback and convert to base64 in a callback here
+    #
 
+    # Chose which set of images to plot
+    dcc.RadioItems(
+        id='image-picker', 
+        options=[
+            {'label':'All phases (constant incl & wavelength)', 'value':'allphases'},
+            {'label':'All incls (constant phase & wavelength)', 'value':'allincls'},
+            {'label':'All waves (constant phase & incl)', 'value':'allwaves'},
+        ],
+        labelStyle={'display': 'block'},
+        value=0
+    ),
+
+    # Chose scale, linear or logarithmic
+    dcc.RadioItems(
+        id='image-scale-picker', 
+        options=[
+            {'label':'Linear flux scale', 'value':'lin'},
+            {'label':'Logarithmic flux scale', 'value':'log'},
+        ],
+        labelStyle={'display': 'block'},
+        value='lin'
+    ),
+
+    # Image plot
+    #html.Img(
+    #    id='image-plot-all',
+    #),
 
 
 
@@ -215,7 +244,6 @@ def create_phase_dict(modelname):
     Input('phase-dropdown', 'value'),
 )
 def create_image_sed_dicts(modelname,phase):
-
     if modelname != 0 or phase != 0:
 
         # Extract file names in folder
@@ -256,13 +284,12 @@ def create_image_sed_dicts(modelname,phase):
     Input('incl-dropdown', 'value'),
 )
 def plot_sed_one(modelname,phase,incl):
-
     if modelname != 0 or phase != 0 or incl != 'N/A':
 
         # Extract luminosity of SED
         lum = a3d.compute_sed_luminosity(
             path=f'{path}{modelname}/{phase}/spectrum_i{incl}.out'
-        )/3.828e26
+        )/Lsol
 
         # Extract image
         fig,ax,maxflux,maxwave = a3d.plot_sed(
@@ -295,8 +322,6 @@ def plot_sed_one(modelname,phase,incl):
 
 
 
-
-
 # Given model, phase and image-file, plot this
 @app.callback(
     Output('image-plot-one', 'src'),
@@ -305,7 +330,6 @@ def plot_sed_one(modelname,phase,incl):
     Input('image-dropdown', 'value'),
 )
 def plot_image_one(modelname,phase,image):
-
     if modelname != 0 or phase != 0 or image != 0:
 
         # If image already exists, remove it so that the image updates
@@ -332,19 +356,18 @@ def plot_image_one(modelname,phase,image):
         return impath
 
 
+
 # Given model, phase and all phases or all inclinations, plot all seds of choice
 @app.callback(
     Output('sed-plot-all', 'figure'),
+    Output('sed_luminosity_average','children'),
     Input('model-dropdown', 'value'),
     Input('phase-dropdown', 'value'),
     Input('incl-dropdown', 'value'),
     Input('sed-picker', 'value'),
 )
 def plot_sed_all(modelname,phase,incl,choice):
-
-
     if modelname != 0 or phase != 0 or incl != 'N/A' or choice != 0:
-
 
         # pathlist and legendlist depends on choice.
         pathlist = []
@@ -372,7 +395,7 @@ def plot_sed_all(modelname,phase,incl,choice):
             for incl in legendlist:
                 pathlist.append(f'{path}{modelname}/{phase}/spectrum_i{incl}.out')
 
-        # Create SED figure
+        # Create SED figure object
         fig,ax = a3d.plot_sedsmany(
             pathlist=pathlist,
             legendlist=legendlist,
@@ -380,8 +403,15 @@ def plot_sed_all(modelname,phase,incl,choice):
         )
         plotly_fig_all = tls.mpl_to_plotly(fig)
 
-        # TODO compute average luminosity of chosen SEDs
 
+        # Compute average luminosity of chosen SEDs
+        lumtot = 0
+        for pathstr in pathlist:
+            lum = a3d.compute_sed_luminosity(
+                path=pathstr
+            )
+            lumtot += lum
+        lumtot /= len(pathlist)*Lsol
 
 
         # Change some settings on the plotly plot
@@ -405,7 +435,99 @@ def plot_sed_all(modelname,phase,incl,choice):
             showline=True, linewidth=2, linecolor='black', mirror=False
         )
 
-        return plotly_fig_all
+        return plotly_fig_all,lumtot
+
+
+
+#Output('image-plot-all','')
+
+
+# Given model/phase/incl, plot several images
+# Chose linear och log-scale.
+#    # Chose which set of images to plot
+#    dcc.RadioItems(
+#        id='image-picker', 
+#        options=[
+#            {'label':'All phases (constant incl & wavelength)', 'value':'allphases'},
+#            {'label':'All incls (constant phase & wavelength)', 'value':'allincls'},
+#            {'label':'All waves (constant phase & incl)', 'value':'allwaves'},
+#        ],
+#        labelStyle={'display': 'block'},
+#        value=0
+#    ),
+#    # Chose scale, linear or logarithmic
+#    dcc.RadioItems(
+#        id='image-scale-picker', 
+#        options=[
+#            {'label':'Linear flux scale', 'value':'lin'},
+#            {'label':'Logarithmic flux scale', 'value':'log'},
+#        ],
+#        labelStyle={'display': 'block'},
+#        value='lin'
+#    ),
+#    # Image plot
+#    #html.Img(
+#    #    id='image-plot-all',
+#    #),
+
+# Extract wavelength and inclination from image-filename
+
+@app.callback(
+    Output('image-plot-all', 'src'),
+    Input('model-dropdown', 'value'),
+    Input('phase-dropdown', 'value'),
+    Input('image-dropdown', 'value'),
+    Input('image-picker', 'value'),
+    Input('image-scale-picker', 'value')
+)
+def plot_image_all(modelname,phase,image,choice,scale):
+    # modelname is foldername in r3dresults
+    # phase is phase-choice
+    # image is imagename, ie choice of wavelength and inclination
+    # choice chooses which two attributes are to be constant
+    # scale is lin or log
+    #
+    
+    # TODO
+    # I need a new function to plot a list of images as subplots below eachother
+    
+    # finish this function:
+    fig,ax = a3d.plot_imagesubplots()
+    
+
+    return 'hej'
+
+
+"""
+# Given model, phase and image-file, plot this
+@app.callback(
+)
+def plot_image_one(modelname,phase,image):
+    if modelname != 0 or phase != 0 or image != 0:
+
+        # If image already exists, remove it so that the image updates
+        if os.path.exists('temp.png') == True:
+            os.system('rm temp.png')
+
+        # Change image to list
+        image = [image]
+
+        # Load and save image as png
+        fig,ax,testflux = a3d.plot_images(
+            path = f'{path}{modelname}/{phase}/',
+            images = image,
+            distance = 1
+        )
+        plt.savefig(
+            'temp.png', dpi=120, bbox_inches='tight'
+        )
+
+        # Change to base64-encoding that html.Img can read
+        tempbase64 = base64.b64encode(open('temp.png', 'rb').read()).decode('ascii')
+        impath = 'data:image/png;base64,{}'.format(tempbase64)
+
+        return impath
+""";
 
 
 
