@@ -1188,7 +1188,6 @@ def plot_sed(
 
 def plot_sedsmany(
         pathlist:list=['../spectrum.out'],
-        legendlist:list=['spectrum1'],
         distance:float=1
     ):
     """
@@ -1221,7 +1220,6 @@ def plot_sedsmany(
         title='Output SEDs',
         xscale='log',yscale='log'
     )
-    ax.legend(legendlist)
 
     return fig,ax
 
