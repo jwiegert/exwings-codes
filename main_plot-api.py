@@ -23,6 +23,8 @@ import dash
 import dash_bootstrap_components as dbc
 
 # Image specific packages
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import io
 import plotly
@@ -72,7 +74,7 @@ app.layout = dbc.Container([
             {'label':modelname, 'value':modelname}  for modelname in modelnames
         ],
         placeholder='Chose a model',
-        value=0
+        value=modelnames[0]
     ),
 
     # Menu of folders inside chosen model
@@ -140,7 +142,6 @@ app.layout = dbc.Container([
     # SED-plotter-choice
     dcc.RadioItems(
         id='sed-picker', 
-        value='',
         options=[
             {'label':'All phases (constant inclination)', 'value':'allphases'},
             {'label':'All inclinations (constant phase)', 'value':'allincls'}
@@ -330,7 +331,7 @@ def plot_image_one(modelname,phase,image):
 
         return impath
 
-"""
+
 # Given model, phase and all phases or all inclinations, plot all seds of choice
 @app.callback(
     Output('sed-plot-all', 'figure'),
@@ -345,71 +346,72 @@ def plot_sed_all(modelname,phase,incl,choice):
     if modelname != 0 or phase != 0 or incl != 'N/A' or choice != 0:
 
 
-    # pathlist and legendlist depends on choice.
-    pathlist = []
-    legendlist = []
+        # pathlist and legendlist depends on choice.
+        pathlist = []
+        legendlist = []
 
-    # All phases, ie inclination is chosen earlier, take all phases with this
-    if choice == 'allphases':
+        # All phases, ie inclination is chosen earlier, take all phases with this
+        if choice == 'allphases':
 
-        legendlist = [
-            phase for phase in os.listdir(path=f'{path}{modelname}/') if os.path.isdir(f'{path}{modelname}/{phase}') == True
-        ]
+            legendlist = [
+                phase for phase in os.listdir(path=f'{path}{modelname}/') if os.path.isdir(f'{path}{modelname}/{phase}') == True
+            ]
 
-        for phase in legendlist:
-            pathlist.append(f'{path}{modelname}/{phase}/spectrum_i{incl}.out')
+            for phase in legendlist:
+                pathlist.append(f'{path}{modelname}/{phase}/spectrum_i{incl}.out')
 
-    # Else, fill list with paths to chosen phsae and all incls there instead
-    if choice == 'allincls':
-        
-        filenames = os.listdir(f'{path}{modelname}/{phase}/')
+        # Else, fill list with paths to chosen phsae and all incls there instead
+        if choice == 'allincls':
+            
+            filenames = os.listdir(f'{path}{modelname}/{phase}/')
 
-        for filename in filenames:
-            if filename[:8] == 'spectrum':
-                legendlist.append(re.findall('spectrum_i.*.', filename)[0][10:-4])
+            for filename in filenames:
+                if filename[:8] == 'spectrum':
+                    legendlist.append(re.findall('spectrum_i.*.', filename)[0][10:-4])
 
-        for incl in legendlist:
-            pathlist.append(f'{path}{modelname}/{phase}/spectrum_i{incl}.out')
+            for incl in legendlist:
+                pathlist.append(f'{path}{modelname}/{phase}/spectrum_i{incl}.out')
 
-    # Create SED figure
-    fig,ax = a3d.plot_sedsmany(
-        pathlist=pathlist,
-        distance=1
-    )
-    plotly_fig_all = tls.mpl_to_plotly(fig)
+        # Create SED figure
+        fig,ax = a3d.plot_sedsmany(
+            pathlist=pathlist,
+            legendlist=legendlist,
+            distance=1
+        )
+        plotly_fig_all = tls.mpl_to_plotly(fig)
 
-    # TODO compute average luminosity of chosen SEDs
+        # TODO compute average luminosity of chosen SEDs
 
 
 
-    # Change some settings on the plotly plot
-    plotly_fig_all.update_layout(
-        title_font_size=18,
-        hoverlabel_font_size=18,
-        plot_bgcolor='white',
-        yaxis = dict(tickfont = dict(size=16)),
-        xaxis = dict(tickfont = dict(size=16))
-    )
-    plotly_fig_all.update_xaxes(
-        titlefont_size=16,
-        showgrid=True, gridwidth=1, gridcolor='lightgrey',
-        ticks="outside", tickwidth=2, ticklen=10,
-        showline=True, linewidth=2, linecolor='black', mirror=False
-    )
-    plotly_fig_all.update_yaxes(
-        titlefont_size=16,
-        showgrid=True, gridwidth=1, gridcolor='lightgrey',
-        ticks="outside", tickwidth=2, ticklen=10,
-        showline=True, linewidth=2, linecolor='black', mirror=False
-    )
+        # Change some settings on the plotly plot
+        plotly_fig_all.update_layout(
+            title_font_size=18,
+            hoverlabel_font_size=18,
+            plot_bgcolor='white',
+            yaxis = dict(tickfont = dict(size=16)),
+            xaxis = dict(tickfont = dict(size=16))
+        )
+        plotly_fig_all.update_xaxes(
+            titlefont_size=16,
+            showgrid=True, gridwidth=1, gridcolor='lightgrey',
+            ticks="outside", tickwidth=2, ticklen=10,
+            showline=True, linewidth=2, linecolor='black', mirror=False
+        )
+        plotly_fig_all.update_yaxes(
+            titlefont_size=16,
+            showgrid=True, gridwidth=1, gridcolor='lightgrey',
+            ticks="outside", tickwidth=2, ticklen=10,
+            showline=True, linewidth=2, linecolor='black', mirror=False
+        )
 
-    return plotly_fig_all
+        return plotly_fig_all
 
-"""
+
 
 
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
-    #app.run_server(port=8050)
+    #app.run_server(debug=True)
+    app.run_server(port=8050)
 
