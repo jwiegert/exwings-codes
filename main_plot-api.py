@@ -477,58 +477,67 @@ def plot_sed_all(modelname,phase,incl,choice):
     Input('image-scale-picker', 'value')
 )
 def plot_image_all(modelname,phase,image,choice,scale):
+
+
     # modelname is foldername in r3dresults
     # phase is phase-choice
     # image is imagename, ie choice of wavelength and inclination
     # choice chooses which two attributes are to be constant
     # scale is lin or log
-    #
+
+    # Extract chocen image inclination and wavelength
+    imageincl = re.split('_','image_i180_100um.out')[1][1:]
+    imagewave = re.split('_','image_i180_100um.out')[1][:-6]
+
+    # Initate path
+    path = f'../r3dresults/{modelname}/'
+
+    # Initate image list
+    imagelist = []
+
+    # Check the choice, all phases, all incls or all waves?
+    if choice == 'allphases':
+        # Extract all phases in models-folder
+        # and use chosen wavelength and inclination from image
+        for phase in [
+            folder for folder in os.listdir(path=path) if os.path.isdir(path+folder) == True
+        ]:
+            imagelist.append(f'path{phase}/image_i{imageincl}_{imagewave}um.out')
+
+    if choice == 'allincls':
+        # Save a list of images with chosen phase and wavelength but all incls
+        for file in os.listdir(path=f'{path}{phase}/'):
+            if file[:5] == 'image':
+                if re.split('_', file)[2] == f'{imagewave}um.out':
+                    imagelist.append(f'path{phase}/{file}')
+
+    if choice == 'allwaves':
+        # Save a list of images with chosen phase and inclination, but all wavelengths
+        for file in os.listdir(path=f'{path}{phase}/'):
+            if file[:5] == 'image':
+                if re.split('_', file)[1] == f'i{imageincl}':
+                    imagelist.append(f'path{phase}/{file}')
+
+
+    # Create fig and ax-objects
+    fig,ax = a3d.plot_imagesubplots(
+        imagelist=imagelist,
+        distance=1,
+        scale=scale
+    )
     
-    # TODO
-    # I need a new function to plot a list of images as subplots below eachother
-    
-    # finish this function:
-    fig,ax = a3d.plot_imagesubplots()
-    
+    # Convert matplotlib-fig to png in base64
+    plt.savefig(
+        'tempsubplots.png', dpi=150, bbox_inches='tight'
+    )
+    # Change to base64-encoding that html.Img can read
+    tempbase64 = base64.b64encode(open('tempsubplots.png', 'rb').read()).decode('ascii')
+    impath = 'data:image/png;base64,{}'.format(tempbase64)
 
-    return 'hej'
-
-
-"""
-# Given model, phase and image-file, plot this
-@app.callback(
-)
-def plot_image_one(modelname,phase,image):
-    if modelname != 0 or phase != 0 or image != 0:
-
-        # If image already exists, remove it so that the image updates
-        if os.path.exists('temp.png') == True:
-            os.system('rm temp.png')
-
-        # Change image to list
-        image = [image]
-
-        # Load and save image as png
-        fig,ax,testflux = a3d.plot_images(
-            path = f'{path}{modelname}/{phase}/',
-            images = image,
-            distance = 1
-        )
-        plt.savefig(
-            'temp.png', dpi=120, bbox_inches='tight'
-        )
-
-        # Change to base64-encoding that html.Img can read
-        tempbase64 = base64.b64encode(open('temp.png', 'rb').read()).decode('ascii')
-        impath = 'data:image/png;base64,{}'.format(tempbase64)
-
-        return impath
-""";
+    return impath
 
 
-
-
-
+# Chose debug mode or not
 if __name__ == "__main__":
     #app.run_server(debug=True)
     app.run_server(port=8050)
