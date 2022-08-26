@@ -7,6 +7,7 @@ import re
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm, xlabel, xscale, yscale
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Useful numbers
 c = 2.998e8 # speed of light in m/s
@@ -63,6 +64,11 @@ AUcm = 1.49598e13 # AU in cm
 #    distance:float=1
 # )
 #
+# load_images(
+#    path:str='../',
+#    image:str='image.out',
+#    distance:float=1
+# )
 #
 # Functions to set Plot-settings
 # ------------------------------
@@ -129,12 +135,6 @@ AUcm = 1.49598e13 # AU in cm
 # plot_sedsmany(
 #    pathlist:list=['../spectrum.out'],
 #    legendlist:list=['spectrum1'],
-#    distance:float=1
-# )
-#
-#prepare_images(
-#    path:str='../',
-#    image:str='image.out',
 #    distance:float=1
 # )
 #
@@ -601,6 +601,73 @@ def load_spectrum(
     
     # Return data
     return wavelengths,spectrum
+
+
+# Prepare image data for plots
+def load_images(
+        path:str='../',
+        image:str='image.out',
+        distance:float=1
+    ):
+
+    # Automatically add / to end of path if it's missing
+    if path[-1] != '/':
+        path += '/'
+
+    # Declare lists
+    image1d = []
+
+    # Load images
+    with open(path+image, 'r') as f:
+        for nl,line in enumerate(f.readlines()):
+            
+            # row 1: pixels by pixels
+            if nl == 1:
+                npixels = int(line.split()[0])
+            
+            # row 3: pixel size in cm, divide by AUcm for AU
+            if nl == 3:
+                pixelsize_au = float(line.split()[0])/AUcm
+            
+            # NOTE might be useful later, commented out for now
+            # row 4: wavelenght in um
+            #if nl == 4:
+            #    wavelength = float(line)
+
+            # row 6 onward: pixels
+            if nl > 5:
+                # Some rows are empty (and they contain space and \n, so strip them lines)
+                if len(line.strip()) > 0:
+                    image1d.append(float(line.strip()))
+
+    # Extract some useful quantities
+    # pixel size in mas
+    pixelsize_mas = pixelsize_au / distance
+    
+    # Size of whole image in AU
+    size_au = pixelsize_au * npixels
+    axisplot  = [0.5*size_au,-0.5*size_au,-0.5*size_au,0.5*size_au]
+
+    # Total flux density of the image
+    flux = sum(image1d) * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
+
+    # Create 2D arrays
+    image2d = np.zeros((npixels,npixels))
+    image2dlog = np.zeros((npixels,npixels))
+    nx,ny = 0,0
+
+    for flux in image1d:
+        image2d[nx,ny] = flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
+        image2dlog[nx,ny] = np.log10(flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2)
+
+        # Move nx and ny
+        nx = nx + 1
+        if nx == npixels:
+            nx = 0
+            ny = ny + 1
+
+
+    return image2d,image2dlog,flux,axisplot
 
 
 # ------------------------------------------------------------ #
@@ -1230,69 +1297,6 @@ def plot_sedsmany(
     return fig,ax
 
 
-# Prepare image data for plots
-def prepare_images(
-        path:str='../',
-        image:str='image.out',
-        distance:float=1
-    ):
-
-    # Declare lists
-    image1d = []
-
-    # Load images
-    with open(path+image, 'r') as f:
-        for nl,line in enumerate(f.readlines()):
-            
-            # row 1: pixels by pixels
-            if nl == 1:
-                npixels = int(line.split()[0])
-            
-            # row 3: pixel size in cm, divide by AUcm for AU
-            if nl == 3:
-                pixelsize_au = float(line.split()[0])/AUcm
-            
-            # NOTE might be useful later, commented out for now
-            # row 4: wavelenght in um
-            #if nl == 4:
-            #    wavelength = float(line)
-
-            # row 6 onward: pixels
-            if nl > 5:
-                # Some rows are empty (and they contain space and \n, so strip them lines)
-                if len(line.strip()) > 0:
-                    image1d.append(float(line.strip()))
-
-    # Extract some useful quantities
-    # pixel size in mas
-    pixelsize_mas = pixelsize_au / distance
-    
-    # Size of whole image in AU
-    size_au = pixelsize_au * npixels
-    axisplot  = [0.5*size_au,-0.5*size_au,-0.5*size_au,0.5*size_au]
-
-    # Total flux density of the image
-    flux = sum(image1d) * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
-
-    # Create 2D arrays
-    image2d = np.zeros((npixels,npixels))
-    image2dlog = np.zeros((npixels,npixels))
-    nx,ny = 0,0
-
-    for flux in image1d:
-        image2d[nx,ny] = flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
-        image2dlog[nx,ny] = np.log10(flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2)
-
-        # Move nx and ny
-        nx = nx + 1
-        if nx == npixels:
-            nx = 0
-            ny = ny + 1
-
-
-    return image2d,image2dlog,flux,axisplot
-
-
 # Plot images
 def plot_images(
         path:str='../',
@@ -1317,7 +1321,7 @@ def plot_images(
     # Loop through all images
     for image in images:
 
-        image2d,image2dlog,flux,axisplot = prepare_images(
+        image2d,image2dlog,flux,axisplot = load_images(
             path=path,
             image=image,
             distance=distance
@@ -1353,30 +1357,97 @@ def plot_images(
         cb0 = plt.colorbar(im0, orientation = 'vertical',shrink=0.6,pad=0.15)
         cb0.set_label(label = rf'Flux at {distance} pc (Jy/asec$^2$)',fontsize= 10)
 
+        # Change figure size
+        #fig.set_figheight(5)
+        #fig.set_figwidth(8)
+        #fig.tight_layout()
+
     return fig, ax, fluxtotal
 
 
-# TODO finish this!
-
+# Plot a list of images in subplots (vertically)
 def plot_imagesubplots(
         imagelist:list=['../image.out'],
+        distance:float=1,
         scale:str='lin'
     ):
+    """
+    Plots a list of images from R3d in vertical subplots
+
+    INPUT
+    imagelist: list of paths to .out files
+    distance: distance to source in pc
+    scale: choce 'lin' or 'log' for lineare or logarithmic
+
+    OUTPUT
+    gives matplotlib objects fig and ax, plot with fig.show()
+    """
 
     # Number of plots
     Nplots = len(imagelist)
 
-    # Loop over imagelist, separate it into path and image-file-names
-    #
-    # input image-file-names into prepare-images
-    #
-    # Info for image title, phase, inclination and wavelength, also add "lin/log" there
-    # also add colourbar like before, so copy a a fair bit
+    # Set fig-and-axis settings for subplots
+    fig, ax = plt.subplots(
+        Nplots,1, 
+        dpi = 150, 
+    )
 
+    # Load image data and save in various lists
+    for nn,image in enumerate(imagelist):
 
+        # Extract path and imagename from image
+        imagestrings = re.split('/', image)
+        path = f'{imagestrings[0]}/{imagestrings[1]}/'
+        modelname = imagestrings[2]
+        phase = imagestrings[3]
+        imagefilename = imagestrings[4]
 
-    fig,ax=0,0
+        # extract inclination and wavelength
+        imagestrings = re.split('_', imagefilename)
+        incl = imagestrings[1][1:]
+        wavelengthum = imagestrings[2][:-6]
+
+        # Load data
+        image2d,image2dlog,flux,axisplot = load_images(
+            path=f'{path}{modelname}/{phase}',
+            image=imagefilename,
+            distance=distance
+        )
+
+        # Only use lin or log depending on choice
+        if scale == 'lin':
+            # Save linear data in list (list of arrays)
+            imagedata = image2d
+        if scale == 'log':
+            imagedata = image2dlog
+        
+        # Plot image at spot nn, set title and axis labels
+        im0 = ax[nn].imshow(
+            imagedata, 
+            origin='lower', extent=axisplot, 
+            cmap=plt.get_cmap('hot')
+        )
+        ax[nn].set(
+            title=f'{modelname}_{phase}: {incl} deg, {wavelengthum} um', 
+            xlabel='Offset (AU)',
+            ylabel='Offset (AU)',
+        )
+
+        # Set colour bar settings and label
+        divider = make_axes_locatable(ax[nn])
+        cax = divider.append_axes('right', size='5%', pad=0.05)
+        cb0 = plt.colorbar(im0, cax=cax, orientation = 'vertical',shrink=0.6,pad=0.15)
+        cb0.set_label(label = rf'Flux at {distance} pc (Jy/asec$^2$)',fontsize= 10)
+
+    # Change figure size
+    fig.set_figheight(10)
+    fig.set_figwidth(10)
+    fig.tight_layout()
+
+    # Return fig and ax
     return fig, ax
+
+
 
 
 

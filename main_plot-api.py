@@ -156,12 +156,8 @@ app.layout = dbc.Container([
     dcc.Graph(
         id='sed-plot-all'
     ),
-    html.P('SED-luminosity (Lsol):'),
+    html.P('Mean SED-luminosity (Lsol):'),
     html.Div(id='sed_luminosity_average'),
-
-
-
-
 
 
     # Horisontal line, separator
@@ -192,6 +188,8 @@ app.layout = dbc.Container([
         labelStyle={'display': 'block'},
         value=0
     ),
+
+    html.Br(), # Empty space between radioitems
 
     # Chose scale, linear or logarithmic
     dcc.RadioItems(
@@ -438,8 +436,6 @@ def plot_sed_all(modelname,phase,incl,choice):
         return plotly_fig_all,lumtot
 
 
-
-#Output('image-plot-all','')
 
 
 # Given model/phase/incl, plot several images

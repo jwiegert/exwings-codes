@@ -64,6 +64,12 @@ Lsol = 3.828e26 # W
 #    path:str='../'
 # )
 #
+# plot_densitytemperature(
+#    Teff:float=2700,
+#    path:str='../r3dresults/st28gm06n056/140/',
+#    nspecie=1
+# )
+#
 #
 # Functions to create r3d-data from c5d-data
 # ------------------------------------------
@@ -515,32 +521,32 @@ def plot_opakappatemperature(
 
 # Plot c5d-OPA vs r3d-temperature
 def plot_densitytemperature(
-        Teff:float=2700,
-        path:str='../r3dresults/st28gm06n056/140/',
+        modelname:str='st28gm06n056',
+        phase:str='140',
         nspecie=1
     ):
     """
     Plots density vs temperature of a given model, given specie
     """
 
-    # Automatically add / to end of path if it's missing
-    if path[-1] != '/':
-        path += '/'
+    # Set path to r3d-data
+    path = f'../r3dresults/{modelname}/{phase}/'
+
+    Mstar,Rstar,Lstar = load_star_information(
+        savpath = f'../co5bold_data/d{modelname}/{modelname}_{phase}.sav'
+    )
 
     # Get paths to necessary files
     density_path = path+'dust_density.inp'
     grid_path = path+'../grid_distances.csv'
     amr_path = path+'amr_grid.inp'
     
-    # Get info on number of dust species in 
-
 
     # load dust_density of specie nspecie
     Ncells,Nspec,density = a3d.load_dustdensity(
         path=density_path,
         numb_specie=nspecie
     )
-
 
     # Load dust_temperature of nspecie
     temperature_path = path+'dust_temperature.dat'
@@ -549,24 +555,55 @@ def plot_densitytemperature(
         numb_specie=nspecie
     )
 
+    # Load radial distance to middle for each cell
+    griddistances = a3d.load_griddistances(
+        gridpath= grid_path,
+        amrpath= amr_path
+    )[:,0]
+
+
+
+    # Separate density and temperature to two lists, inside and outside the star
+    # ie inside or outside Rstar
+    density_insidestar = []
+    temperature_insidestar = []
+
+    density_outsidestar = []
+    temperature_outsidestar = []
+
+    for nn in range(Ncells):
+        if griddistances[nn] < Rstar:
+            density_insidestar.append(density[nn])
+            temperature_insidestar.append(temperature[nn])
+        
+        else:
+            density_outsidestar.append(density[nn])
+            temperature_outsidestar.append(temperature[nn])
+
 
     # Plot density vs temperature
     fig, ax = plt.figure(), plt.axes()
 
+    # NOTE
+    # I've been testing different ways of getting transperent dots, doesn't make a
+    # difference but might be nice to keep here
+    # Outside star
     ax.plot(
-        temperature[np.where(temperature > Teff)[0]],
-        density[np.where(temperature > Teff)[0]],
-        markeredgecolor='b',
-        linestyle='',marker='.',markersize=1
+        temperature_outsidestar,
+        density_outsidestar,
+        mec=(0,0,1,0.3),
+        #markeredgecolor='b',
+        linestyle='',marker='.',markersize=1#, alpha=0.7
     )
 
     # Plot red dots inside the star
 
     ax.plot(
-        temperature[np.where((temperature > 0) & (temperature < Teff))[0]],
-        density[np.where((temperature > 0) & (temperature < Teff))[0]],
-        markeredgecolor='r',
-        linestyle='',marker='.',markersize=1
+        temperature_insidestar,
+        density_insidestar,
+        mec=(1,0,0,0.3),
+        #markeredgecolor='r',
+        linestyle='',marker='.',markersize=1#, alpha=0.7
     )
 
     # Set final settings
