@@ -1360,7 +1360,7 @@ def plot_images(
         # Change figure size
         #fig.set_figheight(5)
         #fig.set_figwidth(8)
-        #fig.tight_layout()
+    fig.tight_layout()
 
     return fig, ax, fluxtotal
 

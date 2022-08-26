@@ -203,9 +203,9 @@ app.layout = dbc.Container([
     ),
 
     # Image plot
-    #html.Img(
-    #    id='image-plot-all',
-    #),
+    html.Img(
+        id='image-plot-all',
+    ),
 
 
 
@@ -436,38 +436,6 @@ def plot_sed_all(modelname,phase,incl,choice):
         return plotly_fig_all,lumtot
 
 
-
-
-# Given model/phase/incl, plot several images
-# Chose linear och log-scale.
-#    # Chose which set of images to plot
-#    dcc.RadioItems(
-#        id='image-picker', 
-#        options=[
-#            {'label':'All phases (constant incl & wavelength)', 'value':'allphases'},
-#            {'label':'All incls (constant phase & wavelength)', 'value':'allincls'},
-#            {'label':'All waves (constant phase & incl)', 'value':'allwaves'},
-#        ],
-#        labelStyle={'display': 'block'},
-#        value=0
-#    ),
-#    # Chose scale, linear or logarithmic
-#    dcc.RadioItems(
-#        id='image-scale-picker', 
-#        options=[
-#            {'label':'Linear flux scale', 'value':'lin'},
-#            {'label':'Logarithmic flux scale', 'value':'log'},
-#        ],
-#        labelStyle={'display': 'block'},
-#        value='lin'
-#    ),
-#    # Image plot
-#    #html.Img(
-#    #    id='image-plot-all',
-#    #),
-
-# Extract wavelength and inclination from image-filename
-
 @app.callback(
     Output('image-plot-all', 'src'),
     Input('model-dropdown', 'value'),
@@ -478,16 +446,20 @@ def plot_sed_all(modelname,phase,incl,choice):
 )
 def plot_image_all(modelname,phase,image,choice,scale):
 
-
     # modelname is foldername in r3dresults
     # phase is phase-choice
     # image is imagename, ie choice of wavelength and inclination
     # choice chooses which two attributes are to be constant
     # scale is lin or log
 
+    # If image already exists, remove it so that the image updates
+    if os.path.exists('tempsubplots.png') == True:
+        os.system('rm tempsubplots.png')
+
+
     # Extract chocen image inclination and wavelength
-    imageincl = re.split('_','image_i180_100um.out')[1][1:]
-    imagewave = re.split('_','image_i180_100um.out')[1][:-6]
+    imageincl = re.split('_',image)[1][1:]
+    imagewave = re.split('_',image)[2][:-6]
 
     # Initate path
     path = f'../r3dresults/{modelname}/'
@@ -495,28 +467,35 @@ def plot_image_all(modelname,phase,image,choice,scale):
     # Initate image list
     imagelist = []
 
+
+    # TODO NÅGOT FUNKAR INTE HÄR!!
     # Check the choice, all phases, all incls or all waves?
     if choice == 'allphases':
         # Extract all phases in models-folder
         # and use chosen wavelength and inclination from image
-        for phase in [
+        for phases in [
             folder for folder in os.listdir(path=path) if os.path.isdir(path+folder) == True
         ]:
-            imagelist.append(f'path{phase}/image_i{imageincl}_{imagewave}um.out')
+            imagelist.append(f'{path}{phases}/image_i{imageincl}_{imagewave}um.out')
+            imagelist.sort()
 
+    # TODO något funkar inte här!!!
+    # fixa...
     if choice == 'allincls':
         # Save a list of images with chosen phase and wavelength but all incls
         for file in os.listdir(path=f'{path}{phase}/'):
             if file[:5] == 'image':
                 if re.split('_', file)[2] == f'{imagewave}um.out':
-                    imagelist.append(f'path{phase}/{file}')
+                    imagelist.append(f'{path}{phase}/{file}')
+                    imagelist.sort()
 
     if choice == 'allwaves':
         # Save a list of images with chosen phase and inclination, but all wavelengths
         for file in os.listdir(path=f'{path}{phase}/'):
             if file[:5] == 'image':
                 if re.split('_', file)[1] == f'i{imageincl}':
-                    imagelist.append(f'path{phase}/{file}')
+                    imagelist.append(f'{path}{phase}/{file}')
+                    imagelist.sort()
 
 
     # Create fig and ax-objects
