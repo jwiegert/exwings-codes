@@ -1,14 +1,12 @@
 # A local API for more easily explore the data within r3dresults.
 #
-# 20220817: 
-# As of now, my results are only from various tests. But in the future there
-# will be a lot of data, a lot of simulated images and SEDs, all in various
-# viewing angles, resolutions etc etc. For this reason I need a much more
-# convenient way of looking at these. As such I designed this simple API that I
-# only run locally, to much faster look at results and inter-compare results.
+# Tool for fast visualisation of local data kept in ../r3dresults/*
+# Run code in python and open in brwoser at 
+# http://127.0.0.1:8050/
+# or at whatever port you want to set in the end of this code.
 #
-
-
+# -------------------------------------------------------------------
+#
 # Standard packages
 import os
 import re
@@ -23,21 +21,25 @@ import dash
 import dash_bootstrap_components as dbc
 
 # Image specific packages
+#
+# Matplotlib's normal usage of TK is not compatible with Dashboards.
+# Change this to Agg instead. Info at:
 # https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
+#
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import io
 import plotly
 import plotly.tools as tls
 import base64
 
-
 # -------------------------------------------------------------------
 # Definitions
 path='../r3dresults/'
-imcounter = 0
 Lsol = 3.828e26 # W
+
+
+# Settings for Dashboard
 
 # List of models (folders) inside ../r3dresults
 modelnames = [
@@ -45,30 +47,34 @@ modelnames = [
 ]
 modelnames.sort()
 
-
-# Dash board settings
+# Themes
 stylesheets = [dbc.themes.MATERIA]
 
-# Create a dash object called app
-app = dash.Dash(__name__, external_stylesheets=stylesheets,
+# Create Dash object, app
+app = dash.Dash(
+    __name__, 
+    external_stylesheets=stylesheets,
     meta_tags=[dict(name='viewport', content='width=device-width, initial-scale=1.0')]
 )
 
 
-# APP LAYOUT
-
+# App layout 
+#
+# NOTE
 # html.H1 = header 1, main title
 # html.H2 = header 2, sub title
 # html.P = paragraph
-# dropdown creates a dropdown manue, id is it's name, value is
-# its default value. Options is a list of what you can chose.
-
-
+# dropdown creates a dropdown manue, 
+# id is it's name, 
+# value is its default value. 
+# Options is a list of what you can chose.
+# placeholder is a default placeholder text on unchosen menus
+# Etc see more online
 app.layout = dbc.Container([
 
     html.H2('R3D results-plotter:'),
 
-    # Menu of model names inside ../r3dresults/
+    # Menu of model names, ie folders inside ../r3dresults/
     dcc.Dropdown(
         id='model-dropdown', 
         className='',
@@ -79,7 +85,7 @@ app.layout = dbc.Container([
         value=modelnames[0]
     ),
 
-    # Menu of folders inside chosen model
+    # Menu of folders (phases) inside chosen model
     dcc.Dropdown(
         id='phase-dropdown', 
         className='',
@@ -87,7 +93,9 @@ app.layout = dbc.Container([
         value=0
     ),
 
+    # Horisontal line
     html.Hr(),
+
     # Plot singular SED below here
     html.P('SEDs:'),
 
@@ -103,15 +111,19 @@ app.layout = dbc.Container([
     dcc.Graph(
         id='sed-plot-one'
     ),
+
+    # Print Bol. luminosity of the SED
     html.P('SED-luminosity (Lsol):'),
     html.Div(id='sed_luminosity'),
 
 
+    # Horisontal line
     html.Hr(),
+
     # Plot singular image here
     html.P('Images:'),
 
-    # Menu of image-files
+    # Menu of image*.out-files
     dcc.Dropdown(
         id='image-dropdown', 
         className='',
@@ -125,23 +137,13 @@ app.layout = dbc.Container([
     ),
 
 
-    # Horisontal line, separator
+    # Horisontal line
     html.Hr(),
+
+    # Plot a choice of SEDs in same figure
     html.P('Plots all SEDs on top of each other'),
 
-
-
-
-    # TODO  finish this below!
-    # Chose between which to plot all of (all on top of each other in the same figure)
-    # - Phases (all Inclinations)
-    # - Inclinations (all Phases)
-    #
-    # Need new function to create this figure-object
-    # Convert to plotly-figure
-
-
-    # SED-plotter-choice
+    # SED-chooser
     dcc.RadioItems(
         id='sed-picker', 
         options=[
@@ -156,26 +158,17 @@ app.layout = dbc.Container([
     dcc.Graph(
         id='sed-plot-all'
     ),
+
+    # Print average luminosity of all plotted SEDs
     html.P('Mean SED-luminosity (Lsol):'),
     html.Div(id='sed_luminosity_average'),
 
 
-    # Horisontal line, separator
+    # Horisontal line
     html.Hr(),
-    html.P('Plots all images  Inclination/Phase/Wavelength'),
 
-    # TODO
-    # if nothing is chosen, show nothing
-    # how to do this?
-    #
-    # Chose between keeping 2 of 3 constant
-    # - Phases and Inclinations (all Wavelengths)
-    # - Phases and Wavelengths (all Inclinations)
-    # - Inclinations and Wavelenths (all Phases)
-    #
-    # Need new function that plots these as subplots and creates this figure
-    # Change to tempsubplots.png in a callback and convert to base64 in a callback here
-    #
+    # Plot all chosen images vertically
+    html.P('Plots all images  Inclination/Phase/Wavelength'),
 
     # Chose which set of images to plot
     dcc.RadioItems(
@@ -189,7 +182,8 @@ app.layout = dbc.Container([
         value=0
     ),
 
-    html.Br(), # Empty space between radioitems
+    # Empty space between image-radioitems
+    html.Br(), 
 
     # Chose scale, linear or logarithmic
     dcc.RadioItems(
@@ -207,12 +201,11 @@ app.layout = dbc.Container([
         id='image-plot-all',
     ),
 
-
-
 ])
+# End of layout
 
-
-# FUNCTIONS AND CALLBACKS
+# -----------------------------------------------------------------------
+# Functions and Callbacks
 
 # Given chosen modelname, change options for phases-menu
 @app.callback(
@@ -221,16 +214,21 @@ app.layout = dbc.Container([
 )
 def create_phase_dict(modelname):
 
+    # If statement is an attempt to stop looking for models when none is chocen
     if modelname != 0 :
+
+        # List all folders within ../r3dresults/{modelname}
         phases = [
             phase for phase in os.listdir(path=f'{path}{modelname}/') if os.path.isdir(f'{path}{modelname}/{phase}') == True
         ]
 
+        # Sort folders, or give string "no phases found"
         if len(phases) > 0:
             phases.sort()
         else:
             phases = ['No phases found']
 
+        # Return dict with menu-options
         return [{'label':phase, 'value':phase} for phase in phases]
 
 
@@ -242,23 +240,24 @@ def create_phase_dict(modelname):
     Input('phase-dropdown', 'value'),
 )
 def create_image_sed_dicts(modelname,phase):
+
+    # If statement to stop search for folders if non are chosen
     if modelname != 0 or phase != 0:
 
         # Extract file names in folder
         filenames = os.listdir(path=f'{path}{modelname}/{phase}')
         filenames.sort()
 
-
-        # Extract image file names
+        # Extract image*.out file names
         images = [image for image in filenames if image[0:5] == 'image']
 
-        # Check if there are any
+        # Check if there are any images, and sort them, or return no-image-string
         if len(images) > 0:
             images.sort()
         else:
             images = ['No image found']
 
-        # Extract inclinations of SEDs
+        # Extract inclinations of SEDs, ie 
         incls = []
         for filename in filenames:
             if filename[:8] == 'spectrum':
@@ -270,10 +269,11 @@ def create_image_sed_dicts(modelname,phase):
         else:
             incls = ['N/A']
 
+        # return two dicts, one with image options and one with sed-incl-options
         return [{'label':image, 'value':image} for image in images], [{'label':f'Inclination: {incl} deg', 'value':incl} for incl in incls]
 
 
-# Given model, phase and sed-file, plot this
+# Given choices of model, phase and sed-inclination, plot the SED
 @app.callback(
     Output('sed-plot-one', 'figure'),
     Output('sed_luminosity', 'children'),
@@ -282,7 +282,11 @@ def create_image_sed_dicts(modelname,phase):
     Input('incl-dropdown', 'value'),
 )
 def plot_sed_one(modelname,phase,incl):
+
+    # if-statement to stop searching if nothing is chosen
     if modelname != 0 or phase != 0 or incl != 'N/A':
+
+        # TODO continue cleaning from here
 
         # Extract luminosity of SED
         lum = a3d.compute_sed_luminosity(
@@ -511,9 +515,9 @@ def plot_image_all(modelname,phase,image,choice,scale):
     )
     # Change to base64-encoding that html.Img can read
     tempbase64 = base64.b64encode(open('tempsubplots.png', 'rb').read()).decode('ascii')
-    impath = 'data:image/png;base64,{}'.format(tempbase64)
+    imallpath = 'data:image/png;base64,{}'.format(tempbase64)
 
-    return impath
+    return imallpath
 
 
 # Chose debug mode or not
