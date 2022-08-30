@@ -305,7 +305,8 @@ def create_grid(
         gridedge *= nxyz/oldnxyz
     
     # Calculate inner refinements around centrum of grid
-    innerrefinements = [inrefine*(nref+1)*refinementlist[-1] for nref in range(nrefines)]
+    # Dive up given inrefine-radius in equal portions and list distances
+    innerrefinements = [(nref+1)*inrefine/nrefines for nref in range(nrefines)]
 
     # Info text
     print('Creating amr_grid with octree refinement.')
