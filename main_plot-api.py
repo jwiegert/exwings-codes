@@ -141,7 +141,7 @@ app.layout = dbc.Container([
     html.Hr(),
 
     # Plot a choice of SEDs in same figure
-    html.P('Plots all SEDs on top of each other'),
+    html.P('Plot all SEDs on top of each other'),
 
     # SED-chooser
     dcc.RadioItems(
@@ -168,7 +168,7 @@ app.layout = dbc.Container([
     html.Hr(),
 
     # Plot all chosen images vertically
-    html.P('Plots all images  Inclination/Phase/Wavelength'),
+    html.P('Plot all images  Inclination/Phase/Wavelength'),
 
     # Chose which set of images to plot
     dcc.RadioItems(
@@ -286,20 +286,18 @@ def plot_sed_one(modelname,phase,incl):
     # if-statement to stop searching if nothing is chosen
     if modelname != 0 or phase != 0 or incl != 'N/A':
 
-        # TODO continue cleaning from here
-
         # Extract luminosity of SED
         lum = a3d.compute_sed_luminosity(
             path=f'{path}{modelname}/{phase}/spectrum_i{incl}.out'
         )/Lsol
 
-        # Extract image
+        # Create matplotlib-figure-object of SED, and convert to plotly-figure
         fig,ax,maxflux,maxwave = a3d.plot_sed(
             path=f'{path}{modelname}/{phase}/spectrum_i{incl}.out'
         )
         plotly_fig = tls.mpl_to_plotly(fig)
 
-        # Change some settings on the plotly plot
+        # Change some settings for the plotly plot
         plotly_fig.update_layout(
             title_font_size=18,
             hoverlabel_font_size=18,
@@ -320,8 +318,8 @@ def plot_sed_one(modelname,phase,incl):
             showline=True, linewidth=2, linecolor='black', mirror=False
         )
 
+        # Return plotly figure obect and luminosity of the SED
         return plotly_fig, lum
-
 
 
 # Given model, phase and image-file, plot this
@@ -332,16 +330,18 @@ def plot_sed_one(modelname,phase,incl):
     Input('image-dropdown', 'value'),
 )
 def plot_image_one(modelname,phase,image):
+
+    # If-statement to stop searching if nothing is chosen
     if modelname != 0 or phase != 0 or image != 0:
 
-        # If image already exists, remove it so that the image updates
+        # If temporary image-file already exists, remove it so the image updates
         if os.path.exists('temp.png') == True:
             os.system('rm temp.png')
 
-        # Change image to list
+        # Put image-choice to a list (since plot_images loops through list)
         image = [image]
 
-        # Load and save image as png
+        # Create image-figure-object and ax-object, save as temporary png-file
         fig,ax,testflux = a3d.plot_images(
             path = f'{path}{modelname}/{phase}/',
             images = image,
@@ -351,15 +351,15 @@ def plot_image_one(modelname,phase,image):
             'temp.png', dpi=120, bbox_inches='tight'
         )
 
-        # Change to base64-encoding that html.Img can read
+        # Change to base64-encoding that html.Img can read the temporary png
         tempbase64 = base64.b64encode(open('temp.png', 'rb').read()).decode('ascii')
         impath = 'data:image/png;base64,{}'.format(tempbase64)
 
+        # Return path to base64-temp-image
         return impath
 
 
-
-# Given model, phase and all phases or all inclinations, plot all seds of choice
+# Given model, plot all seds of your choice
 @app.callback(
     Output('sed-plot-all', 'figure'),
     Output('sed_luminosity_average','children'),
@@ -369,35 +369,43 @@ def plot_image_one(modelname,phase,image):
     Input('sed-picker', 'value'),
 )
 def plot_sed_all(modelname,phase,incl,choice):
+
+    # If statement to stop searching if nothing is chosen
     if modelname != 0 or phase != 0 or incl != 'N/A' or choice != 0:
 
-        # pathlist and legendlist depends on choice.
+        # Initiate empty pathlist and legendlist 
+        # (legend is either inclinations or phases, also used for legend in figure)
+        # these depend on choice.
         pathlist = []
         legendlist = []
 
-        # All phases, ie inclination is chosen earlier, take all phases with this
+        # Create list of SEDs of all phases (constant - pre-chosen - incl)
         if choice == 'allphases':
 
+            # List of phase-folders
             legendlist = [
                 phase for phase in os.listdir(path=f'{path}{modelname}/') if os.path.isdir(f'{path}{modelname}/{phase}') == True
             ]
 
-            for phase in legendlist:
-                pathlist.append(f'{path}{modelname}/{phase}/spectrum_i{incl}.out')
+            # List of spectrum*.out-files
+            pathlist = [f'{path}{modelname}/{phase}/spectrum_i{incl}.out' for phase in legendlist]
 
         # Else, fill list with paths to chosen phsae and all incls there instead
         if choice == 'allincls':
-            
+
+            # List of files in phase-folder
             filenames = os.listdir(f'{path}{modelname}/{phase}/')
 
+            # Extract all spectrum*.out files
             for filename in filenames:
                 if filename[:8] == 'spectrum':
+                    # Save all available inclinations (numbers as str only)
                     legendlist.append(re.findall('spectrum_i.*.', filename)[0][10:-4])
 
-            for incl in legendlist:
-                pathlist.append(f'{path}{modelname}/{phase}/spectrum_i{incl}.out')
+            # Save a list of all spectrum-files
+            pathlist = [f'{path}{modelname}/{phase}/spectrum_i{incl}.out' for incl in legendlist]
 
-        # Create SED figure object
+        # Create SED figure object and convert to plotly-figure
         fig,ax = a3d.plot_sedsmany(
             pathlist=pathlist,
             legendlist=legendlist,
@@ -406,7 +414,7 @@ def plot_sed_all(modelname,phase,incl,choice):
         plotly_fig_all = tls.mpl_to_plotly(fig)
 
 
-        # Compute average luminosity of chosen SEDs
+        # Compute average luminosity of all chosen SEDs
         lumtot = 0
         for pathstr in pathlist:
             lum = a3d.compute_sed_luminosity(
@@ -416,7 +424,7 @@ def plot_sed_all(modelname,phase,incl,choice):
         lumtot /= len(pathlist)*Lsol
 
 
-        # Change some settings on the plotly plot
+        # Change some settings for the plotly plot
         plotly_fig_all.update_layout(
             title_font_size=18,
             hoverlabel_font_size=18,
@@ -437,9 +445,11 @@ def plot_sed_all(modelname,phase,incl,choice):
             showline=True, linewidth=2, linecolor='black', mirror=False
         )
 
+        # Return plotly-figure and average luminosity
         return plotly_fig_all,lumtot
 
 
+# Given model, phase, one-image-plotter, choice and scale, plot several images
 @app.callback(
     Output('image-plot-all', 'src'),
     Input('model-dropdown', 'value'),
@@ -449,52 +459,58 @@ def plot_sed_all(modelname,phase,incl,choice):
     Input('image-scale-picker', 'value')
 )
 def plot_image_all(modelname,phase,image,choice,scale):
-
-    # modelname is foldername in r3dresults
-    # phase is phase-choice
-    # image is imagename, ie choice of wavelength and inclination
-    # choice chooses which two attributes are to be constant
-    # scale is lin or log
-
-    # If image already exists, remove it so that the image updates
+    #
+    # Modelname is foldername in r3dresults
+    # Phase is phase-choice
+    # Image is imagename, ie choice of wavelength and inclination
+    # Choice chooses which two attributes (of three) are to be constant
+    # Scale is lin or log
+    #
+    # If temporary image file already exists, remove it so that the image updates
     if os.path.exists('tempsubplots.png') == True:
         os.system('rm tempsubplots.png')
 
-
-    # Extract chocen image inclination and wavelength
+    # Extract chosen image inclination and wavelength
+    # Filename is formatted as image_i{incl}_{wavelength}um.out
     imageincl = re.split('_',image)[1][1:]
     imagewave = re.split('_',image)[2][:-6]
 
-    # Initate path
+    # Initate path to model-folder
     path = f'../r3dresults/{modelname}/'
 
     # Initate image list
     imagelist = []
 
-
-    # TODO NÅGOT FUNKAR INTE HÄR!!
-    # Check the choice, all phases, all incls or all waves?
+    # Check the choice, do we want all phases, all incls or all wavelengths?
+    #
+    # Choice 1: all phases, rest are constant
     if choice == 'allphases':
         # Extract all phases in models-folder
-        # and use chosen wavelength and inclination from image
+        # and use chosen wavelength and inclination from image-choice earlier
+
+        # Loop over phases listed in model-folder
         for phases in [
             folder for folder in os.listdir(path=path) if os.path.isdir(path+folder) == True
         ]:
+            # Save one image-file-path from each phase-folder
             imagelist.append(f'{path}{phases}/image_i{imageincl}_{imagewave}um.out')
+            # And sort them
             imagelist.sort()
 
-    # TODO något funkar inte här!!!
-    # fixa...
+    # Choice 2: all inclinations
     if choice == 'allincls':
-        # Save a list of images with chosen phase and wavelength but all incls
+        
+        # Save a list of images with chosen phase and wavelength, and all available incls
         for file in os.listdir(path=f'{path}{phase}/'):
             if file[:5] == 'image':
                 if re.split('_', file)[2] == f'{imagewave}um.out':
                     imagelist.append(f'{path}{phase}/{file}')
                     imagelist.sort()
 
+    # Choice 3: all wavelengths
     if choice == 'allwaves':
-        # Save a list of images with chosen phase and inclination, but all wavelengths
+
+        # Save a list of images with chosen phase and inclination, and all available wavelengths
         for file in os.listdir(path=f'{path}{phase}/'):
             if file[:5] == 'image':
                 if re.split('_', file)[1] == f'i{imageincl}':
@@ -509,7 +525,7 @@ def plot_image_all(modelname,phase,image,choice,scale):
         scale=scale
     )
     
-    # Convert matplotlib-fig to png in base64
+    # Save figure as temporary png-file
     plt.savefig(
         'tempsubplots.png', dpi=150, bbox_inches='tight'
     )
@@ -517,11 +533,13 @@ def plot_image_all(modelname,phase,image,choice,scale):
     tempbase64 = base64.b64encode(open('tempsubplots.png', 'rb').read()).decode('ascii')
     imallpath = 'data:image/png;base64,{}'.format(tempbase64)
 
+    # Return base64-image-path
     return imallpath
 
 
-# Chose debug mode or not
+# Final part initiates the server if dunder name is dunder main
 if __name__ == "__main__":
+    # Chose debug mode or not
+
     #app.run_server(debug=True)
     app.run_server(port=8050)
-
