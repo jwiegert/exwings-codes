@@ -1090,6 +1090,7 @@ def create_staropadensity(
         pathopacity:str='../star_opacities.dat',
         pathstardensity:str='../dust_density_onestarstar.inp',
         pathwavelength:str='../wavelength_micron.inp',
+        phase:str=1,
         corrfac:float=1.0
     ):
     """
@@ -1148,7 +1149,7 @@ def create_staropadensity(
     # Print new star-opacity-density file
     print('Writing new radmc3d-files')
 
-    with open('../dust_density_opastar.inp', 'w') as fdensity:
+    with open(f'../dust_density_opastar_{phase}.inp', 'w') as fdensity:
         
         # Write headers
         fdensity.write(f'1\n{int(Ncells)}\n1\n')
@@ -1159,14 +1160,14 @@ def create_staropadensity(
 
     # Print new dustopac_starbins.inp file
     print('Writing opacity files for the binned star.')
-    with open('../dustopac_star.inp', 'w') as fopac:
+    with open(f'../dustopac_star_{phase}.inp', 'w') as fopac:
 
         # Print header
         fopac.write(f'2\n1\n-----------------------------\n')
         # Print specie name
         fopac.write(f'1\n0\nopastar\n-----------------------------\n')
 
-    with open(f'../dustkappa_opastar.inp', 'w') as fopac:
+    with open(f'../dustkappa_opastar_{phase}.inp', 'w') as fopac:
 
         # Write header (1 for no scattering in this and number of wavelengths)
         fopac.write(f'1\n{Nwave}\n')
@@ -1175,7 +1176,7 @@ def create_staropadensity(
         for nn,wave in enumerate(wavelengths):
             fopac.write(f'{wave}    1.0    0.0\n')
     
-    print('C5D create star opacities densities:\n    dust_density_opastar.inp\n    dustopac_star.inp\n    dustkappa_opastar.inp\nDONE\n')
+    print(f'C5D create star opacities densities:\n    dust_density_opastar_{phase}.inp\n    dustopac_star_{phase}.inp\n    dustkappa_opastar_{phase}.inp\nDONE\n')
 
 # Smoothing of data-functions ----------------------------------------------------
 #
@@ -1221,41 +1222,45 @@ def smooth_stellardata(
         smooth_temperature(
             path = f'{path}{phase}/dust_temperature_onestar.dat',
             starradius = starradius,
+            phase = phase,
             griddistances = griddistances,
             smooth_out = 10,
             smooth_in = 3,
             smooth_tolerance = 1.0
         )
-        os.system(f'mv ../dust_temperature_smoothed.dat {path}{phase}/')
+        os.system(f'mv ../dust_temperature_smoothed_{phase}.dat {path}{phase}/dust_temperature_smoothed.dat')
     
 
         # Smooth a5d-Opacity, remove neg spikes
         smooth_opacity(
             path = f'{path}{phase}/star_opacities.dat',
             starradius=starradius,
+            phase = phase,
             griddistances=griddistances,
             smooth_out = 7,
             smooth_in = 6,
             smooth_tolerance_log = 0
         )
-        os.system(f'mv ../star_opacities_smoothed.dat {path}{phase}/')
+        os.system(f'mv ../star_opacities_smoothed_{phase}.dat {path}{phase}/star_opacities_smoothed.dat')
 
         # Smooth a5d-densities, remove negative spikes
         smooth_density(
             path = f'{path}{phase}/dust_density_onestar.inp',
             starradius=starradius,
+            phase = phase,
             griddistances=griddistances,
             smooth_out = 37,
             smooth_in = 36,
             smooth_tolerance = 0.4
         )
-        os.system(f'mv ../dust_density_smoothed.inp {path}{phase}/dust_density_onestar_smoothed.inp')
+        os.system(f'mv ../dust_density_smoothed_{phase}.inp {path}{phase}/dust_density_onestar_smoothed.inp')
 
         # Combine c5d-density and opacity into one and save in r3d-density file
         create_staropadensity(
             pathopacity = f'{path}{phase}/star_opacities_smoothed.dat',
             pathstardensity = f'{path}{phase}/dust_density_onestar_smoothed.inp',
             pathwavelength = f'{path}wavelength_micron.inp',
+            phase = phase,
             corrfac = 1.0
         )
     
@@ -1264,9 +1269,9 @@ def smooth_stellardata(
         #      since I will have to merge stellar and dust data into same R3D-data
         #      which can be done with the _onestar/_smoothed-files I produce here.
         os.system(f'cp {path}{phase}/dust_temperature_smoothed.dat {path}{phase}/dust_temperature.dat')
-        os.system(f'mv ../dust_density_opastar.inp {path}{phase}/dust_density.inp')
-        os.system(f'mv ../dustkappa_opastar.inp {path}{phase}/')
-        os.system(f'mv ../dustopac_star.inp {path}{phase}/dustopac.inp')
+        os.system(f'mv ../dust_density_opastar_{phase}.inp {path}{phase}/dust_density.inp')
+        os.system(f'mv ../dustkappa_opastar_{phase}.inp {path}{phase}/dustkappa_opastar.inp')
+        os.system(f'mv ../dustopac_star_{phase}.inp {path}{phase}/dustopac.inp')
 
     print('All done')
 
@@ -1275,6 +1280,7 @@ def smooth_stellardata(
 def smooth_opacity(
         path:str='../star_opacities.dat',
         starradius:float=1,
+        phase:str = 1,
         griddistances:list=[0],
         smooth_out:int = 4,
         smooth_in:int = 0,
@@ -1289,7 +1295,7 @@ def smooth_opacity(
     Higher smooth tolerance > more tolerant for spikes
 
     OUTPUT
-    New file: star_opacities_smoothed.dat
+    New file: star_opacities_smoothed_{phase}.dat
     """
     print('Removing opacity spikes')
 
@@ -1332,7 +1338,7 @@ def smooth_opacity(
     print(f'{smooth_in}-{smooth_out}: Number of smoothed OPAcells: {counter}')
 
     # Write new file
-    with open('../star_opacities_smoothed.dat', 'w') as fopacity:
+    with open(f'../star_opacities_smoothed_{phase}.dat', 'w') as fopacity:
 
         # Write header
         fopacity.write('# List of c5d-opacities translated to r3d-spatial grid.\n# Use as input when separating one-specie-density_star-file into several species\n# and creating dust-star opacity files.\n')
@@ -1341,13 +1347,14 @@ def smooth_opacity(
         for nn in range(Ncells):
             fopacity.write(f'{opacity[nn]}\n')
 
-    print('C5D smooth opacities:\n    star_opacities_smoothed.dat\nDONE\n')
+    print(f'C5D smooth opacities:\n    star_opacities_smoothed_{phase}.dat\nDONE\n')
 
 
 # Smoothing, removing spikes in temperatures
 def smooth_temperature(
         path:str = '../dust_temperature.dat',
         starradius:float=1,
+        phase:str = 1,
         griddistances:list=[0],
         smooth_out:int = 10,
         smooth_in:int = 3,
@@ -1398,7 +1405,7 @@ def smooth_temperature(
     print(f'{smooth_in}-{smooth_out}: Number of smoothed Tcells: {counter}')
 
     # Print new temperature file
-    with open('../dust_temperature_smoothed.dat', 'w') as ftemperature:
+    with open(f'../dust_temperature_smoothed_{phase}.dat', 'w') as ftemperature:
         # Write headers:
         # 1
         # nleafs
@@ -1408,13 +1415,14 @@ def smooth_temperature(
         for nn in range(Ncells*Nspecies):
             ftemperature.write(f'{temperatures[nn]}\n')
 
-    print('C5D smooth temperatures:\n    dust_temperature_smoothed.dat\nDONE\n')
+    print(f'C5D smooth temperatures:\n    dust_temperature_smoothed_{phase}.dat\nDONE\n')
 
 
 # Smooth density
 def smooth_density(
         path:str = '../dust_density_onestar.inp',
         starradius:float=1,
+        phase:str=1,
         griddistances:list=[0],
         smooth_out:int = 9,
         smooth_in:int = 3,
@@ -1427,7 +1435,7 @@ def smooth_density(
 
     Smaller smooth_tolerance > more tolerant for spikes (is this correct?)
 
-    TODO write more info
+    TODO write more&better info
     """
     print('Removing density spikes')
 
@@ -1461,7 +1469,7 @@ def smooth_density(
     print(f'{smooth_in}-{smooth_out}: Number of smoothed Density cells: {counter}')
 
     # Print new temperature file
-    with open('../dust_density_smoothed.inp', 'w') as fdensity:
+    with open(f'../dust_density_smoothed_{phase}.inp', 'w') as fdensity:
         # Write headers:
         # 1
         # nleafs
@@ -1471,7 +1479,7 @@ def smooth_density(
         for nn in range(Ncells*Nspecies):
             fdensity.write(f'{densities[nn]}\n')
 
-    print('C5D smooth densities:\n    dust_density_smoothed.inp\nDONE\n')
+    print(f'C5D smooth densities:\n    dust_density_smoothed_{phase}.inp\nDONE\n')
 
 
 # ====================================================================
