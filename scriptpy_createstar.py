@@ -6,6 +6,8 @@
 # And from data written in here, change codes manually if required!
 #
 # ------------------------------------------------------------------------
+# Empty line for some space in terminal
+print('')
 # Include inputs from bash
 
 import sys
@@ -15,7 +17,6 @@ phase = sys.argv[2]
 # ------------------------------------------------------------------------
 # Python code below
 
-import create_r3d_functions as c3d
 import analyze_co5bold_functions as a5d
 import analyze_r3d_functions as a3d
 
@@ -23,6 +24,7 @@ path = f'../r3dresults/{modelname}/'
 AUcm = 1.49598e13 # cm
 
 # Extract star's radius
+print(f'Extracting {modelname}_{phase} information.')
 Mstar,starradius,Lstar = a5d.load_star_information(
     savpath = f'../co5bold_data/d{modelname}/{modelname}_{phase}.sav',
     printoutput = 'n'
@@ -47,4 +49,3 @@ a5d.smooth_stellardata(
     starradii = [starradius],
     griddistances = griddistances,
 )
-

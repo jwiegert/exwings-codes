@@ -221,7 +221,7 @@ def write_r3d_runscripts(
         f'chmod +x {path}runcommand_main.sh'
     )
 
-    print('Finished writing run-r3d-scripts:\n    r3doutput_[PHASE].txt\n    runcommand[PHASE].sh\n    runcommand_main.sh\n')
+    print('Finished writing run-r3d-scripts:\n    runcommand[PHASE].sh\n    runcommand_main.sh\n')
 
 
 

@@ -6,6 +6,9 @@
 # And from data written in here, change codes manually if required!
 #
 # ------------------------------------------------------------------------
+# Empty line in Bash to make some space
+print('')
+#
 # Include inputs from bash
 
 import sys
@@ -21,7 +24,6 @@ import os
 
 path = f'../r3dresults/{modelname}/'
 AUcm = 1.49598e13 # cm
-
 
 # Create folders
 for phase in phases:
@@ -51,10 +53,9 @@ c5dgrid,cellcourners,cellsize = a5d.load_grid_properties(
 # Smallest c5d cells are 2*3.65/317 AU = 0.02302839116719243 AU
 # Radius of star: 1.651AU (355 Rsun)
 # Settings for the grid
-r3dedge = 2.1 * Rstar # Size of whole grid
-#basecell = 1.001 * cellsize * 2**4 # Size of base cells (based on smallest cells)
-basecell = 2* 1.001 * cellsize # Size of base cells (based on smallest cells)
-nxyz = r3dedge/basecell
+r3dedge = 2 * cellcourners.max() / AUcm # Size of whole grid in AU
+basecell = 1.001 * cellsize * 2**4 / AUcm # Size of base cells as based on smallest cells
+nxyz = r3dedge/basecell # Number of base cells along one side of the cube
 
 # Refinements based on stellar radius
 refinementlist_au = [
@@ -64,11 +65,11 @@ refinementlist_au = [
     1.5*Rstar/AUcm
 ]
 
-# Inner refinements up to 0.9 Rstar
-inrefine_au = 0.9*Rstar / (4*refinementlist_au[-1]*AUcm)
+# Inner refinements up to 0.9 Rstar (divided equally radially by number of refinements)
+inrefine_au = 0.9*Rstar / AUcm
 
 c3d.create_grid(
-    gridedge=r3dedge/AUcm, 
+    gridedge=r3dedge, 
     nxyz=nxyz, 
     refinementlist=refinementlist_au, 
     inrefine=inrefine_au, 
@@ -109,4 +110,3 @@ for phase in phases:
     os.system(
         f'cp {path}wavelength_micron.inp {path}{phase}/'
     )
-
