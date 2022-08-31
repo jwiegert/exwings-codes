@@ -647,6 +647,9 @@ def create_star(
     Useful file with list of extracted opacities 'kappa': star_opacities.dat
     """
 
+    # Extract phase-designation from savpath
+    phase = savpath.split('_')[-1].split('.')[0]
+
     # Load R3D grid
     print('Loading R3D grid')
     nleafs = a3d.load_grid_properties(amrpath=amrpath)[2]
@@ -678,7 +681,7 @@ def create_star(
         progbar = 0
 
         # Open r3d data files
-        with open('../dust_density_onestar.inp', 'w') as fdensity, open('../dust_temperature_onestar.dat', 'w') as ftemperature, open('../star_opacities.dat', 'w') as fopacity:
+        with open(f'../dust_density_onestar_{phase}.inp', 'w') as fdensity, open(f'../dust_temperature_onestar_{phase}.dat', 'w') as ftemperature, open(f'../star_opacities_{phase}.dat', 'w') as fopacity:
 
             # Write headers:
             # 1
@@ -768,7 +771,7 @@ def create_star(
                     progbar += 1
                     print('Finished 75 per cent of the grid.')
 
-    print('C5D Dust-star:\n    dust_density_onestar.inp\n    dust_temperature_onestar.dat\n    star_opacities.dat\nDONE\n')
+    print(f'C5D Dust-star:\n    dust_density_onestar_{phase}.inp\n    dust_temperature_onestar_{phase}.dat\n    star_opacities_{phase}.dat\nDONE\n')
 
 
 # For when creating several stars/phases
@@ -777,15 +780,17 @@ def create_stars(
         phases:list = [140,141,142]
     ):
     """
-    TODO
-    Blablabla
+    Function for creating many star-models, from lists of them. 
+    Also moves files to correct folders. Also useful when only doing one model and phase.
+        NOTE this is not implemented correctly yet, only do one model (several phases are OK)!
+
+    INPUT
+    modelnames:list = list of modelnames
+    phases:list = list of phases, listed in the same order as models are listed
+        NOTE this is not implemented correctly yet, only do one model!
     """
 
-    # modelnames
-    # phases
-
-    # modelnames = st28gm06n056
-    # phases = [140,141,142]
+    # TODO there should be a list of phases per model inputted in 
 
     for modelname in modelnames:
         for phase in phases:
@@ -807,13 +812,13 @@ def create_stars(
 
             # Files from create star
             os.system(
-                f'mv ../dust_density_onestar.inp {path}{phase}/'
+                f'mv ../dust_density_onestar_{phase}.inp {path}{phase}/dust_density_onestar.inp'
             )
             os.system(
-                f'mv ../dust_temperature_onestar.dat {path}{phase}/'
+                f'mv ../dust_temperature_onestar_{phase}.dat {path}{phase}/dust_temperature_onestar.dat'
             )
             os.system(
-                f'mv ../star_opacities.dat {path}{phase}/'
+                f'mv ../star_opacities_{phase}.dat {path}{phase}/star_opacities.dat'
             )
 
             # Files from create grid-part above
@@ -1205,6 +1210,7 @@ def smooth_stellardata(
     if path[-1] != '/':
         path += '/'
 
+    # TODO change so that everything is not done in the same filenames!!
 
     for nphase,phase in enumerate(phases):
 

@@ -104,9 +104,3 @@ wavelengths = c3d.create_wavelength(
 os.system(
     f'mv ../wavelength_micron.inp {path}'
 )
-
-for phase in phases:
-    # And copy wavelength-grid to each phase-folder
-    os.system(
-        f'cp {path}wavelength_micron.inp {path}{phase}/'
-    )
