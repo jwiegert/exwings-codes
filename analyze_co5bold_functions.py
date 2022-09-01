@@ -44,7 +44,11 @@ Lsol = 3.828e26 # W
 #
 # load_star_properties(
 #    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
-# ) 
+# )
+#
+# load_dustspecies_names(
+#    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n052_186.sav'
+# )
 #
 # load_dust_densitytemperature()
 #    savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
@@ -125,7 +129,6 @@ Lsol = 3.828e26 # W
 # Funcs to load and create dusty envelope
 # ---------------------------------------
 #
-# TODO to finish this, load dust density and temperature is not finished yet
 # create_dustfiles(
 #    savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
 #    amrpath:str='../amr_grid.inp',
@@ -296,6 +299,23 @@ def load_star_properties(
                 c5dstar_opacities[nx,ny,nz] = c5ddata['OPA'][0][0][0][nx][ny][nz]
     
     return c5dstar_densities, c5dstar_temperatures, c5dstar_opacities
+
+# TODO
+# Function that just lists the names of the dust species available in the data
+# load_dustspecies_names(
+#    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n052_186.sav'
+# )
+#
+#    # Extract number of dust species in data
+#    c5ddata = readsav(savpath)
+#    c5ddata = c5ddata['ful']
+#    Nc5dspecies = int((len(c5ddata['Z'][0][0]) - 40)/3)
+#
+# loop over number of species and extract these
+#
+#     speciesname = str(c5ddata['Z'][0][0][42+3*nspecies])[4:-1]
+#
+# Perhaps I don't then need to extract them in the dust-loader which load density and temperature? Think on it
 
 
 # Function for loading one dust specie from c5d-data
@@ -1242,13 +1262,6 @@ def smooth_density(
 # gives a string with the name of the specie!
 # so this can also print the dustkappa-list-file for r3d!
 
-
-
-
-# TODO to finish this, load dust density and temperature is not finished yet
-
-
-
 def create_dustfiles(
         savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
         amrpath:str='../amr_grid.inp',
@@ -1258,6 +1271,7 @@ def create_dustfiles(
         monomermasses:list=[2.3362e-22]
     ):
     """
+    # TODO write more info here
     #graindensity:list=[2],
     #grainsizeum:list=[0.1],
     grainsizecm & graindensity should be lists, one for each specie
@@ -1276,10 +1290,14 @@ def create_dustfiles(
     print('Loading C5D grid properties')
     c5dgrid, c5dcellcourners, c5dcellsize = load_grid_properties(savpath=savpath)
 
+
+
+    # TODO remove this and add the other info-function here
     # Extract number of dust species in data
     c5ddata = readsav(savpath)
     c5ddata = c5ddata['ful']
     Nc5dspecies = int((len(c5ddata['Z'][0][0]) - 40)/3)
+
 
 
     # Check so that the smallest c5dcells are not larger than the r3d's smallest cells
@@ -1294,9 +1312,7 @@ def create_dustfiles(
         print('    You asked for more dust species than available in C5D-data')
         print(f'    Number of dust species in C5D-data: {Nc5dspecies}')
 
-
     else:
-
         print(f'Translating C5D dust data to R3D dust data ({phase})')
 
         # Open r3d data files
