@@ -46,8 +46,7 @@ Lsol = 3.828e26 # W
 #    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
 # ) 
 #
-# TODO Not finished yet
-# load_dustdensity(
+# load_dust_densitytemperature()
 #    savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
 #    nspecies:int=0
 # )
@@ -79,16 +78,6 @@ Lsol = 3.828e26 # W
 #    amrpath:str='../amr_grid.inp',
 #    gridpath:str='../grid_distances.csv',
 #    sizepath:str='../grid_cellsizes.csv',
-# )
-#
-# NOTE Old function! I instead incorprorate Rosseland Opacity in Density file
-# create_staropacity(
-#    pathopacity:str='../star_opacities.dat',
-#    pathstardensity:str='../dust_density_onestarstar.inp',
-#    pathwavelength:str='../wavelength_micron.inp',
-#    pathtemperature:str='../dust_temperature_onestar.dat',
-#    temperaturebins:list=[],
-#    N_opabins:int=2
 # )
 #
 # NOTE New function, combines star's density and Rosseland Opacity into R3D-density
@@ -321,7 +310,7 @@ def load_dust_densitytemperature(
 
     INPUT
     savpath:str = path to sav-file
-    nspecies:int = number of the specie to extract
+    nspecies:int = number of the specie to extract, start with 0!
 
     OUTPUT
     c5ddust_densities: array with monomer number density in the c5d-grid
@@ -342,23 +331,27 @@ def load_dust_densitytemperature(
     ny = cython.declare(cython.int)
     nz = cython.declare(cython.int)
 
-    # Declare np.arrays, tmeperature is a placeholder here TODO
-    c5ddust_densities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
-    c5ddust_temperatures = 0# np.zeros((nc5dedge,nc5dedge,nc5dedge))
+    # Output species name
+    speciesname = str(c5ddata['Z'][0][0][42+3*nspecies])[4:-1]
 
-    # Extract densities - This can take some time
+    # Declare np.arrays for densities (number density of monomers!) and temperatures
+    c5ddust_densities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+    c5ddust_temperatures = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+
+    # Extract densities and temperatures (this is time-demanding!)
     for nx in range(nc5dedge):
         for ny in range(nc5dedge):
             for nz in range(nc5dedge):
+
+                # Densities:
                 c5ddust_densities[nx,ny,nz] = c5ddata['Z'][0][0][40+3*nspecies][nx][ny][nz]
 
-                # TODO: find the dust temperature in the c5d-data
-                #c5ddust_temperatures[nx,ny,nz] = c5ddata['EOS'][0][0][1][nx][ny][nz]
-    
-    return c5ddust_densities, c5ddust_temperatures
+                # Temperatures (only save those cells where there is dust!)
+                if c5ddust_densities[nx,ny,nz] > 0:
+                    c5ddust_temperatures[nx,ny,nz] = c5ddata['EOS'][0][0][1][nx][ny][nz]
 
-
-
+    # Return density-temperature arrays
+    return c5ddust_densities, c5ddust_temperatures, speciesname
 
 
 # ==========================================================================
@@ -830,258 +823,6 @@ def create_stars(
             )
 
 
-# OLD FUNCTION
-# Not used any more since I instead incorporate the Rosseland opacity in the density file
-# for the star.
-#
-# Takes the stellar data from c5d-data that has been translated to r3d but as one specie, and
-# transforms it into separate species on a chosen number of bins of opacities as given by the
-# c5d-data.
-def create_staropacity(
-        pathopacity:str='../star_opacities.dat',
-        pathstardensity:str='../dust_density_onestarstar.inp',
-        pathwavelength:str='../wavelength_micron.inp',
-        pathtemperature:str='../dust_temperature_onestar.dat',
-        temperaturebins:list=[],
-        N_opabins:int=2
-    ):
-    """
-    INPUT
-    pathopacity: path to star_opacities.dat',
-    pathstardensity: path to dust_density_onestarstar.inp',
-    pathwavelength: path to wavelength_micron.inp',
-    pathtemperature: path to dust_temperature_onestar.dat',
-    temperaturebins: list of temperature range bins (it adds lowest and higehst temperature automatically)
-    N_opabins: number of kappa-bins spread logarithimically between min and max
-
-    OUTPUT
-    dust_density_starbins.inp
-    dust_temperature_starbins.dat
-    star_opacities_bins.dat
-    dustopac_starbins.inp
-    dustkappa_star{no+1}.inp
-    """
-
-    Tbins = len(temperaturebins)
-
-    if Tbins > 20:
-        return 'WARNING too many files! Stopping'
-    
-    elif Tbins == 0:
-        print('Only one bin, will only create r3d-opacity files, use *_onestar.inp files for density etc')
-        
-        # load opacity.dat
-        opacity = []
-        with open(pathopacity, 'r') as fopacity:
-            for line in fopacity.readlines():
-                if line[0] != '#':
-                    opacity.append(float(line))
-
-        # Load wavelengthgrid
-        wavelengths,Nwave = a3d.load_wavelengthgrid(path=pathwavelength)
-
-        # Take a SINGLE average of ALL opacity in c5d opacity-data
-        opacityvalue = np.mean(np.array(opacity))
-
-        # Save as constant as function of wavelength/frequency
-
-        # Print new dustopac_starbins.inp file
-        print('Writing opacity files for the star.')
-        with open('../dustopac_starbins.inp', 'w') as fopac:
-
-            # Print header
-            fopac.write(f'2\n1\n-----------------------------\n')
-
-            # Print star's opacity / species names
-            fopac.write(f'1\n0\nstar\n-----------------------------\n')
-
-        # Print opacity file, star-kappa-file
-        with open(f'../dustkappa_star.inp', 'w') as fopac:
-
-            # Write header (1 for no scattering in this and number of wavelengths)
-            fopac.write(f'1\n{Nwave}\n')
-
-            # Write wavelength, abscoeff, scattercoeff
-            for wave in wavelengths:
-                fopac.write(f'{wave}    {opacityvalue}    0.0\n')
-
-        print('C5D create star opacities:\n    dustopac_starbins.inp\n    dustkappa_star.inp\nDONE\n')
-
-    else:
-        # Load denstiy_star.inp
-        Ncells,Nspec,star_densities = a3d.load_dustdensity(path=pathstardensity,numb_specie=1)
-
-        # Load temperature_star
-        Ncells,Nspec,temperatures = a3d.load_temperature(path=pathtemperature)
-
-        # load opacity.dat
-        opacity = []
-        with open(pathopacity, 'r') as fopacity:
-            for line in fopacity.readlines():
-                if line[0] != '#':
-                    opacity.append(float(line))
-        opacity = np.array(opacity)
-
-        # Load wavelengthgrid
-        wavelengths,Nwave = a3d.load_wavelengthgrid(path=pathwavelength)
-
-        # Add lowest temperature to temperature list, change to array and update Tbins
-        # The lowest temperature is not 0, this if statements makes sure it's the smallest
-        # real temperature that is saved.
-        if np.min(temperatures) == 0:
-            temperaturebins.append(np.sort(temperatures)[1])
-        else: 
-            temperaturebins.append(np.min(temperatures))
-
-        temperature_bins = np.array(temperaturebins)
-        Tbins = np.size(temperature_bins)
-
-        print('Temperature bin-ranges are (K):')
-        for temp in temperature_bins:
-            print(f'        {temp}')
-
-        # Define opacity bins, no more than one per order of magnitude
-        # Minimum opacity bin is the minimum value of opacity
-        opamin = np.log10(min(opacity))
-
-        # Maximum opacity is defined from above the highest tmeperature limit
-        opamax = np.log10(np.mean(
-            opacity[ np.where(temperatures > temperature_bins[0])[0]]
-        ))
-        
-        # Array with OPA-bin-limits (numb of limits are one more)
-        if N_opabins < 1:
-            N_opabins = 1
-        Obins = N_opabins + 1
-        opabins = np.logspace(opamax, opamin, Obins)
-
-        print(f'Opacity bin-ranges are (cm2/g):')
-        for opa in opabins:
-            print(f'        {opa}')
-
-        # Bin the opacities by temperature ranges (the stellar surface is never above eg 5000k)
-        # and by opacity range
-
-        # Figure out number of bins (at least one bin always)
-        nbin = 0
-        nbins = 1
-        listbins = np.zeros(Tbins*Obins)
-        listbins[0] = 1
-
-        for nT in range(1,Tbins):
-            for nO in range(1,Obins):
-                
-                nbin += 1
-                sumopacity = 0
-
-                for nn in range(Ncells):
-                    if \
-                        temperature_bins[nT-1] > temperatures[nn] > temperature_bins[nT] and \
-                        opabins[nO-1] > opacity[nn] > opabins[nO]:
-
-                        sumopacity += opacity[nn]
-                
-                if sumopacity != 0:
-                    nbins += 1
-
-                    # Listbins lists the corresponding bin-number for each combination of nT and nO
-                    # 0 where there is none
-                    listbins[nbin] = nbins
-                   
-
-        # Start binning
-        print(f'Binning to {nbins} species.')
-
-        new_temperatures = np.zeros(nbins*Ncells)
-        new_densities = np.zeros(nbins*Ncells)
-        new_opacities = np.zeros(nbins*Ncells)
-
-        for nn in range(Ncells):
-
-            # First bin is inside the star, above highest T or OPA
-            if temperatures[nn] > temperature_bins[0] or opacity[nn] > opabins[0]:
-                new_temperatures[nn] = temperatures[nn]
-                new_densities[nn] = star_densities[nn]
-                new_opacities[nn] = opacity[nn]
-
-            bincounter = 0
-
-            # Remaining bins are outside and within these ranges
-            for nT in range(1,Tbins):
-                for nO in range(1,Obins):
-
-                    bincounter += 1
-
-                    if temperature_bins[nT-1] > temperatures[nn] > temperature_bins[nT] and \
-                        opabins[nO-1] > opacity[nn] > opabins[nO]:
-
-                        nbin = int(listbins[bincounter] - 1)
-
-                        new_temperatures[nn + Ncells*nbin] = temperatures[nn]
-                        new_densities[nn + Ncells*nbin] = star_densities[nn]
-                        new_opacities[nn + Ncells*nbin] = opacity[nn]
-
-
-        # Create new opacities from these limits
-        opacityvalues = np.zeros(nbins)
-
-        for nbin in range(1,nbins+1):
-
-            # If there are no numbers then just let the opacity be 0
-            if np.where(new_opacities[Ncells*(nbin-1):Ncells*nbin] > 0)[0].size > 0:
-
-                opacityvalues[nbin-1] = np.mean(
-                    new_opacities[
-                        Ncells*(nbin-1) + np.where(new_opacities[Ncells*(nbin-1):Ncells*nbin] > 0)[0]
-                    ]
-                )
-
-            #print(f'{nbin}: {Ncells*(nbin-1)}:{Ncells*nbin} OPAC: {opacityvalues[nbin-1]}')
-            
-        # Print new star-density, temperature and opacitybin-files
-        print('Writing new radmc3d-files')
-
-        with open('../dust_density_starbins.inp', 'w') as fdensity,\
-             open('../dust_temperature_starbins.dat', 'w') as ftemperature,\
-             open('../star_opacities_bins.dat', 'w') as fopacity:
-            
-            # Write headers
-            fdensity.write(f'1\n{int(Ncells)}\n{int(nbins)}\n')
-            ftemperature.write(f'1\n{int(Ncells)}\n{int(nbins)}\n')
-            fopacity.write('# Binned opacities for the star(dust) distributions.\n# In same order as density file.\n# For reference and quality checks.\n')
-
-            # Write densities and temperatures
-            for nn,dens in enumerate(new_densities):
-                fdensity.write(f'{dens}\n')
-                ftemperature.write(f'{new_temperatures[nn]}\n')
-                fopacity.write(f'{new_opacities[nn]}\n')
-
-        # Print new dustopac_starbins.inp file
-        print('Writing opacity files for the binned star.')
-        with open('../dustopac_starbins.inp', 'w') as fopac:
-
-            # Print header
-            fopac.write(f'2\n{nbins}\n-----------------------------\n')
-
-            # Print star's opacity / species names
-            for nn in range(nbins):
-                fopac.write(f'1\n0\nstar{nn+1:02d}\n-----------------------------\n')
-
-        # Print opacity files, star-kappa-files
-        for nbin,opac in enumerate(opacityvalues):
-            with open(f'../dustkappa_star{nbin+1:02d}.inp', 'w') as fopac:
-
-                # Write header (1 for no scattering in this and number of wavelengths)
-                fopac.write(f'1\n{Nwave}\n')
-
-                # Write wavelength, abscoeff, scattercoeff
-                for wave in wavelengths:
-                    fopac.write(f'{wave}    {opac}    0.0\n')
-        
-        # TODO Write info-file with data on how the binning is done! stellarbinning_info.txt
-        print('C5D create star opacities:\n    dust_density_starbins.inp\n    dust_temperature_starbins.inp\n    star_opacities_bins.dat\n    dustopac_starbins.inp\n    dustkappa_starN.inp\nDONE\n')
-
-
 # Takes the stellar density data and opacity data from c5d
 # creates a density_star-file where the "density" depends on each cell's mass density
 # and the opacity-kappa of each cell as given by c5d.
@@ -1485,6 +1226,9 @@ def smooth_density(
 # ====================================================================
 # Funcs to load and create dusty envelope
 
+
+
+
 # Extract and construct dust_density-files from C5D-data
 # uses ['Z'][0][0][40][x][y][z] and ['Z'][0][0][43][x][y][z]
 # or rather use
@@ -1498,7 +1242,13 @@ def smooth_density(
 # gives a string with the name of the specie!
 # so this can also print the dustkappa-list-file for r3d!
 
+
+
+
 # TODO to finish this, load dust density and temperature is not finished yet
+
+
+
 def create_dustfiles(
         savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
         amrpath:str='../amr_grid.inp',
@@ -1513,6 +1263,9 @@ def create_dustfiles(
     grainsizecm & graindensity should be lists, one for each specie
     """
 
+    # Extract phase-designation from savpath
+    phase = savpath.split('_')[-1].split('.')[0]
+
     # Load R3D grid
     print('Loading R3D grid')
     nleafs = a3d.load_grid_properties(amrpath=amrpath)[2]
@@ -1523,12 +1276,11 @@ def create_dustfiles(
     print('Loading C5D grid properties')
     c5dgrid, c5dcellcourners, c5dcellsize = load_grid_properties(savpath=savpath)
 
-    # Load C5D data
+    # Extract number of dust species in data
     c5ddata = readsav(savpath)
     c5ddata = c5ddata['ful']
-
-    # Number of dust species in data:
     Nc5dspecies = int((len(c5ddata['Z'][0][0]) - 40)/3)
+
 
     # Check so that the smallest c5dcells are not larger than the r3d's smallest cells
     if r3dcellsizes.min() <= c5dcellsize:
@@ -1542,16 +1294,16 @@ def create_dustfiles(
         print('    You asked for more dust species than available in C5D-data')
         print(f'    Number of dust species in C5D-data: {Nc5dspecies}')
 
+
     else:
-        # Adaptive range used for when cellsizes are too similar - fixes bug 
-        # where I got a lot of zero-cells because my loop misses the c5dcells inside
-        # the current r3dcell
-        adaptive_range = c5dcellsize/r3dcellsizes.min() * 1.1
+
+        print(f'Translating C5D dust data to R3D dust data ({phase})')
 
         # Open r3d data files
-        with open('../dust_density_dust.inp', 'w') as fdensity, open('../dustopac_dust.inp', 'w') as fopac:
+        with open(f'../dust_density_dust_{phase}.inp', 'w') as fdensity, open(f'../dust_temperature_dust_{phase}.dat', 'w') as ftemperature, open(f'../dustopac_dust_{phase}.inp', 'w') as fopac:
 
             # Write headers:
+            #
             # Density:
             # 1
             # nleafs
@@ -1569,26 +1321,25 @@ def create_dustfiles(
 
                 # Declare stuff for the loops
                 r3d_density = 0
+                r3d_temperature = 0
                 progbar = 0
 
-                # Output species-number, species name, grain size and grain mass density
-                speciesname = str(c5ddata['Z'][0][0][42+3*nspecies])[4:-1]
-                #grainsizecm = grainsizeum[nspecies]*1e-4
+                # Load c5d-dust densities and temperatures
+                c5ddensities, c5dtemperatures, speciesname = load_dust_densitytemperature(savpath=savpath, nspecies=nspecies)
 
+                # Some output
                 print(f'Writing dust specie number {nspecies+1}:')
                 print(f'    {speciesname}')
                 print(f'    Monomer mass: {monomermasses} g')
 
-                # Load c5d-dust densities and temperatures
-                #c5ddensities, c5dtemperatures = load_dust_densitytemperature(savpath=savpath, nspecies=nspecies)
-
                 # Write the dustopac file
                 # 1
                 # 0
-                # name
+                # speciename
                 # ---------------
                 fopac.write(f"1\n0\n{speciesname}\n-----------------------------\n")
 
+                # Loop over the r3d-grid
                 for nr3d in range(nleafs):
 
                     # Extract size range for current r3dcell
@@ -1606,47 +1357,54 @@ def create_dustfiles(
                     ]   
 
                     # Extract indeces of all c5dcells within current r3dcell
-                    c5dxrange = np.argwhere(r3dxrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,0] < r3dxrange[1]),0])[:,0]
-                    c5dyrange = np.argwhere(r3dyrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,1] < r3dyrange[1]),1])[:,0]
-                    c5dzrange = np.argwhere(r3dzrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,2] < r3dzrange[1]),2])[:,0]
+                    c5dxrange = np.argwhere(r3dxrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,0] <= r3dxrange[1]),0])[:,0]
+                    c5dyrange = np.argwhere(r3dyrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,1] <= r3dyrange[1]),1])[:,0]
+                    c5dzrange = np.argwhere(r3dzrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,2] <= r3dzrange[1]),2])[:,0]
 
                     # Number of c5dcells within r3dcell
-                    nchildcells = c5dxrange.size*c5dyrange.size*c5dzrange.size
-
-                    # Check so that there are any c5dcells within r3dcell
-                    if nchildcells < 1:
-
-                        # When r3dcellsize approx c5dcellsize the loop misses the c5dcells inside r3dcells
-                        # due to numerical errors. So here I increase the spatial range to loop.
-                        temprange = [r3dxrange[0]*adaptive_range,r3dxrange[1]*adaptive_range]
-                        c5dxrange = np.argwhere(temprange[0] <= c5dgrid[np.argwhere(c5dgrid[:,0] < temprange[1]),0])[:,0]
-                        temprange = [r3dyrange[0]*adaptive_range,r3dyrange[1]*adaptive_range]
-                        c5dyrange = np.argwhere(temprange[0] <= c5dgrid[np.argwhere(c5dgrid[:,1] < temprange[1]),1])[:,0]
-                        temprange = [r3dzrange[0]*adaptive_range,r3dzrange[1]*adaptive_range]
-                        c5dzrange = np.argwhere(temprange[0] <= c5dgrid[np.argwhere(c5dgrid[:,2] < temprange[1]),2])[:,0]
-
-                        # New number of c5dcells within r3dcell
-                        nchildcells = c5dxrange.size*c5dyrange.size*c5dzrange.size
+                    #nchildcells = c5dxrange.size*c5dyrange.size*c5dzrange.size
+                    nchildcells = 0
 
                     # Then loop through c5dcells within r3dcell
                     for nnz in c5dzrange:
                         for nny in c5dyrange:
                             for nnx in c5dxrange:
-                                # Sum all densities
-                                #r3d_density += c5ddensities[nnx,nny,nnz]
-                                r3d_density += c5ddata['Z'][0][0][40+3*nspecies][nnx][nny][nnz]
 
-                    # Average the density of each r3dcell by number of c5dcells
-                    # and
-                    # Recalculate number density of monomers to mass density
-                    # Mg2SiO4: 2*24.305u + 28.085u + 4*15.999u = 140.69u = 2.3362e-22 gram
-                    r3d_density *= monomermasses[nspecies] / nchildcells
+                                # Sum all densities and temperatures
+                                r3d_density += c5ddensities[nnx,nny,nnz]
+                                r3d_temperature += c5dtemperatures[nnx,nny,nnz]
+
+                                # Number of cells
+                                nchildcells += 1
+
+                    # Check if there actually are any c5dcells within r3dcell
+                    # If not, then your r3dgrid is probably smaller than the c5dgrid
+                    # and then the density and temperature will be zero for some cells
+                    # This shouldn't happen since I have the if statement earlier that breaks
+                    # this function would that happen
+                    if nchildcells > 0:
+                        # Otherwise save the average of the c5d-data of each r3dcell
+                        # and
+                        # Recalculate number density of monomers to mass density
+                        # eg
+                        # Mg2SiO4: 2*24.305u + 28.085u + 4*15.999u = 140.69u = 2.3362e-22 gram
+                        r3d_density *= monomermasses[nspecies] / nchildcells
+                        r3d_temperature /= nchildcells
+
+                    else:
+                        r3d_density = c5ddensities[c5dxrange[0],c5dyrange[0],c5dzrange[0]]
+                        r3d_temperature = c5dtemperatures[c5dxrange[0],c5dyrange[0],c5dzrange[0]]
+                        print(f'nchildcells = {nchildcells}')
+
 
                     # Write data to r3d files
                     fdensity.write(f'{r3d_density}\n')
+                    ftemperature.write(f'{r3d_temperature}\n')
 
                     # Reset data
                     r3d_density = 0
+                    r3d_temperature = 0
+                    nchildcells = 0
 
                     # Some progress bar info
                     if int(nr3d/nleafs*100) == 25 and progbar == 0:
@@ -1661,7 +1419,4 @@ def create_dustfiles(
                         progbar += 1
                         print('Finished 75 per cent of the grid.')
 
-                    if int(nr3d/nleafs*100) == 99 and progbar == 3:
-                        print('Finished 99 per cent of the grid.')
-
-    print('C5D Dust-data: done.\n')
+    print(f'C5D Dust-data:\n    dust_density_dust_{phase}.inp\n    dust_temperature_dust_{phase}.dat\n    dustopac_dust_{phase}.inp\nDONE\n')
