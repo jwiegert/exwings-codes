@@ -379,6 +379,8 @@ def load_dust_densitytemperature(
                 # Temperatures (only save those cells where there is dust!)
                 if c5ddust_densities[nx,ny,nz] > 0:
                     c5ddust_temperatures[nx,ny,nz] = c5ddata['EOS'][0][0][1][nx][ny][nz]
+                else: 
+                    c5ddust_temperatures[nx,ny,nz] = 0
 
     # Return density-temperature arrays
     return c5ddust_densities, c5ddust_temperatures
@@ -1343,6 +1345,12 @@ def create_dustfiles(
             # number dust species
             fdensity.write(f'1\n{int(nleafs)}\n{int(Nspecies)}\n')
 
+            # Temperature:
+            # 1
+            # nleafs
+            # number dust species
+            ftemperature.write(f'1\n{int(nleafs)}\n{int(Nspecies)}\n')
+
             # dustopac:
             # 2
             # Number of species
@@ -1350,6 +1358,8 @@ def create_dustfiles(
             fopac.write(f'2\n{int(Nspecies)}\n-----------------------------\n')
 
             # Loop through the number of species you want to include
+            # and write densities and temperatures in the files.
+            # Each specie is listed in same files but after eachother.
             for nspecies in range(Nspecies):
 
                 # Declare stuff for the loops
@@ -1395,41 +1405,35 @@ def create_dustfiles(
                     c5dyrange = np.argwhere(r3dyrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,1] <= r3dyrange[1]),1])[:,0]
                     c5dzrange = np.argwhere(r3dzrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,2] <= r3dzrange[1]),2])[:,0]
 
-                    # Number of c5dcells within r3dcell
-                    #nchildcells = c5dxrange.size*c5dyrange.size*c5dzrange.size
-                    nchildcells = 0
+                    # Number of c5dcells within r3dcell (with data)
+                    ndustcells = 0
+                    ntempcells = 0
 
                     # Then loop through c5dcells within r3dcell
                     for nnz in c5dzrange:
                         for nny in c5dyrange:
                             for nnx in c5dxrange:
+                                # Sum all densities and temperatures (only those with data)
 
-                                # Sum all densities and temperatures
-                                r3d_density += c5ddensities[nnx,nny,nnz]
-                                r3d_temperature += c5dtemperatures[nnx,nny,nnz]
+                                if c5ddensities[nnx,nny,nnz] > 0:
+                                    r3d_density += c5ddensities[nnx,nny,nnz]
+                                    ndustcells += 1
 
-                                # Number of cells
-                                nchildcells += 1
+                                if c5dtemperatures[nnx,nny,nnz] > 0:
+                                    r3d_temperature += c5dtemperatures[nnx,nny,nnz]
+                                    ntempcells += 1
 
-                    # Check if there actually are any c5dcells within r3dcell
-                    # If not, then your r3dgrid is probably smaller than the c5dgrid
-                    # and then the density and temperature will be zero for some cells
-                    # This shouldn't happen since I have the if statement earlier that breaks
-                    # this function would that happen
-                    if nchildcells > 0:
-                        # Otherwise save the average of the c5d-data of each r3dcell
-                        # and
+                    # Take average of those cells with data (and average with respect
+                    # to number of cells containing data only)
+                    if ndustcells > 0:
                         # Recalculate number density of monomers to mass density
                         # eg
                         # Mg2SiO4: 2*24.305u + 28.085u + 4*15.999u = 140.69u = 2.3362e-22 gram
-                        r3d_density *= monomermasses[nspecies] / nchildcells
-                        r3d_temperature /= nchildcells
+                        r3d_density *= monomermasses[nspecies] / ndustcells
 
-                    else:
-                        r3d_density = c5ddensities[c5dxrange[0],c5dyrange[0],c5dzrange[0]]
-                        r3d_temperature = c5dtemperatures[c5dxrange[0],c5dyrange[0],c5dzrange[0]]
-                        print(f'nchildcells = {nchildcells}')
-
+                    # Also for temperature cells
+                    if ntempcells > 0:
+                        r3d_temperature /= ntempcells
 
                     # Write data to r3d files
                     fdensity.write(f'{r3d_density}\n')
@@ -1438,7 +1442,8 @@ def create_dustfiles(
                     # Reset data
                     r3d_density = 0
                     r3d_temperature = 0
-                    nchildcells = 0
+                    ndustcells = 0
+                    ntempcells = 0
 
                     # Some progress bar info
                     if int(nr3d/nleafs*100) == 25 and progbar == 0:
@@ -1453,4 +1458,5 @@ def create_dustfiles(
                         progbar += 1
                         print('Finished 75 per cent of the grid.')
 
+    # End functions with aknowledgements
     print(f'C5D Dust-data:\n    dust_density_dust_{phase}.inp\n    dust_temperature_dust_{phase}.dat\n    dustopac_dust_{phase}.inp\nDONE\n')
