@@ -300,22 +300,35 @@ def load_star_properties(
     
     return c5dstar_densities, c5dstar_temperatures, c5dstar_opacities
 
-# TODO
-# Function that just lists the names of the dust species available in the data
-# load_dustspecies_names(
-#    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n052_186.sav'
-# )
-#
-#    # Extract number of dust species in data
-#    c5ddata = readsav(savpath)
-#    c5ddata = c5ddata['ful']
-#    Nc5dspecies = int((len(c5ddata['Z'][0][0]) - 40)/3)
-#
-# loop over number of species and extract these
-#
-#     speciesname = str(c5ddata['Z'][0][0][42+3*nspecies])[4:-1]
-#
-# Perhaps I don't then need to extract them in the dust-loader which load density and temperature? Think on it
+
+
+# Function that just lists the number and names of the dust species available in the data
+def load_dustspecies_names(
+        savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav'
+    ):
+    """
+    Extract number of dust species and corresponding list of specie-names from c5d-data
+
+    INPUT
+    savpath:str = path to c5d-sav-file
+
+    OUTPUT
+    number of dust species
+    list of strings with dust specie names
+    """
+    # Extract number of dust species in data
+    c5ddata = readsav(savpath)
+    c5ddata = c5ddata['ful']
+    Nc5dspecies = int((len(c5ddata['Z'][0][0]) - 40)/3)
+
+    # Loop over number of species and extract specie names also
+    speciesnames = []
+    for nspecies in range(Nc5dspecies):
+        speciesnames.append(str(c5ddata['Z'][0][0][42+3*nspecies])[4:-1])
+
+    # Return number of species and list of specie names
+    return Nc5dspecies, speciesnames
+
 
 
 # Function for loading one dust specie from c5d-data
@@ -351,9 +364,6 @@ def load_dust_densitytemperature(
     ny = cython.declare(cython.int)
     nz = cython.declare(cython.int)
 
-    # Output species name
-    speciesname = str(c5ddata['Z'][0][0][42+3*nspecies])[4:-1]
-
     # Declare np.arrays for densities (number density of monomers!) and temperatures
     c5ddust_densities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
     c5ddust_temperatures = np.zeros((nc5dedge,nc5dedge,nc5dedge))
@@ -371,7 +381,7 @@ def load_dust_densitytemperature(
                     c5ddust_temperatures[nx,ny,nz] = c5ddata['EOS'][0][0][1][nx][ny][nz]
 
     # Return density-temperature arrays
-    return c5ddust_densities, c5ddust_temperatures, speciesname
+    return c5ddust_densities, c5ddust_temperatures
 
 
 # ==========================================================================
@@ -694,7 +704,9 @@ def create_star(
         progbar = 0
 
         # Open r3d data files
-        with open(f'../dust_density_onestar_{phase}.inp', 'w') as fdensity, open(f'../dust_temperature_onestar_{phase}.dat', 'w') as ftemperature, open(f'../star_opacities_{phase}.dat', 'w') as fopacity:
+        with open(f'../dust_density_onestar_{phase}.inp', 'w') as fdensity, \
+             open(f'../dust_temperature_onestar_{phase}.dat', 'w') as ftemperature, \
+             open(f'../star_opacities_{phase}.dat', 'w') as fopacity:
 
             # Write headers:
             # 1
@@ -1271,10 +1283,20 @@ def create_dustfiles(
         monomermasses:list=[2.3362e-22]
     ):
     """
-    # TODO write more info here
-    #graindensity:list=[2],
-    #grainsizeum:list=[0.1],
-    grainsizecm & graindensity should be lists, one for each specie
+    Creates R3D-files dust_density, dust_temperature and dustopac-list from C5D dust envelope-data.
+
+    INPUT
+    savpath:str = path to c5d-sev-file
+    amrpath:str = path to r3d-amr-grid-file
+    gridpath:str = path to corresponding file with list of r3d radial grid-distances
+    sizepath:str = path to corresponding file with list of r3d cell sizes
+    Nspecies:int = number of dust species to include (this runs through them in order... Might change later)
+    monomermasses:list = list of masses of dust species monomers (check which species are included in c5d with a5d.load_dustspecies_names)
+
+    OUTPUT
+    dust_density_dust_{phase}.inp
+    dust_temperature_dust_{phase}.dat
+    dustopac_dust_{phase}.inp
     """
 
     # Extract phase-designation from savpath
@@ -1290,15 +1312,8 @@ def create_dustfiles(
     print('Loading C5D grid properties')
     c5dgrid, c5dcellcourners, c5dcellsize = load_grid_properties(savpath=savpath)
 
-
-
-    # TODO remove this and add the other info-function here
-    # Extract number of dust species in data
-    c5ddata = readsav(savpath)
-    c5ddata = c5ddata['ful']
-    Nc5dspecies = int((len(c5ddata['Z'][0][0]) - 40)/3)
-
-
+    # Load number of dust species and specie-names
+    Nc5dspecies, specienames =  load_dustspecies_names(savpath=savpath)
 
     # Check so that the smallest c5dcells are not larger than the r3d's smallest cells
     if r3dcellsizes.min() <= c5dcellsize:
@@ -1316,7 +1331,9 @@ def create_dustfiles(
         print(f'Translating C5D dust data to R3D dust data ({phase})')
 
         # Open r3d data files
-        with open(f'../dust_density_dust_{phase}.inp', 'w') as fdensity, open(f'../dust_temperature_dust_{phase}.dat', 'w') as ftemperature, open(f'../dustopac_dust_{phase}.inp', 'w') as fopac:
+        with open(f'../dust_density_dust_{phase}.inp', 'w') as fdensity, \
+             open(f'../dust_temperature_dust_{phase}.dat', 'w') as ftemperature, \
+             open(f'../dustopac_dust_{phase}.inp', 'w') as fopac:
 
             # Write headers:
             #
@@ -1339,9 +1356,10 @@ def create_dustfiles(
                 r3d_density = 0
                 r3d_temperature = 0
                 progbar = 0
+                speciesname = specienames[nspecies]
 
                 # Load c5d-dust densities and temperatures
-                c5ddensities, c5dtemperatures, speciesname = load_dust_densitytemperature(savpath=savpath, nspecies=nspecies)
+                c5ddensities, c5dtemperatures = load_dust_densitytemperature(savpath=savpath)
 
                 # Some output
                 print(f'Writing dust specie number {nspecies+1}:')
