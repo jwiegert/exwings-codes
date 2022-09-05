@@ -233,13 +233,20 @@ def write_r3d_runscripts(
     # 1
     # nleafs
     # number dust species
+# få en path, en modell, en fas
+# ta in en lista på dust_density-filer
+# läs alla filers headers och summera antal species
+# skriv en ny fil med alla densiteter efter varandra
+
+
 
 # TODO
 # function that combines different dust tmeperature files
 # def merge_dusttemperature():
 
 
-
+# TODO
+# function that merges the different dustopac-files, or do that in merge dustdensity?
 
 
 
