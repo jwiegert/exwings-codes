@@ -24,7 +24,7 @@ path = f'../r3dresults/{modelname}/'
 AUcm = 1.49598e13 # cm
 
 # Extract star's radius
-print(f'Extracting {modelname}_{phase} information.')
+print(f'\nExtracting {modelname}_{phase} information.')
 Mstar,starradius,Lstar = a5d.load_star_information(
     savpath = f'../co5bold_data/d{modelname}/{modelname}_{phase}.sav',
     printoutput = 'n'
@@ -38,7 +38,7 @@ griddistances = a3d.load_griddistances(
 
 # Create all r3d-data from c5d-data
 a5d.create_stars(
-    modelnames = ['st28gm06n056'],
+    modelnames = [f'{modelname}'],
     phases = [phase]
 )
 
@@ -48,4 +48,5 @@ a5d.smooth_stellardata(
     phases = [phase],
     starradii = [starradius],
     griddistances = griddistances,
+    clean_data = 'y'
 )

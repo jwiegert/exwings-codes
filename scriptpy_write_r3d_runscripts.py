@@ -19,7 +19,7 @@ c3d.write_r3d_runscripts(
     phase_list = phases,
     sed_inclination_list = [0,90,180,270],
     image_wavelength_list = [1,10,100],
-    image_inclination_list = [90],
-    image_sizeau = 7.4,
-    image_npix = 128,
+    image_inclination_list = [0],
+    image_sizeau = 30,
+    image_npix = 256,
 )

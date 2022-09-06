@@ -822,7 +822,7 @@ def create_stars(
     for modelname in modelnames:
         for phase in phases:
 
-            print(f'Translating C5D model {modelname} and phase {phase} to R3D')
+            print(f'    Translating C5D model {modelname} and phase {phase} to R3D')
 
             savpath = f'../co5bold_data/d{modelname}/{modelname}_{phase}.sav'
             path = f'../r3dresults/{modelname}/'
@@ -848,7 +848,7 @@ def create_stars(
                 f'mv ../star_opacities_{phase}.dat {path}{phase}/star_opacities.dat'
             )
 
-            # Files from create grid-part above
+            # Copy files from create grid-part above to phase-folders
             os.system(
                 f'cp {path}amr_grid.inp {path}{phase}/'
             )
@@ -875,9 +875,9 @@ def create_staropadensity(
     pathwavelength: path to wavelength_micron.inp',
 
     OUTPUT
-    dust_density_opastar.inp
-    dustopac_star.inp
-    dustkappa_opastar.inp
+    dust_density_opastar_{phase}.inp
+    dustopac_star_{phase}.inp
+    dustkappa_opastar_{phase}.inp
     """
 
     print('Loading density, opacity, wavelengths')
@@ -971,8 +971,10 @@ def smooth_stellardata(
         phases = [140,141,142],
         starradii:list=[1,1,1],
         griddistances:list=[0],
+        clean_data:str='y'
     ):
     """
+    TODO finish this info
     path = string with path to data folders
     phases = list of phases
 
@@ -986,9 +988,9 @@ def smooth_stellardata(
     if path[-1] != '/':
         path += '/'
 
-    # TODO change so that everything is not done in the same filenames!!
-
     for nphase,phase in enumerate(phases):
+
+        print(f'    Smoothing star for phase {phase}')
 
         # Stellar radius is then
         starradius = starradii[nphase]
@@ -1003,7 +1005,7 @@ def smooth_stellardata(
             smooth_in = 3,
             smooth_tolerance = 1.0
         )
-        os.system(f'mv ../dust_temperature_smoothed_{phase}.dat {path}{phase}/dust_temperature_smoothed.dat')
+        os.system(f'mv ../dust_temperature_smoothed_{phase}.dat {path}{phase}/dust_temperature_onestar_smoothed.dat')
     
 
         # Smooth a5d-Opacity, remove neg spikes
@@ -1039,16 +1041,23 @@ def smooth_stellardata(
             corrfac = 1.0
         )
     
+        # Clean intermediate files?
+        # if yes, then remove all intermediate star-files
+        if clean_data == 'y':
+            os.system(f'rm {path}{phase}/dust_density_onestar_smoothed.inp')
+            os.system(f'rm {path}{phase}/dust_density_onestar.inp')
+            os.system(f'rm {path}{phase}/dust_temperature_onestar.dat')
+            os.system(f'rm {path}{phase}/star_opacities.dat')
+
         # Move/copy all files to correct places
         # TODO when I add the dust, change this! Handle it when merging data instead
         #      since I will have to merge stellar and dust data into same R3D-data
         #      which can be done with the _onestar/_smoothed-files I produce here.
-        os.system(f'cp {path}{phase}/dust_temperature_smoothed.dat {path}{phase}/dust_temperature.dat')
-        os.system(f'mv ../dust_density_opastar_{phase}.inp {path}{phase}/dust_density.inp')
+        os.system(f'mv ../dust_density_opastar_{phase}.inp {path}{phase}/dust_density_opastar.inp')
         os.system(f'mv ../dustkappa_opastar_{phase}.inp {path}{phase}/dustkappa_opastar.inp')
-        os.system(f'mv ../dustopac_star_{phase}.inp {path}{phase}/dustopac.inp')
+        os.system(f'mv ../dustopac_star_{phase}.inp {path}{phase}/dustopac_opastar.inp')
 
-    print('All done')
+    print(f'smooth_stellardata ({phase}):\n    dust_temperature_onestar_smoothed.dat\n    star_opacities_smoothed.dat\n    dust_density_opastar.inp\n    dustkappa_opastar.inp\n    dustopac_opastar.inp\nDONE\n')
 
 
 # Smooths the opacity file, removes spikes

@@ -237,7 +237,13 @@ def write_r3d_runscripts(
 # ta in en lista på dust_density-filer
 # läs alla filers headers och summera antal species
 # skriv en ny fil med alla densiteter efter varandra
-
+#
+# star-files:    
+# dust_temperature_onestar_smoothed.dat\n    
+# star_opacities_smoothed.dat\n    
+# dust_density_opastar.inp\n    
+# dustkappa_opastar.inp\n    
+# dustopac_opastar.inp\n')
 
 
 # TODO
@@ -316,12 +322,12 @@ def create_grid(
     innerrefinements = [(nref+1)*inrefine/nrefines for nref in range(nrefines)]
 
     # Info text
-    print('Creating amr_grid with octree refinement.')
+    print('\n    Creating amr_grid with octree refinement.')
     print(f'Final length of total side of whole grid: {gridedge} AU')
     print(f'Number of base cells along one side of the grid: {nxyz}')
-    print(f'Distances to outer refinement limits from centrum: {refinementlist} AU')
-    print(f'Distances to inner refinement limits from centrum: {innerrefinements} AU')
-    print(f'Number refinements: {nrefines}')
+    print(f'Distances to outer refinement limits from centrum:\n    {refinementlist} AU')
+    print(f'Distances to inner refinement limits from centrum:\n    {innerrefinements} AU')
+    print(f'Number refinements: {nrefines}\n')
 
     # Change units to cm
     gridedge *= AUcm
