@@ -1269,9 +1269,6 @@ def smooth_density(
 # ====================================================================
 # Funcs to load and create dusty envelope
 
-
-
-
 # Extract and construct dust_density-files from C5D-data
 # uses ['Z'][0][0][40][x][y][z] and ['Z'][0][0][43][x][y][z]
 # or rather use
@@ -1296,18 +1293,18 @@ def create_dustfiles(
     """
     Creates R3D-files dust_density, dust_temperature and dustopac-list from C5D dust envelope-data.
 
-    INPUT
-    savpath:str = path to c5d-sev-file
-    amrpath:str = path to r3d-amr-grid-file
-    gridpath:str = path to corresponding file with list of r3d radial grid-distances
-    sizepath:str = path to corresponding file with list of r3d cell sizes
-    Nspecies:int = number of dust species to include (this runs through them in order... Might change later)
-    monomermasses:list = list of masses of dust species monomers (check which species are included in c5d with a5d.load_dustspecies_names)
+    ARGUMENTS
+      savpath:str = path to c5d-sev-file
+      amrpath:str = path to r3d-amr-grid-file
+      gridpath:str = path to corresponding file with list of r3d radial grid-distances
+      sizepath:str = path to corresponding file with list of r3d cell sizes
+      Nspecies:int = number of dust species to include (this runs through them in order... Might change later)
+      monomermasses:list = list of masses of dust species monomers (check which species are included in c5d with a5d.load_dustspecies_names)
 
-    OUTPUT
-    dust_density_dust_{phase}.inp
-    dust_temperature_dust_{phase}.dat
-    dustopac_dust_{phase}.inp
+    RETURNS
+      dust_density_dust_{phase}.inp
+      dust_temperature_dust_{phase}.dat
+      dustopac_dust_{phase}.inp
     """
 
     # Extract phase-designation from savpath

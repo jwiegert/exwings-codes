@@ -62,11 +62,11 @@ refinementlist_au = [
     3.0*Rstar/AUcm,
     2.5*Rstar/AUcm,
     2.0*Rstar/AUcm,
-    1.5*Rstar/AUcm
+    1.6*Rstar/AUcm
 ]
 
 # Inner refinements up to 0.9 Rstar (divided equally radially by number of refinements)
-inrefine_au = 0.9*Rstar / AUcm
+inrefine_au = 0.6*Rstar / AUcm
 
 c3d.create_grid(
     gridedge=r3dedge, 
