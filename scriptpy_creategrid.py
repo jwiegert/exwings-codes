@@ -52,22 +52,26 @@ c5dgrid,cellcourners,cellsize = a5d.load_grid_properties(
 #
 # Smallest c5d cells are 2*3.65/317 AU = 0.02302839116719243 AU
 # Radius of star: 1.651AU (355 Rsun)
+#
+# light c5d-data: cube side ~  7AU ~  4Rstar
+# heavy c5d-data: cube side ~ 30AU ~ 18Rstar > max radius 9Rstar
 # Settings for the grid
 r3dedge = 2 * cellcourners.max() / AUcm # Size of whole grid in AU
 basecell = 1.001 * cellsize * 2**4 / AUcm # Size of base cells as based on smallest cells
 nxyz = r3dedge/basecell # Number of base cells along one side of the cube
 
-# Refinements based on stellar radius
+# Radial distances to refinements based on stellar radius
 refinementlist_au = [
-    3.0*Rstar/AUcm,
-    2.5*Rstar/AUcm,
-    2.0*Rstar/AUcm,
-    1.6*Rstar/AUcm
+    8*Rstar/AUcm,
+    6*Rstar/AUcm,
+    4*Rstar/AUcm,
+    2*Rstar/AUcm
 ]
 
 # Inner refinements up to 0.9 Rstar (divided equally radially by number of refinements)
 inrefine_au = 0.6*Rstar / AUcm
 
+# Create spatial grid!
 c3d.create_grid(
     gridedge=r3dedge, 
     nxyz=nxyz, 
@@ -76,8 +80,7 @@ c3d.create_grid(
     savegrid=True
 )
 
-
-# Move grid files to correct folder
+# Move spatial grid files to correct folder
 os.system(
     f'mv ../amr_grid.inp {path}'
 )
@@ -96,7 +99,7 @@ os.system(
 wavelengths = c3d.create_wavelength(
     wavelengthstart = 0.1,
     wavelengthend = 1000.0,
-    nwave = 100,
+    nwave = 1000,
     logscale = 'y'
 )
 

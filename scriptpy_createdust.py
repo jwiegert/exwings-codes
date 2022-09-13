@@ -43,25 +43,9 @@ os.system(f'mv ../dust_density_dust_{phase}.inp ../r3dresults/{modelname}/{phase
 os.system(f'mv ../dust_temperature_dust_{phase}.dat ../r3dresults/{modelname}/{phase}/dust_temperature_dust.dat')
 os.system(f'mv ../dustopac_dust_{phase}.inp ../r3dresults/{modelname}/{phase}/dustopac_dust.inp')
 
-
-# Then merge them with stellar files
-c3d.merge_dustdensities(
-    filenames=['dust_density_opastar.inp','dust_density_dust.inp'],
-    modelname=modelname,
-    phases=[phase],
-)
-
-c3d.merge_dusttemperatures(
-    filenames=['dust_temperature_onestar_smoothed.dat','dust_temperature_dust.dat'],
-    modelname=modelname,
-    phases=[phase],
-)
-
-c3d.merge_dustopac(
-    filenames=['dustopac_opastar.inp','dustopac_dust.inp'],
-    modelname=modelname,
-    phases=[phase],
-)
-
-
-
+# NOTE
+# Resulting files are, for each ../r3dresults/[modelname]/[phase]/
+#
+# dust_density_dust.inp
+# dust_temperature_dust.dat
+# dustopac_dust.inp

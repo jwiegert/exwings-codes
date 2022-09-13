@@ -50,3 +50,11 @@ a5d.smooth_stellardata(
     griddistances = griddistances,
     clean_data = 'y'
 )
+
+#
+# NOTE
+# Resulting files are, for each ../r3dresults/[modelname]/[phase]/
+#
+# TODO
+# write comments on what files are the results of this script!
+

@@ -4,6 +4,8 @@
 # Change modelnames and phases and it goes automatically through all
 # necessary python scripts.
 #
+# to save in a logfile?
+# $ ./scriptbash_creategridstardust.sh | cat > log.txt
 # Define variables
 modelname=st28gm06n052
 phase0=186
@@ -18,8 +20,8 @@ wait
 python3 scriptpy_createstar.py $modelname $phase0 &
 python3 scriptpy_createstar.py $modelname $phase1 &
 python3 scriptpy_createstar.py $modelname $phase2 &
+wait
 
-wait # remove this wait if I'm doing this on servers!
 # Extract and create dust-files
 python3 scriptpy_createdust.py $modelname $phase0 &
 python3 scriptpy_createdust.py $modelname $phase1 &
