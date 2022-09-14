@@ -4,8 +4,9 @@
 # Change modelnames and phases and it goes automatically through all
 # necessary python scripts.
 #
-# to save in a logfile?
-# $ ./scriptbash_creategridstardust.sh | cat > log.txt
+# Save in a logfile? Run this (create log.txt first)
+# $ ./scriptbash_creategridstardust.sh | cat > logoutput.txt cat 2> logerror.txt
+#
 # Define variables
 modelname=st28gm06n052
 phase0=186
@@ -16,21 +17,22 @@ phase2=198
 python3 scriptpy_creategrid.py $modelname $phase0 $phase1 $phase2
 wait
 
-# Create stars
+# Extract and create star-files
 python3 scriptpy_createstar.py $modelname $phase0 &
 python3 scriptpy_createstar.py $modelname $phase1 &
 python3 scriptpy_createstar.py $modelname $phase2 &
-wait
-
 # Extract and create dust-files
 python3 scriptpy_createdust.py $modelname $phase0 &
 python3 scriptpy_createdust.py $modelname $phase1 &
 python3 scriptpy_createdust.py $modelname $phase2 &
+wait
+
+# Merge star and dust data
+python3 scriptpy_mergedata.py $modelname $phase0 &
+python3 scriptpy_mergedata.py $modelname $phase1 &
+python3 scriptpy_mergedata.py $modelname $phase2 &
+wait
 
 # Write r3d-runscripts
-wait
 python3 scriptpy_write_r3d_runscripts.py $modelname $phase0 $phase1 $phase2
-
-
-
 

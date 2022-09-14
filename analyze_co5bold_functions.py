@@ -20,6 +20,9 @@ Msol = 1.989e33 # g
 Rsol = 6.955e10 # cm
 Lsol = 3.828e26 # W
 
+# Note
+# Rstar = 1.651AU (355 Rsun)
+#
 # Cython info: might be needed later
 # @cython.cfunc
 # this decorator when declaring what's included in the functions
@@ -685,8 +688,26 @@ def create_star(
     print('Loading C5D grid properties')
     c5dgrid, c5dcellcourners, c5dcellsize = load_grid_properties(savpath=savpath)
 
+    # Compute distance to courner of c5d-grid
+    c5d_gridcournerdist = np.sqrt(
+        np.max(c5dcellcourners[:,0])**2 + \
+        np.max(c5dcellcourners[:,1])**2 + \
+        np.max(c5dcellcourners[:,2])**2
+    )
+
+    # Compute distance to nearest basecell
+    r3d_nearestbasecell = np.min(np.abs(
+        r3ddistances[np.where(r3dcellsizes == r3dcellsizes.max())[0],0]
+    ))
+
+    # Check if the R3D-grid's nearest basecell is inside the c5d-grid
+    if r3d_nearestbasecell + r3dcellsizes.max() >= c5d_gridcournerdist:
+        print('\nERROR')
+        print('    R3D basecells are all outside the CO5BOLD-grid, this will not work')
+        print('    when translating gas/dust densities from CO5BOLD to R3D. Stopping.')
+
     # Check so that the smallest c5dcells are not larger than the r3d's smallest cells
-    if r3dcellsizes.min() <= c5dcellsize:
+    elif r3dcellsizes.min() <= c5dcellsize:
         print('\nERROR')
         print('    R3D grid resolution is higher than C5D grid, stopping')
         print('    No output is given. Change your R3D grid cells to something larger.\n')
