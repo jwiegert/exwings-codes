@@ -107,3 +107,12 @@ wavelengths = c3d.create_wavelength(
 os.system(
     f'mv ../wavelength_micron.inp {path}'
 )
+
+# NOTE
+# Resulting files are, for each ../r3dresults/[modelname]/
+#
+#   amr_grid.inp
+#   grid_info.txt
+#   grid_distances.csv
+#   grid_cellsizes.csv
+#   wavelength_micron.inp

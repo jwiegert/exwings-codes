@@ -40,3 +40,9 @@ c3d.merge_dustopac(
     phases=[phase],
 )
 
+# NOTE
+# Resulting files are, for each ../r3dresults/[modelname]/[phase]/
+#
+#   dust_density.inp
+#   dust_temperature.dat
+#   dustopac.inp

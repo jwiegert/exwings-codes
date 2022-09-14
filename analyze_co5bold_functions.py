@@ -228,13 +228,13 @@ def load_star_information(
     """
     Returns and prints a string with the basic properties of the star in the c5d-sim.
 
-    INPUT
-    savpath:str = path to sav-file you want to work with
+    ARGUMENT
+      savpath:str = path to sav-file you want to work with
 
-    OUTPUT
-    Mstar in gram
-    Rstar in cm
-    Lstar in Watt
+    RETURNS
+      Mstar in gram
+      Rstar in cm
+      Lstar in Watt
     """
 
     c5ddata = readsav(savpath)
@@ -704,7 +704,7 @@ def create_star(
     if r3d_nearestbasecell + r3dcellsizes.max() >= c5d_gridcournerdist:
         print('\nERROR')
         print('    R3D basecells are all outside the CO5BOLD-grid, this will not work')
-        print('    when translating gas/dust densities from CO5BOLD to R3D. Stopping.')
+        print('    when translating gas densities from CO5BOLD to R3D. Stopping.')
 
     # Check so that the smallest c5dcells are not larger than the r3d's smallest cells
     elif r3dcellsizes.min() <= c5dcellsize:
@@ -718,7 +718,7 @@ def create_star(
         c5dstar_densities,c5dstar_temperatures,c5dstar_opacities = load_star_properties(savpath=savpath)
 
         # Start working :)
-        print('Translating C5D data to R3D data')
+        print('Translating C5D gas data to R3D data')
 
         # Declare stuff for the loops
         r3d_densities = 0
@@ -843,7 +843,7 @@ def create_stars(
     for modelname in modelnames:
         for phase in phases:
 
-            print(f'    Translating C5D model {modelname} and phase {phase} to R3D')
+            print(f'    Translating C5D star model {modelname} and phase {phase} to R3D')
 
             savpath = f'../co5bold_data/d{modelname}/{modelname}_{phase}.sav'
             path = f'../r3dresults/{modelname}/'
@@ -988,21 +988,32 @@ def create_staropadensity(
 # Main stellar-data-smoothing function, smooths opacity and density from negative spikes
 # using the optimal settings I wound after a few weeks of exploring :P
 def smooth_stellardata(
-        path = '../r3dresults/st28gm06n056/',
-        phases = [140,141,142],
+        path:str='../r3dresults/st28gm06n056/',
+        phases:list=[140,141,142],
         starradii:list=[1,1,1],
         griddistances:list=[0],
         clean_data:str='y'
     ):
     """
-    TODO finish this info
-    path = string with path to data folders
-    phases = list of phases
+    Removes spikes in stellar gas-data's temperature, opacity and mass density. 
+    These spikes results in strange and high luminosities. Compares cells with 
+    median values of cells around the spike in the r3d-lists and changes the spike
+    to the median according to certain specifics based on general analyzes of
+    all phases of st28gm06n056.
 
-    Smooths and creates new opacity and density files
-    ...
-    combines c5d-opacity and density into the r3d-density and creates a standard opa=1
-    opacity file for r3d
+    ARGUMENTS
+      path:str = path to model-folder with r3d-data.
+      phases:list = list of phases within model-folder where data needs smoothing
+      starradii:list = radii of the star in each phase in centimeters
+      griddistances:list = list of distances to all R3D grid cells in centimeters
+      clean_data:str = Default 'y', will REMOVE all intermediate files!
+
+    RETURNS
+      dust_temperature_onestar_smoothed.dat
+      star_opacities_smoothed.dat
+      dust_density_opastar.inp
+      dustkappa_opastar.inp
+      dustopac_opastar.inp
     """
 
     # Automatically add / to end of path if it's missing
@@ -1013,7 +1024,7 @@ def smooth_stellardata(
 
         print(f'    Smoothing star for phase {phase}')
 
-        # Stellar radius is then
+        # Stellar radius is then (in centimeters)
         starradius = starradii[nphase]
 
         # Smooth a5d-Temperatures, remove pos spikes
@@ -1071,9 +1082,6 @@ def smooth_stellardata(
             os.system(f'rm {path}{phase}/star_opacities.dat')
 
         # Move/copy all files to correct places
-        # TODO when I add the dust, change this! Handle it when merging data instead
-        #      since I will have to merge stellar and dust data into same R3D-data
-        #      which can be done with the _onestar/_smoothed-files I produce here.
         os.system(f'mv ../dust_density_opastar_{phase}.inp {path}{phase}/dust_density_opastar.inp')
         os.system(f'mv ../dustkappa_opastar_{phase}.inp {path}{phase}/dustkappa_opastar.inp')
         os.system(f'mv ../dustopac_star_{phase}.inp {path}{phase}/dustopac_opastar.inp')

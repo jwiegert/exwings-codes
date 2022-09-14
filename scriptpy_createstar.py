@@ -51,10 +51,11 @@ a5d.smooth_stellardata(
     clean_data = 'y'
 )
 
-#
 # NOTE
 # Resulting files are, for each ../r3dresults/[modelname]/[phase]/
 #
-# TODO
-# write comments on what files are the results of this script!
-
+#   dust_temperature_onestar_smoothed.dat
+#   star_opacities_smoothed.dat
+#   dust_density_opastar.inp
+#   dustkappa_opastar.inp
+#   dustopac_opastar.inp

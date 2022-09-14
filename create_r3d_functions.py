@@ -1468,17 +1468,3 @@ def merge_dusttemperatures(
 
         # Print final message
         print(f'merge_dustdensities:\n    {path}{modelname}/{phase}/dust_temperature.dat\nDONE\n')
-
-
-
-# star-files:    
-# dust_temperature_onestar_smoothed.dat\n    
-# star_opacities_smoothed.dat\n    
-# dust_density_opastar.inp\n    
-# dustkappa_opastar.inp\n    
-# dustopac_opastar.inp\n')
-
-# TODO
-# function that combines different dust tmeperature files
-# def merge_dusttemperature():
-
