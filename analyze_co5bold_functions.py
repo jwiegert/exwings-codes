@@ -141,6 +141,9 @@ Lsol = 3.828e26 # W
 #    monomermasses:list=[2.3362e-22]
 # )
 #
+# TODO
+# extract_grainsizes()
+#
 #
 # ============================================================
 # Functions that load C5D-data and saves them in arrays
@@ -342,7 +345,7 @@ def load_dust_densitytemperature(
         nspecies:int = 0
     ):
     """
-    Loads c5d-data and extracts dust density and dust temperature
+    Loads c5d-data and extracts number density of dust monomers and dust temperature
 
     INPUT
     savpath:str = path to sav-file
@@ -350,7 +353,7 @@ def load_dust_densitytemperature(
 
     OUTPUT
     c5ddust_densities: array with monomer number density in the c5d-grid
-    c5ddust_temperatures: array with dust temperatures within c5d-grid NOT FINISHED
+    c5ddust_temperatures: array with dust temperatures within c5d-grid
     """
 
     # Load sav-file
@@ -367,7 +370,7 @@ def load_dust_densitytemperature(
     ny = cython.declare(cython.int)
     nz = cython.declare(cython.int)
 
-    # Declare np.arrays for densities (number density of monomers!) and temperatures
+    # Declare np.arrays for number density of dust monomers and temperatures
     c5ddust_densities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
     c5ddust_temperatures = np.zeros((nc5dedge,nc5dedge,nc5dedge))
 
@@ -387,6 +390,20 @@ def load_dust_densitytemperature(
 
     # Return density-temperature arrays
     return c5ddust_densities, c5ddust_temperatures
+
+
+# TODO
+# function that loads and extracts gas densities and dust densities of a chosen dust specie
+# primarily to use for getting grain sizes
+#
+# write two separate functions? combine in one?
+# the above functions are good, but extra time consuming since both extracts temperatures
+# which sometimes don't need
+def load_dustgas_densities(
+        savpath:str = '../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+    ):
+    return savpath
+
 
 
 # ==========================================================================
@@ -1323,7 +1340,7 @@ def create_dustfiles(
     Creates R3D-files dust_density, dust_temperature and dustopac-list from C5D dust envelope-data.
 
     ARGUMENTS
-      savpath:str = path to c5d-sev-file
+      savpath:str = path to c5d-sav-file
       amrpath:str = path to r3d-amr-grid-file
       gridpath:str = path to corresponding file with list of r3d radial grid-distances
       sizepath:str = path to corresponding file with list of r3d cell sizes
@@ -1495,3 +1512,67 @@ def create_dustfiles(
 
     # End functions with aknowledgements
     print(f'C5D Dust-data:\n    dust_density_dust_{phase}.inp\n    dust_temperature_dust_{phase}.dat\n    dustopac_dust_{phase}.inp\nDONE\n')
+
+
+# TODO
+# Function that extracts and saves grain sizes per R3d-Cell
+# will also bin these by a number of grain sizes
+# but first i will have to rwite something that extracts max and min grain sizes, 
+# see if this is a logarithmic range or not, such things
+def extract_grainsizes():
+    # ARGUMENTS
+    # savpath
+    # log-scale or not
+
+    # constants
+    # set as inputs
+    Amon = 2.3362e-22 # g
+    rhomon = 3.27 # g cm-3
+    nHnd = 3e-16
+    mH = 1.6726e-27 # g
+    epsilonHe = 0.1
+
+
+    # 1. compute constant
+    grainsize_constants = 3/(4*np.pi) * Amon/rhomon * nHnd * mH * (1+epsilonHe)
+
+    # Extract gas and dust monomer densities
+    gas_densities, monomer_densities = load_dustgas_densities()
+
+    Ncells = gas_densities.size()
+
+    sizes = np.repeat(grainsize_constants,Ncells)
+
+    for nn in range(Ncells):
+        sizes[nn] *= monomer_densities[nn]/gas_densities
+
+
+
+
+    # TODO for now we return the array
+    # late we will have to make a binned list
+    # and round each number in this array to nearest of the bins
+    return sizes
+
+# TODO
+# function that bins grain sizes
+def bin_grainsizes(
+        sizes=np.array([1,2,3]),
+        nbins:int=10,
+    ):
+
+    # number of grain size bins
+    nbins = 10
+    min_size = sizes.min
+    max_size = sizes.max
+
+    size_bins = np.logspace(min_size,max_size,nbins)
+
+    for nn,size in enumerate(sizes):
+        # some intelligent way of rounding each size to nearest in the bins
+        1+1
+    
+    return 'hej'
+
+
+
