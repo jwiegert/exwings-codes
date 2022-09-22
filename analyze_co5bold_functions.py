@@ -143,7 +143,7 @@ Lsol = 3.828e26 # W
 #
 # TODO
 # extract_grainsizes()
-#
+#   borrow stuff from create_star and create_dustfiles, or incorporate in create dustfiles?
 #
 # ============================================================
 # Functions that load C5D-data and saves them in arrays
@@ -347,13 +347,13 @@ def load_dust_densitytemperature(
     """
     Loads c5d-data and extracts number density of dust monomers and dust temperature
 
-    INPUT
-    savpath:str = path to sav-file
-    nspecies:int = number of the specie to extract, start with 0!
+    ARGUMENTS
+      savpath:str = path to sav-file
+      nspecies:int = number of the specie to extract, start with 0!
 
-    OUTPUT
-    c5ddust_densities: array with monomer number density in the c5d-grid
-    c5ddust_temperatures: array with dust temperatures within c5d-grid
+    RETURNS
+      c5ddust_densities: array with monomer number density in the c5d-grid
+      c5ddust_temperatures: array with dust temperatures within c5d-grid
     """
 
     # Load sav-file
@@ -392,17 +392,62 @@ def load_dust_densitytemperature(
     return c5ddust_densities, c5ddust_temperatures
 
 
-# TODO
-# function that loads and extracts gas densities and dust densities of a chosen dust specie
-# primarily to use for getting grain sizes
-#
-# write two separate functions? combine in one?
-# the above functions are good, but extra time consuming since both extracts temperatures
-# which sometimes don't need
+# Function that loads and extracts gas densities and dust densities of a chosen dust specie
+# Primarily to use for getting grain sizes
+@cython.cfunc
+@cython.locals(nspecies=cython.int)
 def load_dustgas_densities(
         savpath:str = '../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        nspecies:int = 0
     ):
-    return savpath
+    """
+    TODO
+    fill here ...
+
+    ARGUMENTS
+      ...
+    RETURNS
+      ...    
+    """
+
+    # Load sav-file
+    c5ddata = readsav(savpath)
+
+    # Extract data
+    c5ddata = c5ddata['ful']
+
+    # Get number of gridcells from co5bold data
+    nc5dedge = cython.declare(cython.int, np.size(c5ddata['Z'][0][0][16]))
+
+    # Declare variables
+    nx = cython.declare(cython.int)
+    ny = cython.declare(cython.int)
+    nz = cython.declare(cython.int)
+    monomer_density = cython.declare(cython.float)
+    gas_density = cython.declare(cython.float)
+
+    # Declare np.arrays for number density of dust monomers and temperatures
+    c5ddust_densities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+    c5dstar_densities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+
+    # Extract densities and temperatures (this is time-demanding!)
+    for nx in range(nc5dedge):
+        for ny in range(nc5dedge):
+            for nz in range(nc5dedge):
+
+                monomer_density = c5ddata['Z'][0][0][40+3*nspecies][nx][ny][nz]
+
+                # check already before if data is non-zero?
+                if monomer_density > 0:
+
+                    # Dust monomer densities:
+                    c5ddust_densities[nx,ny,nz] = monomer_density
+
+                    # Gas density
+                    gas_density = c5ddata['Z'][0][0][34][nx][ny][nz]
+                    c5dstar_densities[nx,ny,nz] = gas_density
+    
+    return c5dstar_densities, c5ddust_densities
 
 
 
@@ -1519,7 +1564,13 @@ def create_dustfiles(
 # will also bin these by a number of grain sizes
 # but first i will have to rwite something that extracts max and min grain sizes, 
 # see if this is a logarithmic range or not, such things
-def extract_grainsizes():
+#
+def extract_grainsizes(
+        amrpath,
+        gridpath,
+        sizepath,
+        savpath,
+    ):
     # ARGUMENTS
     # savpath
     # log-scale or not
@@ -1536,15 +1587,40 @@ def extract_grainsizes():
     # 1. compute constant
     grainsize_constants = 3/(4*np.pi) * Amon/rhomon * nHnd * mH * (1+epsilonHe)
 
+    # Load R3D grid
+    print('Loading R3D grid')
+    nleafs = a3d.load_grid_properties(amrpath=amrpath)[2]
+    r3ddistances = a3d.load_griddistances(amrpath=amrpath,gridpath=gridpath)
+    r3dcellsizes = a3d.load_cellsizes(amrpath=amrpath,sizepath=sizepath)
+
+    # Load C5D grid
+    print('Loading C5D grid properties')
+    c5dgrid, c5dcellcourners, c5dcellsize = load_grid_properties(savpath=savpath)
+
+
+
     # Extract gas and dust monomer densities
     gas_densities, monomer_densities = load_dustgas_densities()
 
-    Ncells = gas_densities.size()
 
-    sizes = np.repeat(grainsize_constants,Ncells)
+    # Translate the ratio of these densities into the R3D-grid.
+    # Convert to grain sizes and save as an array or a file?
+    # grain_sizes.dat 
+    # probably file, it makes it easier to change things in hindsight
+    # since this is a quite slow function   
 
-    for nn in range(Ncells):
-        sizes[nn] *= monomer_densities[nn]/gas_densities
+    
+
+
+    # Put these 
+
+
+
+
+    #sizes = np.repeat(grainsize_constants,Ncells)
+
+    #for nn in range(Ncells):
+    #    sizes[nn] *= monomer_densities[nn]/gas_densities
 
 
 
@@ -1552,10 +1628,15 @@ def extract_grainsizes():
     # TODO for now we return the array
     # late we will have to make a binned list
     # and round each number in this array to nearest of the bins
-    return sizes
+    #return sizes
+
 
 # TODO
 # function that bins grain sizes
+#
+# save these in a file
+# grain_sizes_binned.dat
+
 def bin_grainsizes(
         sizes=np.array([1,2,3]),
         nbins:int=10,
