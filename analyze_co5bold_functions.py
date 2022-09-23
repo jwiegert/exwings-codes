@@ -1559,12 +1559,7 @@ def create_dustfiles(
     print(f'C5D Dust-data:\n    dust_density_dust_{phase}.inp\n    dust_temperature_dust_{phase}.dat\n    dustopac_dust_{phase}.inp\nDONE\n')
 
 
-# TODO
 # Function that extracts and saves grain sizes per R3d-Cell
-# will also bin these by a number of grain sizes
-# but first i will have to rwite something that extracts max and min grain sizes, 
-# see if this is a logarithmic range or not, such things
-#
 def extract_grainsizes(
         amrpath:str='../r3dresults/st28gm06n052/amr_grid.inp',
         gridpath:str='../r3dresults/st28gm06n052/grid_distances.csv',
@@ -1629,7 +1624,7 @@ def extract_grainsizes(
 
             # Declare stuff for the loops
             monomer_density = 0
-            gas_densities = 0
+            gas_density = 0
             progbar = 0
 
             # Some output
@@ -1675,25 +1670,26 @@ def extract_grainsizes(
                                 ndustcells += 1
 
                             if gas_densities[nnx,nny,nnz] > 0:
-                                gas_densities += gas_densities[nnx,nny,nnz]
+                                gas_density += gas_densities[nnx,nny,nnz]
                                 ngascells += 1
 
                 # Take average of those cells with data (and average with respect
                 # to number of cells containing data only)
-                if ndustcells > 0:
+                if ndustcells > 0 and ngascells > 0:
                     monomer_density /= ndustcells
-                if ngascells > 0:
-                    gas_densities /= ngascells
+                    gas_density /= ngascells
 
-                # Save ratio times grainsize_constants
-                grain_sizes = (grainsize_constants * monomer_density / gas_densities)**(1/3)
+                    # Save ratio times grainsize_constants
+                    grain_sizes = (grainsize_constants * monomer_density / gas_density)**(1/3)
+                else: 
+                    grain_sizes = 0
 
                 # Write data to r3d files
                 fsizes.write(f'{grain_sizes}\n')
 
                 # Reset data
                 monomer_density = 0
-                gas_densities = 0
+                gas_density = 0
                 ndustcells = 0
                 ngascells = 0
 
@@ -1715,24 +1711,6 @@ def extract_grainsizes(
 
 
 
-    # Put these 
-
-
-
-
-    #sizes = np.repeat(grainsize_constants,Ncells)
-
-    #for nn in range(Ncells):
-    #    sizes[nn] *= monomer_densities[nn]/gas_densities
-
-
-
-
-    # TODO for now we return the array
-    # late we will have to make a binned list
-    # and round each number in this array to nearest of the bins
-    #return sizes
-
 
 # TODO
 # function that bins grain sizes
@@ -1741,22 +1719,48 @@ def extract_grainsizes(
 # grain_sizes_binned.dat
 
 def bin_grainsizes(
-        sizes=np.array([1,2,3]),
-        nbins:int=10,
+        grainsizepath:str='../grain_sizes_186.dat',
+        nbins:int=3,
+        log:str='y'
     ):
 
-    # number of grain size bins
-    nbins = 10
-    min_size = sizes.min
-    max_size = sizes.max
+    # TODO
+    # chose between linear and logarithmic scale?
 
-    size_bins = np.logspace(min_size,max_size,nbins)
+    # TODO
+    # 1 load grainsizes
+    # grain_sizes_{phase}.dat
+    sizes = 10**(np.random.random(10) + 1)
+    print(sizes)
+    print()
 
-    for nn,size in enumerate(sizes):
-        # some intelligent way of rounding each size to nearest in the bins
-        1+1
+    # Extract which phase it is from filename?
+
+    # Define grain size bin-edges
+    min_size = sizes.min()
+    max_size = sizes.max()
+    if log == 'y':
+        size_bins = np.logspace(np.log10(min_size),np.log10(max_size),nbins+1)
+    else: 
+        size_bins = np.linspace(min_size,max_size,nbins+1)
+    print(f'bin edges: {size_bins}')
+
+
+    # Loop through the list of grid sizes and change each to the average
+    # value within each bin
+
+    new_sizes = []
+
+    for size in sizes:
+        for nbin in range(nbins):
+            if size_bins[nbin] <= size < size_bins[nbin+1]:
+                
+                if log == 'y':
+                    # Average number in logarithmic space
+                    average_size = 10**(0.5*(np.log10(size_bins[nbin]) + np.log10(size_bins[nbin+1])))
+                else:
+                    average_size = 0.5*(size_bins[nbin] + size_bins[nbin+1])
+
+                new_sizes.append(average_size)
     
-    return 'hej'
-
-
-
+    return new_sizes

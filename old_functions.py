@@ -54,20 +54,20 @@ def create_staropacity(
         N_opabins:int=2
     ):
     """
-    INPUT
-    pathopacity: path to star_opacities.dat',
-    pathstardensity: path to dust_density_onestarstar.inp',
-    pathwavelength: path to wavelength_micron.inp',
-    pathtemperature: path to dust_temperature_onestar.dat',
-    temperaturebins: list of temperature range bins (it adds lowest and higehst temperature automatically)
-    N_opabins: number of kappa-bins spread logarithimically between min and max
+    ARGUMENTS
+      pathopacity: path to star_opacities.dat',
+      pathstardensity: path to dust_density_onestarstar.inp',
+      pathwavelength: path to wavelength_micron.inp',
+      pathtemperature: path to dust_temperature_onestar.dat',
+      temperaturebins: list of temperature range bins (it adds lowest and higehst temperature automatically)
+      N_opabins: number of kappa-bins spread logarithimically between min and max
 
-    OUTPUT
-    dust_density_starbins.inp
-    dust_temperature_starbins.dat
-    star_opacities_bins.dat
-    dustopac_starbins.inp
-    dustkappa_star{no+1}.inp
+    RETURNS
+      dust_density_starbins.inp
+      dust_temperature_starbins.dat
+      star_opacities_bins.dat
+      dustopac_starbins.inp
+      dustkappa_star{no+1}.inp
     """
 
     Tbins = len(temperaturebins)
