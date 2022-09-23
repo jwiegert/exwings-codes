@@ -1566,25 +1566,40 @@ def create_dustfiles(
 # see if this is a logarithmic range or not, such things
 #
 def extract_grainsizes(
-        amrpath,
-        gridpath,
-        sizepath,
-        savpath,
+        amrpath:str='../r3dresults/st28gm06n052/amr_grid.inp',
+        gridpath:str='../r3dresults/st28gm06n052/grid_distances.csv',
+        sizepath:str='../r3dresults/st28gm06n052/grid_cellsizes.csv',
+        savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        Amon:float=2.3362e-22,
+        rhomon:float=3.27,
+        nHnd:float=3e-16,
+        mH:float=1.6726e-27,
+        epsilonHe:float=0.1
     ):
-    # ARGUMENTS
-    # savpath
-    # log-scale or not
+    """
+    Info about the grain sizes, what is the equation?
+    TODO
+    
+    ARGUMENTS
+      PATHS
+        amrpath:str=
+        gridpath:str=
+        sizepath:str=
+        savpath:str=
+      CONSTANTS
+        Amon = 2.3362e-22 # g
+        rhomon = 3.27 # g cm-3
+        nHnd = 3e-16
+        mH = 1.6726e-27 # g
+        epsilonHe = 0.1
 
-    # constants
-    # set as inputs
-    Amon = 2.3362e-22 # g
-    rhomon = 3.27 # g cm-3
-    nHnd = 3e-16
-    mH = 1.6726e-27 # g
-    epsilonHe = 0.1
+    RETURNS
+      file: grain_sizes.dat
+    """
+    # Extract phase-designation from savpath
+    phase = savpath.split('_')[-1].split('.')[0]
 
-
-    # 1. compute constant
+    # Compute constants
     grainsize_constants = 3/(4*np.pi) * Amon/rhomon * nHnd * mH * (1+epsilonHe)
 
     # Load R3D grid
@@ -1597,19 +1612,107 @@ def extract_grainsizes(
     print('Loading C5D grid properties')
     c5dgrid, c5dcellcourners, c5dcellsize = load_grid_properties(savpath=savpath)
 
-
-
-    # Extract gas and dust monomer densities
-    gas_densities, monomer_densities = load_dustgas_densities()
-
-
-    # Translate the ratio of these densities into the R3D-grid.
-    # Convert to grain sizes and save as an array or a file?
-    # grain_sizes.dat 
-    # probably file, it makes it easier to change things in hindsight
-    # since this is a quite slow function   
-
+    # Check so that the smallest c5dcells are not larger than the r3d's smallest cells
+    if r3dcellsizes.min() <= c5dcellsize:
+        print('\nERROR')
+        print('    R3D grid resolution is higher than C5D grid, stopping')
+        print('    No output is given. Change your R3D grid cells to something larger.\n')
     
+    else:
+        print(f'Computing grain sizes and saving them in R3D-grid ({phase})')
+
+        # Open data files
+        with open(f'../grain_sizes_{phase}.dat', 'w') as fsizes:
+
+            # Write header
+            fsizes.write(f'# List of grain sizes of each cell.\n# Same order as in R3D density and temperature files.\n# As extracted from {savpath}\n')
+
+            # Declare stuff for the loops
+            monomer_density = 0
+            gas_densities = 0
+            progbar = 0
+
+            # Some output
+            print(f'Extracting gas and monomer densities from CO5BOLD-files ({phase})')
+
+            # Extract gas and dust monomer densities
+            gas_densities, monomer_densities = load_dustgas_densities()
+
+            # Loop over the r3d-grid
+            for nr3d in range(nleafs):
+
+                # Extract size range for current r3dcell
+                r3dxrange = [
+                    r3ddistances[nr3d,1]-0.5*r3dcellsizes[nr3d],
+                    r3ddistances[nr3d,1]+0.5*r3dcellsizes[nr3d]
+                ]
+                r3dyrange = [
+                    r3ddistances[nr3d,2]-0.5*r3dcellsizes[nr3d],
+                    r3ddistances[nr3d,2]+0.5*r3dcellsizes[nr3d]
+                ]
+                r3dzrange = [
+                    r3ddistances[nr3d,3]-0.5*r3dcellsizes[nr3d],
+                    r3ddistances[nr3d,3]+0.5*r3dcellsizes[nr3d]
+                ]   
+
+                # Extract indeces of all c5dcells within current r3dcell
+                c5dxrange = np.argwhere(r3dxrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,0] <= r3dxrange[1]),0])[:,0]
+                c5dyrange = np.argwhere(r3dyrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,1] <= r3dyrange[1]),1])[:,0]
+                c5dzrange = np.argwhere(r3dzrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,2] <= r3dzrange[1]),2])[:,0]
+
+                # Number of c5dcells within r3dcell (with data)
+                ndustcells = 0
+                ngascells = 0
+
+                # Then loop through c5dcells within r3dcell
+                for nnz in c5dzrange:
+                    for nny in c5dyrange:
+                        for nnx in c5dxrange:
+                            # Sum all densities and temperatures (only those with data)
+
+                            if monomer_densities[nnx,nny,nnz] > 0:
+                                monomer_density += monomer_densities[nnx,nny,nnz]
+                                ndustcells += 1
+
+                            if gas_densities[nnx,nny,nnz] > 0:
+                                gas_densities += gas_densities[nnx,nny,nnz]
+                                ngascells += 1
+
+                # Take average of those cells with data (and average with respect
+                # to number of cells containing data only)
+                if ndustcells > 0:
+                    monomer_density /= ndustcells
+                if ngascells > 0:
+                    gas_densities /= ngascells
+
+                # Save ratio times grainsize_constants
+                grain_sizes = (grainsize_constants * monomer_density / gas_densities)**(1/3)
+
+                # Write data to r3d files
+                fsizes.write(f'{grain_sizes}\n')
+
+                # Reset data
+                monomer_density = 0
+                gas_densities = 0
+                ndustcells = 0
+                ngascells = 0
+
+                # Some progress bar info
+                if int(nr3d/nleafs*100) == 25 and progbar == 0:
+                    progbar += 1
+                    print('Finished 25 per cent of the grid.')
+
+                if int(nr3d/nleafs*100) == 50 and progbar == 1:
+                    progbar += 1
+                    print('Finished 50 per cent of the grid.')
+
+                if int(nr3d/nleafs*100) == 75 and progbar == 2:
+                    progbar += 1
+                    print('Finished 75 per cent of the grid.')
+
+    # End functions with aknowledgements
+    print(f'C5D grain sizes:\n    grain_sizes_{phase}.dat\nDONE\n')
+
 
 
     # Put these 
