@@ -280,7 +280,7 @@ def load_griddistances(
         return griddistances
     
     else:
-        return f'ERROR: load_griddistances can not find {gridpath}.'
+        print(f'ERROR: load_griddistances can not find {gridpath}.')
 
 
 # Load list of grid cell sizes

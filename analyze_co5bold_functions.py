@@ -707,7 +707,42 @@ def plot_densitytemperature(
     fig.show()
 
 
+# TODO
+# plot grain sizes against radius
+def plot_grainsize_radius(
+        gridpath:str='../r3dresults/st28gm06n052/grid_distances.csv',
+        amrpath:str='../r3dresults/st28gm06n052/amr_grid.inp',
+        grainsizepath:str='../grain_sizes_186.dat'
+    ):
 
+    # Load radius-array
+    griddistances = a3d.load_griddistances(
+        gridpath=gridpath,
+        amrpath=amrpath,
+    )
+    radius_au = griddistances[:,0]/AUcm
+
+    # Load grainsizes in um
+    sizes = []
+    if os.path.exists(grainsizepath) == True:
+        with open(grainsizepath, 'r') as fsizes:
+            for line in fsizes.readlines():
+                if line[0] != '#':
+                    sizes.append(float(line.strip('\n')))
+    else:
+        return f'ERROR: bin_grainsizes can not find {grainsizepath}.'
+    sizes_um = np.array(sizes)*1e4
+
+    # Plot
+    fig, ax = plt.figure(), plt.axes()
+
+    ax.plot(radius_au,sizes_um,
+        '.', markersize = 1
+    )
+    ax.set(
+        xlabel=r'Distance (AU)',
+        ylabel=r'Grain size ($\mu$m)',
+    )
 
 
 # ==========================================================================
@@ -1567,12 +1602,12 @@ def extract_grainsizes(
         savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
         Amon:float=2.3362e-22,
         rhomon:float=3.27,
-        nHnd:float=3e-16,
-        mH:float=1.6726e-27,
+        ndnH:float=3e-16,
+        mH:float=1.6736e-24,
         epsilonHe:float=0.1
     ):
     """
-    Info about the grain sizes, what is the equation?
+    Info about the grain sizes, the equation
     TODO
     
     ARGUMENTS
@@ -1585,7 +1620,7 @@ def extract_grainsizes(
         Amon = 2.3362e-22 # g
         rhomon = 3.27 # g cm-3
         nHnd = 3e-16
-        mH = 1.6726e-27 # g
+        mH = 1.6726e-24 # g
         epsilonHe = 0.1
 
     RETURNS
@@ -1595,6 +1630,7 @@ def extract_grainsizes(
     phase = savpath.split('_')[-1].split('.')[0]
 
     # Compute constants
+    nHnd = 1/ndnH
     grainsize_constants = 3/(4*np.pi) * Amon/rhomon * nHnd * mH * (1+epsilonHe)
 
     # Load R3D grid
@@ -1720,47 +1756,60 @@ def extract_grainsizes(
 
 def bin_grainsizes(
         grainsizepath:str='../grain_sizes_186.dat',
-        nbins:int=3,
-        log:str='y'
+        phase:str='186',
+        nbins:int=10,
+        lin:str='y'
     ):
 
-    # TODO
-    # chose between linear and logarithmic scale?
-
-    # TODO
-    # 1 load grainsizes
-    # grain_sizes_{phase}.dat
-    sizes = 10**(np.random.random(10) + 1)
-    print(sizes)
-    print()
-
-    # Extract which phase it is from filename?
+    # Load grainsizes
+    sizes = []
+    if os.path.exists(grainsizepath) == True:
+        with open(grainsizepath, 'r') as fsizes:
+            for line in fsizes.readlines():
+                if line[0] != '#':
+                    sizes.append(float(line.strip('\n')))
+    else:
+        return f'ERROR: bin_grainsizes can not find {grainsizepath}.'
+    sizes = np.array(sizes)
+    Nleafs = np.size(sizes)
 
     # Define grain size bin-edges
-    min_size = sizes.min()
+    min_size = sizes[np.where(sizes > 0)[0]].min()
     max_size = sizes.max()
-    if log == 'y':
-        size_bins = np.logspace(np.log10(min_size),np.log10(max_size),nbins+1)
-    else: 
+    if lin == 'y':
         size_bins = np.linspace(min_size,max_size,nbins+1)
-    print(f'bin edges: {size_bins}')
-
+    else: 
+        size_bins = np.logspace(np.log10(min_size),np.log10(max_size),nbins+1)
 
     # Loop through the list of grid sizes and change each to the average
     # value within each bin
 
-    new_sizes = []
+    new_sizes = np.zeros(Nleafs)
 
-    for size in sizes:
+    for nn,size in enumerate(sizes):
         for nbin in range(nbins):
             if size_bins[nbin] <= size < size_bins[nbin+1]:
                 
-                if log == 'y':
+                if lin == 'y':
+                    average_size = 0.5*(size_bins[nbin] + size_bins[nbin+1])
+                else:
                     # Average number in logarithmic space
                     average_size = 10**(0.5*(np.log10(size_bins[nbin]) + np.log10(size_bins[nbin+1])))
-                else:
-                    average_size = 0.5*(size_bins[nbin] + size_bins[nbin+1])
 
-                new_sizes.append(average_size)
-    
-    return new_sizes
+                new_sizes[nn] = average_size
+                break
+
+    # Save new sizes in another .dat-file
+    with open(f'../grain_sizes_binned_{phase}.dat', 'w') as fsizes:
+
+        # Write header
+        fsizes.write(f'# List of BINNED grain sizes of each cell.\n# Same order as in R3D density and temperature files.\n# As extracted from {grainsizepath}\n')
+
+        # Write sizes
+        for size in new_sizes:
+            if size > 0:
+                fsizes.write(f'{size}\n')
+            else:
+                fsizes.write('0\n')
+
+    print(f'a5d.bin_grainsizes():\n    grain_sizes_binned_{phase}.dat\nDONE\n')
