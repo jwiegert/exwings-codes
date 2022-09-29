@@ -44,6 +44,10 @@ AUcm = 1.49598e13 # AU in cm
 #    numb_specie:int = 1
 # )
 #
+# load_grainsizes(
+#    grainsize_path:str='../grain_sizes_186.dat'
+# )
+#
 # load_onekappa(
 #    specie_name:str='',
 #    specie_number:int=0,
@@ -117,6 +121,12 @@ AUcm = 1.49598e13 # AU in cm
 #    path:str='../'
 # )
 #
+# plot_grainsize_radius(
+#    gridpath:str='../r3dresults/st28gm06n052/grid_distances.csv',
+#    amrpath:str='../r3dresults/st28gm06n052/amr_grid.inp',
+#    grainsizepath:str='../grain_sizes_186.dat'
+# )
+#
 # plot_onekappa(
 #    specie_name:str = '',
 #    specie_number:int = 0,
@@ -144,9 +154,9 @@ AUcm = 1.49598e13 # AU in cm
 #    distance:float=1
 # )
 #
-# TODO update info here to correct final function
 # plot_imagesubplots(
 #    imagelist:list=['../image.out'],
+#    distance:float=1,
 #    scale:str='lin'
 # )
 #
@@ -421,6 +431,32 @@ def load_dustdensity(
                         dust_densities[nn-3-Ncells*numb_specie] = float(line)
 
             return Ncells,Nspecies,dust_densities
+
+
+# Load grainsizes
+def load_grainsizes(
+        grainsize_path:str='../grain_sizes_186.dat'
+    ):
+    """
+    TODO info
+    Loads already extracted-to-R3D grain sizes
+    ARGUMENTS
+    RETURNS
+      sizes : array with all grain sizes per grid cell
+      Nleafs : number of cells
+    """
+    sizes = []
+    if os.path.exists(grainsize_path) == True:
+        with open(grainsize_path, 'r') as fsizes:
+            for line in fsizes.readlines():
+                if line[0] != '#':
+                    sizes.append(float(line.strip('\n')))
+    else:
+        return f'ERROR: bin_grainsizes can not find {grainsize_path}.'
+    sizes = np.array(sizes)
+    Nleafs = np.size(sizes)
+
+    return sizes,Nleafs
 
 
 # Load absorptionscattering data
@@ -1104,6 +1140,39 @@ def plot_alltemperature_radius(
         )
     fig.tight_layout()
     fig.show()
+
+
+# Plot grain sizes of R3D cells against radius
+def plot_grainsize_radius(
+        gridpath:str='../r3dresults/st28gm06n052/grid_distances.csv',
+        amrpath:str='../r3dresults/st28gm06n052/amr_grid.inp',
+        grainsizepath:str='../grain_sizes_186.dat'
+    ):
+
+    # Load radius-array
+    griddistances = load_griddistances(
+        gridpath=gridpath,
+        amrpath=amrpath,
+    )
+    radius_au = griddistances[:,0]/AUcm
+
+    # Load grainsizes in um
+    # Load grainsizes
+    sizes,Nleafs = load_grainsizes(
+        grainsize_path=grainsizepath
+    )
+    sizes_um = sizes*1e4
+
+    # Plot
+    fig, ax = plt.figure(), plt.axes()
+
+    ax.plot(radius_au,sizes_um,
+        '.', markersize = 1
+    )
+    ax.set(
+        xlabel=r'Distance (AU)',
+        ylabel=r'Grain size ($\mu$m)',
+    )
 
 
 # Plot absorption, scattering, and angles of the various species

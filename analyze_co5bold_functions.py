@@ -76,6 +76,8 @@ Lsol = 3.828e26 # W
 #    nspecie=1
 # )
 #
+# TODO
+# plot_grainsize_distribution()
 #
 # Functions to create r3d-data from c5d-data
 # ------------------------------------------
@@ -141,9 +143,24 @@ Lsol = 3.828e26 # W
 #    monomermasses:list=[2.3362e-22]
 # )
 #
-# TODO
-# extract_grainsizes()
-#   borrow stuff from create_star and create_dustfiles, or incorporate in create dustfiles?
+#extract_grainsizes(
+#    amrpath:str='../r3dresults/st28gm06n052/amr_grid.inp',
+#    gridpath:str='../r3dresults/st28gm06n052/grid_distances.csv',
+#    sizepath:str='../r3dresults/st28gm06n052/grid_cellsizes.csv',
+#    savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+#    Amon:float=2.3362e-22,
+#    rhomon:float=3.27,
+#    ndnH:float=3e-16,
+#    mH:float=1.6736e-24,
+#    epsilonHe:float=0.1
+# )
+#
+# bin_grainsizes(
+#    grainsizepath:str='../grain_sizes_186.dat',
+#    phase:str='186',
+#    nbins:int=10,
+#    lin:str='y'
+# )
 #
 # ============================================================
 # Functions that load C5D-data and saves them in arrays
@@ -707,42 +724,58 @@ def plot_densitytemperature(
     fig.show()
 
 
-# TODO
-# plot grain sizes against radius
-def plot_grainsize_radius(
-        gridpath:str='../r3dresults/st28gm06n052/grid_distances.csv',
+def plot_grainsize_distribution(
+        dustdensity_path:str='../r3dresults/st28gm06n052/186/dust_density_dust.inp',
+        grainsizes_path:str= '../grain_sizes_binned_186.dat',
+        gridsize_path:str='../r3dresults/st28gm06n052/grid_cellsizes.csv',
         amrpath:str='../r3dresults/st28gm06n052/amr_grid.inp',
-        grainsizepath:str='../grain_sizes_186.dat'
+        bulk_density:float=5.0
     ):
-
-    # Load radius-array
-    griddistances = a3d.load_griddistances(
-        gridpath=gridpath,
-        amrpath=amrpath,
+    """
+    TODO
+    info
+    rho_bulk must be in g/cm3
+    """
+    # Load dust_densities per cell
+    Ncells, Nspec, dust_densities = a3d.load_dustdensity(
+        path=dustdensity_path,
+        numb_specie=1
     )
-    radius_au = griddistances[:,0]/AUcm
 
-    # Load grainsizes in um
-    sizes = []
-    if os.path.exists(grainsizepath) == True:
-        with open(grainsizepath, 'r') as fsizes:
-            for line in fsizes.readlines():
-                if line[0] != '#':
-                    sizes.append(float(line.strip('\n')))
-    else:
-        return f'ERROR: bin_grainsizes can not find {grainsizepath}.'
-    sizes_um = np.array(sizes)*1e4
-
-    # Plot
-    fig, ax = plt.figure(), plt.axes()
-
-    ax.plot(radius_au,sizes_um,
-        '.', markersize = 1
+    # Load grain sizes per cell
+    grain_sizes,Ncells = a3d.load_grainsizes(
+        grainsize_path=grainsizes_path
     )
-    ax.set(
-        xlabel=r'Distance (AU)',
-        ylabel=r'Grain size ($\mu$m)',
+
+    # Compute volume per cell - load cell sizes
+    cell_sizes = a3d.load_cellsizes(
+        sizepath=gridsize_path,
+        amrpath=amrpath
     )
+    cell_volumes = cell_sizes**3
+
+    # Ngrains per cell is then
+    Ngrains_cell = np.zeros(Ncells)
+    dustcells = np.where(grain_sizes > 0)[0]
+    Ngrains_cell[dustcells] = dust_densities[dustcells] * cell_volumes[dustcells] / (bulk_density * 4*np.pi/3 * grain_sizes[dustcells]**3)
+
+    # Ngrains as function of agrain is
+    # sum all Ngrains-per-cell over same/similar grain sizes
+    unique_grainsizes = np.unique(grain_sizes)
+
+    Ngrains_agrain = np.zeros(np.size(unique_grainsizes))
+
+    for ncell in range(Ncells):
+        for nn,size in enumerate(unique_grainsizes):
+            if grain_sizes[ncell] == size:
+                Ngrains_agrain[nn] += Ngrains_cell[ncell]
+                break
+    
+
+    plt.plot(unique_grainsizes,Ngrains_agrain,'.')
+
+
+
 
 
 # ==========================================================================
@@ -1746,14 +1779,7 @@ def extract_grainsizes(
     print(f'C5D grain sizes:\n    grain_sizes_{phase}.dat\nDONE\n')
 
 
-
-
-# TODO
-# function that bins grain sizes
-#
-# save these in a file
-# grain_sizes_binned.dat
-
+# Function that bins the grain sizes and saves them in another file
 def bin_grainsizes(
         grainsizepath:str='../grain_sizes_186.dat',
         phase:str='186',
@@ -1762,16 +1788,9 @@ def bin_grainsizes(
     ):
 
     # Load grainsizes
-    sizes = []
-    if os.path.exists(grainsizepath) == True:
-        with open(grainsizepath, 'r') as fsizes:
-            for line in fsizes.readlines():
-                if line[0] != '#':
-                    sizes.append(float(line.strip('\n')))
-    else:
-        return f'ERROR: bin_grainsizes can not find {grainsizepath}.'
-    sizes = np.array(sizes)
-    Nleafs = np.size(sizes)
+    sizes,Nleafs = a3d.load_grainsizes(
+        grainsize_path=grainsizepath
+    )
 
     # Define grain size bin-edges
     min_size = sizes[np.where(sizes > 0)[0]].min()
