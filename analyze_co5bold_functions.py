@@ -1485,21 +1485,28 @@ def create_dustfiles(
 
     # Load number of dust species and specie-names
     Nc5dspecies, specienames =  load_dustspecies_names(savpath=savpath)
+    print(f'Loaded grain species: {specienames[:Nspecies]}')
 
 
     # Load binned grain sizes (first check if they exist)
+    print('Loading grain sizes')
     if os.path.exists(grainsizepath) == True:
         grainsizes,Nleafs = a3d.load_grainsizes(
             grainsize_path=grainsizepath
         )
+        # Change unit to um
+        grainsizes *= 1e4
+
+        # Extract an array with the grain sizes only
+        grainsizes_uniq = np.unique(grainsizes[np.where(grainsizes > 0)[0]])
+
     else:
         grainsizes = 0
-    # Change unit to um
-    grainsizes *= 1e4
-
+        grainsizes_uniq = 0
+    
     # List of grain sizes and number of bins (in micrometers!)
-    grainsizes_uniq = np.unique(grainsizes)
     Ngrainsizes = grainsizes_uniq.size
+    print(f'Availble grain sizez are (um): {grainsizes_uniq}\n')
 
 
     # Check so that the smallest c5dcells are not larger than the r3d's smallest cells
@@ -1516,7 +1523,10 @@ def create_dustfiles(
 
 
     else:
-        # Output
+        # Load c5d-dust densities and temperatures
+        print('Loading CO5BOLD densities and temperatures\n')
+        c5ddensities, c5dtemperatures = load_dust_densitytemperature(savpath=savpath)
+
         print(f'Translating C5D dust data to R3D dust data ({phase})')
 
         # Open r3d data files
@@ -1544,23 +1554,20 @@ def create_dustfiles(
             # -----------------------
             fopac.write(f'2\n{int(Nspecies*Ngrainsizes)}\n-----------------------------\n')
 
-            # First loop of grain sizes of each specie
-            for nsize,size in grainsizes_uniq:
+            # First loop through the number of species you want to include
+            for nspecies in range(Nspecies):
 
-                # Then loop through the number of species you want to include
-                for nspecies in range(Nspecies):
-                    # and write densities and temperatures in the files.
-                    # Each specie and grain size is listed in same files 
-                    # but after eachother.
+                # Then loop of grain sizes of each specie
+                for size in grainsizes_uniq:
+
+                    # Write densities and temperatures in files according to R3D-syntax.
+                    # Each specie and grain size is listed in same files but after eachother.
 
                     # Declare stuff for the loops
                     r3d_density = 0
                     r3d_temperature = 0
                     progbar = 0
                     speciesname = specienames[nspecies]
-
-                    # Load c5d-dust densities and temperatures
-                    c5ddensities, c5dtemperatures = load_dust_densitytemperature(savpath=savpath)
 
                     # Some output
                     print(f'Writing dust specie number {nspecies+1}:')
