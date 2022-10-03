@@ -1458,6 +1458,7 @@ def create_dustfiles(
       amrpath:str = path to r3d-amr-grid-file
       gridpath:str = path to corresponding file with list of r3d radial grid-distances
       sizepath:str = path to corresponding file with list of r3d cell sizes
+    (OPTIONAL) grainsizepath:str = path to file with list of BINNED grain sizes per r3d cell
       Nspecies:int = number of dust species to include (this runs through them in order... Might change later)
       monomermasses:list = list of masses of dust species monomers (check which species are included in c5d with a5d.load_dustspecies_names)
 
@@ -1470,6 +1471,7 @@ def create_dustfiles(
     # Extract phase-designation from savpath
     phase = savpath.split('_')[-1].split('.')[0]
 
+
     # Load R3D grid
     print('Loading R3D grid')
     nleafs = a3d.load_grid_properties(amrpath=amrpath)[2]
@@ -1480,8 +1482,10 @@ def create_dustfiles(
     print('Loading C5D grid properties')
     c5dgrid, c5dcellcourners, c5dcellsize = load_grid_properties(savpath=savpath)
 
+
     # Load number of dust species and specie-names
     Nc5dspecies, specienames =  load_dustspecies_names(savpath=savpath)
+
 
     # Load binned grain sizes (first check if they exist)
     if os.path.exists(grainsizepath) == True:
@@ -1490,8 +1494,11 @@ def create_dustfiles(
         )
     else:
         grainsizes = 0
+    # Change unit to um
+    grainsizes *= 1e4
+
     # List of grain sizes and number of bins (in micrometers!)
-    grainsizes_uniq = np.unique(grainsizes)*1e4
+    grainsizes_uniq = np.unique(grainsizes)
     Ngrainsizes = grainsizes_uniq.size
 
 
@@ -1523,26 +1530,28 @@ def create_dustfiles(
             # 1
             # nleafs
             # number dust species
-            fdensity.write(f'1\n{int(nleafs)}\n{int(Nspecies)}\n')
+            fdensity.write(f'1\n{int(nleafs)}\n{int(Nspecies*Ngrainsizes)}\n')
 
             # Temperature:
             # 1
             # nleafs
             # number dust species
-            ftemperature.write(f'1\n{int(nleafs)}\n{int(Nspecies)}\n')
+            ftemperature.write(f'1\n{int(nleafs)}\n{int(Nspecies*Ngrainsizes)}\n')
 
             # dustopac:
             # 2
             # Number of species
             # -----------------------
-            fopac.write(f'2\n{int(Nspecies)}\n-----------------------------\n')
+            fopac.write(f'2\n{int(Nspecies*Ngrainsizes)}\n-----------------------------\n')
 
-            # Loop through the number of species you want to include
-            # and loop of grain sizes of each specie
-            # and write densities and temperatures in the files.
-            # Each specie is listed in same files but after eachother.
-            for nspecies in range(Nspecies):
-                for nsize,size in grainsizes_uniq:
+            # First loop of grain sizes of each specie
+            for nsize,size in grainsizes_uniq:
+
+                # Then loop through the number of species you want to include
+                for nspecies in range(Nspecies):
+                    # and write densities and temperatures in the files.
+                    # Each specie and grain size is listed in same files 
+                    # but after eachother.
 
                     # Declare stuff for the loops
                     r3d_density = 0
@@ -1556,6 +1565,7 @@ def create_dustfiles(
                     # Some output
                     print(f'Writing dust specie number {nspecies+1}:')
                     print(f'    {speciesname}')
+                    print(f'    Grain size: {size} um')
                     print(f'    Monomer mass: {monomermasses} g')
 
                     # Write the dustopac file
@@ -1568,63 +1578,69 @@ def create_dustfiles(
                     # Loop over the r3d-grid
                     for nr3d in range(nleafs):
 
-                        # TODO
-# nån slags grain-size-väljare här!
+                        # Check if we have any grain size lists
+                        # Then check if the grain size is correct
+                        if len(grainsizes) == 1 or grainsizes[nr3d] == size:
 
-# nån slags if grainsize[nr3d] == size
-# else så ska det matas in nollor i de cellerna
+                            # Else: density and temperature is written as zero
 
+                            ## Så ska densitet och temperatur skrivas på rätt ställe
+                            ## i densitetsfilerna
+                            ## vilket är     (nspecies+nsize)*Nleafs+nr3d
 
-                        # Extract size range for current r3dcell
-                        r3dxrange = [
-                            r3ddistances[nr3d,1]-0.5*r3dcellsizes[nr3d],
-                            r3ddistances[nr3d,1]+0.5*r3dcellsizes[nr3d]
-                        ]
-                        r3dyrange = [
-                            r3ddistances[nr3d,2]-0.5*r3dcellsizes[nr3d],
-                            r3ddistances[nr3d,2]+0.5*r3dcellsizes[nr3d]
-                        ]
-                        r3dzrange = [
-                            r3ddistances[nr3d,3]-0.5*r3dcellsizes[nr3d],
-                            r3ddistances[nr3d,3]+0.5*r3dcellsizes[nr3d]
-                        ]   
+                            # Extract size range for current r3dcell
+                            r3dxrange = [
+                                r3ddistances[nr3d,1]-0.5*r3dcellsizes[nr3d],
+                                r3ddistances[nr3d,1]+0.5*r3dcellsizes[nr3d]
+                            ]
+                            r3dyrange = [
+                                r3ddistances[nr3d,2]-0.5*r3dcellsizes[nr3d],
+                                r3ddistances[nr3d,2]+0.5*r3dcellsizes[nr3d]
+                            ]
+                            r3dzrange = [
+                                r3ddistances[nr3d,3]-0.5*r3dcellsizes[nr3d],
+                                r3ddistances[nr3d,3]+0.5*r3dcellsizes[nr3d]
+                            ]   
 
-                        # Extract indeces of all c5dcells within current r3dcell
-                        c5dxrange = np.argwhere(r3dxrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,0] <= r3dxrange[1]),0])[:,0]
-                        c5dyrange = np.argwhere(r3dyrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,1] <= r3dyrange[1]),1])[:,0]
-                        c5dzrange = np.argwhere(r3dzrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,2] <= r3dzrange[1]),2])[:,0]
+                            # Extract indeces of all c5dcells within current r3dcell
+                            c5dxrange = np.argwhere(r3dxrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,0] <= r3dxrange[1]),0])[:,0]
+                            c5dyrange = np.argwhere(r3dyrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,1] <= r3dyrange[1]),1])[:,0]
+                            c5dzrange = np.argwhere(r3dzrange[0] <= c5dgrid[np.argwhere(c5dgrid[:,2] <= r3dzrange[1]),2])[:,0]
 
-                        # Number of c5dcells within r3dcell (with data)
-                        ndustcells = 0
-                        ntempcells = 0
+                            # Number of c5dcells within r3dcell (with data)
+                            ndustcells = 0
+                            ntempcells = 0
 
-                        # Then loop through c5dcells within r3dcell
-                        for nnz in c5dzrange:
-                            for nny in c5dyrange:
-                                for nnx in c5dxrange:
-                                    # Sum all densities and temperatures (only those with data)
+                            # Then loop through c5dcells within r3dcell
+                            for nnz in c5dzrange:
+                                for nny in c5dyrange:
+                                    for nnx in c5dxrange:
+                                        # Sum all densities and temperatures (only those with data)
 
-                                    if c5ddensities[nnx,nny,nnz] > 0:
-                                        r3d_density += c5ddensities[nnx,nny,nnz]
-                                        ndustcells += 1
+                                        if c5ddensities[nnx,nny,nnz] > 0:
+                                            r3d_density += c5ddensities[nnx,nny,nnz]
+                                            ndustcells += 1
 
-                                    if c5dtemperatures[nnx,nny,nnz] > 0:
-                                        r3d_temperature += c5dtemperatures[nnx,nny,nnz]
-                                        ntempcells += 1
+                                        if c5dtemperatures[nnx,nny,nnz] > 0:
+                                            r3d_temperature += c5dtemperatures[nnx,nny,nnz]
+                                            ntempcells += 1
 
-                        # Take average of those cells with data (and average with respect
-                        # to number of cells containing data only)
-                        if ndustcells > 0:
+                            # Take average of those cells with data (and average with respect
+                            # to number of cells containing data only)
+                            # and
                             # Recalculate number density of monomers to mass density
                             # eg
                             # Mg2SiO4: 2*24.305u + 28.085u + 4*15.999u = 140.69u = 2.3362e-22 gram
-                            r3d_density *= monomermasses[nspecies] / ndustcells
 
-                        # Also for temperature cells
-                        if ntempcells > 0:
-                            r3d_temperature /= ntempcells
+                            # First check if there are any dust cells here
+                            if ndustcells > 0:
+                                r3d_density *= monomermasses[nspecies] / ndustcells
 
-                        # Write data to r3d files
+                            # Also for temperature cells
+                            if ntempcells > 0:
+                                r3d_temperature /= ntempcells
+
+                        # Then write data to r3d files
                         fdensity.write(f'{r3d_density}\n')
                         ftemperature.write(f'{r3d_temperature}\n')
 
