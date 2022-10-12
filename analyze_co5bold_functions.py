@@ -36,6 +36,16 @@ Lsol = 3.828e26 # W
 # Load C5D-data and saves in arrays
 # ---------------------------------
 #
+# TODO
+# write a master loader - loading density, temperature, opacity, saving them
+# as numpy-or-pickle-files! this way I only need to load these once per phase!
+#
+# load_c5dheavydata()
+#    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
+# )
+# 
+# TODO move these redundant load-density-temperatyre-opacity-files to oldfuncs-file
+#
 # load_grid_properties(
 #    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
 # )
@@ -164,6 +174,109 @@ Lsol = 3.828e26 # W
 #
 # ============================================================
 # Functions that load C5D-data and saves them in arrays
+
+@cython.cfunc
+def load_c5dheavydata(
+       savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav',
+        nspecies:int = 0
+    ):
+    """
+    All mighty Master of loading data!
+    """
+
+    # Load sav-data
+    c5ddata = readsav(savpath)
+    c5ddata = c5ddata['ful']
+
+
+
+    # Get number of gridcells from co5bold data
+    nc5dedge = cython.declare(cython.int, np.size(c5ddata['Z'][0][0][16]))
+
+    # Declare variables
+    nx = cython.declare(cython.int)
+    ny = cython.declare(cython.int)
+    nz = cython.declare(cython.int)
+
+    # Declare np.array
+    c5dstar_densities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+    c5dstar_temperatures = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+    c5dstar_opacities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+
+    # Extract densities - This takes a lot of time
+    for nx in range(nc5dedge):
+        for ny in range(nc5dedge):
+            for nz in range(nc5dedge):
+
+                c5dstar_densities[nx,ny,nz] = c5ddata['Z'][0][0][34][nx][ny][nz]
+                c5dstar_temperatures[nx,ny,nz] = c5ddata['EOS'][0][0][1][nx][ny][nz]
+                c5dstar_opacities[nx,ny,nz] = c5ddata['OPA'][0][0][0][nx][ny][nz]
+    
+    #return c5dstar_densities, c5dstar_temperatures, c5dstar_opacities
+
+
+    # TODO
+    # combine these two functions
+    # change later so that the temperature is only one and so that the dust-tmeperature
+    # saved later is 0'oed where there's no dust then instead!
+
+    """
+    Loads c5d-data and extracts number density of dust monomers and dust temperature
+
+    ARGUMENTS
+      savpath:str = path to sav-file
+      nspecies:int = number of the specie to extract, start with 0!
+
+    RETURNS
+      c5ddust_densities: array with monomer number density in the c5d-grid
+      c5ddust_temperatures: array with dust temperatures within c5d-grid
+    """
+
+    # Load sav-file
+    c5ddata = readsav(savpath)
+
+    # Extract data
+    c5ddata = c5ddata['ful']
+
+    # Get number of gridcells from co5bold data
+    nc5dedge = cython.declare(cython.int, np.size(c5ddata['Z'][0][0][16]))
+
+    # Declare variables
+    nx = cython.declare(cython.int)
+    ny = cython.declare(cython.int)
+    nz = cython.declare(cython.int)
+
+    # Declare np.arrays for number density of dust monomers and temperatures
+    c5ddust_densities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+    c5ddust_temperatures = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+
+    # Extract densities and temperatures (this is time-demanding!)
+    for nx in range(nc5dedge):
+        for ny in range(nc5dedge):
+            for nz in range(nc5dedge):
+
+                # Densities:
+                c5ddust_densities[nx,ny,nz] = c5ddata['Z'][0][0][40+3*nspecies][nx][ny][nz]
+
+                # Temperatures (only save those cells where there is dust!)
+                if c5ddust_densities[nx,ny,nz] > 0:
+                    c5ddust_temperatures[nx,ny,nz] = c5ddata['EOS'][0][0][1][nx][ny][nz]
+                else: 
+                    c5ddust_temperatures[nx,ny,nz] = 0
+
+    # Return density-temperature arrays
+    #return c5ddust_densities, c5ddust_temperatures
+
+
+
+
+
+
+
+
+
+
+
 
 # Load c5d grid properties
 @cython.cfunc
@@ -844,6 +957,9 @@ def create_star(
 
     else:
         # Load C5D star densities, temperatures and opacities
+        #
+        # TODO
+        # load from temporary numpy-or-pickle files instead!
         print('Loading C5D star properties (density, temperature, opacity)')
         c5dstar_densities,c5dstar_temperatures,c5dstar_opacities = load_star_properties(savpath=savpath)
 
@@ -1524,6 +1640,9 @@ def create_dustfiles(
 
     else:
         # Load c5d-dust densities and temperatures
+        #
+        # TODO
+        # load from temporary numpy-or-pickle files instead!
         print('Loading CO5BOLD densities and temperatures\n')
         c5ddensities, c5dtemperatures = load_dust_densitytemperature(savpath=savpath)
 
@@ -1571,8 +1690,7 @@ def create_dustfiles(
 
                     # Some output
                     print(f'Writing dust specie number {nspecies+1}:')
-                    print(f'    {speciesname}')
-                    print(f'    Grain size: {size} um')
+                    print(f'    {speciesname}_{size}um')
                     print(f'    Monomer mass: {monomermasses} g')
 
                     # Write the dustopac file
