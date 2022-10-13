@@ -177,19 +177,36 @@ Lsol = 3.828e26 # W
 
 @cython.cfunc
 def load_c5dheavydata(
-       savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav',
-        nspecies:int = 0
+       savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+       Nspecies:int = 1,
+       gas_density:bool=True,
+       dust_density:bool=True,
+       gas_opacity:bool=True,
+       temperature:bool=True
     ):
     """
-    All mighty Master of loading data!
+    Loads c5d-data and extracts gas density, gas opacity, number density 
+    of dust monomers, and temperatures.
+
+    ARGUMENTS
+      savpath:str = path to sav-file
+      nspecies:int = number of the specie to extract, start with 0!
+      gas_density = True to save star(gas) density
+      dust_density = True to save dust monomer density
+      gas_opacity = True to save star(gas) opacity
+      temperature = True to save temperatures
+
+    RETURNS binary files
+      gas densities in c5d-grid; 3D array
+      monomer number density in c5d-grid; 3D array
+      gas opacities in c5d-grid; 3D array
+      temperatures in c5d-grid; 3D array
     """
 
     # Load sav-data
     c5ddata = readsav(savpath)
     c5ddata = c5ddata['ful']
 
-
-
     # Get number of gridcells from co5bold data
     nc5dedge = cython.declare(cython.int, np.size(c5ddata['Z'][0][0][16]))
 
@@ -198,77 +215,94 @@ def load_c5dheavydata(
     ny = cython.declare(cython.int)
     nz = cython.declare(cython.int)
 
-    # Declare np.array
-    c5dstar_densities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
-    c5dstar_temperatures = np.zeros((nc5dedge,nc5dedge,nc5dedge))
-    c5dstar_opacities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+    # Declare arrays
+    if gas_density == True:
+        c5dstar_densities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+
+    if dust_density == True:
+        c5ddust_densities = np.zeros((Nspecies,nc5dedge,nc5dedge,nc5dedge))
+
+    if gas_opacity == True:
+        c5dstar_opacities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+
+    if temperature == True:
+        c5d_temperatures = np.zeros((nc5dedge,nc5dedge,nc5dedge))
+
+
+    # TODO
+    #NO NEED FOR LOOPS YOU STUPID F
+
 
     # Extract densities - This takes a lot of time
     for nx in range(nc5dedge):
         for ny in range(nc5dedge):
             for nz in range(nc5dedge):
 
-                c5dstar_densities[nx,ny,nz] = c5ddata['Z'][0][0][34][nx][ny][nz]
-                c5dstar_temperatures[nx,ny,nz] = c5ddata['EOS'][0][0][1][nx][ny][nz]
-                c5dstar_opacities[nx,ny,nz] = c5ddata['OPA'][0][0][0][nx][ny][nz]
-    
-    #return c5dstar_densities, c5dstar_temperatures, c5dstar_opacities
+                if gas_density == True:
+                    c5dstar_densities[nx,ny,nz] = c5ddata['Z'][0][0][34][nx][ny][nz]
+
+                if dust_density == True:
+                    for nspecies in range(Nspecies):
+                        c5ddust_densities[nspecies,nx,ny,nz] = c5ddata['Z'][0][0][40+3*nspecies][nx][ny][nz]
+
+                if gas_opacity == True:
+                    c5dstar_opacities[nx,ny,nz] = c5ddata['OPA'][0][0][0][nx][ny][nz]
+
+                if temperature == True:
+                    c5d_temperatures[nx,ny,nz] = c5ddata['EOS'][0][0][1][nx][ny][nz]
+
+    print(c5ddust_densities.shape)
+
+    # Save temporary binary files - one for each property
+    # could use one for all, savez den saves the arrays in a dictionay where you
+    # name the different parts of the dictionary
 
 
-    # TODO
-    # combine these two functions
-    # change later so that the temperature is only one and so that the dust-tmeperature
-    # saved later is 0'oed where there's no dust then instead!
+    if gas_density == True:
+        with open('../c5dgas_density.npy', 'wb') as f:
+            np.save(
+                f, c5dstar_densities,
+                allow_pickle=True, 
+                fix_imports=False
+            )
+    if dust_density == True:
+        with open('../c5ddust_density.npy', 'wb') as f:
+            np.save(
+                f, c5ddust_densities,
+                allow_pickle=True, 
+                fix_imports=False
+            )
+    if gas_opacity == True:
+        with open('../c5dgas_opacity.npy', 'wb') as f:
+            np.save(
+                f, c5dstar_opacities,
+                allow_pickle=True, 
+                fix_imports=False
+            )
+    if temperature == True:
+        with open('../c5d_temperature.npy', 'wb') as f:
+            np.save(
+                f, c5d_temperatures,
+                allow_pickle=True, 
+                fix_imports=False
+            )
+
 
     """
-    Loads c5d-data and extracts number density of dust monomers and dust temperature
+        SAVE EXAMPLE
+    import pickle
 
-    ARGUMENTS
-      savpath:str = path to sav-file
-      nspecies:int = number of the specie to extract, start with 0!
+    # An arbitrary collection of objects supported by pickle.
+    data = {
+        'a': [1, 2.0, 3+4j],
+        'b': ("character string", b"byte string"),
+        'c': {None, True, False}
+    }
 
-    RETURNS
-      c5ddust_densities: array with monomer number density in the c5d-grid
-      c5ddust_temperatures: array with dust temperatures within c5d-grid
+    with open('data.pickle', 'wb') as f:
+        # Pickle the 'data' dictionary using the highest protocol available.
+        pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
     """
-
-    # Load sav-file
-    c5ddata = readsav(savpath)
-
-    # Extract data
-    c5ddata = c5ddata['ful']
-
-    # Get number of gridcells from co5bold data
-    nc5dedge = cython.declare(cython.int, np.size(c5ddata['Z'][0][0][16]))
-
-    # Declare variables
-    nx = cython.declare(cython.int)
-    ny = cython.declare(cython.int)
-    nz = cython.declare(cython.int)
-
-    # Declare np.arrays for number density of dust monomers and temperatures
-    c5ddust_densities = np.zeros((nc5dedge,nc5dedge,nc5dedge))
-    c5ddust_temperatures = np.zeros((nc5dedge,nc5dedge,nc5dedge))
-
-    # Extract densities and temperatures (this is time-demanding!)
-    for nx in range(nc5dedge):
-        for ny in range(nc5dedge):
-            for nz in range(nc5dedge):
-
-                # Densities:
-                c5ddust_densities[nx,ny,nz] = c5ddata['Z'][0][0][40+3*nspecies][nx][ny][nz]
-
-                # Temperatures (only save those cells where there is dust!)
-                if c5ddust_densities[nx,ny,nz] > 0:
-                    c5ddust_temperatures[nx,ny,nz] = c5ddata['EOS'][0][0][1][nx][ny][nz]
-                else: 
-                    c5ddust_temperatures[nx,ny,nz] = 0
-
-    # Return density-temperature arrays
-    #return c5ddust_densities, c5ddust_temperatures
-
-
-
 
 
 
