@@ -288,3 +288,109 @@ def create_staropacity(
         
         # TODO Write info-file with data on how the binning is done! stellarbinning_info.txt
         print('C5D create star opacities:\n    dust_density_starbins.inp\n    dust_temperature_starbins.inp\n    star_opacities_bins.dat\n    dustopac_starbins.inp\n    dustkappa_starN.inp\nDONE\n')
+
+
+
+# Extract co5bold densities into a separate array 
+# - note this is probably faster than loading it in the r3d-file-writing functions
+def load_star_properties(
+        savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
+    ):
+    """
+    Loads c5d-star's densities, temperatures, and opacities, and puts them into 3D-arrays
+
+    INPUT
+    savpath: path to sav-file
+    nbins: number of bins to put the opacities in, ie number of duststar-species for the star
+
+    OUTPUT
+    c5dstar_densities: 3D array with star's densities
+    c5dstar_temperatures: 3D array with star's temperatures 
+    c5dstar_opacities: 3D array with star's opacities
+    """
+    # NOTE
+    # Takes 4 seconds
+    
+    # Load sav-file
+    c5ddata = readsav(savpath)
+
+    # Extract data
+    c5ddata = c5ddata['ful']
+
+    # Save np.arrays
+    c5dstar_densities = c5ddata['Z'][0][0][34]
+    c5dstar_temperatures = c5ddata['EOS'][0][0][1]
+    c5dstar_opacities = c5ddata['OPA'][0][0][0]
+    
+    return c5dstar_densities, c5dstar_temperatures, c5dstar_opacities
+
+
+# Function for loading one dust specie from c5d-data
+def load_dust_densitytemperature(
+        savpath:str = '../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        nspecies:int = 0
+    ):
+    """
+    Loads c5d-data and extracts number density of dust monomers and dust temperature
+
+    ARGUMENTS
+      savpath:str = path to sav-file
+      nspecies:int = number of the specie to extract, start with 0!
+
+    RETURNS
+      c5ddust_densities: array with monomer number density in the c5d-grid
+      c5ddust_temperatures: array with dust temperatures within c5d-grid
+    """
+    # NOTE
+    # Takes 4 seconds
+
+    # Load sav-file
+    c5ddata = readsav(savpath)
+
+    # Extract data
+    c5ddata = c5ddata['ful']
+
+    # Declare np.arrays for number density of dust monomers and temperatures
+    c5ddust_densities = c5ddata['Z'][0][0][40+3*nspecies]
+    c5ddust_temperatures = c5ddata['EOS'][0][0][1]
+
+    # TODO add something so that only dust-filled cell-temperatures are saved?
+
+    # Return density-temperature arrays
+    return c5ddust_densities, c5ddust_temperatures
+
+
+
+
+# Function that loads and extracts gas densities and dust densities of a chosen dust specie
+# Primarily to use for getting grain sizes
+def load_dustgas_densities(
+        savpath:str = '../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        nspecies:int = 0
+    ):
+    """
+    TODO
+    fill here ...
+
+    ARGUMENTS
+      ...
+    RETURNS
+      ...    
+    """
+    # NOTE
+    # Takes 4.3 seconds
+
+    # Load sav-file
+    c5ddata = readsav(savpath)
+
+    # Extract data
+    c5ddata = c5ddata['ful']
+
+    # Declare np.arrays for number density of dust monomers and temperatures
+    c5ddust_densities = c5ddata['Z'][0][0][40+3*nspecies]
+    c5dstar_densities = c5ddata['Z'][0][0][34]
+
+    # TODO only save gas-densities where dust exists here?
+    # Or just do that directly in the grain-size-extractor
+
+    return c5dstar_densities, c5ddust_densities
