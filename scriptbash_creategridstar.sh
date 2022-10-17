@@ -14,6 +14,11 @@ phase2=142
 python3 scriptpy_creategrid.py $modelname $phase0 $phase1 $phase2
 wait
 
+# TODO
+# parallell loading of densities, temperature, opacity (for each phase)
+# saved into numpy-or-pickle-files
+# that are faster to load in the later scripts
+
 # Create stars
 python3 scriptpy_createstar.py $modelname $phase0 &
 python3 scriptpy_createstar.py $modelname $phase1 &

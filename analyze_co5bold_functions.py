@@ -206,6 +206,17 @@ def load_c5dheavydata(
     # Extract phase-designation from savpath
     phase = savpath.split('_')[-1].split('.')[0]
 
+    # Print some output
+    print(f'Loading from CO5BOLD for phase {phase}')
+    if gas_density == True:
+        print('Star(gas) densities')
+    if dust_density == True:
+        print('Dust monomer densities')
+    if gas_opacity == True:
+        print('Star(gas) opacities')
+    if temperature == True:
+        print('Temperatures')
+
     # Load sav-data
     c5ddata = readsav(savpath)
     c5ddata = c5ddata['ful']
@@ -785,11 +796,18 @@ def create_star(
 
     else:
         # Load C5D star densities, temperatures and opacities
-        #
-        # TODO
-        # load from temporary numpy-or-pickle files instead!
         print('Loading C5D star properties (density, temperature, opacity)')
-        c5dstar_densities,c5dstar_temperatures,c5dstar_opacities = load_star_properties(savpath=savpath)
+
+        # Check if files exists first
+        if os.path.exists('../c5dgas_density.npy') == True and \
+           os.path.exists('../c5d_temperature.npy') == True and \
+           os.path.exists('../c5dgas_opacity.npy') == True :
+            c5dstar_densities = np.load('../c5dgas_density.npy')
+            c5dstar_temperatures = np.load('../c5d_temperature.npy')
+            c5dstar_opacities = np.load('../c5dgas_opacity.npy')
+        else:
+            print('ERROR: One of these files doesnt exist, did you run a5d.load_c5dheavydata() before?\n    ../c5dgas_density.npy, ../c5d_temperature.npy, ../c5dgas_opacity.npy\n')
+
 
         # Start working :)
         print('Translating C5D gas data to R3D data')
