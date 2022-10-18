@@ -726,7 +726,7 @@ def plot_grainsize_distribution(
                 break
     
 
-    plt.plot(unique_grainsizes,Ngrains_agrain,'.')
+    plt.step(unique_grainsizes,Ngrains_agrain)
 
 
 
