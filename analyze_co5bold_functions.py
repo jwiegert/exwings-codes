@@ -36,12 +36,15 @@ Lsol = 3.828e26 # W
 # Load C5D-data and saves in arrays
 # ---------------------------------
 #
-# TODO
-# write a master loader - loading density, temperature, opacity, saving them
-# as numpy-or-pickle-files! this way I only need to load these once per phase!
-#
-# load_c5dheavydata()
-#    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
+# master loader - loading density, temperature, opacity, saving them
+# as numpy-files
+# load_c5dheavydata(
+#    savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+#    Nspecies:int = 1,
+#    gas_density:bool=True,
+#    dust_density:bool=True,
+#    gas_opacity:bool=True,
+#    temperature:bool=True
 # )
 # 
 # TODO move these redundant load-density-temperatyre-opacity-files to oldfuncs-file
@@ -175,7 +178,6 @@ Lsol = 3.828e26 # W
 # ============================================================
 # Functions that load C5D-data and saves them in arrays
 
-@cython.cfunc
 def load_c5dheavydata(
        savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
        Nspecies:int = 1,
@@ -799,14 +801,14 @@ def create_star(
         print('Loading C5D star properties (density, temperature, opacity)')
 
         # Check if files exists first
-        if os.path.exists('../c5dgas_density.npy') == True and \
-           os.path.exists('../c5d_temperature.npy') == True and \
-           os.path.exists('../c5dgas_opacity.npy') == True :
-            c5dstar_densities = np.load('../c5dgas_density.npy')
-            c5dstar_temperatures = np.load('../c5d_temperature.npy')
-            c5dstar_opacities = np.load('../c5dgas_opacity.npy')
+        if os.path.exists(f'../c5dgas_density_{phase}.npy') == True and \
+           os.path.exists(f'../c5d_temperature_{phase}.npy') == True and \
+           os.path.exists(f'../c5dgas_opacity_{phase}.npy') == True :
+            c5dstar_densities = np.load(f'../c5dgas_density_{phase}.npy')
+            c5dstar_temperatures = np.load(f'../c5d_temperature_{phase}.npy')
+            c5dstar_opacities = np.load(f'../c5dgas_opacity_{phase}.npy')
         else:
-            print('ERROR: One of these files doesnt exist, did you run a5d.load_c5dheavydata() before?\n    ../c5dgas_density.npy, ../c5d_temperature.npy, ../c5dgas_opacity.npy\n')
+            print(f'ERROR: One of these files doesnt exist, did you run a5d.load_c5dheavydata() before?\n    ../c5dgas_density.npy_{phase}, ../c5d_temperature_{phase}.npy, ../c5dgas_opacity_{phase}.npy\n')
 
 
         # Start working :)
@@ -924,13 +926,13 @@ def create_stars(
     Also moves files to correct folders. Also useful when only doing one model and phase.
         NOTE this is not implemented correctly yet, only do one model (several phases are OK)!
 
-    INPUT
-    modelnames:list = list of modelnames
-    phases:list = list of phases, listed in the same order as models are listed
-        NOTE this is not implemented correctly yet, only do one model!
+    ARGUMENTS
+      modelnames:list = list of modelnames - NOTE this is not implemented correctly yet, only do one model!
+      phases:list = list of phases, listed in the same order as models are listed
+    
+    RETURNS
+      Files... TODO write
     """
-
-    # TODO there should be a list of phases per model inputted in 
 
     for modelname in modelnames:
         for phase in phases:
@@ -1486,12 +1488,17 @@ def create_dustfiles(
 
     else:
         # Load c5d-dust densities and temperatures
-        #
-        # TODO
-        # load from temporary numpy-or-pickle files instead!
         print('Loading CO5BOLD densities and temperatures\n')
-        c5ddensities, c5dtemperatures = load_dust_densitytemperature(savpath=savpath)
+        # Check if files exists first
+        if os.path.exists(f'../c5ddust_density_{phase}.npy') == True and \
+           os.path.exists(f'../c5d_temperature_{phase}.npy') == True :
+            c5ddensities = np.load(f'../c5ddust_density_{phase}.npy')
+            c5dtemperatures = np.load(f'../c5d_temperature_{phase}.npy')
+        else:
+            print(f'ERROR: One of these files doesnt exist, did you run a5d.load_c5dheavydata() before?\n    ../c5ddust_density_{phase}.npy, ../c5d_temperature_{phase}.npy\n')
 
+
+        # Continue to c5d-to-r3d-translation
         print(f'Translating C5D dust data to R3D dust data ({phase})')
 
         # Open r3d data files
@@ -1592,7 +1599,7 @@ def create_dustfiles(
                                             r3d_density += c5ddensities[nnx,nny,nnz]
                                             ndustcells += 1
 
-                                        if c5dtemperatures[nnx,nny,nnz] > 0:
+                                        if c5ddensities[nnx,nny,nnz] > 0:
                                             r3d_temperature += c5dtemperatures[nnx,nny,nnz]
                                             ntempcells += 1
 
@@ -1707,11 +1714,16 @@ def extract_grainsizes(
             gas_density = 0
             progbar = 0
 
-            # Some output
-            print(f'Extracting gas and monomer densities from CO5BOLD-files ({phase})')
+            # Load gas and dust monomer densities
+            print(f'Loading gas and monomer densities from CO5BOLD-files ({phase})')
+            # Check if files exists first
+            if os.path.exists(f'../c5dgas_density_{phase}.npy') == True and \
+               os.path.exists(f'../c5ddust_density_{phase}.npy') == True :
+                gas_densities = np.load(f'../c5dgas_density_{phase}.npy')
+                monomer_densities = np.load(f'../c5ddust_density_{phase}.npy')
+            else:
+                print(f'ERROR: One of these files doesnt exist, did you run a5d.load_c5dheavydata() before?\n    ../c5dgas_density_{phase}.npy, ../c5ddust_density_{phase}.npy \n')
 
-            # Extract gas and dust monomer densities
-            gas_densities, monomer_densities = load_dustgas_densities()
 
             # Loop over the r3d-grid
             for nr3d in range(nleafs):
