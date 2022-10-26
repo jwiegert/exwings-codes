@@ -65,6 +65,10 @@ Rsol = 6.955e10 # cm
 # Opacity-functions
 # -----------------
 #
+# create_optoolscript(
+    # TODO
+# )
+#
 # create_kappaabs(
 #    wavelengthpath:str='../wavelength_micron.inp',
 #    optconstlist:list=['mg2sio4'],
@@ -774,6 +778,156 @@ def create_wavelength(
 # ------------------------------------------------------------ #
 # Opacity-functions
 
+# Create optool-kappa-file-script
+def create_optoolscript(
+        grainum_sizes:list=[0.1],
+        grainsize_type:str='normal',
+        grainsize_na:int=21,
+        grainsize_power:float=-3.5,
+        specie:str='mg2sio4',
+        grain_type:str='mie'
+
+    ):
+    """
+
+    ARGUMENTS
+      grainum_sizes:list : list of mean-grainsizes in micrometres
+
+      grainsize_na:int : number of grain sizes per sizes in grainum_sizes
+                       : intermediate-size steps are used to reduce number resonances from
+                       : singular grain sizes
+
+      grainsize_type:str : available grain size distributions:
+                'normal' : log-normal (Gaussian) >> grainsize_power is not used
+                   'mrn' : power-law, MRN or Dohnanyi-style
+                         : e.g. grainsize_power = -3.5 gives an MRN (or Dohnanyi) -powerlaw
+
+      specie:str : available species:
+       'mg2sio4' : Forsterite
+
+      grain_type:str : available kind of grains:
+               'mie' : Mie-theory based spherical compact grains
+               'dhs' : Hollow spheres, good for polarisation
+    
+    """
+
+    # grain_type:str='mie' or 'dhs', for distr of hollow spheres
+
+
+    lnk_path = f'../my_lnk_data/{specie}.lnk'
+
+    # Load wavelenth_grid from wavelength.inp-file and use for the wavelengt-settings!
+
+
+    # For Mie theory, 
+    # MRN-distribution, 3.5 means a^-3.5, minus is dropped
+    # -a AMIN [AMAX [APOW [NA]]]
+    # optool -c ../my_lnk_data/mg2sio4.lnk -mie -a 0.04725051 0.89663067 3.5 10 -lmin 0.1 -lmax 1000 -nlam 100 -s -radmc mg2sio4_optooltest
+
+
+
+    # for log-normal-grain-size distribution:
+    # if it's a list:
+    # compute amin-max from log-mean-grainsizes between the mean-grainsizes
+    #
+    # if it's a singular size, take 0.1 and 10 of the mean
+
+
+
+    # sätt amin till att vara mitt-emellan föregående agrain och nästa
+    # alternativt, mitt-emellan i log-space? i många fall blir det ungefär samma
+    # för "ändarna" i listan kan det funka att bara köra med 0.5*agrain_min och 1.5*agrain_max
+    # amax för en storlek blir amin för nästa
+
+    # log-normal distribution (same as I've used before)
+    # -a amin amax amean:asig [na]
+    #optool 
+    # -c ../my_lnk_data/mg2sio4.lnk 
+    # -mie 
+    # -a 0.70787952 0.89663067 0.80225509:0.1 11 -lmin 0.1 -lmax 1000 -nlam 100 -s -radmc mg2sio4_optooltest
+
+
+    # MRN-dist needs Amin, Amax, power and number of sizez
+    #   amin, max: given from amean
+    #   power and na needs to be given : 2 numbers
+    # Lognormal needs Amin, Amax, Amean, Asig (always the same?), and number of sizes
+    #   amin, amax, asig, given from amean
+    #   needs number of sizes : 1 number
+
+
+
+    # Define grain size limits
+    if len(grainum_sizes) > 1:
+
+        amin_um = [0.5*grainum_sizes[0]]
+        amax_um = []
+
+        for nn in range(len(grainum_sizes)-1):
+
+            midsize = 0.5 * (grainum_sizes[nn]+grainum_sizes[nn+1])
+
+            # Minimum sizes
+            amin_um.append(midsize)
+
+            # Maximum sizes
+            amax_um.append(midsize)
+        
+        amax_um.append(grainum_sizes[-1] + grainum_sizes[-1] - amax_um[-1])
+
+        # Define sigma
+        # Sigma can be defined from amin-max, FWHM = 2.355 sigma
+        # set FWHM = amax-amin
+        # sigma = (amax-amin) / 2.355
+        # ie I want the HALF of the HEIGHT of the Gaussian to be "connected" to the next
+        # grain size Gaussian.
+        # This can ofcourse be varied
+        # And with the max-min-sizes there won't be any problems or overlaps anyway
+        #
+        # Because of the possibility of having log-grain-sizes I should make a list of asig also
+
+        asigma_um = []
+
+        for nn in range(len(grainum_sizes)):
+            asigma_um.append( (amax_um[nn] - amin_um[nn])/2.355 )
+
+
+
+
+    else:
+        # If there is only one size, plus minus half of it
+        amin_um = [0.5*grainum_sizes[0]]
+        amax_um = [grainum_sizes[0] + amin_um[0]]
+
+        # Then sigma is
+        asigma_um = [(amax_um[0] - amin_um[0])/2.355]
+
+
+
+
+    # Write the script with optool commands
+
+    for nn in range(len(grainum_sizes)):
+        #print(f'{amin_um[nn]} - {grainum_sizes[nn]} - {amax_um[nn]}: sigma: {asigma_um[nn]}')
+        
+        # Change units to cm
+        amin = amin_um[nn]
+        amax = amax_um[nn]
+        amean = grainum_sizes[nn]
+        asigma = asigma_um[nn]
+
+        print(f'optool -c {lnk_path} -{grain_type} -a {amin} {amax} {amean}:{asigma} {grainsize_na} -lmin 0.1 -lmax 1000 -nlam 100 -s -radmc mg2sio4_{grainum_sizes[nn]}')
+
+
+
+
+
+
+
+
+
+
+
+
 # Creates dust-kappa-files
 def create_kappaabs(
         wavelengthpath:str='../wavelength_micron.inp',
@@ -816,7 +970,7 @@ def create_kappaabs(
                 wfact=3,
                 na=20,
                 extrapolate=True,
-                verbose=False
+                verbose=True
             )
 
             # Example code and info from makedustopac and bhmie for reference here
@@ -857,7 +1011,7 @@ def create_kappaabs(
             write_radmc3d_kappa_file(opacity,f'{optconst}_{agrainum}')
 
             # Move kappaabs files
-            os.system(f'mv dustkappa_{optconst}_{agrainum}.inp ../r3dsims/opacities/')
+            os.system(f'mv dustkappa_{optconst}_{agrainum}.inp ../')
 
     # Write dustopac.inp, list of all species and names
     with open('dustopac.inp','w') as f:
@@ -871,7 +1025,7 @@ def create_kappaabs(
                 f.write(f'1\n0\n{optconst}_{agrainum}\n-----------------------------\n')
 
     # Move opac-file to subfolder of simulation folder
-    os.system(f'mv dustopac.inp ../r3dsims/opacities')
+    os.system(f'mv dustopac.inp ../')
 
 
 # Load the star_opacity-file that is created with a5d.create_star

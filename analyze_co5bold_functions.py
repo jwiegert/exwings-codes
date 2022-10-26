@@ -647,7 +647,7 @@ def plot_densitytemperature(
 
     # NOTE
     # I've been testing different ways of getting transperent dots, doesn't make a
-    # difference but might be nice to keep here
+    # difference but might be nice to keep mec=() here  
     # Outside star
     ax.plot(
         temperature_outsidestar,
