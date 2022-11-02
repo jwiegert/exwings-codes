@@ -68,7 +68,13 @@ Rsol = 6.955e10 # cm
 # -----------------
 #
 # create_optoolscript(
-    # TODO
+#    wavelength_path:str='../wavelength_micron.inp',
+#    grainum_sizes:list=[0.1],
+#    grainsize_type:str='lognormal',
+#    grainsize_na:int=21,
+#    grainsize_power:float=-3.5,
+#    specie:str='mg2sio4',
+#    grain_type:str='mie'
 # )
 #
 # create_kappaabs(
@@ -781,7 +787,6 @@ def create_wavelength(
 # Opacity-functions
 
 
-
 # Create optool-kappa-file-script
 def create_optoolscript(
         wavelength_path:str='../wavelength_micron.inp',
@@ -959,12 +964,6 @@ def create_optoolscript(
 
 
 
-
-
-
-
-
-
 # Creates dust-kappa-files
 def create_kappaabs(
         wavelengthpath:str='../wavelength_micron.inp',
@@ -1005,7 +1004,7 @@ def create_kappaabs(
                 lamcm = wavelengths,
                 logawidth=logawidth,
                 wfact=3,
-                na=20,
+                na=21,
                 extrapolate=True,
                 verbose=True
             )
