@@ -505,12 +505,27 @@ def load_onekappa(
         print('ERROR: no species number nor name is given.')
 
     # Extract absorption, scattering and scattering angles
+    
+    # First we need to automatically adapt according to available filename
+    if os.path.exists(f'{path}dustkappa_{specie_name}.inp') == True:
+        dustkappa_filename = f'{path}dustkappa_{specie_name}.inp'
+
+    elif os.path.exists(f'{path}dustkapscatmat_{specie_name}.inp') == True:
+        dustkappa_filename = f'{path}dustkapscatmat_{specie_name}.inp'
+
+    else:
+        print(f'ERROR: kappa files are neither dustkappa_X.inp not dustkapscatmat.inp! Need to add additional file-name-style in a3d.load_onekappa()!')
+        return 'STOPPING'
+
+    # Declare lists and counters
     wavelengths = []
     absorption = []
     scattering = []
     scattangle = []
     nn = 0
-    with open(f'{path}dustkappa_{specie_name}.inp', 'r') as f:
+
+    # Open and read dustkappa-files
+    with open(dustkappa_filename, 'r') as f:
         for line in f.readlines():
 
             # Skip comments and header
@@ -519,10 +534,13 @@ def load_onekappa(
                 if nn == 1:
                     Nwave = int(line)
                 
-                # Rest are data:
-                if nn > 1 and nn < Nwave+2:
-                    templine = line.split()
-                    Ndata = len(templine) - 1
+                # If line contains four elements: then it's wavelength, abs, scat, angle
+                # If it's longer or just 1 then it's angles and polarisation matrix elements
+                
+                templine = line.split()
+                Ndata = len(templine) - 1
+
+                if Ndata > 0 and Ndata < 4:
 
                     wavelengths.append(float(templine[0]))
                     absorption.append(float(templine[1]))
@@ -531,14 +549,18 @@ def load_onekappa(
                         scattering.append(float(templine[2]))
                     if Ndata > 2:
                         scattangle.append(float(templine[3]))
+                    
+                    # Save this Ndata also
+                    finalNdata = Ndata
                 
                 # Increase line counter
                 nn += 1
-    if Ndata == 1:
+    print(finalNdata)
+    if finalNdata == 1:
         return specie_name,wavelengths,absorption
-    if Ndata == 2:
+    if finalNdata == 2:
         return specie_name,wavelengths,[absorption,scattering]
-    if Ndata == 3:
+    if finalNdata == 3:
         return specie_name,wavelengths,[absorption,scattering,scattangle]
 
 
@@ -1231,11 +1253,11 @@ def plot_allkappa(
     """
     Load and plots absorption/scattering/scattering angles of all species in dustopac at folder of path
     
-    INPUT
-    path: path to folder containing dustkappa and dustopac-files
+    ARGUMENTS
+      path: path to folder containing dustkappa and dustopac-files
 
-    OUTPUT
-    Figure.
+    RETURNS
+      Figure-object, plot with fig.show() TODO write more info
     """
 
     # Automatically add / to end of path if it's missing
@@ -1288,8 +1310,10 @@ def plot_allkappa(
                 xscale='log',yscale='log'
             )
         counter += nkappa
+    #ax[0].legend(specie_names)
     fig.tight_layout()
-    fig.show();
+    
+    return fig
 
 
 # Plot SED

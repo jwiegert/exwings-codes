@@ -35,6 +35,18 @@ Lsol = 3.828e26 # W
 #    N_opabins:int=2
 # )
 #
+#
+# load_dust_densitytemperature()
+#    savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+#    nspecies:int=0
+# )
+#
+#
+# load_star_properties(
+#    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
+# )
+
+
 # ============================================================
 
 

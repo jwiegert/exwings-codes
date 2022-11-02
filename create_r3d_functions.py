@@ -782,10 +782,6 @@ def create_wavelength(
 
 
 
-# TODO
-# a function that loads and extracts and returns a grain size list from 
-# the binned grain szies as created in c5d binning of grain sizes
-
 # Create optool-kappa-file-script
 def create_optoolscript(
         wavelength_path:str='../wavelength_micron.inp',
@@ -799,7 +795,10 @@ def create_optoolscript(
     """
 
     ARGUMENTS
-      grainum_sizes:list : list of mean-grainsizes in micrometres
+      grainum_sizes: Can be a list or str!
+              list : list of mean-grainsizes in micrometres
+               str : path to grain_sizes_binned_PHASE.dat - file, as created by
+                     a5d.bin_grainsizes()
 
       grainsize_na:int : number of grain sizes per sizes in grainum_sizes
                        : intermediate-size steps are used to reduce number resonances from
@@ -828,6 +827,33 @@ def create_optoolscript(
     # Wavelength grid limits
     lmin = min(wavelengths)
     lmax = max(wavelengths)
+
+    
+    # Check type of grainum_sizes variable and act accordingly
+    if type(grainum_sizes) == str:
+
+        #Then load sizes
+        if os.path.exists(grainum_sizes) == True:
+
+            print(f'Extracting grain sizes from {grainum_sizes}')
+            grainsizes,Nleafs = a3d.load_grainsizes(
+                grainsize_path=grainum_sizes
+            )
+
+            # Extract an array with the grain sizes only
+            grainum_sizes = np.unique(grainsizes[np.where(grainsizes > 0)[0]])
+            # Change unit to um
+            grainum_sizes *= 1e4
+
+            print(f'Grain sizes are {grainum_sizes} um')
+    
+    elif type(grainum_sizes) == list:
+        print(f'Grain sizes are {grainum_sizes} um')
+    
+    else:
+        print('ERROR! grainum_sizes must be either list or string (even with only one grain size)')
+        return 'STOPPING'
+
 
 
     # MRN-dist needs Amin, Amax, power and number of sizez

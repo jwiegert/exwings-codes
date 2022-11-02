@@ -47,7 +47,6 @@ Lsol = 3.828e26 # W
 #    temperature:bool=True
 # )
 # 
-# TODO move these redundant load-density-temperatyre-opacity-files to oldfuncs-file
 #
 # load_grid_properties(
 #    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
@@ -58,17 +57,9 @@ Lsol = 3.828e26 # W
 #    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav',
 # )
 #
-# load_star_properties(
-#    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
-# )
 #
 # load_dustspecies_names(
 #    savpath:str='../co5bold_data/dst28gm06n056/st28gm06n052_186.sav'
-# )
-#
-# load_dust_densitytemperature()
-#    savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
-#    nspecies:int=0
 # )
 #
 #
@@ -156,7 +147,7 @@ Lsol = 3.828e26 # W
 #    monomermasses:list=[2.3362e-22]
 # )
 #
-#extract_grainsizes(
+# extract_grainsizes(
 #    amrpath:str='../r3dresults/st28gm06n052/amr_grid.inp',
 #    gridpath:str='../r3dresults/st28gm06n052/grid_distances.csv',
 #    sizepath:str='../r3dresults/st28gm06n052/grid_cellsizes.csv',
@@ -1675,7 +1666,7 @@ def extract_grainsizes(
         epsilonHe = 0.1
 
     RETURNS
-      file: grain_sizes.dat
+      file: grain_sizes_{phase}.dat
     """
     # Extract phase-designation from savpath
     phase = savpath.split('_')[-1].split('.')[0]
@@ -1849,8 +1840,15 @@ def bin_grainsizes(
     with open(f'../grain_sizes_binned_{phase}.dat', 'w') as fsizes:
 
         # Write header
-        fsizes.write(f'# List of BINNED grain sizes of each cell.\n# Same order as in R3D density and temperature files.\n# As extracted from {grainsizepath}\n')
-
+        fsizes.write('# List of BINNED grain sizes of each cell.\n')
+        fsizes.write(f'# Phase is {phase}.\n')
+        fsizes.write('# Same order as in R3D density and temperature files.\n')
+        fsizes.write(f'# As extracted from {grainsizepath} in {nbins} size bins (ie species).\n')
+        if lin == 'y':
+            fsizes.write('# In LINear grain size scale.\n#\n')
+        elif lin == 'n':
+            fsizes.write('# In LOGarithmic grain size scale.\n#\n')
+        
         # Write sizes
         for size in new_sizes:
             if size > 0:
