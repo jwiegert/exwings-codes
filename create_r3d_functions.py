@@ -850,10 +850,10 @@ def create_optoolscript(
             # Change unit to um
             grainum_sizes *= 1e4
 
-            print(f'Grain sizes are {grainum_sizes} um')
+            print(f'    Grain sizes are (um):\n{grainum_sizes}')
     
     elif type(grainum_sizes) == list:
-        print(f'Grain sizes are {grainum_sizes} um')
+        print(f'    Grain sizes are (um):\n{grainum_sizes}')
     
     else:
         print('ERROR! grainum_sizes must be either list or string (even with only one grain size)')
@@ -878,16 +878,23 @@ def create_optoolscript(
 
         for nn in range(len(grainum_sizes)-1):
 
+            # TODO
+            # maybe?
+            # change to not taking midsize but previous/subsequent size!
+            # keep sigma
+            # run another test-run and see that it's the same as previous test
+            # both lin and log scale
+
             midsize = 0.5 * (grainum_sizes[nn]+grainum_sizes[nn+1])
 
             # Minimum sizes
             amin_um.append(midsize)
 
-            # Maximum sizes
+            # Maximum sizes (previous max size is the next's min-size, ie, the same in loop)
             amax_um.append(midsize)
         
+        # Final maximum size is then this
         amax_um.append(grainum_sizes[-1] + grainum_sizes[-1] - amax_um[-1])
-
 
         # Check if we have lognormal distr
         if grainsize_type == 'lognormal':
@@ -918,6 +925,12 @@ def create_optoolscript(
         if grainsize_type == 'lognormal':
             # Then sigma is just
             asigma_um = [(amax_um[0] - amin_um[0])/2.355]
+
+
+    # Some (temporary) output 
+    print('    Grain size ranges are then')
+    for nn in range(len(grainum_sizes)):
+        print(f'{amin_um[nn]} - {grainum_sizes[nn]} - {amax_um[nn]}')
 
 
 

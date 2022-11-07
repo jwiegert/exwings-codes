@@ -1651,6 +1651,7 @@ def extract_grainsizes(
     """
     Info about the grain sizes, the equation
     TODO
+    FIrst use a5d.load_c5dheavydata to create necessary npy-files:
     
     ARGUMENTS
       PATHS
@@ -1748,8 +1749,8 @@ def extract_grainsizes(
                         for nnx in c5dxrange:
                             # Sum all densities and temperatures (only those with data)
 
-                            if monomer_densities[nnx,nny,nnz] > 0:
-                                monomer_density += monomer_densities[nnx,nny,nnz]
+                            if monomer_densities[0,nnx,nny,nnz] > 0:
+                                monomer_density += monomer_densities[0,nnx,nny,nnz]
                                 ndustcells += 1
 
                             if gas_densities[nnx,nny,nnz] > 0:
