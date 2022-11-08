@@ -716,10 +716,167 @@ def plot_grainsize_distribution(
                 Ngrains_agrain[nn] += Ngrains_cell[ncell]
                 break
     
+    # Change grain size unit to um
+    unique_grainsizes *= 1e4
 
-    plt.step(unique_grainsizes,Ngrains_agrain)
+    # Create and return figure objects
+    fig, ax = plt.figure(), plt.axes()
+    ax.step(unique_grainsizes,Ngrains_agrain)
+    ax.set(
+        xlabel=r'Grain size ($\mu$m)',
+        ylabel=r'Number of grains',
+    )
+    fig.tight_layout()
+
+    return fig, ax
 
 
+def plot_grainsizemass_distribution(
+        phase = 186
+    ):
+    """
+    TODO
+    to plot histograms with grain size vs mass of grain size bins
+    only for st28gm06n052 so far, might change later!
+    """
+
+    # ADD TO INFO
+    # load dust densities from file with only ONE specie!
+    Ncells, Nspec, dust_densities = a3d.load_dustdensity(
+        path=f'../r3dresults/st28gm06n052/{phase}/dust_density_dust.inp',
+        numb_specie=1
+    )
+
+    # Load grain sizes per cell
+    grain_sizes,Ncells = a3d.load_grainsizes(
+        grainsize_path=f'../grain_sizes_{phase}.dat'
+    )
+
+    # Compute volume per cell - load cell sizes
+    cell_sizes = a3d.load_cellsizes(
+        sizepath='../r3dresults/st28gm06n052/grid_cellsizes.csv',
+        amrpath='../r3dresults/st28gm06n052/amr_grid.inp'
+    )
+
+    # Plot only Cells with dust in them
+    dustcells = np.where(grain_sizes > 0)[0]
+
+    # Cell volumes
+    cell_volumes = cell_sizes[dustcells]**3
+    # And mass per cell
+    cell_masses = dust_densities[dustcells] * cell_volumes
+    # And grain sizes in meter
+    grain_sizes_um = grain_sizes[dustcells]*1e4
+
+
+
+    # Linearly bin the grain sizes per mass
+    Nbins = 200
+    dustmass_bins = np.zeros(Nbins)
+    grainsize_bins = np.zeros(Nbins)
+
+    # Mass bins
+    grainsize_binlimits = np.linspace(grain_sizes_um.min(), grain_sizes_um.max(), Nbins+1)
+
+    for nn in range(Nbins):
+        binindeces = np.argwhere(
+            (grain_sizes_um >= grainsize_binlimits[nn]) & \
+            (grain_sizes_um < grainsize_binlimits[nn+1])
+        )
+        dustmass_bins[nn] = np.sum(cell_masses[binindeces])
+        grainsize_bins[nn] = np.mean(grain_sizes_um[binindeces])
+
+    # Declare objects
+    fig,ax = plt.subplots(2,2)
+
+    # Plot first figure:
+    # linear scale, 200 bins
+    ax[0][0].step(grainsize_bins,dustmass_bins)
+    ax[0][0].set(
+        xlabel=r'Grain size ($\mu$m)',
+        ylabel='Dust mass (g)'
+    )
+
+
+    # Lgarithmically bin the grain sizes per mass
+    Nbins = 200
+    dustmass_bins = np.zeros(Nbins)
+    grainsize_bins = np.zeros(Nbins)
+
+    # Mass bins
+    grainsize_binlimits = np.logspace(
+        np.log10(grain_sizes_um.min()), 
+        np.log10(grain_sizes_um.max()), 
+        Nbins+1
+    )
+
+    for nn in range(Nbins):
+        binindeces = np.argwhere(
+            (grain_sizes_um >= grainsize_binlimits[nn]) & \
+            (grain_sizes_um < grainsize_binlimits[nn+1])
+        )
+        dustmass_bins[nn] = np.sum(cell_masses[binindeces])
+        grainsize_bins[nn] = np.mean(grain_sizes_um[binindeces])
+
+    ax[0][1].step(grainsize_bins,dustmass_bins)
+    ax[0][1].set(
+        xlabel=r'Grain size ($\mu$m)',
+        ylabel='Dust mass (g)',
+        xscale='log'
+    )
+
+
+    # Small number of linear bins
+    Nbins = 10
+    dustmass_bins = np.zeros(Nbins)
+    grainsize_bins = np.zeros(Nbins)
+
+    # Mass bins
+    grainsize_binlimits = np.linspace(grain_sizes_um.min(), grain_sizes_um.max(), Nbins+1)
+
+    for nn in range(Nbins):
+        binindeces = np.argwhere(
+            (grain_sizes_um >= grainsize_binlimits[nn]) & \
+            (grain_sizes_um < grainsize_binlimits[nn+1])
+        )
+        dustmass_bins[nn] = np.sum(cell_masses[binindeces])
+        grainsize_bins[nn] = np.mean(grain_sizes_um[binindeces])
+
+    ax[1][0].step(grainsize_bins,dustmass_bins)
+    ax[1][0].set(
+        xlabel=r'Grain size ($\mu$m)',
+        ylabel='Dust mass (g)'
+    )
+
+
+    # Logarithmically bin the grain sizes per mass
+    Nbins = 10
+    dustmass_bins = np.zeros(Nbins)
+    grainsize_bins = np.zeros(Nbins)
+
+    # Mass bins
+    grainsize_binlimits = np.logspace(
+        np.log10(grain_sizes_um.min()), 
+        np.log10(grain_sizes_um.max()), 
+        Nbins+1
+    )
+
+    for nn in range(Nbins):
+        binindeces = np.argwhere(
+            (grain_sizes_um >= grainsize_binlimits[nn]) & \
+            (grain_sizes_um < grainsize_binlimits[nn+1])
+        )
+        dustmass_bins[nn] = np.sum(cell_masses[binindeces])
+        grainsize_bins[nn] = np.mean(grain_sizes_um[binindeces])
+
+    ax[1][1].step(grainsize_bins,dustmass_bins)
+    ax[1][1].set(
+        xlabel=r'Grain size ($\mu$m)',
+        ylabel='Dust mass (g)',
+        xscale='log'
+    )
+
+    return fig, ax 
 
 
 
@@ -1455,14 +1612,16 @@ def create_dustfiles(
         # Extract an array with the grain sizes only
         grainsizes_uniq = np.unique(grainsizes[np.where(grainsizes > 0)[0]])
 
-    else:
-        grainsizes = 0
-        grainsizes_uniq = 0
-    
-    # List of grain sizes and number of bins (in micrometers!)
-    Ngrainsizes = grainsizes_uniq.size
-    print(f'Availble grain sizez are (um): {grainsizes_uniq}\n')
+        # List of grain sizes and number of bins (in micrometers!)
+        Ngrainsizes = grainsizes_uniq.size
+        print(f'Availble grain sizez are (um): {grainsizes_uniq}\n')
 
+    else:
+        # Create place-holder lists
+        grainsizes = [0]
+        grainsizes_uniq = [0]
+        Ngrainsizes = 1
+    
 
     # Check so that the smallest c5dcells are not larger than the r3d's smallest cells
     if r3dcellsizes.min() <= c5dcellsize:
@@ -1586,11 +1745,11 @@ def create_dustfiles(
                                     for nnx in c5dxrange:
                                         # Sum all densities and temperatures (only those with data)
 
-                                        if c5ddensities[nnx,nny,nnz] > 0:
-                                            r3d_density += c5ddensities[nnx,nny,nnz]
+                                        if c5ddensities[0,nnx,nny,nnz] > 0:
+                                            r3d_density += c5ddensities[0,nnx,nny,nnz]
                                             ndustcells += 1
 
-                                        if c5ddensities[nnx,nny,nnz] > 0:
+                                        if c5ddensities[0,nnx,nny,nnz] > 0:
                                             r3d_temperature += c5dtemperatures[nnx,nny,nnz]
                                             ntempcells += 1
 

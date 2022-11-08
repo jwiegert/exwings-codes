@@ -1170,6 +1170,9 @@ def plot_grainsize_radius(
         amrpath:str='../r3dresults/st28gm06n052/amr_grid.inp',
         grainsizepath:str='../grain_sizes_186.dat'
     ):
+    """
+    TODO info
+    """
 
     # Load radius-array
     griddistances = load_griddistances(
@@ -1195,6 +1198,7 @@ def plot_grainsize_radius(
         xlabel=r'Distance (AU)',
         ylabel=r'Grain size ($\mu$m)',
     )
+    return fig, ax
 
 
 # Plot absorption, scattering, and angles of the various species
