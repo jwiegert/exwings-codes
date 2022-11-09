@@ -732,18 +732,20 @@ def plot_grainsize_distribution(
 
 
 def plot_grainsizemass_distribution(
-        phase = 186
+        model:str= 'st28gm06n052',
+        phase:str= '186'
     ):
     """
     TODO
     to plot histograms with grain size vs mass of grain size bins
     only for st28gm06n052 so far, might change later!
+    IE this is quite hard-coded, only copy-pasted from jupyter, but it works :)
     """
 
     # ADD TO INFO
     # load dust densities from file with only ONE specie!
     Ncells, Nspec, dust_densities = a3d.load_dustdensity(
-        path=f'../r3dresults/st28gm06n052/{phase}/dust_density_dust.inp',
+        path=f'../r3dresults/{model}/{phase}/dust_density_dust.inp',
         numb_specie=1
     )
 
@@ -754,8 +756,8 @@ def plot_grainsizemass_distribution(
 
     # Compute volume per cell - load cell sizes
     cell_sizes = a3d.load_cellsizes(
-        sizepath='../r3dresults/st28gm06n052/grid_cellsizes.csv',
-        amrpath='../r3dresults/st28gm06n052/amr_grid.inp'
+        sizepath=f'../r3dresults/{model}/grid_cellsizes.csv',
+        amrpath=f'../r3dresults/{model}/amr_grid.inp'
     )
 
     # Plot only Cells with dust in them
@@ -787,14 +789,15 @@ def plot_grainsizemass_distribution(
         grainsize_bins[nn] = np.mean(grain_sizes_um[binindeces])
 
     # Declare objects
-    fig,ax = plt.subplots(2,2)
+    fig,ax = plt.subplots(2,2, num=f'{model}_{phase}')
 
     # Plot first figure:
     # linear scale, 200 bins
     ax[0][0].step(grainsize_bins,dustmass_bins)
     ax[0][0].set(
         xlabel=r'Grain size ($\mu$m)',
-        ylabel='Dust mass (g)'
+        ylabel='Dust mass (g)',
+        title=f'{model}_{phase}'
     )
 
 
@@ -876,6 +879,7 @@ def plot_grainsizemass_distribution(
         xscale='log'
     )
 
+    fig.tight_layout()
     return fig, ax 
 
 
