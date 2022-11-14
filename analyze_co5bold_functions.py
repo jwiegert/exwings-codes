@@ -183,7 +183,9 @@ def load_c5dheavydata(
 
     ARGUMENTS
       savpath:str = path to sav-file
-      nspecies:int = number of the specie to extract, start with 0!
+      nspecies:int = number of the species to extract
+                     1: only forsterite
+                     2: forsterite and alumina
       gas_density = True to save star(gas) density
       dust_density = True to save dust monomer density
       gas_opacity = True to save star(gas) opacity
@@ -220,8 +222,8 @@ def load_c5dheavydata(
 
     if dust_density == True:
         c5ddust_densities = []
-        for nspecies in range(Nspecies):
-            c5ddust_densities.append(c5ddata['Z'][0][0][40+3*nspecies])
+        for nspecie in range(Nspecies):
+            c5ddust_densities.append(c5ddata['Z'][0][0][40+3*nspecie])
 
     if gas_opacity == True:
         c5dstar_opacities = c5ddata['OPA'][0][0][0]

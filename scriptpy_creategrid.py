@@ -26,9 +26,9 @@ path = f'../r3dresults/{modelname}/'
 AUcm = 1.49598e13 # cm
 
 # Create folders
+os.system(f'mkdir {path}')
 for phase in phases:
-    os.system(f'mkdir {path}/{phase}')
-
+    os.system(f'mkdir {path}{phase}')
 
 # Extract star's radius for each phase
 Mstar,Rstar,Lstar = a5d.load_star_information(
@@ -61,11 +61,17 @@ basecell = 1.001 * cellsize * 2**4 / AUcm # Size of base cells as based on small
 nxyz = r3dedge/basecell # Number of base cells along one side of the cube
 
 # Radial distances to refinements based on stellar radius
+#refinementlist_au = [
+#    8*Rstar/AUcm,
+#    6*Rstar/AUcm,
+#    4*Rstar/AUcm,
+#    2*Rstar/AUcm
+#]
 refinementlist_au = [
-    8*Rstar/AUcm,
-    6*Rstar/AUcm,
-    4*Rstar/AUcm,
-    2*Rstar/AUcm
+    8.5*Rstar/AUcm,
+    6.5*Rstar/AUcm,
+    4.5*Rstar/AUcm,
+    2.5*Rstar/AUcm
 ]
 
 # Inner refinements up to 0.9 Rstar (divided equally radially by number of refinements)

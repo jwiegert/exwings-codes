@@ -17,10 +17,12 @@ phase2=198
 python3 scriptpy_creategrid.py $modelname $phase0 $phase1 $phase2
 wait
 
-# TODO
-# parallell loading of densities, temperature, opacity (for each phase)
-# saved into numpy-or-pickle-files
-# that are faster to load in the later scripts
+# Extract and create temporary npy-files for the remaining steps
+#   gas & dust densities, temperatures, opacity
+python3 scriptpy_createnpy.py $modelname $phase0 &
+python3 scriptpy_createnpy.py $modelname $phase1 &
+python3 scriptpy_createnpy.py $modelname $phase2 &
+wait
 
 # Extract and create star-files
 python3 scriptpy_createstar.py $modelname $phase0 &
@@ -32,7 +34,10 @@ python3 scriptpy_createdust.py $modelname $phase1 &
 python3 scriptpy_createdust.py $modelname $phase2 &
 wait
 
-# Merge star and dust data
+# Remove all npy-files
+rm ../*.npy &
+
+# and merge star and dust data
 python3 scriptpy_mergedata.py $modelname $phase0 &
 python3 scriptpy_mergedata.py $modelname $phase1 &
 python3 scriptpy_mergedata.py $modelname $phase2 &

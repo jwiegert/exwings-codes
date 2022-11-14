@@ -14,17 +14,22 @@ phase2=142
 python3 scriptpy_creategrid.py $modelname $phase0 $phase1 $phase2
 wait
 
-# TODO
-# parallell loading of densities, temperature, opacity (for each phase)
-# saved into numpy-or-pickle-files
-# that are faster to load in the later scripts
+# Extract and create temporary npy-files for the remaining steps
+#   gas & dust densities, temperatures, opacity
+python3 scriptpy_createnpy.py $modelname $phase0 &
+python3 scriptpy_createnpy.py $modelname $phase1 &
+python3 scriptpy_createnpy.py $modelname $phase2 &
+wait
 
 # Create stars
 python3 scriptpy_createstar.py $modelname $phase0 &
 python3 scriptpy_createstar.py $modelname $phase1 &
 python3 scriptpy_createstar.py $modelname $phase2 &
+wait
+
+# Remove all npy-files
+rm ../*.npy &
 
 # Write r3d-runscripts
-wait
 python3 scriptpy_write_r3d_runscripts.py $modelname $phase0 $phase1 $phase2
 

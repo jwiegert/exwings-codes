@@ -37,6 +37,7 @@ griddistances = a3d.load_griddistances(
 )[:,0]
 
 # Create all r3d-data from c5d-data
+# Must run a5d.heavydata first, ie scriptpy_createnpy.py [modelname] [phase]
 a5d.create_stars(
     modelnames = [f'{modelname}'],
     phases = [phase]
@@ -59,3 +60,4 @@ a5d.smooth_stellardata(
 #   dust_density_opastar.inp
 #   dustkappa_opastar.inp
 #   dustopac_opastar.inp
+
