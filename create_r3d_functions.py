@@ -791,7 +791,7 @@ def create_wavelength(
 def create_optoolscript(
         wavelength_path:str='../wavelength_micron.inp',
         grainum_sizes:list=[0.1],
-        grainsize_type:str='lognormal',
+        grainsize_type:str='normal',
         grainsize_na:int=21,
         grainsize_power:float=-3.5,
         specie:str='mg2sio4',
@@ -809,10 +809,11 @@ def create_optoolscript(
                        : intermediate-size steps are used to reduce number resonances from
                        : singular grain sizes
 
-      grainsize_type:str : available grain size distributions:
-                'normal' : log-normal (Gaussian) >> grainsize_power is not used
-                   'mrn' : power-law, MRN or Dohnanyi-style
-                         : e.g. grainsize_power = -3.5 gives an MRN (or Dohnanyi) -powerlaw
+         grainsize_type:str : available grain size distributions:
+                   'normal' : normal Gaussian >> grainsize_power is not used
+                'lognormal' : log-normal Gaussian >> grainsize_power is not used
+                      'mrn' : power-law, MRN or Dohnanyi-style
+                            : e.g. grainsize_power = -3.5 gives an MRN (or Dohnanyi) -powerlaw
 
       specie:str : available species:
        'mg2sio4' : Forsterite
@@ -897,7 +898,7 @@ def create_optoolscript(
         amax_um.append(grainum_sizes[-1] + grainum_sizes[-1] - amax_um[-1])
 
         # Check if we have lognormal distr
-        if grainsize_type == 'lognormal':
+        if grainsize_type == 'normal' or 'lognormal':
             #
             # Define sigma:
             #
@@ -922,7 +923,7 @@ def create_optoolscript(
         amin_um = [0.5*grainum_sizes[0]]
         amax_um = [grainum_sizes[0] + amin_um[0]]
 
-        if grainsize_type == 'lognormal':
+        if grainsize_type == 'normal' or 'lognormal':
             # Then sigma is just
             asigma_um = [(amax_um[0] - amin_um[0])/2.355]
 
@@ -938,7 +939,10 @@ def create_optoolscript(
 
         # Write header
         f.write(f'# Script to run optool to create kappa-files for R3D\n#\n')
-        f.write(f'#    Grain sizes (um): {grainum_sizes} \n')
+        f.write('#    Grain sizes (um):')
+        for size in grainum_sizes:
+            f.write(f' {grainum_sizes} ')
+        f.write('\n')
         f.write(f'#    Grain size distribution-style: {grainsize_type}\n')
         f.write(f'#    Grain type: {grain_type}\n')
         f.write(f'#    Dust specie: {specie}\n#\n')
@@ -954,15 +958,21 @@ def create_optoolscript(
 
             # TODO Write into an optool-bash-script
 
-            if grainsize_type == 'lognormal':
+            if grainsize_type == 'normal' or 'lognormal':
         
                 # Extract data to make the codes clearer
                 amean = grainum_sizes[nn]
                 asigma = asigma_um[nn]
 
-                # log-normal distribution (same as I've used before)
-                # -a amin amax amean:asig [na]
-                f.write(f'optool -c {lnk_path} -{grain_type} -a {amin} {amax} {amean}:{asigma} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -s -radmc mg2sio4_{grainum_sizes[nn]}\n')
+                if grainsize_type == 'normal':
+                    # normal distribution
+                    # -a amin amax amean:-asig [na]
+                    f.write(f'optool -c {lnk_path} -{grain_type} -a {amin} {amax} {amean}:-{asigma} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -s -radmc mg2sio4_{grainum_sizes[nn]}\n')
+
+                if grainsize_type == 'lognormal':
+                    # log-normal distribution
+                    # -a amin amax amean:asig [na]
+                    f.write(f'optool -c {lnk_path} -{grain_type} -a {amin} {amax} {amean}:{asigma} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -s -radmc mg2sio4_{grainum_sizes[nn]}\n')
             
             if grainsize_type == 'mrn':
                 # For Mie theory, 

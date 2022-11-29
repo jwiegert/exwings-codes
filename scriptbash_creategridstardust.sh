@@ -13,16 +13,19 @@ phase0=186
 phase1=190
 phase2=198
 
+
 # Create R3D-grid
-python3 scriptpy_creategrid.py $modelname $phase0 $phase1 $phase2
-wait
+python3 scriptpy_creategrid.py $modelname $phase0 $phase1 $phase2 &
 
 # Extract and create temporary npy-files for the remaining steps
 #   gas & dust densities, temperatures, opacity
 python3 scriptpy_createnpy.py $modelname $phase0 &
 python3 scriptpy_createnpy.py $modelname $phase1 &
 python3 scriptpy_createnpy.py $modelname $phase2 &
+
+
 wait
+
 
 # Extract and create star-files
 python3 scriptpy_createstar.py $modelname $phase0 &
@@ -32,6 +35,8 @@ python3 scriptpy_createstar.py $modelname $phase2 &
 python3 scriptpy_createdust.py $modelname $phase0 &
 python3 scriptpy_createdust.py $modelname $phase1 &
 python3 scriptpy_createdust.py $modelname $phase2 &
+
+
 wait
 
 # Remove all npy-files
@@ -41,6 +46,8 @@ rm ../*.npy &
 python3 scriptpy_mergedata.py $modelname $phase0 &
 python3 scriptpy_mergedata.py $modelname $phase1 &
 python3 scriptpy_mergedata.py $modelname $phase2 &
+
+
 wait
 
 # Write r3d-runscripts
