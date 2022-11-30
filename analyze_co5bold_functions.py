@@ -1797,7 +1797,7 @@ def create_dustfiles(
                             progbar += 1
                             print('Finished 75 per cent of the grid.')
 
-    # End functions with aknowledgements
+    # End functions with acknowledgements
     print(f'C5D Dust-data:\n    dust_density_dust_{phase}.inp\n    dust_temperature_dust_{phase}.dat\n    dustopac_dust_{phase}.inp\nDONE\n')
 
 
@@ -1933,8 +1933,8 @@ def extract_grainsizes(
                 else: 
                     grain_sizes = 0
 
-                # Write data to r3d files
-                fsizes.write(f'{grain_sizes}\n')
+                # Write data to r3d files (and round to 3 decimals)
+                fsizes.write(f'{grain_sizes:.3e}\n')
 
                 # Reset data
                 monomer_density = 0
@@ -1968,7 +1968,7 @@ def bin_grainsizes(
     ):
     """
     TODO
-    write info her
+    write info here
 
     """
     # Load grainsizes
@@ -2018,7 +2018,7 @@ def bin_grainsizes(
         # Write sizes
         for size in new_sizes:
             if size > 0:
-                fsizes.write(f'{size}\n')
+                fsizes.write(f'{size:.3e}\n')
             else:
                 fsizes.write('0\n')
 

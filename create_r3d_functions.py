@@ -790,6 +790,7 @@ def create_wavelength(
 # Create optool-kappa-file-script
 def create_optoolscript(
         wavelength_path:str='../wavelength_micron.inp',
+        phase=186,
         grainum_sizes:list=[0.1],
         grainsize_type:str='normal',
         grainsize_na:int=21,
@@ -861,7 +862,6 @@ def create_optoolscript(
         return 'STOPPING'
 
 
-
     # MRN-dist needs Amin, Amax, power and number of sizez
     #   amin, max: given from amean
     #   power and na needs to be given : 2 numbers
@@ -869,23 +869,32 @@ def create_optoolscript(
     # Lognormal needs Amin, Amax, Amean, Asig (always the same?), and number of sizes
     #   amin, amax, asig, given from amean
     #   needs number of sizes : 1 number
+    #
+    # Normal needs the same as Lognormal
 
 
     # Define grain size limits
     if len(grainum_sizes) > 1:
 
-        amin_um = [0.5*grainum_sizes[0]]
+        # Smallest size's lower limit:
+        #   if the half-distance to next grain size is smaller than the smallest size
+        #   take smallest-size minus half-distance
+        #   else take one tenth of the smallest size
+        #
+        midsize = 0.5 * (grainum_sizes[0]+grainum_sizes[1]) - grainum_sizes[0]
+        if midsize < grainum_sizes[0]:
+            amin_um = [grainum_sizes[0] - midsize]
+            print('yes')
+        else: 
+            amin_um = [0.1*grainum_sizes[0]]
+        # Old alternative
+        # amin_um = [0.5*grainum_sizes[0]]
+
         amax_um = []
 
         for nn in range(len(grainum_sizes)-1):
 
-            # TODO
-            # maybe?
-            # change to not taking midsize but previous/subsequent size!
-            # keep sigma
-            # run another test-run and see that it's the same as previous test
-            # both lin and log scale
-
+            # Size in between the current and next size
             midsize = 0.5 * (grainum_sizes[nn]+grainum_sizes[nn+1])
 
             # Minimum sizes
@@ -894,7 +903,7 @@ def create_optoolscript(
             # Maximum sizes (previous max size is the next's min-size, ie, the same in loop)
             amax_um.append(midsize)
         
-        # Final maximum size is then this
+        # Final maximum size is then this ie add the previous half distance on the max grain size
         amax_um.append(grainum_sizes[-1] + grainum_sizes[-1] - amax_um[-1])
 
         # Check if we have lognormal distr
@@ -929,19 +938,19 @@ def create_optoolscript(
 
 
     # Some (temporary) output 
-    print('    Grain size ranges are then')
-    for nn in range(len(grainum_sizes)):
-        print(f'{amin_um[nn]} - {grainum_sizes[nn]} - {amax_um[nn]}')
+    #if grainsize_type == 'normal' or 'lognormal':
+    #    print('    Grain size ranges are then')
+    #    for nn in range(len(grainum_sizes)):
+    #        print(f'{amin_um[nn]:.3e} - {grainum_sizes[nn]:.3e} - {amax_um[nn]:.3e}')
 
 
-
-    with open('../optool_script.sh','w') as f:
+    with open(f'../optool_script_{phase}.sh','w') as f:
 
         # Write header
         f.write(f'# Script to run optool to create kappa-files for R3D\n#\n')
         f.write('#    Grain sizes (um):')
         for size in grainum_sizes:
-            f.write(f' {grainum_sizes} ')
+            f.write(f' {size} ')
         f.write('\n')
         f.write(f'#    Grain size distribution-style: {grainsize_type}\n')
         f.write(f'#    Grain type: {grain_type}\n')
@@ -967,21 +976,21 @@ def create_optoolscript(
                 if grainsize_type == 'normal':
                     # normal distribution
                     # -a amin amax amean:-asig [na]
-                    f.write(f'optool -c {lnk_path} -{grain_type} -a {amin} {amax} {amean}:-{asigma} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -s -radmc mg2sio4_{grainum_sizes[nn]}\n')
+                    f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {amean:.3e}:-{asigma:.3e} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -s -radmc mg2sio4_{amean:.3e}\n')
 
                 if grainsize_type == 'lognormal':
                     # log-normal distribution
                     # -a amin amax amean:asig [na]
-                    f.write(f'optool -c {lnk_path} -{grain_type} -a {amin} {amax} {amean}:{asigma} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -s -radmc mg2sio4_{grainum_sizes[nn]}\n')
+                    f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {amean:.3e}:{asigma:.3e} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -s -radmc mg2sio4_{amean:.3e}\n')
             
             if grainsize_type == 'mrn':
                 # For Mie theory, 
                 # MRN-distribution, 3.5 means a^-3.5, minus is dropped
                 # -a AMIN AMAX APOW NA
-                f.write(f'optool -c {lnk_path} -{grain_type} -a {amin} {amax} {-grainsize_power} {grainsize_na} -lmin 0.1 -lmax 1000 -nlam 100 -s -radmc mg2sio4_{grainum_sizes[nn]}\n')
+                f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {-grainsize_power} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -s -radmc mg2sio4_{grainum_sizes[nn]}\n')
 
     # Make into executable
-    os.system('chmod +x ../optool_script.sh')
+    os.system(f'chmod +x ../optool_script_{phase}.sh')
 
     print('create_optoolscript:\n    ../optool_script.sh\nDONE\n')
 
