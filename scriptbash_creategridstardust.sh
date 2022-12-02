@@ -4,8 +4,14 @@
 # Change modelnames and phases and it goes automatically through all
 # necessary python scripts.
 #
+# Many users, nice this:
+# $ nice -n 19 ./scriptbash_creategridstardust.sh
+#
 # Save in a logfile? Run this (create log.txt first)
 # $ ./scriptbash_creategridstardust.sh | cat > logoutput.txt cat 2> logerror.txt
+#
+# All of it?
+# $ nice -n 19 ./scriptbash_creategridstardust.sh | cat > logoutput.txt cat 2> logerror.txt
 #
 # Define variables
 modelname=st28gm06n052

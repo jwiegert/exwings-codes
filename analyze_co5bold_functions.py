@@ -1699,7 +1699,7 @@ def create_dustfiles(
 
                     # Some output
                     print(f'Writing dust specie number {nspecies+1}:')
-                    print(f'    {speciesname}_{size}um')
+                    print(f'    {speciesname}_{size:.3e}um')
                     print(f'    Monomer mass: {monomermasses} g')
 
                     # Write the dustopac file

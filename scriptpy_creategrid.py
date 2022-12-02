@@ -98,7 +98,7 @@ os.system(
 # Create wavelength grid
 wavelengths = c3d.create_wavelength(
     wavelengthstart = 0.1,
-    wavelengthend = 1000.0,
+    wavelengthend = 500.0,
     nwave = 1000,
     logscale = 'y'
 )
@@ -116,3 +116,4 @@ os.system(
 #   grid_distances.csv
 #   grid_cellsizes.csv
 #   wavelength_micron.inp
+
