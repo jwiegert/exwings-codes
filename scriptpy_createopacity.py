@@ -29,15 +29,31 @@ import os
 # automate this somehow? For now leave as is, I can check species
 # for future co5bold-data manually and change this manually
 #
+# > this is why I write dustopac-file here instead of in a5d.create_dustfiles()
+#
+# Declare dust specie
+specie='mg2sio4'
+
 c3d.create_optoolscript(
-    wavelength_path=f'../r3dresults/{modelname}/wavelength_micron.inp',
+    wavelength_path=f'../r3dresults/opacities_{modelname}/wavelength_micron.inp',
     phase=phase,
     grainum_sizes=f'../grain_sizes_binned_{phase}.dat',
     grainsize_type='normal',
     grainsize_na=21,
-    specie='mg2sio4',
+    specie=specie,
     grain_type='mie'
 )
+
+# Move dustopac-file
+os.system(f'mv ../dustopac_{specie}_{phase}.inp ../r3dresults/{modelname}/{phase}/dustopac_dust.inp')
+
+# Merge with opastar dustopac-file
+c3d.merge_dustopac(
+    filenames=['dustopac_opastar.inp','dustopac_dust.inp'],
+    modelname=modelname,
+    phases=[phase],
+)
+
 
 # Move optool script to phase-folder
 os.system(f'mv ../optool_script_{phase}.sh ../r3dresults/{modelname}/{phase}/optool_script.sh')
@@ -54,4 +70,9 @@ os.system(f'mv *mg2sio4* ../r3dresults/{modelname}/{phase}/')
 
 # Clean up?
 #os.system(f'rm ../grain_sizes_binned_{phase}.dat')
+
+# Resulting files:
+#    dustkapscatmat_{specie}_{grain size in um}.inp
+#    dustopac.inp
+#    optool_script.sh
 

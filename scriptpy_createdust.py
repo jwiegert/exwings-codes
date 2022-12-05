@@ -61,13 +61,12 @@ a5d.create_dustfiles(
 #    RETURNS
 #      dust_density_dust_{phase}.inp
 #      dust_temperature_dust_{phase}.dat
-#      dustopac_dust_{phase}.inp
 
 
 # Move them to correct folder
 os.system(f'mv ../dust_density_dust_{phase}.inp ../r3dresults/{modelname}/{phase}/dust_density_dust.inp')
 os.system(f'mv ../dust_temperature_dust_{phase}.dat ../r3dresults/{modelname}/{phase}/dust_temperature_dust.dat')
-os.system(f'mv ../dustopac_dust_{phase}.inp ../r3dresults/{modelname}/{phase}/dustopac_dust.inp')
+
 
 # Clean up
 os.system(f'rm ../grain_sizes_{phase}.dat')
@@ -80,5 +79,4 @@ os.system(f'rm ../grain_sizes_{phase}.dat')
 #
 # dust_density_dust.inp
 # dust_temperature_dust.dat
-# dustopac_dust.inp
 

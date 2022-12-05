@@ -799,6 +799,8 @@ def create_optoolscript(
         grain_type:str='mie'
     ):
     """
+    Writes script to optool to write opacity files for Radmc3d and dustopac.inp with all
+    dust grain sizes.
 
     ARGUMENTS
       grainum_sizes: Can be a list or str!
@@ -874,7 +876,9 @@ def create_optoolscript(
 
 
     # Define grain size limits
-    if len(grainum_sizes) > 1:
+    Ngrainsizes = len(grainum_sizes)
+
+    if Ngrainsizes > 1:
 
         # Smallest size's lower limit:
         #   if the half-distance to next grain size is smaller than the smallest size
@@ -892,7 +896,7 @@ def create_optoolscript(
 
         amax_um = []
 
-        for nn in range(len(grainum_sizes)-1):
+        for nn in range(Ngrainsizes - 1):
 
             # Size in between the current and next size
             midsize = 0.5 * (grainum_sizes[nn]+grainum_sizes[nn+1])
@@ -924,7 +928,7 @@ def create_optoolscript(
             # Because of the possibility of having log-grain-sizes I should make a list of asig also
             #
             asigma_um = []
-            for nn in range(len(grainum_sizes)):
+            for nn in range(Ngrainsizes):
                 asigma_um.append( (amax_um[nn] - amin_um[nn])/2.355 )
 
     else:
@@ -940,37 +944,41 @@ def create_optoolscript(
     # Some (temporary) output 
     #if grainsize_type == 'normal' or 'lognormal':
     #    print('    Grain size ranges are then')
-    #    for nn in range(len(grainum_sizes)):
+    #    for nn in range(Ngrainsizes):
     #        print(f'{amin_um[nn]:.3e} - {grainum_sizes[nn]:.3e} - {amax_um[nn]:.3e}')
 
 
-    with open(f'../optool_script_{phase}.sh','w') as f:
+    with open(f'../optool_script_{phase}.sh','w') as f, \
+         open(f'../dustopac_{specie}_{phase}.inp', 'w') as fopac:
 
-        # Write header
+        # Write header of optool script
         f.write(f'# Script to run optool to create kappa-files for R3D\n#\n')
         f.write('#    Grain sizes (um):')
         for size in grainum_sizes:
-            f.write(f' {size} ')
+            f.write(f' {size:.3e} ')
         f.write('\n')
         f.write(f'#    Grain size distribution-style: {grainsize_type}\n')
         f.write(f'#    Grain type: {grain_type}\n')
         f.write(f'#    Dust specie: {specie}\n#\n')
 
-        # Write the script with optool commands
-        for nn in range(len(grainum_sizes)):
+        # Write header of dustopac_dust_phase.inp
+        # dustopac:
+        # 2
+        # Number of species
+        # -----------------------
+        fopac.write(f'2\n{int(Ngrainsizes)}\n-----------------------------\n')
 
-            # Extract data to make the codes clearer
+        # Loop over grain sizes
+        for nn in range(Ngrainsizes):
 
             # Grain size limits
             amin = amin_um[nn]
             amax = amax_um[nn]
+            amean = grainum_sizes[nn]
 
-            # TODO Write into an optool-bash-script
-
+            # Write the script with optool commands
             if grainsize_type == 'normal' or 'lognormal':
-        
-                # Extract data to make the codes clearer
-                amean = grainum_sizes[nn]
+                # For Gaussian or log-normal distributions
                 asigma = asigma_um[nn]
 
                 if grainsize_type == 'normal':
@@ -989,10 +997,18 @@ def create_optoolscript(
                 # -a AMIN AMAX APOW NA
                 f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {-grainsize_power} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -s -radmc mg2sio4_{grainum_sizes[nn]}\n')
 
+            # Write dustopac-file for these opacities
+            # dustopac.inp :
+            # 1
+            # 0
+            # speciename
+            # ---------------
+            fopac.write(f"1\n0\n{specie}_{amean:.3e}\n-----------------------------\n")
+
     # Make into executable
     os.system(f'chmod +x ../optool_script_{phase}.sh')
 
-    print('create_optoolscript:\n    ../optool_script.sh\nDONE\n')
+    print('create_optoolscript:\n    ../optool_script.sh\n    ../dustopac_{specie}_{phase}.inp\nDONE\n')
 
 
 

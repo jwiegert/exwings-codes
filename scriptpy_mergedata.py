@@ -34,15 +34,9 @@ c3d.merge_dusttemperatures(
     phases=[phase],
 )
 
-c3d.merge_dustopac(
-    filenames=['dustopac_opastar.inp','dustopac_dust.inp'],
-    modelname=modelname,
-    phases=[phase],
-)
-
 # NOTE
 # Resulting files are, for each ../r3dresults/[modelname]/[phase]/
 #
 #   dust_density.inp
 #   dust_temperature.dat
-#   dustopac.inp
+

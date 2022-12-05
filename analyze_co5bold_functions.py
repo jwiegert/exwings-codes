@@ -1659,8 +1659,7 @@ def create_dustfiles(
 
         # Open r3d data files
         with open(f'../dust_density_dust_{phase}.inp', 'w') as fdensity, \
-             open(f'../dust_temperature_dust_{phase}.dat', 'w') as ftemperature, \
-             open(f'../dustopac_dust_{phase}.inp', 'w') as fopac:
+             open(f'../dust_temperature_dust_{phase}.dat', 'w') as ftemperature:
 
             # Write headers:
             #
@@ -1675,12 +1674,6 @@ def create_dustfiles(
             # nleafs
             # number dust species
             ftemperature.write(f'1\n{int(nleafs)}\n{int(Nspecies*Ngrainsizes)}\n')
-
-            # dustopac:
-            # 2
-            # Number of species
-            # -----------------------
-            fopac.write(f'2\n{int(Nspecies*Ngrainsizes)}\n-----------------------------\n')
 
             # First loop through the number of species you want to include
             for nspecies in range(Nspecies):
@@ -1699,15 +1692,8 @@ def create_dustfiles(
 
                     # Some output
                     print(f'Writing dust specie number {nspecies+1}:')
-                    print(f'    {speciesname}_{size:.3e}um')
+                    print(f'    {speciesname}, {size:.3e}um')
                     print(f'    Monomer mass: {monomermasses} g')
-
-                    # Write the dustopac file
-                    # 1
-                    # 0
-                    # speciename
-                    # ---------------
-                    fopac.write(f"1\n0\n{speciesname}_{size}um\n-----------------------------\n")
 
                     # Loop over the r3d-grid
                     for nr3d in range(nleafs):
@@ -1798,7 +1784,7 @@ def create_dustfiles(
                             print('Finished 75 per cent of the grid.')
 
     # End functions with acknowledgements
-    print(f'C5D Dust-data:\n    dust_density_dust_{phase}.inp\n    dust_temperature_dust_{phase}.dat\n    dustopac_dust_{phase}.inp\nDONE\n')
+    print(f'C5D Dust-data:\n    dust_density_dust_{phase}.inp\n    dust_temperature_dust_{phase}.dat\nDONE\n')
 
 
 # Function that extracts and saves grain sizes per R3d-Cell
