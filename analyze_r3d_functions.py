@@ -1680,11 +1680,12 @@ def plot_opticalthick(
     Plots optical thickness along an average line-of-sight and returns an estimate of
     the average radius of the star.
 
-    INPUT
-    path:str = path to folder containing all r3d-model-data.
+    ARGUMENTS
+      path:str = path to folder containing all r3d-model-data.
 
-    OUTPUT
-    star_surface:float = average radial distance to stellar surface in cm
+    RETURNS
+      star_surface:float = average radial distance to stellar surface in cm
+      fig,ax = matplotlibobjects for plotting
     """
 
     # Automatically add / to end of path if it's missing
@@ -1763,7 +1764,7 @@ def plot_opticalthick(
     star_surface = 0.5* (dxarray[star_surface_index-1] + dxarray[star_surface_index])
 
     # Plot average optical thickness along LOS
-    fig, ax = plt.figure(), plt.axes()
+    fig, ax = plt.figure('Optical thickness along average LOS', figsize=(6, 4)), plt.axes()
 
     # Optical thickness
     ax.plot(
@@ -1780,14 +1781,12 @@ def plot_opticalthick(
 
     ax.set(
         ylabel=r'$\tau$',
-        xlabel=r'Radius (AU)',
-        title='Average optical thickness along LOS',
+        xlabel=r'Distance along LOS (AU)',
         yscale='log'
     )
     fig.tight_layout()
-    fig.show();
 
-    return star_surface
+    return star_surface,fig,ax
 
 
 # ------------------------------------------------------------ #
