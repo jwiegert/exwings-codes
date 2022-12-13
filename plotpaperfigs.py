@@ -54,7 +54,7 @@ if plotthis == 'y':
 #
 # Plot Figure with average LOS optical thickness of gasmodel
 
-plotthis = 'y'
+plotthis = 'n'
 if plotthis == 'y':
 
     Reffective,fig,ax = a3d.plot_opticalthick(
@@ -68,4 +68,15 @@ if plotthis == 'y':
 
     fig.tight_layout()
     fig.savefig('figs/optthick_los.pdf', facecolor="white")
+    fig.show()
+
+# ----------------------------------------------------------------
+#
+# Plot Figure with Mass-vs-grain size histogram
+
+plotthis = 'y'
+if plotthis == 'y':
+
+    fig,ax = a5d.plot_grainsizemass_histogram()
+
     fig.show()

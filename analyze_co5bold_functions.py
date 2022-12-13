@@ -733,6 +733,96 @@ def plot_grainsize_distribution(
     return fig, ax
 
 
+# TODO
+# function som skapar en subplot per phase, förinvalda antal bins
+
+
+def plot_grainsizemass_histogram(
+        model:str= 'st28gm06n052',
+        Nbins=10
+    ):
+    #check model-folder for phases
+    # placeholder in the meantime
+    phases = [186]
+    Nphases = len(phases)
+
+
+    # Initiate fig-axes-subplot-objects
+    fig,ax = plt.subplots(1,Nphases, num=f'{model}')
+
+    # Loop over phases
+    for nphase,phase in enumerate(phases):
+
+        # Load dust densities
+        #
+        # Load each dust density and add them togeyjer into one array
+        # Start with 2 since specie numb1 is the star
+        # End with +1 since range stops one early
+        print(f'Loading dust densities of phase {phase}')
+        Ncells, Nspec, dust_densities = a3d.load_dustdensity(
+            path=f'../r3dresults/{model}/{phase}/dust_density.inp',
+            numb_specie=2
+        )
+        for nspecie in range(2,Nspec+1):
+            Ncells, Nspec, dust_density = a3d.load_dustdensity(
+                path=f'../r3dresults/{model}/{phase}/dust_density.inp',
+                numb_specie=nspecie
+            )
+            dust_densities += dust_density
+
+        # Load binned grain sizes per cell
+        grain_sizes,Ncells = a3d.load_grainsizes(
+            grainsize_path=f'../grain_sizes_binned_{phase}.dat'
+        )
+
+        # Compute volume per cell - load cell sizes
+        cell_sizes = a3d.load_cellsizes(
+            sizepath=f'../r3dresults/{model}/grid_cellsizes.csv',
+            amrpath=f'../r3dresults/{model}/amr_grid.inp'
+        )
+
+        # Plot only Cells with dust in them
+        dustcells = np.where(grain_sizes > 0)[0]
+
+        # Cell volumes
+        cell_volumes = cell_sizes[dustcells]**3
+        # And mass per cell
+        cell_masses = dust_densities[dustcells] * cell_volumes
+        # And grain sizes in meter
+        grain_sizes_um = grain_sizes[dustcells]*1e4
+
+
+        dustmass_bins = np.zeros(Nbins)
+        grainsize_bins = np.zeros(Nbins)
+
+        # Mass bins
+        grainsize_binlimits = np.linspace(grain_sizes_um.min(), grain_sizes_um.max(), Nbins+1)
+
+        for nn in range(Nbins):
+            binindeces = np.argwhere(
+                (grain_sizes_um >= grainsize_binlimits[nn]) & \
+                (grain_sizes_um < grainsize_binlimits[nn+1])
+            )
+            dustmass_bins[nn] = np.sum(cell_masses[binindeces])
+            grainsize_bins[nn] = np.mean(grain_sizes_um[binindeces])
+
+
+        # Plot first figure:
+        # linear scale, 200 bins
+        ax[0][nphase].step(grainsize_bins,dustmass_bins)
+        ax[0][nphase].set(
+            xlabel=r'Grain size ($\mu$m)',
+            ylabel='Dust mass (g)',
+            title=f'Phase: {phase}'
+        )
+        print(f'Finished figure for phase {phase}')
+
+    fig.tight_layout()
+    return fig, ax 
+
+
+
+
 def plot_grainsizemass_distribution(
         model:str= 'st28gm06n052',
         phase:str= '186'
@@ -1559,6 +1649,9 @@ def smooth_density(
 # gives a string with the name of the specie!
 # so this can also print the dustkappa-list-file for r3d!
 
+
+# TODO
+# add link to folder with npy-files
 def create_dustfiles(
         savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
         amrpath:str='../amr_grid.inp',
@@ -1629,6 +1722,14 @@ def create_dustfiles(
         Ngrainsizes = 1
     
 
+    # Check npy-files exists before
+    if os.path.exists(f'../c5ddust_density_{phase}.npy') == True and \
+        os.path.exists(f'../c5d_temperature_{phase}.npy') == True :
+        c5ddensities = np.load(f'../c5ddust_density_{phase}.npy')
+        c5dtemperatures = np.load(f'../c5d_temperature_{phase}.npy')
+    else:
+        print(f'ERROR: One of these files doesnt exist, did you run a5d.load_c5dheavydata() before?\n    ../c5ddust_density_{phase}.npy, ../c5d_temperature_{phase}.npy\n')
+
     # Check so that the smallest c5dcells are not larger than the r3d's smallest cells
     if r3dcellsizes.min() <= c5dcellsize:
         print('\nERROR')
@@ -1645,14 +1746,6 @@ def create_dustfiles(
     else:
         # Load c5d-dust densities and temperatures
         print('Loading CO5BOLD densities and temperatures\n')
-        # Check if files exists first
-        if os.path.exists(f'../c5ddust_density_{phase}.npy') == True and \
-           os.path.exists(f'../c5d_temperature_{phase}.npy') == True :
-            c5ddensities = np.load(f'../c5ddust_density_{phase}.npy')
-            c5dtemperatures = np.load(f'../c5d_temperature_{phase}.npy')
-        else:
-            print(f'ERROR: One of these files doesnt exist, did you run a5d.load_c5dheavydata() before?\n    ../c5ddust_density_{phase}.npy, ../c5d_temperature_{phase}.npy\n')
-
 
         # Continue to c5d-to-r3d-translation
         print(f'Translating C5D dust data to R3D dust data ({phase})')
