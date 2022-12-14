@@ -1255,13 +1255,14 @@ def plot_allkappa(
         path:str='../'
     ):
     """
+    TODO write more info
     Load and plots absorption/scattering/scattering angles of all species in dustopac at folder of path
     
     ARGUMENTS
       path: path to folder containing dustkappa and dustopac-files
 
     RETURNS
-      Figure-object, plot with fig.show() TODO write more info
+      Figure and Axes-objects, plot with fig.show() 
     """
 
     # Automatically add / to end of path if it's missing
@@ -1301,23 +1302,34 @@ def plot_allkappa(
     # one for scattering
     # and one final for scattering angles
     figuretitles = ['Absorption', 'Scattering', 'Average scattering angle']
-    yaxislabels = [r'$\kappa_{\rm abs}$ (cm$^2$/g)',r'$\kappa_{\rm scat}$ (cm$^2$/g)',r'$\left< \cos \theta \right>$']
+
     counter = 0
-    fig, ax = plt.subplots(1,max(Nkappa))
+    fig, ax = plt.subplots(
+        max(Nkappa),1,
+        num='abs_scat_angle.pdf',
+        figsize=(6,10)
+    )
     for nkappa in Nkappa:
         for nn in range(nkappa):
             ax[nn].plot(wavelengths,kappas[counter + nn])
             ax[nn].set(
-                ylabel=yaxislabels[nn],
-                xlabel=r'Wavelength ($\mu$m)',
                 title=figuretitles[nn],
                 xscale='log',yscale='log'
             )
         counter += nkappa
-    #ax[0].legend(specie_names)
-    fig.tight_layout()
     
-    return fig
+    # Change specie name strings:
+    grainsizes_legend = []
+    for grainsize in specie_names:
+        grainsize = round(float(grainsize.split('_')[1].split('e')[0])*100)/100
+        grainsizes_legend.append(rf'{grainsize} $\mu$m')
+
+    ax[2].legend(grainsizes_legend)
+
+    fig.tight_layout()
+
+    return fig,ax
+
 
 
 # Plot SED

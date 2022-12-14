@@ -761,7 +761,8 @@ def plot_grainsizemass_histogram(
     fig,ax = plt.subplots(
         Nphases,1, 
         num=f'grainsize_mass_hist_{model}',
-        figsize=(6, 10))
+        figsize=(6, 10)
+    )
 
     # Loop over phases
     for nphase,phase in enumerate(phases):

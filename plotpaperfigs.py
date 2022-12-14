@@ -75,10 +75,13 @@ if plotthis == 'y':
 # Plot Figure with Mass-vs-grain size histogram
 #
 # Warning: slow because of loading lots dust densities
-plotthis = 'y'
+plotthis = 'n'
 if plotthis == 'y':
 
-    fig,ax = a5d.plot_grainsizemass_histogram()
+    fig,ax = a5d.plot_grainsizemass_histogram(
+        model='st28gm06n052',
+        phases=[186,190,198]
+    )
 
     ax[0].set_ylabel(r'Dust mass (g)',fontsize=18)    
     ax[1].set_ylabel(r'Dust mass (g)',fontsize=18)
@@ -97,10 +100,26 @@ if plotthis == 'y':
 
 # ----------------------------------------------------------------
 #
-# Plot Figure absorption and scattering, and angles?
+# Plot Figure absorption and scattering, and angles
 
+plotthis = 'y'
+if plotthis == 'y':
 
+    fig,ax = a3d.plot_allkappa(
+        path='../r3dresults/opacities_st28gm06n052/'
+    )
 
-a3d.plot_allkappa(
-    path='/home/joachim/program/optool/testfolder/log_test/'
-).show()
+    ax[0].set_ylabel(r'$\kappa_{\rm abs}$ (cm$^2$/g)',fontsize=18)    
+    ax[1].set_ylabel(r'$\kappa_{\rm scat}$ (cm$^2$/g)',fontsize=18)
+    ax[2].set_ylabel(r'$\left< \cos \theta \right>$',fontsize=18)
+
+    ax[2].set_xlabel(r'Wavelength ($\mu$m)',fontsize=18)
+
+    ax[0].tick_params(axis='both', which='major', labelsize=15)
+    ax[1].tick_params(axis='both', which='major', labelsize=15)
+    ax[2].tick_params(axis='both', which='major', labelsize=15)
+
+    fig.tight_layout()
+    fig.savefig('figs/abs_scat_angle.pdf', facecolor="white")
+
+    fig.show()
