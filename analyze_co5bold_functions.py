@@ -735,45 +735,53 @@ def plot_grainsize_distribution(
 
 # TODO
 # function som skapar en subplot per phase, förinvalda antal bins
-
+# få att funka? :)
+# alternativt: gör den snabbare, ladda från npy-filer istället?
 
 def plot_grainsizemass_histogram(
-        model:str= 'st28gm06n052',
-        Nbins=10
+        model:str='st28gm06n052',
+        phases:list=[186,190,198]
     ):
-    #check model-folder for phases
-    # placeholder in the meantime
-    phases = [186]
+    """
+    TODO better info
+    Plots histogram of mass of each grain size
+
+    ARGUMENTS
+      model-name
+      phases
+
+    RETURNS
+      figure,axex - objects
+    """
+
     Nphases = len(phases)
 
 
     # Initiate fig-axes-subplot-objects
-    fig,ax = plt.subplots(1,Nphases, num=f'{model}')
+    fig,ax = plt.subplots(
+        Nphases,1, 
+        num=f'grainsize_mass_hist_{model}',
+        figsize=(6, 10))
 
     # Loop over phases
     for nphase,phase in enumerate(phases):
-
-        # Load dust densities
-        #
-        # Load each dust density and add them togeyjer into one array
-        # Start with 2 since specie numb1 is the star
-        # End with +1 since range stops one early
-        print(f'Loading dust densities of phase {phase}')
-        Ncells, Nspec, dust_densities = a3d.load_dustdensity(
-            path=f'../r3dresults/{model}/{phase}/dust_density.inp',
-            numb_specie=2
-        )
-        for nspecie in range(2,Nspec+1):
-            Ncells, Nspec, dust_density = a3d.load_dustdensity(
-                path=f'../r3dresults/{model}/{phase}/dust_density.inp',
-                numb_specie=nspecie
-            )
-            dust_densities += dust_density
 
         # Load binned grain sizes per cell
         grain_sizes,Ncells = a3d.load_grainsizes(
             grainsize_path=f'../grain_sizes_binned_{phase}.dat'
         )
+
+        # Use only Cells with dust in them
+        #dustcells = np.where(grain_sizes > 0)[0]
+
+        # And save grain sizes in um
+        grainsize_bins = np.unique(grain_sizes[np.where(grain_sizes > 0)[0]])*1e4
+
+        # And number of grain sizes, ie species
+        Nspecies = np.size(grainsize_bins)
+
+        # And create array for masses per grain size bin
+        dustmass_bins = np.zeros(Nspecies)
 
         # Compute volume per cell - load cell sizes
         cell_sizes = a3d.load_cellsizes(
@@ -781,41 +789,36 @@ def plot_grainsizemass_histogram(
             amrpath=f'../r3dresults/{model}/amr_grid.inp'
         )
 
-        # Plot only Cells with dust in them
-        dustcells = np.where(grain_sizes > 0)[0]
-
         # Cell volumes
-        cell_volumes = cell_sizes[dustcells]**3
-        # And mass per cell
-        cell_masses = dust_densities[dustcells] * cell_volumes
-        # And grain sizes in meter
-        grain_sizes_um = grain_sizes[dustcells]*1e4
+        cell_volumes = cell_sizes**3
 
+        # Skip header, star, and load all dust data
+        # (much faster with a custom density loader since my other density loader
+        # opens and closes the file too much.)
+        with open(f'../r3dresults/{model}/{phase}/dust_density.inp') as f:
+            for nn,line in enumerate(f.readlines()):
+                if nn > 3+Ncells:
 
-        dustmass_bins = np.zeros(Nbins)
-        grainsize_bins = np.zeros(Nbins)
+                    # Only look at cells with dust:
+                    data = float(line)
 
-        # Mass bins
-        grainsize_binlimits = np.linspace(grain_sizes_um.min(), grain_sizes_um.max(), Nbins+1)
+                    if data > 0:
 
-        for nn in range(Nbins):
-            binindeces = np.argwhere(
-                (grain_sizes_um >= grainsize_binlimits[nn]) & \
-                (grain_sizes_um < grainsize_binlimits[nn+1])
-            )
-            dustmass_bins[nn] = np.sum(cell_masses[binindeces])
-            grainsize_bins[nn] = np.mean(grain_sizes_um[binindeces])
+                        # Then we are at this species number
+                        nspecie = int((nn-3-Ncells)/Ncells)
 
+                        # And this cell
+                        ncell = (nn-3-Ncells) - nspecie*Ncells
 
-        # Plot first figure:
-        # linear scale, 200 bins
-        ax[0][nphase].step(grainsize_bins,dustmass_bins)
-        ax[0][nphase].set(
-            xlabel=r'Grain size ($\mu$m)',
-            ylabel='Dust mass (g)',
-            title=f'Phase: {phase}'
-        )
-        print(f'Finished figure for phase {phase}')
+                        # Add the total dust mass of this cell to the size bin
+                        dustmass_bins[nspecie] += cell_volumes[ncell]*data
+                        # This is then the dust mass in grams per grain size
+
+        # Plot figures
+        ax[nphase].step(grainsize_bins,dustmass_bins,where='mid')
+        ax[nphase].plot(grainsize_bins,dustmass_bins,'.')
+        ax[nphase].set(title=f'Phase: {phase}')
+        print(f'Finished figure object for phase {phase}')
 
     fig.tight_layout()
     return fig, ax 

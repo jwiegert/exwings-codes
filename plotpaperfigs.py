@@ -73,10 +73,34 @@ if plotthis == 'y':
 # ----------------------------------------------------------------
 #
 # Plot Figure with Mass-vs-grain size histogram
-
+#
+# Warning: slow because of loading lots dust densities
 plotthis = 'y'
 if plotthis == 'y':
 
     fig,ax = a5d.plot_grainsizemass_histogram()
 
+    ax[0].set_ylabel(r'Dust mass (g)',fontsize=18)    
+    ax[1].set_ylabel(r'Dust mass (g)',fontsize=18)
+    ax[2].set_ylabel(r'Dust mass (g)',fontsize=18)
+
+    ax[2].set_xlabel(r'Grain size ($\mu$m)',fontsize=18)
+
+    ax[0].tick_params(axis='both', which='major', labelsize=15)
+    ax[1].tick_params(axis='both', which='major', labelsize=15)
+    ax[2].tick_params(axis='both', which='major', labelsize=15)
+
+    fig.tight_layout()
+    fig.savefig('figs/grainsize_hist.pdf', facecolor="white")
+
     fig.show()
+
+# ----------------------------------------------------------------
+#
+# Plot Figure absorption and scattering, and angles?
+
+
+
+a3d.plot_allkappa(
+    path='/home/joachim/program/optool/testfolder/log_test/'
+).show()
