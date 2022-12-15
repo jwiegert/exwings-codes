@@ -530,9 +530,9 @@ def load_onekappa(
 
             # Skip comments and header
             if line[0] != '#':
-                # second line is number of wavelengths
-                if nn == 1:
-                    Nwave = int(line)
+                # second line is number of wavelengths (not used)
+                #if nn == 1:
+                #    Nwave = int(line)
                 
                 # If line contains four elements: then it's wavelength, abs, scat, angle
                 # If it's longer or just 1 then it's angles and polarisation matrix elements
@@ -555,7 +555,7 @@ def load_onekappa(
                 
                 # Increase line counter
                 nn += 1
-    print(finalNdata)
+    
     if finalNdata == 1:
         return specie_name,wavelengths,absorption
     if finalNdata == 2:
@@ -1301,7 +1301,21 @@ def plot_allkappa(
     # One plot for absorption
     # one for scattering
     # and one final for scattering angles
+
+
+    # List of subplot titles
     figuretitles = ['Absorption', 'Scattering', 'Average scattering angle']
+
+    # List of line markers
+    from matplotlib.lines import Line2D
+    markerlist = list(Line2D.markers)
+
+    # List of colours
+    import matplotlib.colors as mcolors
+    colourlist = []
+    for colour in list(mcolors.TABLEAU_COLORS):
+        colourlist.append(colour.split(':')[1])
+
 
     counter = 0
     fig, ax = plt.subplots(
@@ -1311,7 +1325,29 @@ def plot_allkappa(
     )
     for nkappa in Nkappa:
         for nn in range(nkappa):
-            ax[nn].plot(wavelengths,kappas[counter + nn])
+
+            linecounter = int(counter/3)
+
+            # Plot cyrves
+            ax[nn].plot(
+                wavelengths,
+                kappas[counter + nn],
+                color=colourlist[linecounter],
+                linestyle='-',
+                label='_nolegend_',
+                zorder=1
+            )
+
+            # Plot symbols on each
+            indexnumber = round(0.24*len(wavelengths))+30*linecounter
+            ax[nn].plot(
+                wavelengths[indexnumber],
+                kappas[counter + nn][indexnumber],
+                color=colourlist[linecounter],
+                marker=markerlist[2*linecounter],
+                zorder=5
+            )
+
             ax[nn].set(
                 title=figuretitles[nn],
                 xscale='log',yscale='log'
@@ -1321,10 +1357,11 @@ def plot_allkappa(
     # Change specie name strings:
     grainsizes_legend = []
     for grainsize in specie_names:
-        grainsize = round(float(grainsize.split('_')[1].split('e')[0])*100)/100
-        grainsizes_legend.append(rf'{grainsize} $\mu$m')
-
-    ax[2].legend(grainsizes_legend)
+        # I use the exponent in my rounding to make sure that the decimals are correct
+        divider = 10**(1 + -1*int(grainsize.split('_')[1].split('e')[1]))
+        grainsize = round(float(grainsize.split('_')[1].split('e')[0])*100)/divider
+        grainsizes_legend.append(rf'{grainsize:.2f} $\mu$m')
+    ax[2].legend(labels=grainsizes_legend)
 
     fig.tight_layout()
 
