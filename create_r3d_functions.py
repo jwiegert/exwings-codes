@@ -920,16 +920,20 @@ def create_optoolscript(
             # set FWHM = amax-amin
             # sigma = (amax-amin) / 2.355
             #
-            # ie we want the HALF of the HEIGHT of the Gaussian to be "connected" to the next
-            # grain size Gaussian.
+            # ie we want the HALF of the HEIGHT of the Gaussian to be "connected" 
+            # to the nextgrain size Gaussian.
             # This can ofcourse be varied
             # With the max-min-sizes there won't be any overlaps
             #
-            # Because of the possibility of having log-grain-sizes I should make a list of asig also
+            # Because of the possibility of having log-grain-sizes I should make 
+            # a list of asig also.
             #
             asigma_um = []
             for nn in range(Ngrainsizes):
                 asigma_um.append( (amax_um[nn] - amin_um[nn])/2.355 )
+                
+                # Test a wider spread
+                #asigma_um.append( 2*(amax_um[nn] - amin_um[nn])/2.355 )
 
     else:
         # If there is only one size, plus minus half of it
