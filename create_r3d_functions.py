@@ -165,14 +165,14 @@ def write_r3d_runscripts(
     Creates runcommand-files, one for each phase and one main file that runs them in paralell
     TODO: add lists for second viewing angle
 
-    INPUT
-    path = path from code-folder to main data folder (ie below the phase-folders, see example)
-    phase_list = list of all phases for this model-star
-    sed_inclination_list = list of inclination angles for the SED-simulations
-    image_wavelength_list = list of image wavelengths in micrometres
-    image_inclination_list = list of inclination angles for images
-    image_sizeau = size of image-side in AU
-    image_npix = number of pixels per side of images
+    ARGUMENTS
+      path = path from code-folder to main data folder (ie below the phase-folders, see example)
+      phase_list = list of all phases for this model-star
+      sed_inclination_list = list of inclination angles for the SED-simulations
+      image_wavelength_list = list of image wavelengths in micrometres
+      image_inclination_list = list of inclination angles for images
+      image_sizeau = size of image-side in AU
+      image_npix = number of pixels per side of images
     """
 
     # Automatically add / to end of path if it's missing
@@ -224,7 +224,7 @@ def write_r3d_runscripts(
             f'chmod +x {path}runcommand{phase}.sh'
         )
 
-        # Write main script that runs all phases in paralell # TODO TESTA!
+        # Write main script that runs all phases in paralell
         with open(f'{path}runcommand_main.sh', 'a') as fmain:
             fmain.write(f'rm r3doutput_{phase}.txt\ntouch r3doutput_{phase}.txt\n./runcommand{phase}.sh | cat > r3doutput_{phase}.txt &\n\n')
     
@@ -981,6 +981,20 @@ def create_optoolscript(
             amean = grainum_sizes[nn]
 
             # Write the script with optool commands
+            #
+            # TODO
+            # For now I cant get the full scattering matrix to work in R3D:
+            #
+            # Warning: The scattering opacities kappa_s in the file dustkapscatmat_mg2sio4_8.966e-01.inp
+            #          have relative differences of up to    8.9569185783100469E-003  with the 
+            #          scattering matrix elements in the same file. I will correct kappa_s.
+            #
+            # And then:
+            #    STOP 8800
+            #
+            # So I only write normal dustkappa-files for now
+            # otherwise you add     -s      before      -radmc
+            #
             if grainsize_type == 'normal' or 'lognormal':
                 # For Gaussian or log-normal distributions
                 asigma = asigma_um[nn]
@@ -988,26 +1002,26 @@ def create_optoolscript(
                 if grainsize_type == 'normal':
                     # normal distribution
                     # -a amin amax amean:-asig [na]
-                    f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {amean:.3e}:-{asigma:.3e} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -s -radmc mg2sio4_{amean:.3e}\n')
+                    f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {amean:.3e}:-{asigma:.3e} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -radmc mg2sio4_{amean:.3e}\n')
 
                 if grainsize_type == 'lognormal':
                     # log-normal distribution
                     # -a amin amax amean:asig [na]
-                    f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {amean:.3e}:{asigma:.3e} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -s -radmc mg2sio4_{amean:.3e}\n')
+                    f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {amean:.3e}:{asigma:.3e} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -radmc mg2sio4_{amean:.3e}\n')
             
             if grainsize_type == 'mrn':
                 # For Mie theory, 
                 # MRN-distribution, 3.5 means a^-3.5, minus is dropped
                 # -a AMIN AMAX APOW NA
-                f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {-grainsize_power} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -s -radmc mg2sio4_{grainum_sizes[nn]}\n')
+                f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {-grainsize_power} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -radmc mg2sio4_{grainum_sizes[nn]}\n')
 
             # Write dustopac-file for these opacities
             # dustopac.inp :
-            # 1
+            # 1 for dustkappa-files, 10 for dustkapscatmat-files < hardcoded! TODO
             # 0
             # speciename
             # ---------------
-            fopac.write(f"1\n0\n{specie}_{amean:.3e}\n-----------------------------\n")
+            fopac.write(f"10\n0\n{specie}_{amean:.3e}\n-----------------------------\n")
 
     # Make into executable
     os.system(f'chmod +x ../optool_script_{phase}.sh')
@@ -1033,7 +1047,7 @@ def create_kappaabs(
     # Change units from um to cm and change list to np.array
     wavelengths = np.array([wavelength*1e-4 for wavelength in wavelengths])
 
-    # Logarithmic spread parameter TODO not tested yet! works fine for 10 sizes
+    # Logarithmic spread parameter
     logawidth = max(agrainlist)/len(agrainlist)
 
     # Go through the different dust species
@@ -1349,8 +1363,8 @@ def create_spheredensity(
     # Compute normalization density (ie zero density)
     # TODO this is the same for all dust species, allow for different morphs? Ie different
     # radii and radial dependence later?
-    # TODO check the math here, why r^(2+inputvalue)? Is it due to some derivative? No, due to spherical coordinates!
     # TODO this divides the zero density equally between dust species and grain sizes
+    # The r^(2+inputvalue) is due to spherical coordinates!
     radiusintegral = s.integrate.quad(lambda x: x**(2+densitypower), inradius, outradius)
     zerodensity = totaldustmass / nrspec * inradius**densitypower / (4.*np.pi * radiusintegral[0])
 

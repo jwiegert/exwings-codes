@@ -1848,11 +1848,12 @@ def compute_sed_luminosity(
     """
     Insert a spectrum.out from r3d and get the bolometric luminosity in Watt
 
-    INPUT
-    path = path to spectrum-file including file name
+    ARGUMENTS
+      path = path to spectrum-file including file name
+      distance = distance the SED is observed from
 
-    OUTPUT
-    luminosity in Watt
+    RETURNS
+      luminosity in Watt
     """
 
     # Load spectrum
