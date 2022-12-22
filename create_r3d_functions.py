@@ -796,7 +796,8 @@ def create_optoolscript(
         grainsize_na:int=21,
         grainsize_power:float=-3.5,
         specie:str='mg2sio4',
-        grain_type:str='mie'
+        grain_type:str='mie',
+        polarisation_matrix:str='n'
     ):
     """
     Writes script to optool to write opacity files for Radmc3d and dustopac.inp with all
@@ -825,6 +826,9 @@ def create_optoolscript(
                'mie' : Mie-theory based spherical compact grains
                'dhs' : Hollow spheres, good for polarisation
     
+      polarisation_matrix:str : include computation of polarisation matrix or not?
+                          'y' : -s is included in optool-script and dustopac.inp is adapted for this
+                          'n' : default setting, no polarisation matrix, standard dustopac.inp
     """
 
     lnk_path = f'~/program/optool/my_lnk_data/{specie}.lnk'
@@ -1002,26 +1006,38 @@ def create_optoolscript(
                 if grainsize_type == 'normal':
                     # normal distribution
                     # -a amin amax amean:-asig [na]
-                    f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {amean:.3e}:-{asigma:.3e} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -radmc mg2sio4_{amean:.3e}\n')
+                    if polarisation_matrix == 'y':
+                        f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {amean:.3e}:-{asigma:.3e} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -s -radmc mg2sio4_{amean:.3e}\n')
+                    else:
+                        f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {amean:.3e}:-{asigma:.3e} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -radmc mg2sio4_{amean:.3e}\n')
 
                 if grainsize_type == 'lognormal':
                     # log-normal distribution
                     # -a amin amax amean:asig [na]
-                    f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {amean:.3e}:{asigma:.3e} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -radmc mg2sio4_{amean:.3e}\n')
+                    if polarisation_matrix == 'y':
+                        f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {amean:.3e}:{asigma:.3e} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -s -radmc mg2sio4_{amean:.3e}\n')
+                    else:
+                        f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {amean:.3e}:{asigma:.3e} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -radmc mg2sio4_{amean:.3e}\n')
             
             if grainsize_type == 'mrn':
                 # For Mie theory, 
                 # MRN-distribution, 3.5 means a^-3.5, minus is dropped
                 # -a AMIN AMAX APOW NA
-                f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {-grainsize_power} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -radmc mg2sio4_{grainum_sizes[nn]}\n')
+                if polarisation_matrix == 'y':
+                    f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {-grainsize_power} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -s -radmc mg2sio4_{grainum_sizes[nn]}\n')
+                else:
+                    f.write(f'optool -c {lnk_path} -{grain_type} -a {amin:.3e} {amax:.3e} {-grainsize_power} {grainsize_na} -lmin {lmin} -lmax {lmax} -nlam {nwave} -radmc mg2sio4_{grainum_sizes[nn]}\n')
 
             # Write dustopac-file for these opacities
             # dustopac.inp :
-            # 1 for dustkappa-files, 10 for dustkapscatmat-files < hardcoded! TODO
+            # 1 for dustkappa-files, 10 for dustkapscatmat-files
             # 0
             # speciename
             # ---------------
-            fopac.write(f"10\n0\n{specie}_{amean:.3e}\n-----------------------------\n")
+            if polarisation_matrix == 'y':
+                fopac.write(f"10\n0\n{specie}_{amean:.3e}\n-----------------------------\n")
+            else:
+                fopac.write(f"1\n0\n{specie}_{amean:.3e}\n-----------------------------\n")
 
     # Make into executable
     os.system(f'chmod +x ../optool_script_{phase}.sh')

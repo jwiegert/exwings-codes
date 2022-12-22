@@ -758,11 +758,18 @@ def plot_grainsizemass_histogram(
 
 
     # Initiate fig-axes-subplot-objects
-    fig,ax = plt.subplots(
-        Nphases,1, 
+    #fig,ax = plt.subplots(
+    #    Nphases,1, 
+    #    num=f'grainsize_mass_hist_{model}',
+    #    figsize=(6, 10)
+    #)
+    fig,ax = plt.figure(
         num=f'grainsize_mass_hist_{model}',
-        figsize=(6, 10)
-    )
+        figsize=(6, 4)
+    ), plt.axes()
+
+    # Set line symbols
+    linesymbols = ['r-X','g-*','b-o']
 
     # Loop over phases
     for nphase,phase in enumerate(phases):
@@ -816,10 +823,17 @@ def plot_grainsizemass_histogram(
                         # This is then the dust mass in grams per grain size
 
         # Plot figures
-        ax[nphase].step(grainsize_bins,dustmass_bins,where='mid')
-        ax[nphase].plot(grainsize_bins,dustmass_bins,'.')
-        ax[nphase].set(title=f'Phase: {phase}')
+        ax.step(grainsize_bins,dustmass_bins,linesymbols[nphase],where='mid')
+        #ax.plot(grainsize_bins,dustmass_bins,'.')
+        #ax.set(title=f'Phase: {phase}')
         print(f'Finished figure object for phase {phase}')
+    
+    # Legend instead of title
+    ax.legend(phases)    
+
+    #    TODO
+    # pu all in same figure
+
 
     fig.tight_layout()
     return fig, ax 

@@ -98,11 +98,28 @@ if plotthis == 'y':
 
     fig.show()
 
+plotthis = 'y'
+if plotthis == 'y':
+
+    fig,ax = a5d.plot_grainsizemass_histogram(
+        model='st28gm06n052',
+        phases=[186,190,198]
+    )
+
+    ax.set_ylabel(r'Dust mass (g)',fontsize=18)    
+    ax.set_xlabel(r'Grain size ($\mu$m)',fontsize=18)
+    ax.tick_params(axis='both', which='major', labelsize=15)
+
+    fig.tight_layout()
+    fig.savefig('figs/grainsize_hist.pdf', facecolor="white")
+
+    fig.show()
+
 # ----------------------------------------------------------------
 #
 # Plot Figure absorption and scattering, and angles
 
-plotthis = 'y'
+plotthis = 'n'
 if plotthis == 'y':
 
     fig,ax = a3d.plot_allkappa(
