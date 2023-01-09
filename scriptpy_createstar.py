@@ -55,9 +55,9 @@ a5d.smooth_stellardata(
 # NOTE
 # Resulting files are, for each ../r3dresults/[modelname]/[phase]/
 #
-#   dust_temperature_onestar_smoothed.dat
-#   star_opacities_smoothed.dat
 #   dust_density_opastar.inp
 #   dustkappa_opastar.inp
 #   dustopac_opastar.inp
+#   dust_temperature_onestar_smoothed.dat
+#   star_opacities_smoothed.dat
 
