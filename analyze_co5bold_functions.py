@@ -1390,7 +1390,7 @@ def smooth_stellardata(
             phase = phase,
             griddistances = griddistances,
             smooth_out = 10,
-            smooth_in = 3,
+            smooth_in = 2,
             smooth_tolerance = 1.0
         )
         os.system(f'mv ../dust_temperature_smoothed_{phase}.dat {path}{phase}/dust_temperature_onestar_smoothed.dat')
