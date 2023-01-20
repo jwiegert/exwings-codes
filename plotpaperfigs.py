@@ -19,7 +19,7 @@ rc('ytick.minor',size=4)
 AUcm = 1.49598e13 # cm
 
 # ----------------------------------------------------------------
-# FIG Cut through of CO 5 BOLD grid for st28gm06n052 with cell 
+# FIG Cut through of CO5BOLD grid for st28gm06n052 with cell 
 # sizes against distance from centre of the grid.
 
 plotthis = 'n'
@@ -98,7 +98,7 @@ if plotthis == 'y':
 
     fig.show()
 
-plotthis = 'y'
+plotthis = 'n'
 if plotthis == 'y':
 
     fig,ax = a5d.plot_grainsizemass_histogram(
@@ -119,7 +119,7 @@ if plotthis == 'y':
 #
 # Plot Figure absorption and scattering, and angles
 
-plotthis = 'n'
+plotthis = 'y'
 if plotthis == 'y':
 
     fig,ax = a3d.plot_allkappa(

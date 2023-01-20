@@ -99,11 +99,11 @@ app.layout = dbc.Container([
     # Plot singular SED below here
     html.P('SEDs:'),
 
-    # Menu of Inclinations
+    # Menu of Inclinations and phi angles
     dcc.Dropdown(
         id='incl-dropdown', 
         className='',
-        placeholder='Chose an Inclination',
+        placeholder='Chose a spectrum',
         value='N/A'
     ),
 
@@ -261,7 +261,7 @@ def create_image_sed_dicts(modelname,phase):
         incls = []
         for filename in filenames:
             if filename[:8] == 'spectrum':
-                incls.append(re.findall('spectrum_i.*.', filename)[0][10:-4])
+                incls.append(re.findall('spectrum_i.*.', filename)[0][9:-4])
         
         # Check if there are any SEDs
         if len(incls) > 0:
@@ -270,7 +270,7 @@ def create_image_sed_dicts(modelname,phase):
             incls = ['N/A']
 
         # return two dicts, one with image options and one with sed-incl-options
-        return [{'label':image, 'value':image} for image in images], [{'label':f'Inclination: {incl} deg', 'value':incl} for incl in incls]
+        return [{'label':image, 'value':image} for image in images], [{'label':f'Angles: {incl}', 'value':incl} for incl in incls]
 
 
 # Given choices of model, phase and sed-inclination, plot the SED
@@ -288,12 +288,12 @@ def plot_sed_one(modelname,phase,incl):
 
         # Extract luminosity of SED
         lum = a3d.compute_sed_luminosity(
-            path=f'{path}{modelname}/{phase}/spectrum_i{incl}.out'
+            path=f'{path}{modelname}/{phase}/spectrum_{incl}.out'
         )/Lsol
 
         # Create matplotlib-figure-object of SED, and convert to plotly-figure
         fig,ax,maxflux,maxwave = a3d.plot_sed(
-            path=f'{path}{modelname}/{phase}/spectrum_i{incl}.out'
+            path=f'{path}{modelname}/{phase}/spectrum_{incl}.out'
         )
         plotly_fig = tls.mpl_to_plotly(fig)
 
@@ -388,7 +388,7 @@ def plot_sed_all(modelname,phase,incl,choice):
             ]
 
             # List of spectrum*.out-files
-            pathlist = [f'{path}{modelname}/{phase}/spectrum_i{incl}.out' for phase in legendlist]
+            pathlist = [f'{path}{modelname}/{phase}/spectrum_{incl}.out' for phase in legendlist]
 
         # Else, fill list with paths to chosen phsae and all incls there instead
         if choice == 'allincls':
@@ -400,10 +400,10 @@ def plot_sed_all(modelname,phase,incl,choice):
             for filename in filenames:
                 if filename[:8] == 'spectrum':
                     # Save all available inclinations (numbers as str only)
-                    legendlist.append(re.findall('spectrum_i.*.', filename)[0][10:-4])
+                    legendlist.append(re.findall('spectrum_i.*.', filename)[0][9:-4])
 
             # Save a list of all spectrum-files
-            pathlist = [f'{path}{modelname}/{phase}/spectrum_i{incl}.out' for incl in legendlist]
+            pathlist = [f'{path}{modelname}/{phase}/spectrum_{incl}.out' for incl in legendlist]
 
         # Create SED figure object and convert to plotly-figure
         fig,ax = a3d.plot_sedsmany(
@@ -471,9 +471,12 @@ def plot_image_all(modelname,phase,image,choice,scale):
         os.system('rm tempsubplots.png')
 
     # Extract chosen image inclination and wavelength
-    # Filename is formatted as image_i{incl}_{wavelength}um.out
+    # Filename is formatted as image_i{incl}_phi{phi}_{wavelength}um.out
     imageincl = re.split('_',image)[1][1:]
-    imagewave = re.split('_',image)[2][:-6]
+    imagephi = re.split('_',image)[2][3:]  #
+    imagewave = re.split('_',image)[3][:-6]
+
+    # image_i000_phi000_100um.out
 
     # Initate path to model-folder
     path = f'../r3dresults/{modelname}/'
@@ -493,7 +496,7 @@ def plot_image_all(modelname,phase,image,choice,scale):
             folder for folder in os.listdir(path=path) if os.path.isdir(path+folder) == True
         ]:
             # Save one image-file-path from each phase-folder
-            imagelist.append(f'{path}{phases}/image_i{imageincl}_{imagewave}um.out')
+            imagelist.append(f'{path}{phases}/image_i{imageincl}_phi{imagephi}_{imagewave}um.out')
             # And sort them
             imagelist.sort()
 
@@ -503,7 +506,7 @@ def plot_image_all(modelname,phase,image,choice,scale):
         # Save a list of images with chosen phase and wavelength, and all available incls
         for file in os.listdir(path=f'{path}{phase}/'):
             if file[:5] == 'image':
-                if re.split('_', file)[2] == f'{imagewave}um.out':
+                if re.split('_', file)[3] == f'{imagewave}um.out':
                     imagelist.append(f'{path}{phase}/{file}')
                     imagelist.sort()
 

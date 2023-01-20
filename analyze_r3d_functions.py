@@ -1358,9 +1358,8 @@ def plot_allkappa(
     grainsizes_legend = []
     for grainsize in specie_names:
         # I use the exponent in my rounding to make sure that the decimals are correct
-        divider = 10**(1 + -1*int(grainsize.split('_')[1].split('e')[1]))
-        grainsize = round(float(grainsize.split('_')[1].split('e')[0])*100)/divider
-        grainsizes_legend.append(rf'{grainsize:.2f} $\mu$m')
+        grainsize = float(grainsize.split('_')[1])
+        grainsizes_legend.append(rf'{grainsize:.3f} $\mu$m')
     ax[2].legend(labels=grainsizes_legend)
 
     fig.tight_layout()
@@ -1551,7 +1550,8 @@ def plot_imagesubplots(
         # extract inclination and wavelength
         imagestrings = re.split('_', imagefilename)
         incl = imagestrings[1][1:]
-        wavelengthum = imagestrings[2][:-6]
+        phi = imagestrings[2][3:]
+        wavelengthum = imagestrings[3][:-6]
 
         # Load data
         image2d,image2dlog,flux,axisplot = load_images(
@@ -1574,7 +1574,7 @@ def plot_imagesubplots(
             cmap=plt.get_cmap('hot')
         )
         ax[nn].set(
-            title=f'{modelname}_{phase}: {incl} deg, {wavelengthum} um', 
+            title=f'{modelname}_{phase}: i:{incl}, phi:{phi}, {wavelengthum} um', 
             xlabel='Offset (AU)',
             ylabel='Offset (AU)',
         )
