@@ -480,7 +480,8 @@ def load_onekappa(
     kappadata: a list with lsits containing 
         [0] absorption in cm^2/g
         [1] scattering in cm^2/g
-        [2] mean scattering angles in <cos theta>
+        [2] total extinction (abs + scat)
+        [3] mean scattering angles in <cos theta>
     """
 
     # Automatically add / to end of path if it's missing
@@ -559,9 +560,9 @@ def load_onekappa(
     if finalNdata == 1:
         return specie_name,wavelengths,absorption
     if finalNdata == 2:
-        return specie_name,wavelengths,[absorption,scattering]
+        return specie_name,wavelengths,[absorption,scattering,np.array(absorption)+np.array(scattering)]
     if finalNdata == 3:
-        return specie_name,wavelengths,[absorption,scattering,scattangle]
+        return specie_name,wavelengths,[absorption,scattering,np.array(absorption)+np.array(scattering),scattangle]
 
 
 # ------------------------------------------------------------ #
@@ -1304,7 +1305,7 @@ def plot_allkappa(
 
 
     # List of subplot titles
-    figuretitles = ['Absorption', 'Scattering', 'Average scattering angle']
+    figuretitles = ['Absorption', 'Scattering', 'Extinction', 'Average scattering angle']
 
     # List of line markers
     from matplotlib.lines import Line2D
@@ -1321,12 +1322,12 @@ def plot_allkappa(
     fig, ax = plt.subplots(
         max(Nkappa),1,
         num='abs_scat_angle.pdf',
-        figsize=(6,10)
+        figsize=(6,13)
     )
     for nkappa in Nkappa:
         for nn in range(nkappa):
 
-            linecounter = int(counter/3)
+            linecounter = int(counter/nkappa)
 
             # Plot cyrves
             ax[nn].plot(
@@ -1360,7 +1361,7 @@ def plot_allkappa(
         # I use the exponent in my rounding to make sure that the decimals are correct
         grainsize = float(grainsize.split('_')[1])
         grainsizes_legend.append(rf'{grainsize:.3f} $\mu$m')
-    ax[2].legend(labels=grainsizes_legend)
+    ax[nkappa-1].legend(labels=grainsizes_legend)
 
     fig.tight_layout()
 
@@ -1519,13 +1520,13 @@ def plot_imagesubplots(
     """
     Plots a list of images from R3d in vertical subplots
 
-    INPUT
-    imagelist: list of paths to .out files
-    distance: distance to source in pc
-    scale: choce 'lin' or 'log' for lineare or logarithmic
+    ARGUMENTS
+      imagelist: list of paths to .out files
+      distance: distance to source in pc
+      scale: choce 'lin' or 'log' for lineare or logarithmic
 
-    OUTPUT
-    gives matplotlib objects fig and ax, plot with fig.show()
+    RETURNS
+      gives matplotlib objects: fig and ax, plot with fig.show()
     """
 
     # Number of plots

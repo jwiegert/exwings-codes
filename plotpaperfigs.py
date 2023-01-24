@@ -18,12 +18,19 @@ rc('ytick.minor',size=4)
 # Constants
 AUcm = 1.49598e13 # cm
 
+
+# Plot choices
+plot_coboldgrid = 'n'
+plot_opticalthickness = 'n'
+plot_grainsizehist_all = 'n'
+plot_grainsizehist_one = 'n'
+plot_absscat = 'y'
+
 # ----------------------------------------------------------------
 # FIG Cut through of CO5BOLD grid for st28gm06n052 with cell 
 # sizes against distance from centre of the grid.
 
-plotthis = 'n'
-if plotthis == 'y':
+if plot_coboldgrid == 'y':
 
     c5dgrid,cellcourners,cellsize = a5d.load_grid_properties(
         savpath='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav'
@@ -54,8 +61,7 @@ if plotthis == 'y':
 #
 # Plot Figure with average LOS optical thickness of gasmodel
 
-plotthis = 'n'
-if plotthis == 'y':
+if plot_opticalthickness == 'y':
 
     Reffective,fig,ax = a3d.plot_opticalthick(
         path='../r3dresults/st28gm06n056/140/'
@@ -75,8 +81,9 @@ if plotthis == 'y':
 # Plot Figure with Mass-vs-grain size histogram
 #
 # Warning: slow because of loading lots dust densities
-plotthis = 'n'
-if plotthis == 'y':
+
+plot_grainsizehist_all = 'n'
+if plot_grainsizehist_all == 'y':
 
     fig,ax = a5d.plot_grainsizemass_histogram(
         model='st28gm06n052',
@@ -98,8 +105,7 @@ if plotthis == 'y':
 
     fig.show()
 
-plotthis = 'n'
-if plotthis == 'y':
+if plot_grainsizehist_one == 'y':
 
     fig,ax = a5d.plot_grainsizemass_histogram(
         model='st28gm06n052',
@@ -119,8 +125,7 @@ if plotthis == 'y':
 #
 # Plot Figure absorption and scattering, and angles
 
-plotthis = 'y'
-if plotthis == 'y':
+if plot_absscat == 'y':
 
     fig,ax = a3d.plot_allkappa(
         path='../r3dresults/opacities_st28gm06n052/'
@@ -128,13 +133,15 @@ if plotthis == 'y':
 
     ax[0].set_ylabel(r'$\kappa_{\rm abs}$ (cm$^2$/g)',fontsize=18)    
     ax[1].set_ylabel(r'$\kappa_{\rm scat}$ (cm$^2$/g)',fontsize=18)
-    ax[2].set_ylabel(r'$\left< \cos \theta \right>$',fontsize=18)
+    ax[2].set_ylabel(r'$\kappa_{\rm abs} + \kappa_{\rm scat}$ (cm$^2$/g)',fontsize=18)
+    ax[3].set_ylabel(r'$\left< \cos \theta \right>$',fontsize=18)
 
-    ax[2].set_xlabel(r'Wavelength ($\mu$m)',fontsize=18)
+    ax[3].set_xlabel(r'Wavelength ($\mu$m)',fontsize=18)
 
     ax[0].tick_params(axis='both', which='major', labelsize=15)
     ax[1].tick_params(axis='both', which='major', labelsize=15)
     ax[2].tick_params(axis='both', which='major', labelsize=15)
+    ax[3].tick_params(axis='both', which='major', labelsize=15)
 
     fig.tight_layout()
     fig.savefig('figs/abs_scat_angle.pdf', facecolor="white")
