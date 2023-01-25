@@ -1668,8 +1668,6 @@ def smooth_density(
 # so this can also print the dustkappa-list-file for r3d!
 
 
-# TODO
-# add link to folder with npy-files
 def create_dustfiles(
         savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
         amrpath:str='../amr_grid.inp',

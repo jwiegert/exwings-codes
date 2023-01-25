@@ -468,20 +468,20 @@ def load_onekappa(
     """
     Loads absorption/scattering/scattering angles of one dust specie
     
-    INPUT
-    specie_name: a string
-    OR
-    specie_number: an integer
-    path: path to folder containing dustkappa and dustopac-files
+    ARGUMENTS
+      specie_name: a string
+      OR
+      specie_number: an integer
+      path: path to folder containing dustkappa and dustopac-files
 
-    OUTPUT
-    specie_name: a string
-    wavelenths: a list of wavelengths in micro meters
-    kappadata: a list with lsits containing 
-        [0] absorption in cm^2/g
-        [1] scattering in cm^2/g
-        [2] total extinction (abs + scat)
-        [3] mean scattering angles in <cos theta>
+    RETURNS
+      specie_name: a string
+      wavelenths: a list of wavelengths in micro meters
+      kappadata: a list with lsits containing 
+          [0] absorption in cm^2/g
+          [1] scattering in cm^2/g
+          [2] total extinction (abs + scat)
+          [3] mean scattering angles in <cos theta>
     """
 
     # Automatically add / to end of path if it's missing
