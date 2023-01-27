@@ -251,14 +251,15 @@ def load_griddistances(
     Loads array of distances to cells of the current grid.
     Distances are from centrum of grid (radial,x,y, and z) in centimeters.
 
-    Inputs
-    ------
-    gridpath: path to grid_distances.csv
-    amrpath: path to amr_grid.inp
+    ARGUMENTS
+      gridpath: path to grid_distances.csv
+      amrpath: path to amr_grid.inp
 
-    OUTPUT
-    ------
-    griddistances: np.array of size nleafs*4. Each column is distances in cm
+    RETURNS
+      griddistances: np.array of size nleafs*4. 
+        Each column is distances in cm
+        [:,0] : radial distances
+        [:,1] 2] and 3] : x,y, and z distances
     """
 
     # Check if file exists
@@ -301,14 +302,12 @@ def load_cellsizes(
     """
     Loads array of grid cell sizes in centimeters
     
-    Inputs
-    ------
-    sizepath: path to grid_cellsizes.csv
-    amrpath: path to amr_grid.inp
+    ARGUMENTS
+      sizepath: path to grid_cellsizes.csv
+      amrpath: path to amr_grid.inp
 
-    OUTPUT
-    ------
-    gridsizes: np.array of size nleafs*1 with cell sizes in same order as in dust_density
+    RETURNS
+      gridsizes: np.array of size nleafs*1 with cell sizes in same order as in dust_density
     """
 
     # Check if file exists
