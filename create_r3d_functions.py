@@ -32,6 +32,10 @@ Rsol = 6.955e10 # cm
 # Simpler functions
 # -----------------
 #
+# find_zeroelements(
+#    inputlist
+# )
+#
 # movecoordinates(nxyz,nx,ny,nz)
 #
 # write_r3d_runscripts(
@@ -133,6 +137,42 @@ Rsol = 6.955e10 # cm
 # ------------------------------------------------------------ #
 # Shorter simpler functions
 
+# Searches and extracts sequences of 0s from lists/arrays
+# TODO change so that it can extract sequences of any number?
+def find_zeroelements(
+        inputlist:list,
+    ):
+    """
+    Searches for sequences of zeros and returns a list of lists where
+    each list contains elements of sequences of zeros.
+
+    ARGUMENTS
+      inputlist: list: list or array to search through
+    """
+
+    # Declare lists to fill
+    hole_lists = []
+    hole_list = []
+
+    for nn,number in enumerate(inputlist):
+
+        # Save zeros
+        if number == 0:
+            hole_list.append(nn)
+
+        # Save list when 0s ends and reset list
+        if number != 0 and inputlist[nn-1] == 0 and len(hole_list) > 0:
+            hole_lists.append(hole_list)
+            hole_list = []
+        
+        # Save list if 0s continue to end of array
+        if nn == len(inputlist)-1 and number == 0 and len(hole_list) > 0:
+            hole_lists.append(hole_list)
+
+    return hole_lists
+
+
+
 # Move base cell coordinates
 def movecoordinates(nxyz,nx,ny,nz):
     """
@@ -150,6 +190,7 @@ def movecoordinates(nxyz,nx,ny,nz):
         ny =  0
         nz += 1
     return nx,ny,nz
+
 
 # Write runcommand-files, one for each phase and one main file that runs them in paralell
 def write_r3d_runscripts(
