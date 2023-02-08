@@ -40,13 +40,66 @@ Lsol = 3.828e26 # W
 # Load DARWIN-data and save in arrays
 # -----------------------------------
 
-
 def load_darwindata(
+        modelname:str='M2n315u6',
+        timestep:str='230791'
+    ):
+    """
+    Loads and extracts densities and temperatures of one model and timestep
+
+    ARGUMENTS
+      modelname: str: Letter-number-code for the model.
+      timestep: str: timestep number (ie model.XXXXXX.dat)
+
+    RETURNS
+      average_radius: np.array with radial range in cm
+      average_density: np.array with time-averaged radial dependant gas densities in g/cm3
+      average_temperature: np.array with time-averaged radial dependant gas temperatures in K
+    """
+
+    filename = f'../darwin_data/{modelname}_sel/model.{timestep}.dat'
+
+
+    radius_cm = []
+    gas_density = []
+    gas_temperature = []
+    # TODO gas_opacity
+
+    with open(filename, 'r') as f:
+        for nn,line in enumerate(f.readlines()):
+            # 18 lines are the header
+            if nn > 18:
+                
+                # Clean up each line
+                line_list = line.strip().split('  ')
+
+                # Save data
+                radius_cm.append(float(line_list[0]))
+                gas_density.append(float(line_list[1]))
+                gas_temperature.append(float(line_list[2]))
+                # TODO gas_opacity
+
+
+    # Save a list of number of radial cells per time step
+    Ncells = len(radius_cm)
+
+    # Save in lists and reverse the radial direction
+    radius_cm = np.array(radius_cm[::-1])
+    gas_density = np.array(gas_density[::-1])
+    gas_temperature = np.array(gas_temperature[::-1])
+    # TODO all_opacities
+
+
+    return radius_cm,gas_density,gas_temperature
+
+
+# Take all time steps for model and make time-averaged data
+def load_averagedarwindata(
         modelname:str='M2n315u6'
     ):
     """
     Loads all Darwin-data in a folder
-    and takes time-average of all data
+    and takes time-average of all densities and temperatures
 
     ARGUMENTS
       modelname: string: Letter-number-code for the model.
@@ -171,20 +224,85 @@ def load_darwindata(
 
 
 # TODO
-# Translate Darwindata to R3D-grid (and save files here?)
+# func that computes rosseland opacities from density and temperatures
+# and outputs array with density*opacity
 
-def darwin_to_radmc3d():
+
+# TODO
+# Translate Darwindata to R3D-grid (and save files here?)
+def darwin_to_radmc3d(
+    darwin_radius:list,
+    darwin_density:list,
+    darwin_temperature:list,
+    gridpath:str='../grid_distances.csv',
+    amrpath:str='../amr_grid.inp'
+):
+    """
+    Adapts (interpolates) 1D Darwin data to Radmc3d-grid and writes necessary 
+    input files.
+
+    ARGUMENTS
+      darwin_radius:list-like: Distances to centre of star in cm (increasing order)
+      darwin_density:list-like: Gas density * Rosseland opacities in g/cm2 * cm2/g
+      darwin_temperature:list-like: Gas temperatures in Kelvin
+      gridpath:str: Path to grid_distances.csv of your radmc3d-model
+      amrpath:str: Path to amr_grid.inp of your radmc3d-model
+
+    RETURNS
+      dust_density_darwinstar.inp
+      dust_temperature_darwinstar.dat
+        Input files for Radmc3d, merge these with dust-files if necessary 
+        (with c3d.merge_dustdensities and c3d.merge_dusttemperatures)
+    """
 
     # Load r3d-grid
-    # needs path to amr-file and radius-file
+    print('Loading Radmc3d-grid.')
+    r3d_griddistances = a3d.load_griddistances(
+        gridpath=gridpath,
+        amrpath=amrpath,
+    )
+    r3d_radius = r3d_griddistances[:,0]
 
-    # interpolate darwin-1d-data to r3d-radial grid
+    # Interpolate darwin-1d-data to r3d-radial grid
+    # Default setting of interp is to keep first o last value outside the range
+    r3d_darwindensity = np.interp(r3d_radius,darwin_radius,darwin_density)
+    r3d_darwintemperature = np.interp(r3d_radius,darwin_radius,darwin_temperature)
 
-    # Multiply density with Rosseland-kappa!
+    # Save in RADMC-3D inp-files
+    nleafs = np.size(r3d_radius)
+    progbar = 0
 
-    # save in r3d-style inp-files
+    print('Writing radmc3d-files:')
+    with open('../dust_density_darwinstar.inp', 'w') as fdensity, \
+        open('../dust_temperature_darwinstar.dat', 'w') as ftemperature:
+        
+        # Write headers:
+        # 1
+        # nleafs
+        # number dust species
+        fdensity.write(f'1\n{int(nleafs)}\n1\n')
+        ftemperature.write(f'1\n{int(nleafs)}\n1\n')    
 
-    # Done!
+        # Write densities and temperatures
 
+        # zip
 
-    return 'hej'
+        for nr3d in range(nleafs):
+            fdensity.write(f'{r3d_darwindensity[nr3d]}\n')
+            ftemperature.write(f'{r3d_darwintemperature[nr3d]}\n')
+
+            # Some progress bar info
+            if int(nr3d/nleafs*100) == 25 and progbar == 0:
+                progbar += 1
+                print('  Finished 25 per cent of the grid.')
+
+            if int(nr3d/nleafs*100) == 50 and progbar == 1:
+                progbar += 1
+                print('  Finished 50 per cent of the grid.')
+
+            if int(nr3d/nleafs*100) == 75 and progbar == 2:
+                progbar += 1
+                print('  Finished 75 per cent of the grid.')
+
+    print(f'DARWIN Dust-star:\n    dust_density_darwinstar.inp\n    dust_temperature_darwinstar.dat\nDONE\n')
+

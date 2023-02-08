@@ -128,11 +128,11 @@ Rsol = 6.955e10 # cm
 #    phases:list=[186,190,198],
 # )
 #
-# TODO
-# Merge dust_temperature-files
-#
-
-
+# merge_dusttemperatures(
+#    filenames:list=['dust_temperature.dat'],
+#    modelname:str='st28gm06n052',
+#    phases:list=[186,190,198],
+# )
 #
 # ------------------------------------------------------------ #
 # Shorter simpler functions

@@ -22,6 +22,7 @@ Lsol = 3.828e26 # W
 
 # Note
 # Rstar = 1.651AU (355 Rsun)
+# Lstar = 7000 Lsol?
 #
 # Cython info: might be needed later
 # @cython.cfunc
