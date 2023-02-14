@@ -14,6 +14,7 @@ print('')
 import sys
 modelname = sys.argv[1]
 phase = sys.argv[2]
+include_dust = sys.argv[3]
 
 # ------------------------------------------------------------------------
 # Python code below
@@ -23,10 +24,10 @@ import analyze_co5bold_functions as a5d
 a5d.load_c5dheavydata(
    savpath = f'../co5bold_data/d{modelname}/{modelname}_{phase}.sav',
    Nspecies = 1,
-   gas_density=True,
-   dust_density=True,
-   gas_opacity=True,
-   temperature=True
+   gas_density = True,
+   dust_density = include_dust,
+   gas_opacity = True,
+   temperature = True
 )
 
 # NOTE

@@ -706,8 +706,8 @@ def load_images(
     size_au = pixelsize_au * npixels
     axisplot  = [0.5*size_au,-0.5*size_au,-0.5*size_au,0.5*size_au]
 
-    # Total flux density of the image
-    flux = sum(image1d) * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
+    # Total flux density of the image in Jy
+    totalflux = sum(image1d) * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
 
     # Create 2D arrays
     image2d = np.zeros((npixels,npixels))
@@ -725,7 +725,7 @@ def load_images(
             ny = ny + 1
 
 
-    return image2d,image2dlog,flux,axisplot
+    return image2d,image2dlog,totalflux,axisplot
 
 
 # ------------------------------------------------------------ #
@@ -1499,12 +1499,12 @@ def plot_images(
             xlabel='Offset (AU)',
         )
 
-        cb0 = plt.colorbar(im0, orientation = 'vertical',shrink=0.6,pad=0.15)
-        cb0.set_label(label = rf'Flux at {distance} pc (Jy/asec$^2$)',fontsize= 10)
+        #cb0 = plt.colorbar(im0, orientation = 'vertical',shrink=0.4,pad=0.15)
+        #cb0.set_label(label = rf'Flux at {distance} pc (Jy/asec$^2$)',fontsize= 10)
 
         # Change figure size
-        #fig.set_figheight(5)
-        #fig.set_figwidth(8)
+    #fig.set_figheight(3)
+    #fig.set_figwidth(7)
     fig.tight_layout()
 
     return fig, ax, fluxtotal

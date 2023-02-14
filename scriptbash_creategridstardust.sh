@@ -25,9 +25,10 @@ python3 scriptpy_creategrid.py $modelname $phase0 $phase1 $phase2 &
 
 # Extract and create temporary npy-files for the remaining steps
 #   gas & dust densities, temperatures, opacity
-python3 scriptpy_createnpy.py $modelname $phase0 &
-python3 scriptpy_createnpy.py $modelname $phase1 &
-python3 scriptpy_createnpy.py $modelname $phase2 &
+include_dust = True
+python3 scriptpy_createnpy.py $modelname $phase0 include_dust &
+python3 scriptpy_createnpy.py $modelname $phase1 include_dust &
+python3 scriptpy_createnpy.py $modelname $phase2 include_dust &
 
 
 wait

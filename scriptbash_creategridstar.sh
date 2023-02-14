@@ -5,20 +5,21 @@
 # necessary python scripts.
 #
 # Define variables
-modelname=st28gm06n056
-phase0=140
-phase1=141
-phase2=142
+modelname=st28gm06n052
+phase0=186
+phase1=190
+phase2=198
 
 # Create R3D-grid
 python3 scriptpy_creategrid.py $modelname $phase0 $phase1 $phase2
 wait
 
 # Extract and create temporary npy-files for the remaining steps
-#   gas & dust densities, temperatures, opacity
-python3 scriptpy_createnpy.py $modelname $phase0 &
-python3 scriptpy_createnpy.py $modelname $phase1 &
-python3 scriptpy_createnpy.py $modelname $phase2 &
+#   gas densities, temperatures, opacity
+include_dust = False
+python3 scriptpy_createnpy.py $modelname $phase0 include_dust &
+python3 scriptpy_createnpy.py $modelname $phase1 include_dust &
+python3 scriptpy_createnpy.py $modelname $phase2 include_dust &
 wait
 
 # Create stars

@@ -79,16 +79,11 @@ def load_darwindata(
                 gas_temperature.append(float(line_list[2]))
                 # TODO gas_opacity
 
-
-    # Save a list of number of radial cells per time step
-    Ncells = len(radius_cm)
-
-    # Save in lists and reverse the radial direction
+    # Save in arrays and reverse the radial direction
     radius_cm = np.array(radius_cm[::-1])
     gas_density = np.array(gas_density[::-1])
     gas_temperature = np.array(gas_temperature[::-1])
     # TODO all_opacities
-
 
     return radius_cm,gas_density,gas_temperature
 
