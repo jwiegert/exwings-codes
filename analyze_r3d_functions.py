@@ -575,16 +575,14 @@ def load_temperature(
     """
     Load and extracts temperatures in output file dust_temperature.dat
 
-    INPUT
-    -----
-    path: string with path and filename of temperature file
-    nspecie: number of specie you want to load
+    ARGUMENTS
+      path: string with path and filename of temperature file
+      nspecie: number of specie you want to load
     
-    OUTPUT
-    ------
-    Ncells: Number of cells in grid (nleafs)
-    Nspecies: number of species in data
-    dust_temperatures: np.array containing temperatures in grid
+    RETURNS
+      Ncells: Number of cells in grid (nleafs)
+      Nspecies: number of species in data
+      dust_temperatures: np.array containing temperatures in grid
     """
 
     # Read header
