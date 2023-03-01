@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm, xlabel, xscale, yscale
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+# My own libraries
+import analyze_co5bold_functions as a5d
+
 # Useful numbers
 c = 2.998e8 # speed of light in m/s
 pc = 30.857e15 # 1 parsec in m
@@ -1172,7 +1175,7 @@ def plot_alltemperature_radius(
 
 
 # Plots temperature of radial bins (for paper-usage)
-def plot_temperaturebins_raduis(
+def plot_temperaturebins_radius(
         temperature_path:str='../dust_temperature.dat',
         grid_path:str='../grid_distances.csv',
         amr_path:str='../amr_grid.inp',
@@ -1181,6 +1184,18 @@ def plot_temperaturebins_raduis(
     """
     # TODO
     Info here...
+    Plots average temperature of 100 spherical shells, 
+    and max-min-values, and STD of each shell.
+    Can take a few minutes when loading the larger data sets.
+
+    ARGUMENTS
+      temperature_path:str='../dust_temperature.dat',
+      grid_path:str='../grid_distances.csv',
+      amr_path:str='../amr_grid.inp',
+      numb_specie:int=1
+
+    RETURNS
+      fig-object
     """
 
     # Load R3D-temperature-file
@@ -1189,12 +1204,20 @@ def plot_temperaturebins_raduis(
         numb_specie=numb_specie
     )
 
-    # Load coordintaes of R3D-cells
+    # Load coordintaes of R3D-cells and change to AU
     cellcoords = load_griddistances(
         gridpath=grid_path,
         amrpath=amr_path
     )
     radii = cellcoords[:,0]/AUcm
+
+    # Load star's radius here
+    Mstar,Rstar,Lstar = a5d.load_star_information(
+        savpath='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        printoutput='n'
+    )
+    Rstar /= AUcm
+
 
     # Set up bins and arrays for binned data
     Nbins = 100
@@ -1220,32 +1243,33 @@ def plot_temperaturebins_raduis(
     # ax.plot
     # ax.set
 
-    # TODO
-    # fix figure-object
-    """
-    plt.fill_between(
-        radial_bins,
+    ax.plot(radial_range,temperature_bins,'k')
+
+    ax.fill_between(
+        radial_range,
         temperature_min,
         temperature_max,
         color='b',
         alpha=0.2
     )
 
-    plt.fill_between(
-        radial_bins,
+    ax.fill_between(
+        radial_range,
         temperature_bins-temperature_std,
         temperature_bins+temperature_std,
         color='b',
         alpha=0.4
     )
 
-    plt.plot([Rstar,Rstar],[temperature_bins[-1],2800],'r')
-    plt.plot([0,Rstar],[2800,2800],'r')
-    plt.ylim(0,4000)
-
+    # Plot star's radius here
+    ax.plot([Rstar,Rstar],[0,4000],'r:',linewidth=1)
     
-    """
-
+    # Plot settings
+    ax.set(
+        ylabel=r'Gas \& dust temperature (K)',
+        xlabel=r'Distance (AU)',
+        ylim=(0,4000)
+    )
 
     return fig
 
