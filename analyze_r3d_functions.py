@@ -110,6 +110,7 @@ AUcm = 1.49598e13 # AU in cm
 #    path:str='../'
 # )
 #
+# These two plots all cell's temperatures
 # plot_onetemperature_radius(
 #    temperature_path:str='../dust_temperature.dat',
 #    grid_path:str='../grid_distances.csv',
@@ -120,6 +121,15 @@ AUcm = 1.49598e13 # AU in cm
 # plot_alltemperature_radius(
 #    path:str='../'
 # )
+#
+# This plots binned averages of the temperatures instead
+# plot_temperaturebins_raduis(
+#    temperature_path:str='../dust_temperature.dat',
+#    grid_path:str='../grid_distances.csv',
+#    amr_path:str='../amr_grid.inp',
+#    numb_specie:int=1
+# )
+#
 #
 # plot_grainsize_radius(
 #    gridpath:str='../r3dresults/st28gm06n052/grid_distances.csv',
@@ -1024,13 +1034,13 @@ def plot_onetemperature_radius(
     """
     Plots one figure with radial temperature distribution of one specie.
 
-    INPUT
-    temperature_path: path to dust_temperature.dat
-    grid_path: path to grid_distances.csv'
-    amr_path: path to amr_grid.inp
+    ARGUMENTS
+      temperature_path: path to dust_temperature.dat
+      grid_path: path to grid_distances.csv'
+      amr_path: path to amr_grid.inp
 
-    OUTPUT
-    Shows figure
+    RETURNS
+      figure-object
     """
 
     # Load griddistances
@@ -1056,7 +1066,7 @@ def plot_onetemperature_radius(
         xlabel=r'Distance (AU)',
         title='Grid cell temperatures'
     )
-    fig.show()
+    return fig
 
 
 # Plot all temperatures
@@ -1066,13 +1076,13 @@ def plot_alltemperature_radius(
     """
     Plots figures with radial temperature distribution of all species within temperature file.
 
-    INPUT
-    temperature_path: path to dust_temperature.dat
-    grid_path: path to grid_distances.csv'
-    amr_path: path to amr_grid.inp
+    ARGUMENTS
+      temperature_path: path to dust_temperature.dat
+      grid_path: path to grid_distances.csv'
+      amr_path: path to amr_grid.inp
 
-    OUTPUT
-    Shows figure
+    RETURNS
+      figure-object
     """
 
     # Automatically add / to end of path if it's missing
@@ -1111,14 +1121,13 @@ def plot_alltemperature_radius(
     colour = cm.rainbow(np.linspace(0, 1, Nspec))
 
     # Set objects for plot with all in the same figure
-    fig, ax = plt.figure(), plt.axes()
+    fig1, ax1 = plt.figure(), plt.axes()
     
     for nn, c in enumerate(colour):
 
         temperature = np.array(temperatures[nn])
 
-
-        ax.plot(
+        ax1.plot(
             griddistances[
                 np.where(temperature > 0)[0],0
             ],temperature[
@@ -1126,26 +1135,26 @@ def plot_alltemperature_radius(
             ],
             markeredgecolor=c,linestyle='',marker='.',markersize=1
         )
-    ax.plot(
+    ax1.plot(
         1.65,2800,'r*'
     )
-    ax.set(
+    ax1.set(
         ylabel=r'Cell temperature (K)',
         xlabel=r'Distance (AU)',
         title=f'Dust species 1 to {Nspec}'
     )
-    fig.tight_layout()
-    fig.show()
+    fig1.tight_layout()
+    fig1.show()
 
     # Set objects for subplots (two columns, increasing number of rows)
     # ax[rows,columns]
-    fig,ax = plt.subplots((-(-Nspec//2)),2)
+    fig2,ax2 = plt.subplots((-(-Nspec//2)),2)
 
     for nn, c in enumerate(colour):
 
         temperature = np.array(temperatures[nn])
 
-        ax.ravel()[nn].plot(
+        ax2.ravel()[nn].plot(
             griddistances[
                 np.where(temperature > 0)[0],0
             ],temperature[
@@ -1153,13 +1162,92 @@ def plot_alltemperature_radius(
             ],
             markeredgecolor=c,linestyle='',marker='.',markersize=1
         )
-        ax.ravel()[nn].set(
+        ax2.ravel()[nn].set(
             ylabel=r'Cell temperature (K)',
             xlabel=r'Radius (AU)',
             title=f'Dust specie {nn+1}'
         )
-    fig.tight_layout()
-    fig.show()
+    fig2.tight_layout()
+    return fig1, fig2
+
+
+# Plots temperature of radial bins (for paper-usage)
+def plot_temperaturebins_raduis(
+        temperature_path:str='../dust_temperature.dat',
+        grid_path:str='../grid_distances.csv',
+        amr_path:str='../amr_grid.inp',
+        numb_specie:int=1
+    ):
+    """
+    # TODO
+    Info here...
+    """
+
+    # Load R3D-temperature-file
+    Ncells, Nspecies, temperatures = load_temperature(
+        path=temperature_path,
+        numb_specie=numb_specie
+    )
+
+    # Load coordintaes of R3D-cells
+    cellcoords = load_griddistances(
+        gridpath=grid_path,
+        amrpath=amr_path
+    )
+    radii = cellcoords[:,0]/AUcm
+
+    # Set up bins and arrays for binned data
+    Nbins = 100
+    radial_bins = np.linspace(0,radii.max(),Nbins+1)
+    radial_range = np.zeros(Nbins)
+    temperature_bins = np.zeros(Nbins)
+    temperature_max = np.zeros(Nbins)
+    temperature_min = np.zeros(Nbins)
+    temperature_std = np.zeros(Nbins)
+
+    # Loop through bins and save binned data
+    for nn in range(Nbins):
+        ncells = np.where((radii >= radial_bins[nn]) & (radii < radial_bins[nn+1]))[0]
+        temperature_bins[nn] = temperatures[ncells].mean()
+        temperature_max[nn] = temperatures[ncells].max()
+        temperature_min[nn] = temperatures[ncells].min()
+        temperature_std[nn] = temperatures[ncells].std()
+        radial_range[nn] = radial_bins[nn] + 0.5 * radial_bins[1]
+
+    # Create figure-ax-objects
+    fig, ax = plt.figure(), plt.axes()
+
+    # ax.plot
+    # ax.set
+
+    # TODO
+    # fix figure-object
+    """
+    plt.fill_between(
+        radial_bins,
+        temperature_min,
+        temperature_max,
+        color='b',
+        alpha=0.2
+    )
+
+    plt.fill_between(
+        radial_bins,
+        temperature_bins-temperature_std,
+        temperature_bins+temperature_std,
+        color='b',
+        alpha=0.4
+    )
+
+    plt.plot([Rstar,Rstar],[temperature_bins[-1],2800],'r')
+    plt.plot([0,Rstar],[2800,2800],'r')
+    plt.ylim(0,4000)
+
+    
+    """
+
+
+    return fig
 
 
 # Plot grain sizes of R3D cells against radius
