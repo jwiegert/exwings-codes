@@ -1195,7 +1195,8 @@ def plot_temperaturebins_radius(
       numb_specie:int=1
 
     RETURNS
-      fig-object
+      figure-object
+      axex-object
     """
 
     # Load R3D-temperature-file
@@ -1238,8 +1239,7 @@ def plot_temperaturebins_radius(
         radial_range[nn] = radial_bins[nn] + 0.5 * radial_bins[1]
 
     # Create figure-ax-objects
-    fig, ax = plt.figure(), plt.axes()
-
+    fig, ax = plt.figure('Average radial temperatures', figsize=(6, 4)), plt.axes()
     # ax.plot
     # ax.set
 
@@ -1266,12 +1266,13 @@ def plot_temperaturebins_radius(
     
     # Plot settings
     ax.set(
-        ylabel=r'Gas \& dust temperature (K)',
+        ylabel=r'Gas and dust temperature (K)',
         xlabel=r'Distance (AU)',
-        ylim=(0,4000)
+        ylim=(0,4000),
+        xlim=(0,radial_range.max()+0.5)
     )
 
-    return fig
+    return fig,ax
 
 
 # Plot grain sizes of R3D cells against radius

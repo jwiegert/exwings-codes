@@ -24,7 +24,8 @@ plot_coboldgrid = 'n'
 plot_opticalthickness = 'n'
 plot_grainsizehist_all = 'n'
 plot_grainsizehist_one = 'n'
-plot_absscat = 'y'
+plot_absscat = 'n'
+plot_temperatureradial = 'y'
 
 # ----------------------------------------------------------------
 # FIG Cut through of CO5BOLD grid for st28gm06n052 with cell 
@@ -147,3 +148,26 @@ if plot_absscat == 'y':
     fig.savefig('figs/abs_scat_angle.pdf', facecolor="white")
 
     fig.show()
+
+# ----------------------------------------------------------------
+#
+# Plot Figure with radial dependence of temperatures
+
+if plot_temperatureradial == 'y':
+    fig,ax = a3d.plot_temperaturebins_radius(
+        temperature_path='../r3dresults/st28gm06n052_staranddust/186/dust_temperature.dat',
+        grid_path='../r3dresults/st28gm06n052_staranddust/grid_distances.csv',
+        amr_path='../r3dresults/st28gm06n052_staranddust/amr_grid.inp',
+        numb_specie=1
+    )
+
+    ax.set_ylabel(r'Gas \&  dust temperature (K)',fontsize=18)
+    ax.set_xlabel(r'Distance (AU)',fontsize=18)
+
+    ax.tick_params(axis='both', which='major', labelsize=15)
+    fig.tight_layout()
+    fig.savefig('figs/temperature_radial.pdf', facecolor="white")
+
+    fig.show()
+
+
