@@ -55,7 +55,7 @@ if plot_coboldgrid == 'y':
     ax.tick_params(axis='both', which='major', labelsize=15)
 
     fig.tight_layout()
-    fig.savefig('figs/grid-cutthrough.pdf', facecolor="white")
+    fig.savefig('figs/grid-cutthrough.pdf', dpi=300, facecolor="white")
     fig.show()
 
 # ----------------------------------------------------------------
@@ -74,7 +74,7 @@ if plot_opticalthickness == 'y':
     ax.tick_params(axis='both', which='major', labelsize=15)
 
     fig.tight_layout()
-    fig.savefig('figs/optthick_los.pdf', facecolor="white")
+    fig.savefig('figs/optthick_los.pdf', dpi=300, facecolor="white")
     fig.show()
 
 # ----------------------------------------------------------------
@@ -102,7 +102,7 @@ if plot_grainsizehist_all == 'y':
     ax[2].tick_params(axis='both', which='major', labelsize=15)
 
     fig.tight_layout()
-    fig.savefig('figs/grainsize_hist.pdf', facecolor="white")
+    fig.savefig('figs/grainsize_hist.pdf', dpi=300, facecolor="white")
 
     fig.show()
 
@@ -118,7 +118,7 @@ if plot_grainsizehist_one == 'y':
     ax.tick_params(axis='both', which='major', labelsize=15)
 
     fig.tight_layout()
-    fig.savefig('figs/grainsize_hist.pdf', facecolor="white")
+    fig.savefig('figs/grainsize_hist.pdf', dpi=300, facecolor="white")
 
     fig.show()
 
@@ -145,7 +145,7 @@ if plot_absscat == 'y':
     ax[3].tick_params(axis='both', which='major', labelsize=15)
 
     fig.tight_layout()
-    fig.savefig('figs/abs_scat_angle.pdf', facecolor="white")
+    fig.savefig('figs/abs_scat_angle.pdf', dpi=300, facecolor="white")
 
     fig.show()
 
@@ -166,7 +166,7 @@ if plot_temperatureradial == 'y':
 
     ax.tick_params(axis='both', which='major', labelsize=15)
     fig.tight_layout()
-    fig.savefig('figs/temperature_radial.pdf', facecolor="white")
+    fig.savefig('figs/temperature_radial.pdf', dpi=300, facecolor="white")
 
     fig.show()
 

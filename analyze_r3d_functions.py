@@ -1562,14 +1562,14 @@ def plot_images(
     """
     Plots list of images
 
-    INPUT
-    path: path to folder containing images
-    images: list of image-file names inside your folder
-    distance: distance to source in pc (default 1 pc)
+    ARGUMENTS
+      path: path to folder containing images
+      images: list of image-file names inside your folder
+      distance: distance to source in pc (default 1 pc)
 
-    OUTPUT
-    Figure with 2 subplots, linear and logarithmic scales.
-    Total flux of images in Jy at chosen distance
+    RETURNS
+      Figure with 2 subplots, linear and logarithmic scales.
+      Total flux of images in Jy at chosen distance
     """
 
     fluxtotal = []
@@ -1947,6 +1947,57 @@ def plot_opticalthick(
     fig.tight_layout()
 
     return star_surface,fig,ax
+
+
+# Function to plot Pearson-Chi2-comparison between two sets of data
+def plot_chisquare(
+        simulation:list,
+        observation:list,
+        obssigma:list
+    ):
+    """
+    PLOTS
+      chi2 = (simulation - observation)^2 / obssigma^2
+
+    ARGUMENTS
+      simulation: list/array with simulated data to compare with observation
+      observations: list/array with observed data
+      Length of both must be the same
+
+    RETURNS
+      fig-object
+      Total chi^2-number
+        1/N * sum( (simulation - observation)^2 / obssigma^2 )
+      where N = length of input arrays.
+    """
+
+    # Check so that length of both are correct
+    if len(simulation) != len(observation):
+        return 'ERROR: your input data arrays are not of equal length'
+
+    # Put data in np.arrays if needed
+    if type(simulation) == list:
+        simulation = np.array(simulation)
+    if type(observation) == list:
+        observation = np.array(observation)
+
+    # Compute chi2-array and total number
+
+
+    # TODO
+
+
+    return 'hej'
+
+
+
+
+
+
+
+
+
+
 
 
 # ------------------------------------------------------------ #
