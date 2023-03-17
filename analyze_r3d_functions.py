@@ -922,13 +922,11 @@ def plot_alldensity_radius(
     """
     Plots one figure with radial density distribution of all species in dust_density.inp
 
-    INPUT
-    density_path: path to density.inp-file
-    grid_path: path to grid_distances.csv'
-    amr_path: path to amr_grid.inp
+    ARGUMENTS
+      path: path to density.inp-file's folder
 
-    OUTPUT
-    Shows figure
+    RETURNS
+      Shows figures
     """
 
     # Automatically add / to end of path if it's missing
@@ -1853,6 +1851,7 @@ def plot_opticalthick(
         path += '/'
 
     # Load densities (first one and then the rest to get the Nspecies)
+    print('Loading densities')
     Ncells, Nspecies, density = load_dustdensity(
         path=path+'dust_density.inp',
         numb_specie=1,
@@ -1868,6 +1867,7 @@ def plot_opticalthick(
         densities[:,nspecie] = density
 
     # Load Absorptions
+    print('Loading opacities')
     kappa = 0
     kappas = np.zeros(Ncells)
     specieindeces = []
@@ -1888,13 +1888,17 @@ def plot_opticalthick(
         # Save kappa-values and multiply with corresponding densities
         kappas[specieindeces[nspecie]] = kappa * densities[[specieindeces[nspecie]],nspecie]
 
+
     # Load griddistances [radial,x,y,z]
+    print('Loading grid-info')
     griddistances = load_griddistances(
         gridpath=path+'../grid_distances.csv',
         amrpath=path+'../amr_grid.inp'
     )
 
+
     # Set up arrays for final optical depth computations
+    print('Computing optical depths')
     Nradius = 100
     dxarray = np.linspace(0,np.max(griddistances[:,0]),Nradius)
     dtauarray = np.zeros(Nradius)
@@ -1912,18 +1916,25 @@ def plot_opticalthick(
             dtauarray[nx] = 0
         else:
             dtauarray[nx] = np.mean(kappas[binindeces]) * (dxarray[nx+1] - dxarray[nx])
-    
+
+
     # Optical depth along line of sight is then the sum of all outer values
     dtauarray[-1] = dtauarray[-2]
     for nx in range(1,np.shape(dxarray)[0]+1):
         nx *= -1
         dtauarray[nx] += dtauarray[nx+1]
 
-    # Extract surface of star
-    star_surface_index = np.where(dtauarray < 1)[0][0]
-    star_surface = 0.5* (dxarray[star_surface_index-1] + dxarray[star_surface_index])
+
+    # Find surface of star (if possible)
+    if len(np.where(dtauarray < 1)[0]) > 0:
+        star_surface_index = np.where(dtauarray < 1)[0][0]
+        star_surface = 0.5* (dxarray[star_surface_index-1] + dxarray[star_surface_index])
+    else:
+        star_surface_index = 0
+        star_surface = 0
 
     # Plot average optical thickness along LOS
+    print('Creating figure')
     fig, ax = plt.figure('Optical thickness along average LOS', figsize=(6, 4)), plt.axes()
 
     # Optical thickness
@@ -1932,12 +1943,13 @@ def plot_opticalthick(
     )
 
     # Stellar radius
-    ax.plot(
-        [star_surface/AUcm,star_surface/AUcm],[dtauarray[0],dtauarray[-1]],'r'
-    )
-    ax.plot(
-        [dxarray[star_surface_index-1]/AUcm,dxarray[star_surface_index]/AUcm],[1,1],'r'
-    )
+    if star_surface_index > 0:
+        ax.plot(
+            [star_surface/AUcm,star_surface/AUcm],[dtauarray[0],dtauarray[-1]],'r'
+        )
+        ax.plot(
+            [dxarray[star_surface_index-1]/AUcm,dxarray[star_surface_index]/AUcm],[1,1],'r'
+        )
 
     ax.set(
         ylabel=r'$\tau$',
@@ -1946,6 +1958,7 @@ def plot_opticalthick(
     )
     fig.tight_layout()
 
+    print('Returning: star_surface, fig, ax')
     return star_surface,fig,ax
 
 
