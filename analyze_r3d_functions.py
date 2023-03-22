@@ -640,15 +640,13 @@ def load_spectrum(
     """
     Loads and returns SED and wavelength.
 
-    INPUT
-    -----
-    path: str with path and filename of spectrum.out file
-    distance: float, distance to star in pc
+    ARGUMENTS
+      path: str with path and filename of spectrum.out file
+      distance: float, distance to star in pc
 
-    OUTPUT
-    ------
-    wavelengths: array with wavelength grid in microns
-    spectrum: array with SED in Jy normalised to indicated distance
+    RETURNS
+      wavelengths: array with wavelength grid in microns
+      spectrum: array with SED in Jy normalised to indicated distance
     """
 
     # Declare lists
@@ -1180,8 +1178,6 @@ def plot_temperaturebins_radius(
         numb_specie:int=1
     ):
     """
-    # TODO
-    Info here...
     Plots average temperature of 100 spherical shells, 
     and max-min-values, and STD of each shell.
     Can take a few minutes when loading the larger data sets.
@@ -1193,8 +1189,13 @@ def plot_temperaturebins_radius(
       numb_specie:int=1
 
     RETURNS
-      figure-object
-      axex-object
+      fig,ax, temperature_bins,temperature_std,minmax_bins,radial_range
+        figure-object
+        axes-object
+        Radial temperature-array - in K
+        and standard deviation
+        and Max-min
+        Radial range array - in AU
     """
 
     # Load R3D-temperature-file
@@ -1270,7 +1271,14 @@ def plot_temperaturebins_radius(
         xlim=(0,radial_range.max()+0.5)
     )
 
-    return fig,ax
+
+    # For output: 
+    #   create a min-max-array with average
+    #   difference between min-max
+    minmax_bins = 0.5*(temperature_max - temperature_min)
+
+
+    return fig,ax, temperature_bins,temperature_std,minmax_bins,radial_range
 
 
 # Plot grain sizes of R3D cells against radius
@@ -1966,7 +1974,8 @@ def plot_opticalthick(
 def plot_chisquare(
         simulation:list,
         observation:list,
-        obssigma:list
+        obssigma:list,
+        xdata:list
     ):
     """
     PLOTS
@@ -1975,13 +1984,16 @@ def plot_chisquare(
     ARGUMENTS
       simulation: list/array with simulated data to compare with observation
       observations: list/array with observed data
+      obssigma: List/array with error bar data for observations
       Length of both must be the same
 
     RETURNS
-      fig-object
-      Total chi^2-number
-        1/N * sum( (simulation - observation)^2 / obssigma^2 )
-      where N = length of input arrays.
+      fig,ax,chisq_array,chiaq_reduced
+        fig-object and ax-object
+        The Chi^2-array that is plotted
+        Total chi^2-number
+          1/N * sum( (simulation - observation)^2 / obssigma^2 )
+          where N = length of input arrays.
     """
 
     # Check so that length of both are correct
@@ -1993,14 +2005,34 @@ def plot_chisquare(
         simulation = np.array(simulation)
     if type(observation) == list:
         observation = np.array(observation)
+    if type(obssigma) == list:
+        obssigma = np.array(obssigma)
 
     # Compute chi2-array and total number
+    chisq_array = ((simulation - observation) / obssigma)**2
+    chiaq_reduced = 1/chisq_array.size * chisq_array.sum()
 
 
-    # TODO
+    fig, ax = plt.figure(figsize=(6, 4)), plt.axes()
+
+    # Chi2-array:
+    ax.plot(xdata,chisq_array)
+
+    # Line to singify 1-sigma limit
+    ax.plot([xdata[0],xdata[-1]],[1,1],'r--')
+
+    ax.set(
+        ylabel=r'$\chi ^2$',
+        xlabel=r'X-data',
+        yscale='log',
+        xscale='log',
+        ylim=[1e-3,chisq_array.max()]
+    )
+    fig.tight_layout()
 
 
-    return 'hej'
+
+    return fig,ax,chisq_array,chiaq_reduced
 
 
 
@@ -2017,7 +2049,7 @@ def plot_chisquare(
 # Compute different quantities
 
 def compute_sed_luminosity(
-        path:str = '../r3dsims/spectrum.out',
+        path:str = '../spectrum.out',
         distance:float = 1
     ):
     """

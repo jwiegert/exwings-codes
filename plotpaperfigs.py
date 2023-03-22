@@ -154,7 +154,7 @@ if plot_absscat == 'y':
 # Plot Figure with radial dependence of temperatures
 
 if plot_temperatureradial == 'y':
-    fig,ax = a3d.plot_temperaturebins_radius(
+    fig,ax, Tbins,Tstd,Tminmax,radial_range = a3d.plot_temperaturebins_radius(
         temperature_path='../r3dresults/st28gm06n052_staranddust/186/dust_temperature.dat',
         grid_path='../r3dresults/st28gm06n052_staranddust/grid_distances.csv',
         amr_path='../r3dresults/st28gm06n052_staranddust/amr_grid.inp',
@@ -169,5 +169,10 @@ if plot_temperatureradial == 'y':
     fig.savefig('figs/temperature_radial.pdf', dpi=300, facecolor="white")
 
     fig.show()
+
+
+
+
+
 
 
