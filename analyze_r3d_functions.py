@@ -1175,23 +1175,27 @@ def plot_temperaturebins_radius(
         temperature_path:str='../dust_temperature.dat',
         grid_path:str='../grid_distances.csv',
         amr_path:str='../amr_grid.inp',
-        numb_specie:int=1
+        numb_specie:int=1,
+        ax=0
     ):
     """
     Plots average temperature of 100 spherical shells, 
     and max-min-values, and STD of each shell.
     Can take a few minutes when loading the larger data sets.
+    Only returns fig and ax objects if input-ax = 0, is ax and axis-object
+    this function also returns fig and ax-objects (see below RETURNS)
 
     ARGUMENTS
       temperature_path:str='../dust_temperature.dat',
       grid_path:str='../grid_distances.csv',
       amr_path:str='../amr_grid.inp',
       numb_specie:int=1
+      ax: ax object to plot into, if none, don't change
 
     RETURNS
-      fig,ax, temperature_bins,temperature_std,minmax_bins,radial_range
-        figure-object
-        axes-object
+      (fig),(ax), temperature_bins,temperature_std,minmax_bins,radial_range
+        figure-object (if ax-object did not exist before running func)
+        axes-object (if ax-object did not exist before running func)
         Radial temperature-array - in K
         and standard deviation
         and Max-min
@@ -1237,8 +1241,14 @@ def plot_temperaturebins_radius(
         temperature_std[nn] = temperatures[ncells].std()
         radial_range[nn] = radial_bins[nn] + 0.5 * radial_bins[1]
 
-    # Create figure-ax-objects
-    fig, ax = plt.figure(figsize=(6, 4)), plt.axes()
+    # Check if input ax-object exists (!= 0)
+    if ax == 0:
+        # Create figure-ax-objects
+        fig, ax = plt.figure(figsize=(6, 4)), plt.axes()
+        # And save that fig-object is not created outside function
+        externalfig = 'n'
+    else:
+        externalfig = 'y'
 
     ax.plot(radial_range,temperature_bins,'k')
 
@@ -1275,8 +1285,14 @@ def plot_temperaturebins_radius(
     #   difference between min-max
     minmax_bins = 0.5*(temperature_max - temperature_min)
 
-
-    return fig,ax, temperature_bins,temperature_std,minmax_bins,radial_range
+    # if figure object is created outside, don't return any figs or ax
+    if externalfig == 'y':
+        return temperature_bins,temperature_std,minmax_bins,radial_range
+    
+    # Else return fig and ax-objects also
+    if externalfig == 'n':
+        return fig,ax, temperature_bins,temperature_std,minmax_bins,radial_range
+    
 
 
 # Plot grain sizes of R3D cells against radius

@@ -171,73 +171,67 @@ if plot_temperatureradial == 'y':
 
     fig.show()
 
+
+# Plot comparisons of temperature between co5bold and radmc3d
 if plot_temperaturecompare == 'y':
-    # Load cobold-T
-    fig1,ax1, T_c5d,Tstd_c5d,Tminmax_c5d,radius_c5d = a3d.plot_temperaturebins_radius(
-        temperature_path='../r3dresults/st28gm06n052_staranddust/186/dust_temperature.dat',
-        grid_path='../r3dresults/st28gm06n052_staranddust/grid_distances.csv',
-        amr_path='../r3dresults/st28gm06n052_staranddust/amr_grid.inp',
-        numb_specie = 1
+
+    # Set up subplots
+    fig,ax = plt.subplots(
+        3,1,
+        figsize=(6,13)
     )
 
+
+    # Load cobold-T and create subplot
+    T_c5d,Tstd_c5d,Tminmax_c5d,radius_c5d = a3d.plot_temperaturebins_radius(
+        temperature_path='../r3dresults/st28gm06n052_staranddust_1/186/dust_temperature.dat',
+        grid_path='../r3dresults/st28gm06n052_staranddust_1/grid_distances.csv',
+        amr_path='../r3dresults/st28gm06n052_staranddust_1/amr_grid.inp',
+        numb_specie = 1,
+        ax=ax[0]
+    )
+    ax[0].set_ylabel(r'$T_{\rm CO5BOLD}$, K',fontsize=18)
+    ax[0].set_xlabel(r'')
+    ax[0].set(xlim=(0,26))
+    ax[0].tick_params(axis='both', which='major', labelsize=15)
+
+
     # Load r3d-T
-    fig2,ax2, T_r3d,Tstd_r3d,Tminmax_r3d,radius_r3d = a3d.plot_temperaturebins_radius(
+    T_r3d,Tstd_r3d,Tminmax_r3d,radius_r3d = a3d.plot_temperaturebins_radius(
         temperature_path='../r3dresults/st28gm06n052_pointtemperature/186/dust_temperature.dat',
         grid_path='../r3dresults/st28gm06n052_pointtemperature/grid_distances.csv',
         amr_path='../r3dresults/st28gm06n052_pointtemperature/amr_grid.inp',
-        numb_specie = 1
+        numb_specie = 1,
+        ax=ax[1]
     )
-
-
-    # Compute and plot chi2
-    Tsigma = Tstd_c5d + Tstd_r3d
-    Tminmax = Tminmax_c5d + Tminmax_r3d
-
-    # With std
-    fig3,ax3,c2,c2red = a3d.plot_chisquare(
-        T_c5d,T_r3d,Tsigma,radius_c5d
-    )
-    ax3.set(xscale='lin')
-
-    # with minmax
-    fig4,ax4,c2,c2red = a3d.plot_chisquare(
-        T_c5d,T_r3d,Tminmax,radius_c5d
-    )
-    ax4.set(xscale='lin')
-
+    ax[1].set_ylabel(r'$T_{\rm RADMC-3D}$, K',fontsize=18)
+    ax[1].set_xlabel(r'')
+    ax[1].set(xlim=(0,26))
+    ax[1].tick_params(axis='both', which='major', labelsize=15)
 
     # A plot with Tc5d / Tr3d
-    fig5,ax5 = plt.figure(figsize=(6, 4)), plt.axes()
-    ax5.plot(radius_r3d,T_c5d/T_r3d,'b')
+    ax[2].plot(radius_r3d,T_c5d/T_r3d,'b')
 
-    ax5.fill_between(
-        radius_r3d,
-        (T_c5d-Tminmax_c5d)/(T_r3d-Tminmax_r3d),
-        (T_c5d+Tminmax_c5d)/(T_r3d+Tminmax_r3d),
-        color='b',
-        alpha=0.2
-    )
-
-    ax5.fill_between(
+    ax[2].fill_between(
         radius_r3d,
         (T_c5d-Tstd_c5d)/(T_r3d-Tstd_r3d),
         (T_c5d+Tstd_c5d)/(T_r3d+Tstd_r3d),
         color='b',
         alpha=0.4
     )
-
-    ax5.plot([1.65,1.65],[0,10],'r:')
-    ax5.set(
-        ylim=(0,5)
+    ax[2].plot([1.65,1.65],[0,10],'r:')
+    ax[2].set_ylabel(r'$T_{\rm CO5BOLD}$ / $T_{\rm RADMC-3D}$',fontsize=18)
+    ax[2].set_xlabel(r'Distance (AU)',fontsize=18)
+    ax[2].set(
+        ylim=(1,3),
+        xlim=(0,26)
     )
+    ax[2].tick_params(axis='both', which='major', labelsize=15)
 
     # Show all plots
-    fig1.show()
-    fig2.show()
-    fig3.show()
-    fig4.show()
-    fig5.show()
+    plt.tight_layout()
+    fig.show()
 
-
-
+    #Save figure
+    fig.savefig('figs/temperatures_all.pdf', dpi=300, facecolor="white")
 
