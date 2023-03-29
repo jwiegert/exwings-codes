@@ -126,7 +126,7 @@ AUcm = 1.49598e13 # AU in cm
 # )
 #
 # This plots binned averages of the temperatures instead
-# plot_temperaturebins_raduis(
+# plot_temperaturebins_radius(
 #    temperature_path:str='../dust_temperature.dat',
 #    grid_path:str='../grid_distances.csv',
 #    amr_path:str='../amr_grid.inp',
@@ -1238,9 +1238,7 @@ def plot_temperaturebins_radius(
         radial_range[nn] = radial_bins[nn] + 0.5 * radial_bins[1]
 
     # Create figure-ax-objects
-    fig, ax = plt.figure('Average radial temperatures', figsize=(6, 4)), plt.axes()
-    # ax.plot
-    # ax.set
+    fig, ax = plt.figure(figsize=(6, 4)), plt.axes()
 
     ax.plot(radial_range,temperature_bins,'k')
 

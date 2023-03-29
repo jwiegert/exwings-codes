@@ -25,7 +25,8 @@ plot_opticalthickness = 'n'
 plot_grainsizehist_all = 'n'
 plot_grainsizehist_one = 'n'
 plot_absscat = 'n'
-plot_temperatureradial = 'y'
+plot_temperatureradial = 'n'
+plot_temperaturecompare = 'y'
 
 # ----------------------------------------------------------------
 # FIG Cut through of CO5BOLD grid for st28gm06n052 with cell 
@@ -170,8 +171,72 @@ if plot_temperatureradial == 'y':
 
     fig.show()
 
+if plot_temperaturecompare == 'y':
+    # Load cobold-T
+    fig1,ax1, T_c5d,Tstd_c5d,Tminmax_c5d,radius_c5d = a3d.plot_temperaturebins_radius(
+        temperature_path='../r3dresults/st28gm06n052_staranddust/186/dust_temperature.dat',
+        grid_path='../r3dresults/st28gm06n052_staranddust/grid_distances.csv',
+        amr_path='../r3dresults/st28gm06n052_staranddust/amr_grid.inp',
+        numb_specie = 1
+    )
+
+    # Load r3d-T
+    fig2,ax2, T_r3d,Tstd_r3d,Tminmax_r3d,radius_r3d = a3d.plot_temperaturebins_radius(
+        temperature_path='../r3dresults/st28gm06n052_pointtemperature/186/dust_temperature.dat',
+        grid_path='../r3dresults/st28gm06n052_pointtemperature/grid_distances.csv',
+        amr_path='../r3dresults/st28gm06n052_pointtemperature/amr_grid.inp',
+        numb_specie = 1
+    )
 
 
+    # Compute and plot chi2
+    Tsigma = Tstd_c5d + Tstd_r3d
+    Tminmax = Tminmax_c5d + Tminmax_r3d
+
+    # With std
+    fig3,ax3,c2,c2red = a3d.plot_chisquare(
+        T_c5d,T_r3d,Tsigma,radius_c5d
+    )
+    ax3.set(xscale='lin')
+
+    # with minmax
+    fig4,ax4,c2,c2red = a3d.plot_chisquare(
+        T_c5d,T_r3d,Tminmax,radius_c5d
+    )
+    ax4.set(xscale='lin')
+
+
+    # A plot with Tc5d / Tr3d
+    fig5,ax5 = plt.figure(figsize=(6, 4)), plt.axes()
+    ax5.plot(radius_r3d,T_c5d/T_r3d,'b')
+
+    ax5.fill_between(
+        radius_r3d,
+        (T_c5d-Tminmax_c5d)/(T_r3d-Tminmax_r3d),
+        (T_c5d+Tminmax_c5d)/(T_r3d+Tminmax_r3d),
+        color='b',
+        alpha=0.2
+    )
+
+    ax5.fill_between(
+        radius_r3d,
+        (T_c5d-Tstd_c5d)/(T_r3d-Tstd_r3d),
+        (T_c5d+Tstd_c5d)/(T_r3d+Tstd_r3d),
+        color='b',
+        alpha=0.4
+    )
+
+    ax5.plot([1.65,1.65],[0,10],'r:')
+    ax5.set(
+        ylim=(0,5)
+    )
+
+    # Show all plots
+    fig1.show()
+    fig2.show()
+    fig3.show()
+    fig4.show()
+    fig5.show()
 
 
 
