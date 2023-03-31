@@ -669,7 +669,8 @@ def plot_densitytemperature(
         title=f'Dust species {nspecie}'
     )
     fig.tight_layout()
-    fig.show()
+    
+    return fig,ax
 
 
 def plot_grainsize_distribution(
@@ -680,9 +681,21 @@ def plot_grainsize_distribution(
         bulk_density:float=5.0
     ):
     """
-    TODO
-    info
-    rho_bulk must be in g/cm3
+    Plots Number of grains vs grain size in grain size bins
+    Only plots one phase and one specie, ie, to plot all grain sizes
+    you need to use a dust_density-file with all grain sizes in the
+    same dust specie.
+    
+    ARGUMENTS
+      dustdensity_path: path to dust_density-file only containing dust densities
+      grainsizes_path: path to a grain_sizes_binned_*.dat', a file with same 
+          style as dust_density, but with grain size of each cell instead.
+      gridsize_path: path to grid_cellsizes.csv, file with sizes of each r3d cell
+      amrpath: path to apropiate amr_grid.inp
+      bulk_density: mass density of all dust grains in g/cm3
+
+    RETURNS
+      fig,ax-objects
     """
     # Load dust_densities per cell
     Ncells, Nspec, dust_densities = a3d.load_dustdensity(
@@ -734,42 +747,32 @@ def plot_grainsize_distribution(
     return fig, ax
 
 
-# TODO
-# function som skapar en subplot per phase, förinvalda antal bins
-# få att funka? :)
-# alternativt: gör den snabbare, ladda från npy-filer istället?
 
 def plot_grainsizemass_histogram(
         model:str='st28gm06n052',
         phases:list=[186,190,198]
     ):
     """
-    TODO better info
-    Plots histogram of mass of each grain size
+    Plots histogram of total mass (gram) of each grain size bin (um)
+    For a specified model-folder in r3dresults and a list of phases
+    in the same plot
 
     ARGUMENTS
-      model-name
-      phases
+      model: folder-name in r3dresults
+      phases: list of folder-names for phases to plot
 
     RETURNS
       figure,axex - objects
     """
 
-    Nphases = len(phases)
-
-
-    # Initiate fig-axes-subplot-objects
-    #fig,ax = plt.subplots(
-    #    Nphases,1, 
-    #    num=f'grainsize_mass_hist_{model}',
-    #    figsize=(6, 10)
-    #)
+    # Initiate fig-axes-object
     fig,ax = plt.figure(
         num=f'grainsize_mass_hist_{model}',
         figsize=(6, 4)
     ), plt.axes()
 
     # Set line symbols
+    # NOTE This is hardcoded for a maximum of three symbols!
     linesymbols = ['r-X','g-*','b-o']
 
     # Loop over phases
@@ -823,34 +826,38 @@ def plot_grainsizemass_histogram(
                         dustmass_bins[nspecie] += cell_volumes[ncell]*data
                         # This is then the dust mass in grams per grain size
 
-        # Plot figures
+        # Plot figures as step-plot with symbols in the moddel
         ax.step(grainsize_bins,dustmass_bins,linesymbols[nphase],where='mid')
-        #ax.plot(grainsize_bins,dustmass_bins,'.')
-        #ax.set(title=f'Phase: {phase}')
-        print(f'Finished figure object for phase {phase}')
+
+        print(f'Finished figure object with phase {phase}')
     
     # Legend instead of title
     ax.legend(phases)    
-
-    #    TODO
-    # pu all in same figure
-
-
+    # Tight layout for nicer image file
     fig.tight_layout()
+
     return fig, ax 
 
 
-
-
+# Function to test various grain size bins
 def plot_grainsizemass_distribution(
         model:str= 'st28gm06n052',
         phase:str= '186'
     ):
     """
-    TODO
-    to plot histograms with grain size vs mass of grain size bins
-    only for st28gm06n052 so far, might change later!
-    IE this is quite hard-coded, only copy-pasted from jupyter, but it works :)
+    Plots various histograms of unbinned grain-sizes for one phase only.
+    Each subplot is a different setting of histogram
+        varies number of bins and scale between bins
+    Warning: relatively hardcoded. Used to test verious grain size bins.
+            
+    ARGUMENTS
+      model: folder-name containing model
+      phase: name of phase-folder with densities
+      NOTE: Also needs a grain_sizes_{phase}.dat file (ie list of grain sizes
+            in same order as density.inp-files, unbinned grain sizes).
+      
+    RETURNS
+      fig,ax-files
     """
 
     # ADD TO INFO
@@ -1910,8 +1917,10 @@ def extract_grainsizes(
         epsilonHe:float=0.1
     ):
     """
+    Creates a file with same style as dust_density.inp, ie a list of grain
+    size of each cell in the r3d-grid.
+    TODO:
     Info about the grain sizes, the equation
-    TODO
     FIrst use a5d.load_c5dheavydata to create necessary npy-files:
     
     ARGUMENTS
