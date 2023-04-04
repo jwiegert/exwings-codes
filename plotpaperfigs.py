@@ -24,6 +24,7 @@ plot_coboldgrid = 'n'
 plot_opticalthickness = 'n'
 plot_grainsizehist_all = 'n'
 plot_grainsizehist_one = 'n'
+plot_grainsizeradius = 'n'
 plot_absscat = 'n'
 plot_temperatureradial = 'n'
 plot_temperaturecompare = 'y'
@@ -123,6 +124,34 @@ if plot_grainsizehist_one == 'y':
 
     fig.show()
 
+
+# Plot figure with grain sizes vs R
+if plot_grainsizeradius == 'y':
+
+    phases = ['186','190','198']
+    fig, ax = plt.subplots(
+        len(phases),1,
+        figsize=(6,13)
+    )
+    a5d.plot_grainsizeradius(phases=phases,ax=ax)
+
+    ax[0].set_ylabel(fr'Grain sizes ($\mu$m), phase: {phases[0]}',fontsize=18)
+    ax[1].set_ylabel(fr'Grain sizes ($\mu$m), phase: {phases[1]}',fontsize=18)
+    ax[2].set_ylabel(fr'Grain sizes ($\mu$m), phase: {phases[2]}',fontsize=18)
+    ax[0].set_xlabel(r'',fontsize=18)
+    ax[1].set_xlabel(r'',fontsize=18)
+    ax[2].set_xlabel(r'Distance (AU)',fontsize=18)
+    ax[0].tick_params(axis='both', which='major', labelsize=15)
+    ax[1].tick_params(axis='both', which='major', labelsize=15)
+    ax[2].tick_params(axis='both', which='major', labelsize=15)
+
+    fig.tight_layout()
+
+    fig.savefig('figs/grainsizes_radius.pdf', dpi=300, facecolor="white")
+
+    fig.show()
+
+
 # ----------------------------------------------------------------
 #
 # Plot Figure absorption and scattering, and angles
@@ -181,16 +210,17 @@ if plot_temperaturecompare == 'y':
         figsize=(6,13)
     )
 
+    phase = 190
 
     # Load cobold-T and create subplot
     T_c5d,Tstd_c5d,Tminmax_c5d,radius_c5d = a3d.plot_temperaturebins_radius(
-        temperature_path='../r3dresults/st28gm06n052_staranddust_1/186/dust_temperature.dat',
+        temperature_path=f'../r3dresults/st28gm06n052_staranddust_1/{phase}/dust_temperature.dat',
         grid_path='../r3dresults/st28gm06n052_staranddust_1/grid_distances.csv',
         amr_path='../r3dresults/st28gm06n052_staranddust_1/amr_grid.inp',
         numb_specie = 1,
         ax=ax[0]
     )
-    ax[0].set_ylabel(r'$T_{\rm CO5BOLD}$, K',fontsize=18)
+    ax[0].set_ylabel(r'$T_{\rm CO5BOLD}$ (K)',fontsize=18)
     ax[0].set_xlabel(r'')
     ax[0].set(xlim=(0,26))
     ax[0].tick_params(axis='both', which='major', labelsize=15)
@@ -198,13 +228,13 @@ if plot_temperaturecompare == 'y':
 
     # Load r3d-T
     T_r3d,Tstd_r3d,Tminmax_r3d,radius_r3d = a3d.plot_temperaturebins_radius(
-        temperature_path='../r3dresults/st28gm06n052_pointtemperature/186/dust_temperature.dat',
+        temperature_path=f'../r3dresults/st28gm06n052_pointtemperature/{phase}/dust_temperature.dat',
         grid_path='../r3dresults/st28gm06n052_pointtemperature/grid_distances.csv',
         amr_path='../r3dresults/st28gm06n052_pointtemperature/amr_grid.inp',
         numb_specie = 1,
         ax=ax[1]
     )
-    ax[1].set_ylabel(r'$T_{\rm RADMC-3D}$, K',fontsize=18)
+    ax[1].set_ylabel(r'$T_{\rm RADMC-3D}$ (K)',fontsize=18)
     ax[1].set_xlabel(r'')
     ax[1].set(xlim=(0,26))
     ax[1].tick_params(axis='both', which='major', labelsize=15)
@@ -233,5 +263,5 @@ if plot_temperaturecompare == 'y':
     fig.show()
 
     #Save figure
-    fig.savefig('figs/temperatures_all.pdf', dpi=300, facecolor="white")
+    fig.savefig(f'figs/temperatures_{phase}.pdf', dpi=300, facecolor="white")
 

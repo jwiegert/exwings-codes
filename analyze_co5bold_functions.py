@@ -747,6 +747,135 @@ def plot_grainsize_distribution(
     return fig, ax
 
 
+def plot_grainsizeradius(
+        grainsizes_folder='../../exwings_archivedata/st28gm06n052_generaldata/',
+        grid_path='../r3dresults/st28gm06n052_staranddust_1/grid_distances.csv',
+        amr_path='../r3dresults/st28gm06n052_staranddust_1/amr_grid.inp',
+        phases=['186'],
+        ax=0
+    ):
+    """
+    Plots grain size vs radial distance to centre of grid of all phases of a data set.
+
+    ARGUMENTS
+
+    RETURNS
+      fig,ax objects for plotting
+
+    """
+
+    # Automatically add / to end of path if it's missing
+    if grainsizes_folder[-1] != '/':
+        grainsizes_folder += '/'
+
+    # Load grid info
+    # Load coordinates of R3D-cells and change to AU
+    cellcoords = a3d.load_griddistances(
+        gridpath=grid_path,
+        amrpath=amr_path
+    )
+    radii = cellcoords[:,0]/AUcm
+
+    # Load star's radius here
+    Mstar,Rstar,Lstar = load_star_information(
+        savpath='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        printoutput='n'
+    )
+    Rstar /= AUcm
+
+
+    # If needed, initiate fig-ax-objects
+    if ax.any() == 0:
+        # Create figure-ax-objects
+        fig, ax = plt.subplots(
+            len(phases),1,
+            figsize=(6,13)
+        )
+        # Note that fig-object is not created outside function
+        externalfig = 'n'
+    else:
+        # Else note that fig-object is from outside function
+        externalfig = 'y'
+
+
+    # Fill plots
+    Nbins = 100
+
+    for nplot,phase in enumerate(phases):
+
+        # Load grainsizes
+        grain_sizes,Ncells = a3d.load_grainsizes(
+            grainsize_path = f'{grainsizes_folder}grain_sizes_{phase}.dat'
+        )
+        # Change to um
+        grain_sizes *= 1e4
+
+
+        # N radial bins, set up radial grid
+        radial_bins = np.linspace(0,radii.max(),Nbins+1)
+        radial_range = np.zeros(Nbins)
+        grainsize_bins = np.zeros(Nbins)
+        grainsize_max = np.zeros(Nbins)
+        grainsize_min = np.zeros(Nbins)
+        grainsize_std = np.zeros(Nbins)
+
+
+        # Loop through bins and save binned data
+        for nn in range(Nbins):
+            ncells = np.where((radii >= radial_bins[nn]) & (radii < radial_bins[nn+1]))[0]
+            grainsize_bins[nn] = grain_sizes[ncells].mean()
+            grainsize_max[nn] = grain_sizes[ncells].max()
+            grainsize_min[nn] = grain_sizes[ncells].min()
+            grainsize_std[nn] = grain_sizes[ncells].std()
+            radial_range[nn] = radial_bins[nn] + 0.5 * radial_bins[1]
+
+
+        
+        # Plot max-min-range of grain sizes
+        ax[nplot].fill_between(
+            radial_range,
+            grainsize_min,
+            grainsize_max,
+            color='g',
+            alpha=0.2
+        )
+
+        # Plot std-range of grain sizes
+        ax[nplot].fill_between(
+            radial_range,
+            grainsize_bins-grainsize_std,
+            grainsize_bins+grainsize_std,
+            color='g',
+            alpha=0.4
+        )
+
+        # Plot average value
+        ax[nplot].plot(radial_range,grainsize_bins,'k')
+
+        # Add line for stellar surface
+        ax[nplot].plot([Rstar,Rstar],[0,grainsize_max.max()+0.05],'r:',linewidth=1)
+
+        # Plot settings
+        # Plot settings
+        ax[nplot].set(
+            ylabel=r'Grain sizes ($\mu$m)',
+            xlabel=r'Distance (AU)',
+            xlim=(0,radial_range.max()+0.5),
+            ylim=(0,grainsize_max.max()+0.05)
+        )
+
+    # TODO return arrays also?
+
+    # if figure object is created outside, don't return any figs or ax
+    if externalfig == 'y':
+        print('Grain size fig object is finished, show with fig.show()')
+    
+    # Else return fig and ax-objects
+    if externalfig == 'n':
+        return fig,ax
+
+
+
 
 def plot_grainsizemass_histogram(
         model:str='st28gm06n052',
