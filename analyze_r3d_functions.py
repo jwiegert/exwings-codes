@@ -1289,9 +1289,9 @@ def plot_temperaturebins_radius(
     if externalfig == 'y':
         return temperature_bins,temperature_std,minmax_bins,radial_range
     
-    # Else return fig and ax-objects also
+    # Else return only fig and ax-objects
     if externalfig == 'n':
-        return fig,ax, temperature_bins,temperature_std,minmax_bins,radial_range
+        return fig,ax
     
 
 

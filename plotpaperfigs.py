@@ -210,7 +210,7 @@ if plot_temperaturecompare == 'y':
         figsize=(6,13)
     )
 
-    phase = 190
+    phase = 198
 
     # Load cobold-T and create subplot
     T_c5d,Tstd_c5d,Tminmax_c5d,radius_c5d = a3d.plot_temperaturebins_radius(

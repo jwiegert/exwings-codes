@@ -406,3 +406,137 @@ def load_dustgas_densities(
     # Or just do that directly in the grain-size-extractor
 
     return c5dstar_densities, c5ddust_densities
+
+
+
+
+# Fromt darwin-functions
+# Take all time steps for model and make time-averaged data
+def load_averagedarwindata(
+        modelname:str='M2n315u6'
+    ):
+    """
+    DON'T USE
+    Loads all Darwin-data in a folder
+    and takes time-average of all densities and temperatures
+
+    ARGUMENTS
+      modelname: string: Letter-number-code for the model.
+
+    RETURNS
+      average_radius: np.array with radial range in cm
+      average_density: np.array with time-averaged radial dependant gas densities in g/cm3
+      average_temperature: np.array with time-averaged radial dependant gas temperatures in K
+    """
+
+    # Given modelname, list all time-step-files
+    filenames = os.listdir(f'../darwin_data/{modelname}_kappaross/')
+    Ntimesteps = len(filenames)
+
+
+    # Load all Darwin data
+    Ncells = []
+    all_radii = []
+    all_density = []
+    all_temperature = []
+    all_opacity = []
+
+    for filename in filenames:
+        
+        #Loop through files
+        path = f'../darwin_data/{modelname}_kappaross/{filename}'
+
+        # Reset lists
+        radius_cm = []
+        gas_density = []
+        gas_temperature = []
+        gas_opacity = []
+
+        with open(path, 'r') as f:
+            for nn,line in enumerate(f.readlines()):
+                # 18 lines are the header
+                if nn > 8:
+                    
+                    # Clean up each line
+                    line_list = line.strip().split('  ')
+
+                    if len(line_list) > 1:
+                        # Save data
+                        radius_cm.append(float(line_list[0]))
+                        gas_density.append(float(line_list[1]))
+                        gas_temperature.append(float(line_list[2]))
+                        gas_opacity.append(float(line_list[3]))
+
+        # Save a list of number of radial cells per time step
+        Ncells.append(len(radius_cm))
+
+        # Save in lists and reverse the radial direction
+        all_radii.append(radius_cm[::-1])
+        all_density.append(gas_density[::-1])
+        all_temperature.append(gas_temperature[::-1])
+        all_opacity.append(gas_opacity[::-1])
+
+
+    # Average all data into one time-averaged set
+
+    # Define grid to average into
+    Naverage = max(Ncells)
+    average_radius = np.linspace(
+        min(min(all_radii)),
+        max(max(all_radii)),
+        Naverage
+    )
+    average_density = np.zeros(Naverage)
+    average_temperature = np.zeros(Naverage)
+    average_opacity = np.zeros(Naverage)
+    average_cellcounter = np.zeros(Naverage)
+
+
+    # Loop over all time steps
+    for nstep in range(Ntimesteps):
+
+        # Loop over all data in each time step
+        for nn in range(Ncells[nstep]):
+
+            # Check where in average_radius these data are
+            for na in range(Naverage - 1):
+                if all_radii[nstep][nn] >= average_radius[na] and all_radii[nstep][nn] < average_radius[na+1]:
+
+                    # Sum all data at each radial point
+                    average_density[na] += all_density[nstep][nn]
+                    average_temperature[na] += all_temperature[nstep][nn]
+                    average_opacity[na] += all_opacity[nstep][nn]
+                    average_cellcounter[na] += 1
+
+
+    # Extract all zero-elements as sequence-based lists
+    zero_lists = c3d.find_zeroelements(average_cellcounter)
+
+    # Remove zeros in cell counter (to avoid infs, or NaN)
+    average_cellcounter[np.where(average_cellcounter == 0)[0]] = 1
+
+    # Average the data
+    average_density /= average_cellcounter
+    average_temperature /= average_cellcounter
+    average_opacity /= average_cellcounter
+
+
+
+    # Add average-data into the remaining "holes" in the averaged data sets
+    for zero_list in zero_lists:
+
+        # Make sure were not in the end of the array
+        if zero_list[-1] != Naverage-1:
+
+            # Take average of prev and next index (before and after "hole")
+            average_density[zero_list] = 0.5*(average_density[zero_list[0]-1] + average_density[zero_list[-1]+1])
+            average_temperature[zero_list] = 0.5*(average_temperature[zero_list[0]-1] + average_temperature[zero_list[-1]+1])
+            average_opacity[zero_list] = 0.5*(average_opacity[zero_list[0]-1] + average_opacity[zero_list[-1]+1])
+
+        # For the end of the array, just take the final real value
+        if zero_list[-1] == Naverage-1:
+            average_density[zero_list] = average_density[zero_list[0]-1] 
+            average_temperature[zero_list] = average_temperature[zero_list[0]-1]
+            average_opacity[zero_list] = average_opacity[zero_list[0]-1]
+
+    return average_radius,average_density,average_temperature,average_opacity
