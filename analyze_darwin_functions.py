@@ -3,6 +3,7 @@
 
 # Import various libraries
 import os
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm, xlabel, xscale, yscale
@@ -131,11 +132,13 @@ def darwin_to_radmc3d(
     Ncells = np.zeros(len(darwin_radius))
     for nn in range(len(darwin_radius) - 1):
         Ncells[nn] = np.size(np.where(
-            (r3d_radius > darwin_radius[nn]) & (r3d_radius <= darwin_radius[nn+1])
+            (r3d_radius > darwin_radius[nn]) & (r3d_radius <= darwin_radius[nn+1])[0]
         ))
+        # Remove zeros and infs
+        if Ncells[nn] == 0 or Ncells[nn] == math.inf:
+            Ncells[nn] = 1
     # Add a number for the final element
     Ncells[-1] = Ncells[-2]
-
 
     # Create density-opacity array for r3d-sims, since the gas-density
     # in r3d is density*rosselandopacity, and the gas kappa is just
@@ -151,8 +154,12 @@ def darwin_to_radmc3d(
 
 
     # Then write new array and divide both with number of r3d-cells per spherical shell
-    darwin_densityopacity = darwin_density * darwin_opacity * (AUcm / darwin_radius)**2
-    
+    print('r^2')
+    darwin_densityopacity = darwin_density * darwin_opacity * (AUcm / darwin_radius)**4
+    darwin_temperature *= (AUcm / darwin_radius)**2
+    #print('Ncells^2')
+    #darwin_densityopacity = darwin_density * darwin_opacity / Ncells**2
+    #darwin_temperature /= Ncells
     
     # Interpolate darwin-1d-data to r3d-radial grid
     # Default setting of interp is to keep first o last value outside the range
