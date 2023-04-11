@@ -1880,13 +1880,14 @@ def plot_opticalthick(
     )
     densities = np.zeros((Ncells,Nspecies))
     densities[:,0] = density
-    for nspecie in range(1,Nspecies):
-        Ncells, Nspecies, density = load_dustdensity(
-            path=path+'dust_density.inp',
-            numb_specie=nspecie+1,
-        )
-        # Add all densities to one 2D array
-        densities[:,nspecie] = density
+    if Nspecies > 1:
+        for nspecie in range(1,Nspecies):
+            Ncells, Nspecies, density = load_dustdensity(
+                path=path+'dust_density.inp',
+                numb_specie=nspecie+1,
+            )
+            # Add all densities to one 2D array
+            densities[:,nspecie] = density
 
     # Load Absorptions
     print('Loading opacities')
@@ -1921,7 +1922,8 @@ def plot_opticalthick(
 
     # Set up arrays for final optical depth computations
     print('Computing optical depths')
-    Nradius = 100
+    # size of each spherical shell needs to be ~0.05 AU to work
+    Nradius = int(np.round(np.max(griddistances[:,0])/(AUcm*0.05)))
     dxarray = np.linspace(0,np.max(griddistances[:,0]),Nradius)
     dtauarray = np.zeros(Nradius)
 
@@ -1941,7 +1943,8 @@ def plot_opticalthick(
 
 
     # Optical depth along line of sight is then the sum of all outer values
-    dtauarray[-1] = dtauarray[-2]
+    #dtauarray[-1] = dtauarray[-2]
+    dtauarray[-1] = 0
     for nx in range(1,np.shape(dxarray)[0]+1):
         nx *= -1
         dtauarray[nx] += dtauarray[nx+1]

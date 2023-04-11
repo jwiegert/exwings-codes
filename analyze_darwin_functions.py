@@ -154,10 +154,14 @@ def darwin_to_radmc3d(
 
 
     # Then write new array and divide both with number of r3d-cells per spherical shell
-    print('r^2')
-    darwin_densityopacity = darwin_density * darwin_opacity * (AUcm / darwin_radius)**4
-    darwin_temperature *= (AUcm / darwin_radius)**2
-    #print('Ncells^2')
+    print('normal')
+    darwin_densityopacity = darwin_density * darwin_opacity
+
+    #print('/r^2')
+    #darwin_densityopacity = darwin_density * darwin_opacity * (AUcm / darwin_radius)**4
+    #darwin_temperature *= (AUcm / darwin_radius)**2
+
+    #print('/Ncells')
     #darwin_densityopacity = darwin_density * darwin_opacity / Ncells**2
     #darwin_temperature /= Ncells
     
@@ -165,6 +169,14 @@ def darwin_to_radmc3d(
     # Default setting of interp is to keep first o last value outside the range
     r3d_darwindensityopa = np.interp(r3d_radius,darwin_radius,darwin_densityopacity)
     r3d_darwintemperature = np.interp(r3d_radius,darwin_radius,darwin_temperature)
+
+
+    # TEMP!
+    print('remove all outside 2AU!')
+    for nn in range(len(r3d_radius)):
+        if r3d_radius[nn] > 2*AUcm:
+            r3d_darwindensityopa[nn] = 0
+
 
 
     # Save in RADMC-3D inp-files
