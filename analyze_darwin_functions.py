@@ -127,18 +127,26 @@ def darwin_to_radmc3d(
     r3d_radius = r3d_griddistances[:,0]
 
 
-    # Load number of cells per radial Darwin bin!
-
+    # Load number of cells per radial Darwin bin
     Ncells = np.zeros(len(darwin_radius))
-    for nn in range(len(darwin_radius) - 1):
+
+    # First number of cells are all inside smallest darwin cell
+    Ncells[0] = np.size(np.where(
+        r3d_radius <= darwin_radius[0])[0]
+    )
+    for nn in range(1,len(darwin_radius)):
         Ncells[nn] = np.size(np.where(
-            (r3d_radius > darwin_radius[nn]) & (r3d_radius <= darwin_radius[nn+1])[0]
-        ))
+            (r3d_radius >= darwin_radius[nn-1]) & (r3d_radius <= darwin_radius[nn]))[0]
+        )
+
         # Remove zeros and infs
         if Ncells[nn] == 0 or Ncells[nn] == math.inf:
             Ncells[nn] = 1
-    # Add a number for the final element
+
+    # Add a number for the final and first elements
     Ncells[-1] = Ncells[-2]
+    
+
 
     # Create density-opacity array for r3d-sims, since the gas-density
     # in r3d is density*rosselandopacity, and the gas kappa is just
@@ -154,29 +162,21 @@ def darwin_to_radmc3d(
 
 
     # Then write new array and divide both with number of r3d-cells per spherical shell
-    print('normal')
-    darwin_densityopacity = darwin_density * darwin_opacity
+    #print('normal')
+    #darwin_densityopacity = darwin_density * darwin_opacity
 
     #print('/r^2')
     #darwin_densityopacity = darwin_density * darwin_opacity * (AUcm / darwin_radius)**4
     #darwin_temperature *= (AUcm / darwin_radius)**2
 
-    #print('/Ncells')
-    #darwin_densityopacity = darwin_density * darwin_opacity / Ncells**2
-    #darwin_temperature /= Ncells
+    print('divide by Ncells')
+    darwin_densityopacity = darwin_density * darwin_opacity / Ncells**2
+    darwin_temperature /= Ncells
     
     # Interpolate darwin-1d-data to r3d-radial grid
     # Default setting of interp is to keep first o last value outside the range
     r3d_darwindensityopa = np.interp(r3d_radius,darwin_radius,darwin_densityopacity)
     r3d_darwintemperature = np.interp(r3d_radius,darwin_radius,darwin_temperature)
-
-
-    # TEMP!
-    print('remove all outside 2AU!')
-    for nn in range(len(r3d_radius)):
-        if r3d_radius[nn] > 2*AUcm:
-            r3d_darwindensityopa[nn] = 0
-
 
 
     # Save in RADMC-3D inp-files
