@@ -18,6 +18,8 @@ AUcm = 1.49598e13 # cm
 Msol = 1.989e33 # g
 Rsol = 6.955e10 # cm
 Lsol = 3.828e26 # W
+Lsolcgs = 3.8280e33 # erg/s
+sigma = 5.670374419e-8
 
 # Note
 # Co5bold-Rstar = 1.651AU (355 Rsun)
@@ -96,6 +98,8 @@ def darwin_to_radmc3d(
         darwin_density:list,
         darwin_temperature:list,
         darwin_opacity:list,
+        input_radius:float,
+        input_luminosity:float,
         gridpath:str='../grid_distances.csv',
         amrpath:str='../amr_grid.inp'
     ):
@@ -108,15 +112,24 @@ def darwin_to_radmc3d(
       darwin_density:list-like: Darwin-Gas density g/cm3
       darwin_temperature:list-like: Darwin-Gas temperatures in Kelvin
       darwin_opacity:list-like: Darwin-Rosseland opacities cm2/g
+
+      input_radius:float: Rint, radius of Darwin-star in meters
+      input_luminosity:float: Lext, (bol) luminosity of star in Watts
+
       gridpath:str: Path to grid_distances.csv of your radmc3d-model
       amrpath:str: Path to amr_grid.inp of your radmc3d-model
 
+      
     RETURNS
       dust_density_darwinstar.inp
       dust_temperature_darwinstar.dat
         Input files for Radmc3d, merge these with dust-files if necessary 
         (with c3d.merge_dustdensities and c3d.merge_dusttemperatures)
     """
+
+    # Compute effective temperature
+    effective_temperature = (input_luminosity / (4*np.pi * input_radius**2 * sigma) )**0.25
+    print(f'Effective temperature is: {effective_temperature} K')
 
     # Load r3d-grid
     print('Loading Radmc3d-grid.')
@@ -125,9 +138,6 @@ def darwin_to_radmc3d(
         amrpath=amrpath,
     )
     r3d_radius = r3d_griddistances[:,0]
-
-
-
 
 
     # Create density-opacity array for r3d-sims, since the gas-density
@@ -146,8 +156,18 @@ def darwin_to_radmc3d(
     # Then write new array and divide both with number of r3d-cells per spherical shell
 
     # 0
-    #print('normal')
+    #print('normal and T-cut')
     #darwin_densityopacity = darwin_density * darwin_opacity
+    #darwin_temperature[
+    #    np.where(darwin_temperature >= effective_temperature)[0]
+    #] = effective_temperature
+
+    # 9
+    print('rho-kappa divide by R and T-cut')
+    darwin_densityopacity = darwin_density * darwin_opacity * (AUcm / darwin_radius)**2
+    darwin_temperature[
+        np.where(darwin_temperature >= effective_temperature)[0]
+    ] = effective_temperature
 
     # 1
     #print('/r^2')
@@ -182,13 +202,25 @@ def darwin_to_radmc3d(
     #darwin_densityopacity = darwin_density * darwin_opacity / Ncells
 
     # 5
-    print('divide by delta R')
-    deltaRau = np.zeros(len(darwin_radius))
-    deltaRau[0] = darwin_radius[0]/AUcm
-    for nn in range(1,len(darwin_radius)):
-        deltaRau[nn] = (darwin_radius[nn] - darwin_radius[nn-1])/AUcm
-    darwin_densityopacity = darwin_density * darwin_opacity / deltaRau
-    darwin_temperature /= deltaRau
+    #print('divide by delta R')
+    #deltaRau = np.zeros(len(darwin_radius))
+    #deltaRau[0] = darwin_radius[0]/AUcm
+    #for nn in range(1,len(darwin_radius)):
+    #    deltaRau[nn] = (darwin_radius[nn] - darwin_radius[nn-1])/AUcm
+    #darwin_densityopacity = darwin_density * darwin_opacity / deltaRau
+    #darwin_temperature /= deltaRau
+
+    # 6
+    #print('Divide T with R^2')
+    #darwin_densityopacity = darwin_density * darwin_opacity
+    #darwin_temperature *= (AUcm / darwin_radius)**2
+
+    # 7
+    #print('Divide T with R')
+    #darwin_densityopacity = darwin_density * darwin_opacity
+    #darwin_temperature *= (AUcm / darwin_radius)
+
+
 
     
     # Interpolate darwin-1d-data to r3d-radial grid
