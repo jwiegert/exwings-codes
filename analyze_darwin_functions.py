@@ -153,74 +153,14 @@ def darwin_to_radmc3d(
         darwin_temperature = np.array(darwin_temperature)
 
 
-    # Then write new array and divide both with number of r3d-cells per spherical shell
-
-    # 0
-    #print('normal and T-cut')
-    #darwin_densityopacity = darwin_density * darwin_opacity
-    #darwin_temperature[
-    #    np.where(darwin_temperature >= effective_temperature)[0]
-    #] = effective_temperature
-
-    # 9
-    print('rho-kappa divide by R and T-cut')
-    darwin_densityopacity = darwin_density * darwin_opacity * (AUcm / darwin_radius)**2
+    # Then write new arrays:
+    # Cut temperature at effective temperature
+    # normalise density and opacity by R[AU]^2
+    print('rho-kappa divide by R^2 and T-cut')
+    darwin_densityopacity = darwin_density * darwin_opacity * (AUcm / darwin_radius)**4
     darwin_temperature[
         np.where(darwin_temperature >= effective_temperature)[0]
     ] = effective_temperature
-
-    # 1
-    #print('/r^2')
-    #darwin_densityopacity = darwin_density * darwin_opacity * (AUcm / darwin_radius)**4
-    #darwin_temperature *= (AUcm / darwin_radius)**2
-
-    # 2
-    #print('divide by r')
-    #darwin_densityopacity = darwin_density * darwin_opacity * (AUcm / darwin_radius)**2
-    #darwin_temperature *= (AUcm / darwin_radius)
-
-    # 3
-    # only divide rho-kappa by r4
-
-    # 4
-    #print('divide by Ncells')
-    # Load number of cells per radial Darwin bin
-    #Ncells = np.zeros(len(darwin_radius))
-    #
-    ## First number of cells are all inside smallest darwin cell
-    #Ncells[0] = np.size(np.where(
-    #    r3d_radius <= darwin_radius[0])[0]
-    #)
-    #for nn in range(1,len(darwin_radius)):
-    #    Ncells[nn] = np.size(np.where(
-    #        (r3d_radius >= darwin_radius[nn-1]) & (r3d_radius <= darwin_radius[nn]))[0]
-    #    )
-    #
-    #    # Remove zeros and infs
-    #    if Ncells[nn] == 0 or Ncells[nn] == math.inf:
-    #        Ncells[nn] = 1
-    #darwin_densityopacity = darwin_density * darwin_opacity / Ncells
-
-    # 5
-    #print('divide by delta R')
-    #deltaRau = np.zeros(len(darwin_radius))
-    #deltaRau[0] = darwin_radius[0]/AUcm
-    #for nn in range(1,len(darwin_radius)):
-    #    deltaRau[nn] = (darwin_radius[nn] - darwin_radius[nn-1])/AUcm
-    #darwin_densityopacity = darwin_density * darwin_opacity / deltaRau
-    #darwin_temperature /= deltaRau
-
-    # 6
-    #print('Divide T with R^2')
-    #darwin_densityopacity = darwin_density * darwin_opacity
-    #darwin_temperature *= (AUcm / darwin_radius)**2
-
-    # 7
-    #print('Divide T with R')
-    #darwin_densityopacity = darwin_density * darwin_opacity
-    #darwin_temperature *= (AUcm / darwin_radius)
-
-
 
     
     # Interpolate darwin-1d-data to r3d-radial grid
