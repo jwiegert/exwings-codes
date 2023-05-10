@@ -198,6 +198,10 @@ AUcm = 1.49598e13 # AU in cm
 #    distance:float=1
 # )
 #
+# remove_sedspikes()
+#    path:str = '../r3dsims/spectrum.out',
+#    distance:float = 1
+# )
 #
 # ------------------------------------------------------------ #
 # Functions that load various r3d input data
@@ -2052,16 +2056,6 @@ def plot_chisquare(
     return fig,ax,chisq_array,chiaq_reduced
 
 
-
-
-
-
-
-
-
-
-
-
 # ------------------------------------------------------------ #
 # Compute different quantities
 
@@ -2103,13 +2097,13 @@ def compute_luminosity(
         distance:float = 1
     ):
     """
-    INPUT
-    wavelengthum: List of wavelengths in um
-    spectrum: List of flux densities in Jy
-    distance: distance to source in pc
+    ARGUMENTS
+      wavelengthum: List of wavelengths in um
+      spectrum: List of flux densities in Jy
+      distance: distance to source in pc
 
-    OUTPUT
-    luminosity in Watt
+    RETURNS
+      luminosity in Watt
     """
 
     nwave = len(wavelengths)
@@ -2131,3 +2125,62 @@ def compute_luminosity(
     else:
         print('ERROR, wavelengths and spectrum have different lengths')
 
+
+# Function to remove those strange spikes we're getting by combining two or more
+# SEDs
+def remove_sedspikes(
+        paths:list = ['../r3dsims/spectrum.out'],
+        save:bool=False
+    ):
+    """
+    Combine spectra to remove random spikes.
+    Obviously the spectra should come with the same physical settings, but with
+    variations in e.g. number of cores or photons.
+
+    ARGUMENTS
+
+    RETURNS
+    """
+
+    # Declare list of SEDs
+    seds = []
+
+    # Load SEDs, uses default distance of 1pc
+    for path in paths:
+        seds.append(load_spectrum(path=path)[1])
+    
+    # And load wavelenths
+    wavelength = load_spectrum(path=paths[0])[0]
+
+    # Loop through wavelengths and all SEDs and extract min-values at each wavelength
+    sed_final = []
+
+    for nn in range(len(seds[0])):
+        all_fluxes = []
+
+        for sed in seds:
+            all_fluxes.append(sed[nn])
+
+        sed_final.append(np.min(all_fluxes))
+
+    # Save as new sed-out-file
+    #
+    # Format:
+    #            1
+    #         1000
+    #  
+    #   0.1000000000000E+00   0.1238187064847E-23
+    #    lambda in um          flux in Jy *1e-23 * distance[pc]**2  (ie normalised to 1pc)
+    #
+    if save == True:
+        with open('../spectrum.out','w') as f:
+
+            # Write header
+            f.write(f'           1\n        1000\n\n')
+
+            # Write wavelength and flux
+            for nn in range(len(seds[0])):
+                f.write(f'  {wavelength[nn]}   {sed_final[nn]*1e-23}\n')
+
+    # Return final SED and wavelengths
+    return wavelength,sed_final
