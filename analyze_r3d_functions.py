@@ -1991,7 +1991,7 @@ def plot_opticalthick(
     return star_surface,fig,ax
 
 
-# Function to plot Pearson-Chi2-comparison between two sets of data
+# Function to plot and compute Pearson-Chi2-comparison between two sets of data
 def plot_chisquare(
         simulation:list,
         observation:list,
@@ -2017,22 +2017,11 @@ def plot_chisquare(
           where N = length of input arrays.
     """
 
-    # Check so that length of both are correct
-    if len(simulation) != len(observation):
-        return 'ERROR: your input data arrays are not of equal length'
-
-    # Put data in np.arrays if needed
-    if type(simulation) == list:
-        simulation = np.array(simulation)
-    if type(observation) == list:
-        observation = np.array(observation)
-    if type(obssigma) == list:
-        obssigma = np.array(obssigma)
-
-    # Compute chi2-array and total number
-    chisq_array = ((simulation - observation) / obssigma)**2
-    chiaq_reduced = 1/chisq_array.size * chisq_array.sum()
-
+    chisq_array, chiaq_reduced =  compute_chisquare(
+        simulation,
+        observation,
+        obssigma
+    )
 
     fig, ax = plt.figure(figsize=(6, 4)), plt.axes()
 
@@ -2050,8 +2039,6 @@ def plot_chisquare(
         ylim=[1e-3,chisq_array.max()]
     )
     fig.tight_layout()
-
-
 
     return fig,ax,chisq_array,chiaq_reduced
 
@@ -2124,6 +2111,50 @@ def compute_luminosity(
 
     else:
         print('ERROR, wavelengths and spectrum have different lengths')
+
+
+
+
+# Function to plot and compute Pearson-Chi2-comparison between two sets of data
+def compute_chisquare(
+        simulation:list,
+        observation:list,
+        obssigma:list,
+    ):
+    """
+    Computes chi2-numbers for comparisons betweens arrays/models/data.
+
+    ARGUMENTS
+      simulation: list/array with simulated data to compare with observation
+      observations: list/array with observed data
+      obssigma: List/array with error bar data for observations
+        Length of all input lists/arrays must be the same
+
+    RETURNS
+      chisq_array,chiaq_reduced
+        chisq_array: chi2 for each point in xdata-array
+        chiaq_reduced: Total chi^2-number (ie reduced sum):
+            1/N * sum( (simulation - observation)^2 / obssigma^2 )
+            where N = length of input arrays.
+    """
+
+    # Check so that length of both are correct
+    if len(simulation) != len(observation):
+        return 'ERROR: your input data arrays are not of equal length'
+
+    # Put data in np.arrays if needed
+    if type(simulation) == list:
+        simulation = np.array(simulation)
+    if type(observation) == list:
+        observation = np.array(observation)
+    if type(obssigma) == list:
+        obssigma = np.array(obssigma)
+
+    # Compute chi2-array and total number
+    chisq_array = ((simulation - observation) / obssigma)**2
+    chiaq_reduced = 1/chisq_array.size * chisq_array.sum()
+
+    return chisq_array,chiaq_reduced
 
 
 # Function to remove those strange spikes we're getting by combining two or more

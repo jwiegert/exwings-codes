@@ -21,13 +21,32 @@ AUcm = 1.49598e13 # cm
 
 # Plot choices
 plot_coboldgrid = 'n'
+
 plot_opticalthickness = 'n'
+
 plot_grainsizehist_all = 'n'
 plot_grainsizehist_one = 'n'
 plot_grainsizeradius = 'n'
+
 plot_absscat = 'n'
+
 plot_temperatureradial = 'n'
-plot_temperaturecompare = 'y'
+plot_temperaturecompare = 'n'
+
+# Make these as just one humongous figure?
+# that would be 3*4 SEDs in one figure. 
+# My main results?
+plot_manyseds = 'y'
+#plot_seds_cobold = 'n'
+#plot_seds_darwin = 'n'
+#plot_seds_points = 'n'
+#plot_seds_pointstemper = 'n'
+
+# plot co5bold-pictures
+# plot one darwin and one point-source-picture, 190 I think
+
+
+
 
 # ----------------------------------------------------------------
 # FIG Cut through of CO5BOLD grid for st28gm06n052 with cell 
@@ -264,4 +283,139 @@ if plot_temperaturecompare == 'y':
 
     #Save figure
     fig.savefig(f'figs/temperatures_{phase}.pdf', dpi=300, facecolor="white")
+
+
+
+
+# ----------------------------------------------------------------
+#
+# Plot Figure subplots of ALL Seds
+
+if plot_manyseds == 'y':
+
+    paths = [
+        '../r3dresults/st28gm06n052_staranddust_nospikes/',
+        '../r3dresults/st28gm06n052_darwinsource/',
+    ]
+#        '../r3dresults/st28gm06n052_pointsource/',
+#        '../r3dresults/st28gm06n052_pointtemperature/',
+    
+    
+    phases = ['186','190','198']
+    spectra = [
+        '/spectrum_i000_phi000.out',
+        '/spectrum_i090_phi000.out',
+        '/spectrum_i090_phi090.out',
+        '/spectrum_i090_phi270.out',
+        '/spectrum_i180_phi000.out',
+        '/spectrum_i270_phi000.out'
+    ]
+
+    legendlist = [
+        r'0, 0',
+        r'90, 0',
+        r'90, 90',
+        r'90, 270',
+        r'180, 0',
+        r'270, 0',
+    ]
+
+
+    fig,ax = plt.subplots(len(paths)+1,len(phases))
+
+
+    # Spara SEDerna och kör över som jämförelser till en tredje rad    
+    # Kör en slags jämförelse mot 10% av c5d-model istället för ena kurvan
+    # ie, chi2 = 1 -> kurvorna är 0.1* varandra
+    # chi2 > 1 -> mer än 0.1 från andrandra
+    #
+    # kanske köra att "sigma" är 100% av c5d-model istället?
+    # det innebär att chi=1 -> 2*model = c5dmodel?
+    
+    sedscobold = []
+    sedcoboldnumbers = []
+    
+    sedsdarwin = []
+    sedsdarwinnumbers = []
+
+    # Extract SEDs and fill figure-axes-objects
+    for nphase,phase in enumerate(phases):
+        for npath,path in enumerate(paths):
+            for nangle,spectrum in enumerate(spectra):
+
+                wavelength,sed = a3d.load_spectrum(
+                    path = path+phase+spectrum
+                )
+                
+                if npath == 0:
+                    sedscobold.append(sed)
+                    sedcoboldnumbers.append(f'{nphase} {nangle}')
+                    
+                    
+                if npath == 1:
+                    sedsdarwin.append(sed)
+                    sedsdarwinnumbers.append(f'{nphase} {nangle}')
+
+
+                ax[npath][nphase].plot(wavelength,sed)
+
+            ax[npath][nphase].set(
+                xscale='log',yscale='log'
+            )
+
+
+    # Compute chi2-numbers of each SED and add to plots
+    for nn in range(len(sedcoboldnumbers)):
+        if sedcoboldnumbers[nn] == sedsdarwinnumbers[nn]:
+            #print(f'{sedcoboldnumbers[nn]} | {sedsdarwinnumbers[nn]}')
+            chisq_array, chiaq_reduced = a3d.compute_chisquare(
+                simulation = np.array(sedsdarwin[nn]),
+                observation = np.array(sedscobold[nn]),
+                obssigma = 0.1*np.array(sedscobold[nn])
+            )
+            
+            # Plot line (angle order should be the same as above)
+            nphase = int(sedcoboldnumbers[nn][0])
+            ax[2][nphase].plot(wavelength,chisq_array)
+            ax[2][nphase].set(
+                xscale='log',yscale='log'
+            )
+
+    # Add line at sigma-limit of chi2-plots
+    # dvs chi2 = 1 -> D = 1.1C eller 0.9C, om sigma = 0.1C
+    ax[2]
+
+
+
+    # TODO
+    # Limit axis to something useful
+
+    # ax.set dessa endast på yttre plots
+    #                 ylabel=f'Flux density (Jy at 1 pc)',
+    #                xlabel=r'Wavelength ($\mu$m)',
+    ax[0][0].set(
+        ylabel=r'Flux density (Jy at 1 pc)',
+    )
+    ax[1][0].set(
+        ylabel=r'Flux density (Jy at 1 pc)',
+    )
+    ax[2][0].set(
+        ylabel=r'$\chi^2(\lambda)$',
+    )
+
+    
+    
+    ax[-1][1].set(
+        xlabel=r'Wavelength ($\mu$m)',
+    )
+    ax[1][-1].legend(legendlist)
+
+
+
+
+    fig.tight_layout()
+    fig.show()
+    
+
+
 
