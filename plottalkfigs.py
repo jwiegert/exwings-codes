@@ -172,14 +172,6 @@ if plot_cobolddarwin_compare == 'y':
             )
 
 
-
-
-    # TODO
-    # Limit axis to something useful
-
-    # ax.set dessa endast på yttre plots
-    #                 ylabel=f'Flux density (Jy at 1 pc)',
-    #                xlabel=r'Wavelength ($\mu$m)',
     ax[0].set(
         ylabel=r'$|\chi(\lambda)|$',
     )

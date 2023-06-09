@@ -312,25 +312,15 @@ if plot_manyseds == 'y':
     ]
 
     legendlist = [
-        r'0, 0',
-        r'90, 0',
-        r'90, 90',
-        r'90, 270',
-        r'180, 0',
-        r'270, 0',
+        '0, 0',
+        '90, 0',
+        '90, 90',
+        '90, 270',
+        '180, 0',
+        '270, 0',
     ]
+    fig,ax = plt.subplots(len(paths)+1,len(phases), figsize = (12, 12))
 
-
-    fig,ax = plt.subplots(len(paths)+1,len(phases))
-
-
-    # Spara SEDerna och kör över som jämförelser till en tredje rad    
-    # Kör en slags jämförelse mot 10% av c5d-model istället för ena kurvan
-    # ie, chi2 = 1 -> kurvorna är 0.1* varandra
-    # chi2 > 1 -> mer än 0.1 från andrandra
-    #
-    # kanske köra att "sigma" är 100% av c5d-model istället?
-    # det innebär att chi=1 -> 2*model = c5dmodel?
     
     sedscobold = []
     sedcoboldnumbers = []
@@ -351,7 +341,6 @@ if plot_manyseds == 'y':
                     sedscobold.append(sed)
                     sedcoboldnumbers.append(f'{nphase} {nangle}')
                     
-                    
                 if npath == 1:
                     sedsdarwin.append(sed)
                     sedsdarwinnumbers.append(f'{nphase} {nangle}')
@@ -359,9 +348,11 @@ if plot_manyseds == 'y':
 
                 ax[npath][nphase].plot(wavelength,sed)
 
-            ax[npath][nphase].set(
-                xscale='log',yscale='log'
-            )
+            ax[npath][nphase].set(xscale='log',yscale='log')
+            ax[npath][nphase].set_xlim(5e-1,6e1)
+            ax[npath][nphase].set_ylim(1e6,1.3e8)
+            ax[npath][nphase].tick_params(axis='both', which='major', labelsize=15)
+
 
 
     # Compute chi2-numbers of each SED and add to plots
@@ -371,47 +362,44 @@ if plot_manyseds == 'y':
             chisq_array, chiaq_reduced = a3d.compute_chisquare(
                 simulation = np.array(sedsdarwin[nn]),
                 observation = np.array(sedscobold[nn]),
-                obssigma = 0.1*np.array(sedscobold[nn])
+                obssigma = np.array(sedscobold[nn])
             )
             
             # Plot line (angle order should be the same as above)
             nphase = int(sedcoboldnumbers[nn][0])
             ax[2][nphase].plot(wavelength,chisq_array)
-            ax[2][nphase].set(
-                xscale='log',yscale='log'
-            )
+            ax[2][nphase].set(xscale='log',yscale='linear')
+            ax[2][nphase].set_xlim(5e-1,6e1)
+            ax[2][nphase].set_ylim(0,2)
+            ax[2][nphase].tick_params(axis='both', which='major', labelsize=15)
 
     # Add line at sigma-limit of chi2-plots
     # dvs chi2 = 1 -> D = 1.1C eller 0.9C, om sigma = 0.1C
-    ax[2]
+    #
+    # Eller
+    #      alt. sigma = C
+    #  Det ger att chi = 1 -> D =   +/-  C
+    #              chi = 2 -> D = C +/- 2C
+    #              chi = 3 -> D = C +/- 3C
+    #
+    # en vanlig Pearson's chi2, med (O-E)^2 / E
+    #    https://www.statology.org/chi-square-critical-value-calculator/
+    #    https://www.omnicalculator.com/statistics/critical-value
+    # med Critical limit på ~1073.6427
+    #                           1073.64265
+    #    Så 1074 är en bra gräns.
+    # Är chi2 = 1/N-1 * sumN((Oi-Ei)^2 / Ei) < 1074 är det en signifikant likhet
+    # mellan båda data-seten
+    #    Dvs inom 95% (alpha = 0.05)
+    # Och för varje datapunkt är critical value då 3.84146 ? (DF=1)
+    #
+    # Vilken ska jag köra med?
 
-
-
-    # TODO
-    # Limit axis to something useful
-
-    # ax.set dessa endast på yttre plots
-    #                 ylabel=f'Flux density (Jy at 1 pc)',
-    #                xlabel=r'Wavelength ($\mu$m)',
-    ax[0][0].set(
-        ylabel=r'Flux density (Jy at 1 pc)',
-    )
-    ax[1][0].set(
-        ylabel=r'Flux density (Jy at 1 pc)',
-    )
-    ax[2][0].set(
-        ylabel=r'$\chi^2(\lambda)$',
-    )
-
-    
-    
-    ax[-1][1].set(
-        xlabel=r'Wavelength ($\mu$m)',
-    )
+    ax[0][0].set_ylabel(r'Flux density (Jy at 1 pc)', fontsize=18)
+    ax[1][0].set_ylabel(r'Flux density (Jy at 1 pc)', fontsize=18)
+    ax[2][0].set_ylabel(r'$\chi^2(\lambda)$', fontsize=18)
+    ax[-1][1].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
     ax[1][-1].legend(legendlist)
-
-
-
 
     fig.tight_layout()
     fig.show()
