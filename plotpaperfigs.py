@@ -33,13 +33,20 @@ plot_absscat = 'n'
 plot_temperatureradial = 'n'
 plot_temperaturecompare = 'n'
 
-# Make these as just one humongous figure?
-# that would be 3*4 SEDs in one figure. 
-# My main results?
-plot_manyseds = 'y'
+
+# Plots co5bold-darwin-seds and comparison
+plot_seds_cobolddarwin = 'n'
+# Plots point-source seds, with r3d-temperature
+plot_seds_point = 'y'
+
+
+
+
+
+
 #plot_seds_cobold = 'n'
 #plot_seds_darwin = 'n'
-#plot_seds_points = 'n'
+
 #plot_seds_pointstemper = 'n'
 
 # plot co5bold-pictures
@@ -289,16 +296,14 @@ if plot_temperaturecompare == 'y':
 
 # ----------------------------------------------------------------
 #
-# Plot Figure subplots of ALL Seds
+# Plot Figure subplots of co5bold-darwin Seds
 
-if plot_manyseds == 'y':
+if plot_seds_cobolddarwin == 'y':
 
     paths = [
         '../r3dresults/st28gm06n052_staranddust_nospikes/',
         '../r3dresults/st28gm06n052_darwinsource/',
     ]
-#        '../r3dresults/st28gm06n052_pointsource/',
-#        '../r3dresults/st28gm06n052_pointtemperature/',
     
     
     phases = ['186','190','198']
@@ -319,7 +324,7 @@ if plot_manyseds == 'y':
         '180, 0',
         '270, 0',
     ]
-    fig,ax = plt.subplots(len(paths)+1,len(phases), figsize = (12, 12))
+    fig,ax = plt.subplots(len(paths)+1,len(phases), figsize = (12, 10))
 
     
     sedscobold = []
@@ -346,7 +351,7 @@ if plot_manyseds == 'y':
                     sedsdarwinnumbers.append(f'{nphase} {nangle}')
 
 
-                ax[npath][nphase].plot(wavelength,sed)
+                ax[npath][nphase].plot(wavelength,sed,label = legendlist[nangle])
 
             ax[npath][nphase].set(xscale='log',yscale='log')
             ax[npath][nphase].set_xlim(5e-1,6e1)
@@ -358,20 +363,143 @@ if plot_manyseds == 'y':
     # Compute chi2-numbers of each SED and add to plots
     for nn in range(len(sedcoboldnumbers)):
         if sedcoboldnumbers[nn] == sedsdarwinnumbers[nn]:
-            #print(f'{sedcoboldnumbers[nn]} | {sedsdarwinnumbers[nn]}')
-            chisq_array, chiaq_reduced = a3d.compute_chisquare(
-                simulation = np.array(sedsdarwin[nn]),
-                observation = np.array(sedscobold[nn]),
-                obssigma = np.array(sedscobold[nn])
-            )
+            
+            #chisq_array, chiaq_reduced = a3d.compute_chisquare(
+            #    simulation = np.array(sedsdarwin[nn]),
+            #    observation = np.array(sedscobold[nn]),
+            #    obssigma = np.array(sedscobold[nn])
+            #)
+
+            chisq_array = (np.array(sedsdarwin[nn]) - np.array(sedscobold[nn]))/np.array(sedscobold[nn])
             
             # Plot line (angle order should be the same as above)
             nphase = int(sedcoboldnumbers[nn][0])
             ax[2][nphase].plot(wavelength,chisq_array)
             ax[2][nphase].set(xscale='log',yscale='linear')
             ax[2][nphase].set_xlim(5e-1,6e1)
-            ax[2][nphase].set_ylim(0,2)
+            #ax[2][nphase].set_ylim(0,3)
             ax[2][nphase].tick_params(axis='both', which='major', labelsize=15)
+    for nn in range(3):
+        ax[2][nn].plot([wavelength[0],wavelength[-1]],[0,0],'k:')
+    # Add line at sigma-limit of chi2-plots
+    # dvs chi2 = 1 -> D = 1.1C eller 0.9C, om sigma = 0.1C
+    #
+    # Eller
+    #      alt. sigma = C
+    #  Det ger att chi = 1 -> D =   +/-  C
+    #              chi = 2 -> D = C +/- 2C
+    #              chi = 3 -> D = C +/- 3C
+    #
+    # en vanlig Pearson's chi2, med (O-E)^2 / E
+    #    https://www.statology.org/chi-square-critical-value-calculator/
+    #    https://www.omnicalculator.com/statistics/critical-value
+    # med Critical limit på ~1073.6427
+    #                           1073.64265
+    #    Så 1074 är en bra gräns.
+    # Är chi2 = 1/N-1 * sumN((Oi-Ei)^2 / Ei) < 1074 är det en signifikant likhet
+    # mellan båda data-seten
+    #    Dvs inom 95% (alpha = 0.05)
+    # Och för varje datapunkt är critical value då 3.84146 ? (DF=1)
+    #
+    # Vilken ska jag köra med?
+
+    ax[0][0].set_ylabel(r'$F({\rm CO5BOLD})$, Jy at 1 pc', fontsize=18)
+    ax[1][0].set_ylabel(r'$F({\rm DARWIN})$, Jy at 1 pc', fontsize=18)
+    ax[2][0].set_ylabel(
+        r'$\frac{F({\rm DARWIN}) - F({\rm CO5BOLD})}{F({\rm CO5BOLD}}$', 
+        fontsize=18
+    )
+    ax[2][1].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
+    ax[0][2].legend(title=r'$i$, $\phi$')
+
+    fig.tight_layout()
+    fig.show()
+    
+    #Save figure
+    fig.savefig(f'figs/seds_all_cobold_darwin.pdf', dpi=300, facecolor="white")
+
+
+
+# TODO
+#         3*2 subplots
+#        pointsource-data i egen plot    
+#        jämförelse med c5d-resultat(?)
+if plot_seds_point == 'y':
+
+    paths = [
+        '../r3dresults/st28gm06n052_pointtemperature/',
+        '../r3dresults/st28gm06n052_staranddust_nospikes/',
+    ]
+    
+    
+    phases = ['186','190','198']
+    spectra = [
+        '/spectrum_i000_phi000.out',
+        '/spectrum_i090_phi000.out',
+        '/spectrum_i090_phi090.out',
+        '/spectrum_i090_phi270.out',
+        '/spectrum_i180_phi000.out',
+        '/spectrum_i270_phi000.out'
+    ]
+
+    legendlist = [
+        '0, 0',
+        '90, 0',
+        '90, 90',
+        '90, 270',
+        '180, 0',
+        '270, 0',
+    ]
+    fig,ax = plt.subplots(len(paths),len(phases), figsize = (12, 6))
+
+
+    # Loop through phases
+    for nphase,phase in enumerate(phases):
+        # Loop through spectra
+        for nangle,spectrum in enumerate(spectra):
+
+            # Load all point source seds
+            wavelength,sed = a3d.load_spectrum(
+                path = paths[0]+phase+spectrum
+            )
+            
+            # Plot on first row
+            ax[0][nphase].plot(wavelength,sed,label = legendlist[nangle])
+        
+        # Set settings for first row
+        ax[0][nphase].set(xscale='log',yscale='log')
+        ax[0][nphase].set_xlim(5e-1,6e1)
+        ax[0][nphase].set_ylim(1e6,1.3e8)
+        ax[0][nphase].tick_params(axis='both', which='major', labelsize=15)
+
+
+    # Compute chi2-numbers of each SED and add to plots
+    # (Yes I load the point-seds twice, whatev)
+    for nphase,phase in enumerate(phases):
+        for spectrum in spectra:
+
+            # Load each spectra
+            wavelength,sedpoint = a3d.load_spectrum(
+                path = paths[0]+phase+spectrum
+            )
+            wavelength,sedcobold = a3d.load_spectrum(
+                path = paths[1]+phase+spectrum
+            )
+
+            # Compute comparisons
+            #chisq_array, chiaq_reduced = a3d.compute_chisquare(
+            #    simulation = np.array(sedpoint),
+            #    observation = np.array(sedcobold),
+            #    obssigma = np.array(sedcobold)
+            #)
+            chisq_array = (np.array(sedpoint) - np.array(sedcobold))/np.array(sedcobold)
+            
+            # Plot line (angle order should be the same as above)
+            ax[1][nphase].plot(wavelength,chisq_array)
+        ax[1][nphase].plot([wavelength[0],wavelength[-1]],[0,0],'k:')
+        ax[1][nphase].set(xscale='log',yscale='linear')
+        ax[1][nphase].set_xlim(5e-1,6e1)
+        ax[1][nphase].tick_params(axis='both', which='major', labelsize=15)
 
     # Add line at sigma-limit of chi2-plots
     # dvs chi2 = 1 -> D = 1.1C eller 0.9C, om sigma = 0.1C
@@ -395,15 +523,16 @@ if plot_manyseds == 'y':
     #
     # Vilken ska jag köra med?
 
-    ax[0][0].set_ylabel(r'Flux density (Jy at 1 pc)', fontsize=18)
-    ax[1][0].set_ylabel(r'Flux density (Jy at 1 pc)', fontsize=18)
-    ax[2][0].set_ylabel(r'$\chi^2(\lambda)$', fontsize=18)
-    ax[-1][1].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
-    ax[1][-1].legend(legendlist)
+    ax[0][0].set_ylabel(r'$F({\rm point})$, Jy at 1 pc', fontsize=18)
+    ax[1][0].set_ylabel(
+        r'$\frac{\left(F({\rm point}) - F({\rm CO5BOLD})\right)^2}{F({\rm CO5BOLD})^2}$', 
+        fontsize=18
+    )
+    ax[1][1].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
+    ax[0][2].legend(title=r'$i$, $\phi$')
 
     fig.tight_layout()
     fig.show()
     
-
-
-
+    #Save figure
+    fig.savefig(f'figs/seds_all_pointtemperature.pdf', dpi=300, facecolor="white")

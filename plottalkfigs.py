@@ -63,7 +63,7 @@ if plot_coboldseds == 'y':
 
                 ax[nphase].plot(
                     wavelength,sed,
-                    label = legendlist[nangle],
+                    label = legendlist[nangle]
                 )
 
             ax[nphase].set(
