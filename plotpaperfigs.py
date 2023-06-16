@@ -20,37 +20,32 @@ AUcm = 1.49598e13 # cm
 
 
 # Plot choices
+
+# 
 plot_coboldgrid = 'n'
 
+#
 plot_opticalthickness = 'n'
 
+# Grain properties
 plot_grainsizehist_all = 'n'
 plot_grainsizehist_one = 'n'
 plot_grainsizeradius = 'n'
-
 plot_absscat = 'n'
 
-plot_temperatureradial = 'n'
+#
+plot_temperatureradial = 'n' # Only cobold-T, no comparison, not used
 plot_temperaturecompare = 'n'
 
-
-# Plots co5bold-darwin-seds and comparison
+# Plot SEDs
 plot_seds_cobolddarwin = 'n'
-# Plots point-source seds, with r3d-temperature
-plot_seds_point = 'y'
+plot_seds_point = 'n'
+plot_represenativeseds = 'n'
 
 
 
 
-
-
-#plot_seds_cobold = 'n'
-#plot_seds_darwin = 'n'
-
-#plot_seds_pointstemper = 'n'
-
-# plot co5bold-pictures
-# plot one darwin and one point-source-picture, 190 I think
+# Plot various images
 
 
 
@@ -161,6 +156,10 @@ if plot_grainsizeradius == 'y':
     )
     a5d.plot_grainsizeradius(phases=phases,ax=ax)
 
+
+    #size_path='../r3dresults/st28gm06n052_staranddust_1/grid_cellsizes.csv',
+
+
     ax[0].set_ylabel(fr'Grain sizes ($\mu$m), phase: {phases[0]}',fontsize=18)
     ax[1].set_ylabel(fr'Grain sizes ($\mu$m), phase: {phases[1]}',fontsize=18)
     ax[2].set_ylabel(fr'Grain sizes ($\mu$m), phase: {phases[2]}',fontsize=18)
@@ -172,9 +171,7 @@ if plot_grainsizeradius == 'y':
     ax[2].tick_params(axis='both', which='major', labelsize=15)
 
     fig.tight_layout()
-
     fig.savefig('figs/grainsizes_radius.pdf', dpi=300, facecolor="white")
-
     fig.show()
 
 
@@ -381,35 +378,15 @@ if plot_seds_cobolddarwin == 'y':
             ax[2][nphase].tick_params(axis='both', which='major', labelsize=15)
     for nn in range(3):
         ax[2][nn].plot([wavelength[0],wavelength[-1]],[0,0],'k:')
-    # Add line at sigma-limit of chi2-plots
-    # dvs chi2 = 1 -> D = 1.1C eller 0.9C, om sigma = 0.1C
-    #
-    # Eller
-    #      alt. sigma = C
-    #  Det ger att chi = 1 -> D =   +/-  C
-    #              chi = 2 -> D = C +/- 2C
-    #              chi = 3 -> D = C +/- 3C
-    #
-    # en vanlig Pearson's chi2, med (O-E)^2 / E
-    #    https://www.statology.org/chi-square-critical-value-calculator/
-    #    https://www.omnicalculator.com/statistics/critical-value
-    # med Critical limit på ~1073.6427
-    #                           1073.64265
-    #    Så 1074 är en bra gräns.
-    # Är chi2 = 1/N-1 * sumN((Oi-Ei)^2 / Ei) < 1074 är det en signifikant likhet
-    # mellan båda data-seten
-    #    Dvs inom 95% (alpha = 0.05)
-    # Och för varje datapunkt är critical value då 3.84146 ? (DF=1)
-    #
-    # Vilken ska jag köra med?
-
+    
     ax[0][0].set_ylabel(r'$F({\rm CO5BOLD})$, Jy at 1 pc', fontsize=18)
     ax[1][0].set_ylabel(r'$F({\rm DARWIN})$, Jy at 1 pc', fontsize=18)
     ax[2][0].set_ylabel(
         r'$\frac{F({\rm DARWIN}) - F({\rm CO5BOLD})}{F({\rm CO5BOLD}}$', 
         fontsize=18
     )
-    ax[2][1].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
+    for nn in range(3):
+        ax[-1][nn].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
     ax[0][2].legend(title=r'$i$, $\phi$')
 
     fig.tight_layout()
@@ -419,11 +396,7 @@ if plot_seds_cobolddarwin == 'y':
     fig.savefig(f'figs/seds_all_cobold_darwin.pdf', dpi=300, facecolor="white")
 
 
-
-# TODO
-#         3*2 subplots
-#        pointsource-data i egen plot    
-#        jämförelse med c5d-resultat(?)
+# Plots SEDs of point-source-temperature
 if plot_seds_point == 'y':
 
     paths = [
@@ -501,34 +474,13 @@ if plot_seds_point == 'y':
         ax[1][nphase].set_xlim(5e-1,6e1)
         ax[1][nphase].tick_params(axis='both', which='major', labelsize=15)
 
-    # Add line at sigma-limit of chi2-plots
-    # dvs chi2 = 1 -> D = 1.1C eller 0.9C, om sigma = 0.1C
-    #
-    # Eller
-    #      alt. sigma = C
-    #  Det ger att chi = 1 -> D =   +/-  C
-    #              chi = 2 -> D = C +/- 2C
-    #              chi = 3 -> D = C +/- 3C
-    #
-    # en vanlig Pearson's chi2, med (O-E)^2 / E
-    #    https://www.statology.org/chi-square-critical-value-calculator/
-    #    https://www.omnicalculator.com/statistics/critical-value
-    # med Critical limit på ~1073.6427
-    #                           1073.64265
-    #    Så 1074 är en bra gräns.
-    # Är chi2 = 1/N-1 * sumN((Oi-Ei)^2 / Ei) < 1074 är det en signifikant likhet
-    # mellan båda data-seten
-    #    Dvs inom 95% (alpha = 0.05)
-    # Och för varje datapunkt är critical value då 3.84146 ? (DF=1)
-    #
-    # Vilken ska jag köra med?
-
     ax[0][0].set_ylabel(r'$F({\rm point})$, Jy at 1 pc', fontsize=18)
     ax[1][0].set_ylabel(
         r'$\frac{\left(F({\rm point}) - F({\rm CO5BOLD})\right)^2}{F({\rm CO5BOLD})^2}$', 
         fontsize=18
     )
-    ax[1][1].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
+    for nn in range(3):
+        ax[-1][nn].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
     ax[0][2].legend(title=r'$i$, $\phi$')
 
     fig.tight_layout()
@@ -536,3 +488,90 @@ if plot_seds_point == 'y':
     
     #Save figure
     fig.savefig(f'figs/seds_all_pointtemperature.pdf', dpi=300, facecolor="white")
+
+
+# Plot 3 representative SEDer vid obskuration
+if plot_represenativeseds == 'y':
+
+
+    # Set up settings for plots
+    fig,ax = plt.subplots(1,4, figsize = (12, 4))
+    linestyles = [
+        'b-',
+        'k:',
+        'k--'
+    ]
+    for nn in range(len(ax)):
+        ax[nn].set(xscale='log',yscale='log')
+        ax[nn].set_xlim(3e-1,6e1)
+        ax[nn].set_ylim(5e5,1.3e8)
+        ax[nn].tick_params(axis='both', which='major', labelsize=15)
+        ax[nn].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
+    ax[0].set_ylabel(r'$F$ (Jy at 1 pc)', fontsize=18)
+    
+
+    # Links to files with "normal" SED
+    imagefiles = [
+        '../r3dresults/st28gm06n052_staranddust_nospikes/198/spectrum_i180_phi000.out',
+        '../r3dresults/st28gm06n052_nodust/198/spectrum_i180_phi000.out',
+        '../r3dresults/st28gm06n052_nostar/198/spectrum_i180_phi000.out'
+    ]
+    # Load and plot SEDs and wavelength grid
+    for nn,imagefile in enumerate(imagefiles):
+        wavelength,sed = a3d.load_spectrum(
+            path = imagefile
+        )
+        ax[0].plot(wavelength,sed,linestyles[nn])
+    ax[0].text(x=5e0,y=7e7,s=r'\noindent CO5BOLD\\$i = 180$,$\phi = 0$')
+
+    # Links to obscured cobold-sed
+    imagefiles = [
+        '../r3dresults/st28gm06n052_staranddust_nospikes/198/spectrum_i090_phi090.out',
+        '../r3dresults/st28gm06n052_nodust/198/spectrum_i090_phi090.out',
+        '../r3dresults/st28gm06n052_nostar/198/spectrum_i090_phi090.out'
+    ]
+    # Load and plot SEDs and wavelength grid
+    for nn,imagefile in enumerate(imagefiles):
+        wavelength,sed = a3d.load_spectrum(
+            path = imagefile
+        )
+        ax[1].plot(wavelength,sed,linestyles[nn])
+    ax[1].text(x=5e0,y=7e7,s=r'\noindent CO5BOLD\\$i = 90$,$\phi = 90$')
+
+
+    # Links to DARWIN-version of same LOS
+    imagefiles = [
+        '../r3dresults/st28gm06n052_darwinsource/198/spectrum_i090_phi090.out',
+        '../r3dresults/st28gm06n052_darwinnodust/10/spectrum_i000_phi000.out',
+        '../r3dresults/st28gm06n052_nostar/198/spectrum_i090_phi090.out'
+    ]
+    # Load and plot SEDs and wavelength grid
+    for nn,imagefile in enumerate(imagefiles):
+        wavelength,sed = a3d.load_spectrum(
+            path = imagefile
+        )
+        ax[2].plot(wavelength,sed,linestyles[nn])
+    ax[2].text(x=5e0,y=7e7,s=r'\noindent DARWIN\\$i = 90$,$\phi = 90$')
+
+
+    # Links to r3d-temperature-version of same LOS
+    imagefiles = [
+        '../r3dresults/st28gm06n052_pointtemperature/198/spectrum_i090_phi090.out',
+        '../r3dresults/st28gm06n052_pointtemperature/198/spectrum_i090_phi090_nodust.out',
+#        '../r3dresults/st28gm06n052_pointtemperature/198/spectrumnostar_i090_phi090.out',
+    ]
+    # Load and plot SEDs and wavelength grid
+    for nn,imagefile in enumerate(imagefiles):
+        wavelength,sed = a3d.load_spectrum(
+            path = imagefile
+        )
+        ax[3].plot(wavelength,sed,linestyles[nn])
+    ax[3].text(x=5e0,y=7e7,s=r'\noindent Point source\\$i = 90$,$\phi = 90$')
+
+
+
+    fig.tight_layout()
+    fig.show()
+
+    #Save figure
+    fig.savefig(f'figs/seds_obscuredexamples.pdf', dpi=300, facecolor="white")

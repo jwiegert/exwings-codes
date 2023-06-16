@@ -750,12 +750,15 @@ def plot_grainsize_distribution(
 def plot_grainsizeradius(
         grainsizes_folder='../../exwings_archivedata/st28gm06n052_generaldata/',
         grid_path='../r3dresults/st28gm06n052_staranddust_1/grid_distances.csv',
+        size_path='../r3dresults/st28gm06n052_staranddust_1/grid_cellsizes.csv',
         amr_path='../r3dresults/st28gm06n052_staranddust_1/amr_grid.inp',
         phases=['186'],
         ax=0
     ):
     """
     Plots grain size vs radial distance to centre of grid of all phases of a data set.
+
+    TODO info!
 
     ARGUMENTS
 
@@ -769,12 +772,14 @@ def plot_grainsizeradius(
         grainsizes_folder += '/'
 
     # Load grid info
-    # Load coordinates of R3D-cells and change to AU
+    # Load radial coordinates of R3D-cells and change to AU
+    # Load half-size of cube to show where shells are partially outside the cube
     cellcoords = a3d.load_griddistances(
         gridpath=grid_path,
         amrpath=amr_path
     )
     radii = cellcoords[:,0]/AUcm
+    cubesize = cellcoords[:,1].max()/AUcm
 
     # Load star's radius here
     Mstar,Rstar,Lstar = load_star_information(
@@ -852,8 +857,9 @@ def plot_grainsizeradius(
         # Plot average value
         ax[nplot].plot(radial_range,grainsize_bins,'k')
 
-        # Add line for stellar surface
+        # Add line for stellar surface and edge of cube
         ax[nplot].plot([Rstar,Rstar],[0,grainsize_max.max()+0.05],'r:',linewidth=1)
+        ax[nplot].plot([cubesize,cubesize],[0,grainsize_max.max()+0.05],'k:',linewidth=1)
 
         # Plot settings
         # Plot settings
