@@ -750,7 +750,6 @@ def plot_grainsize_distribution(
 def plot_grainsizeradius(
         grainsizes_folder='../../exwings_archivedata/st28gm06n052_generaldata/',
         grid_path='../r3dresults/st28gm06n052_staranddust_1/grid_distances.csv',
-        size_path='../r3dresults/st28gm06n052_staranddust_1/grid_cellsizes.csv',
         amr_path='../r3dresults/st28gm06n052_staranddust_1/amr_grid.inp',
         phases=['186'],
         ax=0
@@ -779,7 +778,7 @@ def plot_grainsizeradius(
         amrpath=amr_path
     )
     radii = cellcoords[:,0]/AUcm
-    cubesize = cellcoords[:,1].max()/AUcm
+    cubesize = cellcoords[:,1].max()/AUcm 
 
     # Load star's radius here
     Mstar,Rstar,Lstar = load_star_information(
@@ -1872,7 +1871,7 @@ def create_dustfiles(
 
         # List of grain sizes and number of bins (in micrometers!)
         Ngrainsizes = grainsizes_uniq.size
-        print(f'Availble grain sizez are (um): {grainsizes_uniq}\n')
+        print(f'Available grain sizez are (um): {grainsizes_uniq}\n')
 
     else:
         # Create place-holder lists

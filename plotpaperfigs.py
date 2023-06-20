@@ -35,7 +35,7 @@ plot_absscat = 'n'
 
 #
 plot_temperatureradial = 'n' # Only cobold-T, no comparison, not used
-plot_temperaturecompare = 'n'
+plot_temperaturecompare = 'y'
 
 # Plot SEDs
 plot_seds_cobolddarwin = 'n'
@@ -233,7 +233,7 @@ if plot_temperaturecompare == 'y':
         figsize=(6,13)
     )
 
-    phase = 198
+    phase = 186
 
     # Load cobold-T and create subplot
     T_c5d,Tstd_c5d,Tminmax_c5d,radius_c5d = a3d.plot_temperaturebins_radius(
@@ -249,14 +249,58 @@ if plot_temperaturecompare == 'y':
     ax[0].tick_params(axis='both', which='major', labelsize=15)
 
 
-    # Load r3d-T
-    T_r3d,Tstd_r3d,Tminmax_r3d,radius_r3d = a3d.plot_temperaturebins_radius(
-        temperature_path=f'../r3dresults/st28gm06n052_pointtemperature/{phase}/dust_temperature.dat',
-        grid_path='../r3dresults/st28gm06n052_pointtemperature/grid_distances.csv',
-        amr_path='../r3dresults/st28gm06n052_pointtemperature/amr_grid.inp',
-        numb_specie = 1,
-        ax=ax[1]
-    )
+
+
+
+
+
+    # TODO
+    # is this significantly different with otherr species?
+    #
+    # nej inte direkt, men kolla ett par till...
+    #
+    # take average of all 10 grain sizes, and std of the 10 averages 
+    #  10 Ts per grid cell -> 1 average per grid cell -> std and average per shell
+    #  10 Ts per grid cell -> 1 max/min per grid cell -> 1 max/min of max/min per shell
+
+
+
+
+
+    Nspecies = 10
+
+    Ttot_r3d = 0
+    Ttotstd_r3d = 0
+
+
+
+    for nspecie in range(Nspecies):
+
+
+
+        T_r3d,Tstd_r3d,Tmax_r3d,Tmin_r3d,radius_r3d = a3d.plot_temperaturebins_radius(
+            temperature_path=f'../r3dresults/st28gm06n052_pointtemperature/{phase}/dust_temperature.dat',
+            grid_path='../r3dresults/st28gm06n052_pointtemperature/grid_distances.csv',
+            amr_path='../r3dresults/st28gm06n052_pointtemperature/amr_grid.inp',
+            numb_specie = nspecie,
+            ax=0
+        )
+
+        Ttot_r3d += T_r3d
+        Ttotstd_r3d += Tstd_r3d
+
+    Tmean_r3d = Ttot_r3d / Nspecies
+    Tmeanstd_r3d = Ttotstd_r3d / Nspecies
+
+
+    ax[1].plot(radius_r3d,Tmean_r3d,'k')
+
+
+
+
+
+
+
     ax[1].set_ylabel(r'$T_{\rm RADMC-3D}$ (K)',fontsize=18)
     ax[1].set_xlabel(r'')
     ax[1].set(xlim=(0,26))
@@ -280,6 +324,11 @@ if plot_temperaturecompare == 'y':
         xlim=(0,26)
     )
     ax[2].tick_params(axis='both', which='major', labelsize=15)
+
+    # A vertical line at limit of grid
+    for nn in range(3):
+        # Grid cube
+        ax[nn].plot([15,15],[0,4100],'k:')
 
     # Show all plots
     plt.tight_layout()
@@ -476,7 +525,7 @@ if plot_seds_point == 'y':
 
     ax[0][0].set_ylabel(r'$F({\rm point})$, Jy at 1 pc', fontsize=18)
     ax[1][0].set_ylabel(
-        r'$\frac{\left(F({\rm point}) - F({\rm CO5BOLD})\right)^2}{F({\rm CO5BOLD})^2}$', 
+        r'$\frac{F({\rm point}) - F({\rm CO5BOLD})}{F({\rm CO5BOLD})}$', 
         fontsize=18
     )
     for nn in range(3):
@@ -522,7 +571,7 @@ if plot_represenativeseds == 'y':
             path = imagefile
         )
         ax[0].plot(wavelength,sed,linestyles[nn])
-    ax[0].text(x=5e0,y=7e7,s=r'\noindent CO5BOLD\\$i = 180$,$\phi = 0$')
+    ax[0].text(x=5e0,y=7e7,s=r'\noindent CO5BOLD\\$i = 180$, $\phi = 0$')
 
     # Links to obscured cobold-sed
     imagefiles = [
@@ -536,7 +585,7 @@ if plot_represenativeseds == 'y':
             path = imagefile
         )
         ax[1].plot(wavelength,sed,linestyles[nn])
-    ax[1].text(x=5e0,y=7e7,s=r'\noindent CO5BOLD\\$i = 90$,$\phi = 90$')
+    ax[1].text(x=5e0,y=7e7,s=r'\noindent CO5BOLD\\$i = 90$, $\phi = 90$')
 
 
     # Links to DARWIN-version of same LOS
@@ -551,14 +600,14 @@ if plot_represenativeseds == 'y':
             path = imagefile
         )
         ax[2].plot(wavelength,sed,linestyles[nn])
-    ax[2].text(x=5e0,y=7e7,s=r'\noindent DARWIN\\$i = 90$,$\phi = 90$')
+    ax[2].text(x=5e0,y=7e7,s=r'\noindent DARWIN\\$i = 90$, $\phi = 90$')
 
 
     # Links to r3d-temperature-version of same LOS
     imagefiles = [
         '../r3dresults/st28gm06n052_pointtemperature/198/spectrum_i090_phi090.out',
         '../r3dresults/st28gm06n052_pointtemperature/198/spectrum_i090_phi090_nodust.out',
-#        '../r3dresults/st28gm06n052_pointtemperature/198/spectrumnostar_i090_phi090.out',
+        '../r3dresults/st28gm06n052_pointtemperature/198/spectrum_i090_phi090_nostar.out',
     ]
     # Load and plot SEDs and wavelength grid
     for nn,imagefile in enumerate(imagefiles):
@@ -566,7 +615,7 @@ if plot_represenativeseds == 'y':
             path = imagefile
         )
         ax[3].plot(wavelength,sed,linestyles[nn])
-    ax[3].text(x=5e0,y=7e7,s=r'\noindent Point source\\$i = 90$,$\phi = 90$')
+    ax[3].text(x=5e0,y=7e7,s=r'\noindent Point source\\$i = 90$, $\phi = 90$')
 
 
 

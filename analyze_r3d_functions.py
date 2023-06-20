@@ -1195,6 +1195,7 @@ def plot_temperaturebins_radius(
       amr_path:str='../amr_grid.inp',
       numb_specie:int=1
       ax: ax object to plot into, if none, don't change
+          if you only want the binned arrays, write 'no' here.
 
     RETURNS
       (fig),(ax), temperature_bins,temperature_std,minmax_bins,radial_range
@@ -1252,46 +1253,47 @@ def plot_temperaturebins_radius(
         # And save that fig-object is not created outside function
         externalfig = 'n'
     else:
+        # There's an external fig, check if we want to plot at all
         externalfig = 'y'
 
-    ax.plot(radial_range,temperature_bins,'k')
+        # If ax is not "no", then we plot the figure also
+        # if ax is "no", then we don't plot anything and only the bins
+        # are sent out
+        if ax != 'no':
 
-    ax.fill_between(
-        radial_range,
-        temperature_min,
-        temperature_max,
-        color='b',
-        alpha=0.2
-    )
+            ax.plot(radial_range,temperature_bins,'k')
 
-    ax.fill_between(
-        radial_range,
-        temperature_bins-temperature_std,
-        temperature_bins+temperature_std,
-        color='b',
-        alpha=0.4
-    )
+            ax.fill_between(
+                radial_range,
+                temperature_min,
+                temperature_max,
+                color='b',
+                alpha=0.2
+            )
 
-    # Plot star's radius here
-    ax.plot([Rstar,Rstar],[0,4000],'r:',linewidth=1)
-    
-    # Plot settings
-    ax.set(
-        ylabel=r'Gas and dust temperature (K)',
-        xlabel=r'Distance (AU)',
-        ylim=(0,4000),
-        xlim=(0,radial_range.max()+0.5)
-    )
+            ax.fill_between(
+                radial_range,
+                temperature_bins-temperature_std,
+                temperature_bins+temperature_std,
+                color='b',
+                alpha=0.4
+            )
 
-
-    # For output: 
-    #   create a min-max-array with average
-    #   difference between min-max
-    minmax_bins = 0.5*(temperature_max - temperature_min)
+            # Plot star's radius here
+            ax.plot([Rstar,Rstar],[0,4000],'r:',linewidth=1)
+            
+            # Plot settings
+            ax.set(
+                ylabel=r'Gas and dust temperature (K)',
+                xlabel=r'Distance (AU)',
+                ylim=(0,4000),
+                xlim=(0,radial_range.max()+0.5)
+            )
 
     # if figure object is created outside, don't return any figs or ax
+    # if no figure at all, just send data
     if externalfig == 'y':
-        return temperature_bins,temperature_std,minmax_bins,radial_range
+        return temperature_bins,temperature_std,temperature_max,temperature_min,radial_range
     
     # Else return only fig and ax-objects
     if externalfig == 'n':
