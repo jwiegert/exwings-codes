@@ -1,7 +1,10 @@
 # Plots various figures for first co5bold-r3d-paper
 import matplotlib.pyplot as plt
-from matplotlib import rc
 import numpy as np
+import re
+
+from matplotlib import rc
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import analyze_co5bold_functions as a5d
 import analyze_r3d_functions as a3d
@@ -35,7 +38,7 @@ plot_absscat = 'n'
 
 #
 plot_temperatureradial = 'n' # Only cobold-T, no comparison, not used
-plot_temperaturecompare = 'y'
+plot_temperaturecompare = 'n'
 
 # Plot SEDs
 plot_seds_cobolddarwin = 'n'
@@ -46,7 +49,7 @@ plot_represenativeseds = 'n'
 
 
 # Plot various images
-
+plot_images_obscured = 'y'
 
 
 
@@ -235,8 +238,17 @@ if plot_temperaturecompare == 'y':
 
     phase = 186
 
+
+    # Load star's radius here
+    Mstar,Rstar,Lstar = a5d.load_star_information(
+        savpath='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        printoutput='n'
+    )
+    Rstar /= AUcm
+
+
     # Load cobold-T and create subplot
-    T_c5d,Tstd_c5d,Tminmax_c5d,radius_c5d = a3d.plot_temperaturebins_radius(
+    T_c5d, Tstd_c5d, Tmax_c5d, Tmin_c5d, radial_range = a3d.plot_temperaturebins_radius(
         temperature_path=f'../r3dresults/st28gm06n052_staranddust_1/{phase}/dust_temperature.dat',
         grid_path='../r3dresults/st28gm06n052_staranddust_1/grid_distances.csv',
         amr_path='../r3dresults/st28gm06n052_staranddust_1/amr_grid.inp',
@@ -250,69 +262,93 @@ if plot_temperaturecompare == 'y':
 
 
 
+    # Load R3d-temperatures and bin each grain size's tmeperature
+    # and take averages, max-min, stds of these
+    # Re-use radial range from c5d-plot since the grid is identical
+
+    # Load coordintaes of R3D-cells and change to AU
+    # extract size of grid cube (round up because this is the centre of cell coord)
+    # and create binned radius-array
+    cellcoords = a3d.load_griddistances(
+        gridpath='../r3dresults/st28gm06n052_pointtemperature/grid_distances.csv',
+        amrpath='../r3dresults/st28gm06n052_pointtemperature/amr_grid.inp'
+    )
+    cubesize = np.ceil(cellcoords[:,1].max()/AUcm )
+    radii = cellcoords[:,0]/AUcm
+    Nbins = 100
+    radial_bins = np.linspace(0,radii.max(),Nbins+1)
 
 
-
-
-    # TODO
-    # is this significantly different with otherr species?
-    #
-    # nej inte direkt, men kolla ett par till...
-    #
-    # take average of all 10 grain sizes, and std of the 10 averages 
-    #  10 Ts per grid cell -> 1 average per grid cell -> std and average per shell
-    #  10 Ts per grid cell -> 1 max/min per grid cell -> 1 max/min of max/min per shell
-
-
-
-
-
+    # Create temporary temperature arrays
     Nspecies = 10
+    temperatures_avr = np.zeros((Nbins,Nspecies))
+    temperatures_max = np.zeros((Nbins,Nspecies))
+    temperatures_min = np.zeros((Nbins,Nspecies))
+    temperatures_std = np.zeros((Nbins,Nspecies))
 
-    Ttot_r3d = 0
-    Ttotstd_r3d = 0
-
-
-
+    # Bin each grain size temperature
     for nspecie in range(Nspecies):
 
-
-
-        T_r3d,Tstd_r3d,Tmax_r3d,Tmin_r3d,radius_r3d = a3d.plot_temperaturebins_radius(
-            temperature_path=f'../r3dresults/st28gm06n052_pointtemperature/{phase}/dust_temperature.dat',
-            grid_path='../r3dresults/st28gm06n052_pointtemperature/grid_distances.csv',
-            amr_path='../r3dresults/st28gm06n052_pointtemperature/amr_grid.inp',
-            numb_specie = nspecie,
-            ax=0
+        # Load each specie's R3D-temperature
+        Ncells, Ntemp, temperatures = a3d.load_temperature(
+            path=f'../r3dresults/st28gm06n052_pointtemperature/{phase}/dust_temperature.dat',
+            numb_specie=nspecie+1
         )
 
-        Ttot_r3d += T_r3d
-        Ttotstd_r3d += Tstd_r3d
-
-    Tmean_r3d = Ttot_r3d / Nspecies
-    Tmeanstd_r3d = Ttotstd_r3d / Nspecies
-
-
-    ax[1].plot(radius_r3d,Tmean_r3d,'k')
-
+        # Bin the temperatures and save in a Nbins*Nspecies arrays
+        for nn in range(Nbins):
+            ncells = np.where((radii >= radial_bins[nn]) & (radii < radial_bins[nn+1]))[0]
+            temperatures_avr[nn,nspecie] = temperatures[ncells].mean()
+            temperatures_max[nn,nspecie] = temperatures[ncells].max()
+            temperatures_min[nn,nspecie] = temperatures[ncells].min()
+            temperatures_std[nn,nspecie] = temperatures[ncells].std()
 
 
+    # Save average/max-min/std's of each specie 
+    # This saves the maximum standard deviation of eahc specie at each radial bin
+    Tr3d_avr = np.zeros(Nbins)
+    Tr3d_max = np.zeros(Nbins)
+    Tr3d_min = np.zeros(Nbins)
+    Tr3d_std = np.zeros(Nbins)
+
+    for nn in range(Nbins):
+        Tr3d_avr[nn] = temperatures_avr[nn,:].mean()
+        Tr3d_max[nn] = temperatures_max[nn,:].max()
+        Tr3d_min[nn] = temperatures_min[nn,:].min()
+        Tr3d_std[nn] = temperatures_std[nn,:].max()
 
 
+    ax[1].plot(radial_range,Tr3d_avr,'k')
+
+    ax[1].fill_between(
+        radial_range,
+        Tr3d_min,
+        Tr3d_max,
+        color='b',
+        alpha=0.2
+    )
+
+    ax[1].fill_between(
+        radial_range,
+        Tr3d_avr-Tr3d_std,
+        Tr3d_avr+Tr3d_std,
+        color='b',
+        alpha=0.4
+    )
 
 
     ax[1].set_ylabel(r'$T_{\rm RADMC-3D}$ (K)',fontsize=18)
     ax[1].set_xlabel(r'')
-    ax[1].set(xlim=(0,26))
+    ax[1].set(xlim=(0,26), ylim=(0,4000))
     ax[1].tick_params(axis='both', which='major', labelsize=15)
 
     # A plot with Tc5d / Tr3d
-    ax[2].plot(radius_r3d,T_c5d/T_r3d,'b')
+    ax[2].plot(radial_range,T_c5d/Tr3d_avr,'b')
 
     ax[2].fill_between(
-        radius_r3d,
-        (T_c5d-Tstd_c5d)/(T_r3d-Tstd_r3d),
-        (T_c5d+Tstd_c5d)/(T_r3d+Tstd_r3d),
+        radial_range,
+        (T_c5d-Tstd_c5d)/(Tr3d_avr-Tr3d_std),
+        (T_c5d+Tstd_c5d)/(Tr3d_avr+Tr3d_std),
         color='b',
         alpha=0.4
     )
@@ -328,7 +364,10 @@ if plot_temperaturecompare == 'y':
     # A vertical line at limit of grid
     for nn in range(3):
         # Grid cube
-        ax[nn].plot([15,15],[0,4100],'k:')
+        ax[nn].plot([cubesize,cubesize],[0,4100],'k:')
+        # And stellar radius
+        ax[nn].plot([Rstar,Rstar],[0,4100],'r:',linewidth=1)
+
 
     # Show all plots
     plt.tight_layout()
@@ -624,3 +663,82 @@ if plot_represenativeseds == 'y':
 
     #Save figure
     fig.savefig(f'figs/seds_obscuredexamples.pdf', dpi=300, facecolor="white")
+
+
+# ----------------------------------------------------------------------
+# Plot various images
+
+if plot_images_obscured == 'y':
+
+    imagelist=[
+        '../r3dresults/st28gm06n052_staranddust_1/198/image_i090_phi090_1um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/198/image_i090_phi090_2um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/198/image_i090_phi090_5um.out',
+    ]
+    distance=1
+
+    # Number of plots
+    Nplots = len(imagelist)
+
+    # Set fig-and-axis settings for subplots
+    fig, ax = plt.subplots(
+        Nplots,1,
+        figsize = (5,13)
+    )
+    #        dpi = 300, 
+
+    # Load image data and save in various lists
+    for nn,image in enumerate(imagelist):
+
+        # Extract path and imagename from image
+        imagestrings = re.split('/', image)
+        path = f'{imagestrings[0]}/{imagestrings[1]}/'
+        modelname = imagestrings[2]
+        phase = imagestrings[3]
+        imagefilename = imagestrings[4]
+
+        # extract inclination and wavelength
+        imagestrings = re.split('_', imagefilename)
+        incl = imagestrings[1][1:]
+        phi = imagestrings[2][3:]
+        wavelengthum = imagestrings[3][:-6]
+
+        # Remove 0 if first character in incl and phi
+        incl = (incl[1:] if incl.startswith('0') else incl)
+        phi = (phi[1:] if phi.startswith('0') else phi)
+
+        # Load data
+        image2d,image2dlog,flux,axisplot = a3d.load_images(
+            path=f'{path}{modelname}/{phase}',
+            image=imagefilename,
+            distance=distance
+        )
+
+        # Save linear data in list (list of arrays)
+        imagedata = image2d
+
+        # Plot image at spot nn, set title and axis labels
+        im0 = ax[nn].imshow(
+            imagedata, 
+            origin='lower', extent=axisplot, 
+            cmap=plt.get_cmap('hot')
+        )
+        ax[nn].set(
+            xlim=(-7,7),
+            ylim=(-7,7)
+        )
+        ax[nn].set_ylabel(rf'Offset (AU), $\lambda =$ {wavelengthum} $\mu$m', fontsize=18)
+        ax[nn].tick_params(axis='both', which='major', labelsize=15)
+    ax[-1].set_xlabel('Offset (AU)', fontsize=18)
+    
+
+
+    # Change figure size
+    fig.tight_layout()
+    #fig.show()
+
+    #Save figure
+    fig.savefig(f'figs/images_obscuredexamples.pdf', dpi=300, facecolor="white")
+
+
+

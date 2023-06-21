@@ -778,7 +778,8 @@ def plot_grainsizeradius(
         amrpath=amr_path
     )
     radii = cellcoords[:,0]/AUcm
-    cubesize = cellcoords[:,1].max()/AUcm 
+    cubesize = np.ceil(cellcoords[:,1].max()/AUcm )
+
 
     # Load star's radius here
     Mstar,Rstar,Lstar = load_star_information(
