@@ -46,10 +46,9 @@ plot_seds_point = 'n'
 plot_represenativeseds = 'n'
 
 
-
-
 # Plot various images
-plot_images_obscured = 'y'
+plot_images_examples = 'y'
+plot_images_obscured = 'n'
 
 
 
@@ -668,6 +667,99 @@ if plot_represenativeseds == 'y':
 # ----------------------------------------------------------------------
 # Plot various images
 
+if plot_images_examples == 'y':
+    # Plot 3 images at 10um, one per phase, lin and log
+
+    distance=1
+    imagelist=[
+        '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_10um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_10um.out',
+        '../r3dresults/st28gm06n052_staranddust_2/198/image_i000_phi000_10um.out'
+    ]
+    
+    # Number of plots
+    Nplots = len(imagelist)
+
+    # Set fig-and-axis settings for subplots
+    fig, ax = plt.subplots(
+        2,Nplots,
+        figsize = (12,7)
+    )
+
+    # Load image data and save in various lists
+    for nn,image in enumerate(imagelist):
+
+        # Extract path and imagename from image
+        imagestrings = re.split('/', image)
+        path = f'{imagestrings[0]}/{imagestrings[1]}/'
+        modelname = imagestrings[2]
+        phase = imagestrings[3]
+        imagefilename = imagestrings[4]
+
+        # extract inclination and wavelength
+        imagestrings = re.split('_', imagefilename)
+        incl = imagestrings[1][1:]
+        phi = imagestrings[2][3:]
+        wavelengthum = imagestrings[3][:-6]
+
+        # Load data
+        image2d,image2dlog,flux,axisplot = a3d.load_images(
+            path=f'{path}{modelname}/{phase}',
+            image=imagefilename,
+            distance=distance
+        )
+
+
+        imlin = ax[0][nn].imshow(
+            image2d, 
+            origin='lower', extent=axisplot, 
+            cmap=plt.get_cmap('hot'),
+            vmin=0,vmax=7000
+        )
+        ax[0][nn].set_title(f'{phase}', fontsize=15)
+        ax[0][nn].tick_params(axis='both', which='major', labelsize=15)
+
+        imlog = ax[1][nn].imshow(
+            image2dlog, 
+            origin='lower', extent=axisplot, 
+            cmap=plt.get_cmap('hot'),
+            vmin=0,vmax=4.8
+        )
+        ax[1][nn].set_xlabel('Offset (AU)',fontsize=18)
+        ax[1][nn].tick_params(axis='both', which='major', labelsize=15)
+
+    ax[0][0].set_ylabel('Offset (AU)',fontsize=18)
+    ax[1][0].set_ylabel('Offset (AU)',fontsize=18)
+
+
+
+    # Set colour bar settings and label
+    divider = make_axes_locatable(ax[0][-1])
+    cax = divider.append_axes('right', size='5%', pad=0.05)
+    cb0 = plt.colorbar(imlin, cax=cax, orientation = 'vertical',shrink=0.6,pad=0.15)
+    cb0.set_label(label = rf'$F$(Jy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc',fontsize= 15)
+    cb0.ax.tick_params(labelsize=15)
+
+    # Set colour bar settings and label
+    divider = make_axes_locatable(ax[1][-1])
+    cax = divider.append_axes('right', size='5%', pad=0.05)
+    cb0 = plt.colorbar(imlog, cax=cax, orientation = 'vertical',shrink=0.6,pad=0.15)
+    cb0.set_label(label = rf'$\log F$(Jy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc',fontsize= 15)
+    cb0.ax.tick_params(labelsize=15)
+
+
+
+    fig.tight_layout()
+    #fig.show()
+
+    #Save figure
+    fig.savefig(f'figs/images_10umexamples.pdf', dpi=300, facecolor="white")
+
+
+
+
+
+
 if plot_images_obscured == 'y':
 
     imagelist=[
@@ -732,8 +824,6 @@ if plot_images_obscured == 'y':
     ax[-1].set_xlabel('Offset (AU)', fontsize=18)
     
 
-
-    # Change figure size
     fig.tight_layout()
     #fig.show()
 

@@ -729,7 +729,13 @@ def load_images(
 
     for flux in image1d:
         image2d[nx,ny] = flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
-        image2dlog[nx,ny] = np.log10(flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2)
+        
+        # Remove zeros before logging (1e-6 is small enough, probably)
+        # Smallest number >0 is 1.1, so log10 is just larger than 0
+        if image2d[nx,ny] == 0:
+            image2dlog[nx,ny] = -6
+        else:
+            image2dlog[nx,ny] = np.log10(flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2)
 
         # Move nx and ny
         nx = nx + 1
