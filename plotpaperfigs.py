@@ -20,7 +20,7 @@ rc('ytick.minor',size=4)
 
 # Constants
 AUcm = 1.49598e13 # cm
-
+Lsol = 3.828e26 # W
 
 # Plot choices
 
@@ -42,13 +42,16 @@ plot_temperaturecompare = 'n'
 
 # Plot SEDs
 plot_seds_cobolddarwin = 'n'
-plot_seds_point = 'n'
+plot_seds_point = 'y'
 plot_represenativeseds = 'n'
 
 
 # Plot various images
-plot_images_examples = 'y'
+plot_images_examples = 'n'
 plot_images_obscured = 'n'
+
+# Observables
+compute_luminosities = 'n'
 
 
 
@@ -420,12 +423,21 @@ if plot_seds_cobolddarwin == 'y':
     # Extract SEDs and fill figure-axes-objects
     for nphase,phase in enumerate(phases):
         for npath,path in enumerate(paths):
+            print(path)
             for nangle,spectrum in enumerate(spectra):
 
                 wavelength,sed = a3d.load_spectrum(
                     path = path+phase+spectrum
                 )
                 
+                # Print all sed-luminosities
+                luminosity = a3d.compute_luminosity(
+                    wavelengths=wavelength,
+                    spectrum=sed
+                )
+                print(f'{phase}{spectrum}: {luminosity/Lsol}')
+
+
                 if npath == 0:
                     sedscobold.append(sed)
                     sedcoboldnumbers.append(f'{nphase} {nangle}')
@@ -463,9 +475,13 @@ if plot_seds_cobolddarwin == 'y':
             ax[2][nphase].set_xlim(5e-1,6e1)
             #ax[2][nphase].set_ylim(0,3)
             ax[2][nphase].tick_params(axis='both', which='major', labelsize=15)
-    for nn in range(3):
-        ax[2][nn].plot([wavelength[0],wavelength[-1]],[0,0],'k:')
     
+    for nn in range(3):
+        # Line for the 1-1 correspondance
+        ax[2][nn].plot([wavelength[0],wavelength[-1]],[0,0],'k:')
+        # Phase number as title on top-plots
+        ax[0][nn].set_title(phases[nn], fontsize=16)
+
     ax[0][0].set_ylabel(r'$F({\rm CO5BOLD})$, Jy at 1 pc', fontsize=18)
     ax[1][0].set_ylabel(r'$F({\rm DARWIN})$, Jy at 1 pc', fontsize=18)
     ax[2][0].set_ylabel(
@@ -481,6 +497,9 @@ if plot_seds_cobolddarwin == 'y':
     
     #Save figure
     fig.savefig(f'figs/seds_all_cobold_darwin.pdf', dpi=300, facecolor="white")
+
+
+
 
 
 # Plots SEDs of point-source-temperature
@@ -512,7 +531,7 @@ if plot_seds_point == 'y':
     ]
     fig,ax = plt.subplots(len(paths),len(phases), figsize = (12, 6))
 
-
+    print(paths[0])
     # Loop through phases
     for nphase,phase in enumerate(phases):
         # Loop through spectra
@@ -523,6 +542,13 @@ if plot_seds_point == 'y':
                 path = paths[0]+phase+spectrum
             )
             
+            # Print all sed-luminosities
+            luminosity = a3d.compute_luminosity(
+                wavelengths=wavelength,
+                spectrum=sed
+            )
+            print(f'{phase}{spectrum}: {luminosity/Lsol}')
+
             # Plot on first row
             ax[0][nphase].plot(wavelength,sed,label = legendlist[nangle])
         
@@ -568,6 +594,7 @@ if plot_seds_point == 'y':
     )
     for nn in range(3):
         ax[-1][nn].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
+        ax[0][nn].set_title(phases[nn], fontsize=16)
     ax[0][2].legend(title=r'$i$, $\phi$')
 
     fig.tight_layout()
@@ -668,13 +695,16 @@ if plot_represenativeseds == 'y':
 # Plot various images
 
 if plot_images_examples == 'y':
-    # Plot 3 images at 10um, one per phase, lin and log
+    # Plot 3 images at one walanvegth, one per phase, lin and log
+
+    # Chose wavelength here
+    wavelengthum = 10
 
     distance=1
     imagelist=[
-        '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_10um.out',
-        '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_10um.out',
-        '../r3dresults/st28gm06n052_staranddust_2/198/image_i000_phi000_10um.out'
+        f'../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_{wavelengthum}um.out',
+        f'../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_{wavelengthum}um.out',
+        f'../r3dresults/st28gm06n052_staranddust_2/198/image_i000_phi000_{wavelengthum}um.out'
     ]
     
     # Number of plots
@@ -700,7 +730,6 @@ if plot_images_examples == 'y':
         imagestrings = re.split('_', imagefilename)
         incl = imagestrings[1][1:]
         phi = imagestrings[2][3:]
-        wavelengthum = imagestrings[3][:-6]
 
         # Load data
         image2d,image2dlog,flux,axisplot = a3d.load_images(
@@ -830,5 +859,59 @@ if plot_images_obscured == 'y':
     #Save figure
     fig.savefig(f'figs/images_obscuredexamples.pdf', dpi=300, facecolor="white")
 
+
+# -------------------------------------------------------------------------------
+# Compute various observables
+#
+
+if compute_luminosities == 'y':
+    # Compute luminosities of all SEDs without dust
+
+    # Load st28gm06n052_nodust
+    #   186, 190, 198
+    # Load st28gm06n056
+    #   140, 141, 142
+    #
+    paths = [
+        '../r3dresults/st28gm06n052_nodust/',
+        '../r3dresults/st28gm06n056/',
+    ]
+    phaseses = [
+        ['186','190','198'],
+        ['140','141','142']
+    ]
+    spectra = [
+        '/spectrum_i000_phi000.out',
+        '/spectrum_i090_phi000.out',
+        '/spectrum_i090_phi090.out',
+        '/spectrum_i090_phi270.out',
+        '/spectrum_i180_phi000.out',
+        '/spectrum_i270_phi000.out'
+    ]
+
+    for npath, path in enumerate(paths):
+        print(path)
+        phases = phaseses[npath]
+        for phase in phases:
+
+            lumsum = 0
+            
+            for spectrum in spectra:
+
+                wavelength,sed = a3d.load_spectrum(
+                    path = path+phase+spectrum
+                )
+
+                # Print all sed-luminosities
+                luminosity = a3d.compute_luminosity(
+                    wavelengths=wavelength,
+                    spectrum=sed
+                )
+                luminosity = luminosity/Lsol
+                print(f'{phase}{spectrum}: {luminosity}')
+
+                lumsum += luminosity
+            
+            print(f'    Average: {lumsum/len(spectra)}')
 
 
