@@ -42,12 +42,13 @@ plot_temperaturecompare = 'n'
 
 # Plot SEDs
 plot_seds_cobolddarwin = 'n'
-plot_seds_point = 'y'
+plot_seds_point = 'n'
 plot_represenativeseds = 'n'
 
 
 # Plot various images
 plot_images_examples = 'n'
+plot_images_darwinpoint = 'y'
 plot_images_obscured = 'n'
 
 # Observables
@@ -97,7 +98,7 @@ if plot_opticalthickness == 'y':
     )
     print(f'{Reffective / 1.49598e13} AU')
 
-    ax.set_xlabel(r'Distance along LOS (AU)',fontsize=18)
+    ax.set_xlabel(r'Distance along LOS (au)',fontsize=18)
     ax.set_ylabel(r'Optical thickness, $\tau$',fontsize=18)
     ax.tick_params(axis='both', which='major', labelsize=15)
 
@@ -170,7 +171,7 @@ if plot_grainsizeradius == 'y':
     ax[2].set_ylabel(fr'Grain sizes ($\mu$m), phase: {phases[2]}',fontsize=18)
     ax[0].set_xlabel(r'',fontsize=18)
     ax[1].set_xlabel(r'',fontsize=18)
-    ax[2].set_xlabel(r'Distance (AU)',fontsize=18)
+    ax[2].set_xlabel(r'Distance (au)',fontsize=18)
     ax[0].tick_params(axis='both', which='major', labelsize=15)
     ax[1].tick_params(axis='both', which='major', labelsize=15)
     ax[2].tick_params(axis='both', which='major', labelsize=15)
@@ -220,7 +221,7 @@ if plot_temperatureradial == 'y':
     )
 
     ax.set_ylabel(r'Gas \&  dust temperature (K)',fontsize=18)
-    ax.set_xlabel(r'Distance (AU)',fontsize=18)
+    ax.set_xlabel(r'Distance (au)',fontsize=18)
 
     ax.tick_params(axis='both', which='major', labelsize=15)
     fig.tight_layout()
@@ -356,7 +357,7 @@ if plot_temperaturecompare == 'y':
     )
     ax[2].plot([1.65,1.65],[0,10],'r:')
     ax[2].set_ylabel(r'$T_{\rm CO5BOLD}$ / $T_{\rm RADMC-3D}$',fontsize=18)
-    ax[2].set_xlabel(r'Distance (AU)',fontsize=18)
+    ax[2].set_xlabel(r'Distance (au)',fontsize=18)
     ax[2].set(
         ylim=(1,3),
         xlim=(0,26)
@@ -754,11 +755,11 @@ if plot_images_examples == 'y':
             cmap=plt.get_cmap('hot'),
             vmin=0,vmax=4.8
         )
-        ax[1][nn].set_xlabel('Offset (AU)',fontsize=18)
+        ax[1][nn].set_xlabel('Offset (au)',fontsize=18)
         ax[1][nn].tick_params(axis='both', which='major', labelsize=15)
 
-    ax[0][0].set_ylabel('Offset (AU)',fontsize=18)
-    ax[1][0].set_ylabel('Offset (AU)',fontsize=18)
+    ax[0][0].set_ylabel('Offset (au)',fontsize=18)
+    ax[1][0].set_ylabel('Offset (au)',fontsize=18)
 
 
 
@@ -776,8 +777,6 @@ if plot_images_examples == 'y':
     cb0.set_label(label = rf'$\log F$(Jy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc',fontsize= 15)
     cb0.ax.tick_params(labelsize=15)
 
-
-
     fig.tight_layout()
     #fig.show()
 
@@ -786,6 +785,93 @@ if plot_images_examples == 'y':
 
 
 
+if plot_images_darwinpoint == 'y':
+    # Plot Darwin-and-pointsource example images at 10um
+
+    imagelist=[
+        '../r3dresults/st28gm06n052_darwinsource/190/image_i000_phi000_10um.out',
+        '../r3dresults/st28gm06n052_pointtemperature/190/image_i000_phi000_10um.out'
+    ]
+    distance=1
+
+    # Number of plots
+    Nplots = len(imagelist)
+
+    # Set fig-and-axis settings for subplots
+    fig, ax = plt.subplots(
+        Nplots,1,
+        figsize = (7,10),
+    )
+
+    # Load image data and save in various lists
+    for nn,image in enumerate(imagelist):
+
+        # Extract path and imagename from image
+        imagestrings = re.split('/', image)
+        path = f'{imagestrings[0]}/{imagestrings[1]}/'
+        modelname = imagestrings[2]
+        phase = imagestrings[3]
+        imagefilename = imagestrings[4]
+
+        # extract inclination and wavelength
+        imagestrings = re.split('_', imagefilename)
+        incl = imagestrings[1][1:]
+        phi = imagestrings[2][3:]
+        wavelengthum = imagestrings[3][:-6]
+
+        # Load data
+        image2d,image2dlog,flux,axisplot = a3d.load_images(
+            path=f'{path}{modelname}/{phase}',
+            image=imagefilename,
+            distance=distance
+        )
+
+        imlin = ax[nn].imshow(
+            image2d, 
+            origin='lower', extent=axisplot, 
+            cmap=plt.get_cmap('hot'),
+            vmin=0,vmax=7e3
+        )
+        ax[nn].tick_params(axis='both', which='major', labelsize=15)
+    
+    ax[0].set_title(r'M2n315u6 \&\ dust', fontsize=15)
+    ax[1].set_title(r'Point source \&\ dust', fontsize=15)
+    ax[1].set_xlabel('Offset (au)', fontsize=18)
+    ax[0].set_ylabel('Offset (au)', fontsize=18)
+    ax[1].set_ylabel('Offset (au)', fontsize=18)
+
+
+    # Set colour bar settings and label
+    #divider = make_axes_locatable(ax[1])
+    #cax = divider.append_axes(
+    #    'right', 
+    #    size='5%', 
+    #    pad=0.05,
+    #)
+    # [Xcoord, Ycoord, Width, Height]
+    cax = fig.add_axes([0.83, 0.17, 0.03, 0.7])
+    cb0 = plt.colorbar(
+        imlin, 
+        cax=cax, 
+        orientation = 'vertical', 
+    )
+    #shrink=0.6,pad=0.15
+    cb0.set_label(
+        label = rf'$F$(Jy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc', fontsize=15
+    )
+    cb0.ax.tick_params(labelsize=15)
+
+    fig.tight_layout()
+    #fig.show()
+
+
+
+    #Save figure
+    fig.savefig(f'figs/images_10umdarwinpoint.pdf', dpi=300, facecolor="white")
+
+    # TODO
+    # Fontstorlekar
+    # flytta colourbar till mitten mellan båda?
 
 
 
@@ -848,9 +934,9 @@ if plot_images_obscured == 'y':
             xlim=(-7,7),
             ylim=(-7,7)
         )
-        ax[nn].set_ylabel(rf'Offset (AU), $\lambda =$ {wavelengthum} $\mu$m', fontsize=18)
+        ax[nn].set_ylabel(rf'Offset (au), $\lambda =$ {wavelengthum} $\mu$m', fontsize=18)
         ax[nn].tick_params(axis='both', which='major', labelsize=15)
-    ax[-1].set_xlabel('Offset (AU)', fontsize=18)
+    ax[-1].set_xlabel('Offset (au)', fontsize=18)
     
 
     fig.tight_layout()
