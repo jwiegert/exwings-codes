@@ -21,6 +21,9 @@ rc('ytick.minor',size=4)
 # Constants
 AUcm = 1.49598e13 # cm
 Lsol = 3.828e26 # W
+cubesize = 222757675648155.62/AUcm # Yes, hardcoded to large grid, change if needed for 
+                                   # other grids, ie, from amr_grid, first coordinate 
+                                   # is courner coordinate of first base cell
 
 # Plot choices
 
@@ -31,7 +34,6 @@ plot_coboldgrid = 'n'
 plot_opticalthickness = 'n'
 
 # Grain properties
-plot_grainsizehist_all = 'n'
 plot_grainsizehist_one = 'n'
 plot_grainsizeradius = 'n'
 plot_absscat = 'n'
@@ -43,12 +45,12 @@ plot_temperaturecompare = 'n'
 # Plot SEDs
 plot_seds_cobolddarwin = 'n'
 plot_seds_point = 'n'
-plot_represenativeseds = 'n'
+plot_seds_obscured = 'y'
 
 
 # Plot various images
 plot_images_examples = 'n'
-plot_images_darwinpoint = 'y'
+plot_images_darwinpoint = 'n'
 plot_images_obscured = 'n'
 
 # Observables
@@ -112,33 +114,12 @@ if plot_opticalthickness == 'y':
 #
 # Warning: slow because of loading lots dust densities
 
-plot_grainsizehist_all = 'n'
-if plot_grainsizehist_all == 'y':
 
-    fig,ax = a5d.plot_grainsizemass_histogram(
-        model='st28gm06n052',
-        phases=[186,190,198]
-    )
-
-    ax[0].set_ylabel(r'Dust mass (g)',fontsize=18)    
-    ax[1].set_ylabel(r'Dust mass (g)',fontsize=18)
-    ax[2].set_ylabel(r'Dust mass (g)',fontsize=18)
-
-    ax[2].set_xlabel(r'Grain size ($\mu$m)',fontsize=18)
-
-    ax[0].tick_params(axis='both', which='major', labelsize=15)
-    ax[1].tick_params(axis='both', which='major', labelsize=15)
-    ax[2].tick_params(axis='both', which='major', labelsize=15)
-
-    fig.tight_layout()
-    fig.savefig('figs/grainsize_hist.pdf', dpi=300, facecolor="white")
-
-    fig.show()
-
+# This is broken, 
 if plot_grainsizehist_one == 'y':
 
     fig,ax = a5d.plot_grainsizemass_histogram(
-        model='st28gm06n052',
+        model='st28gm06n052_staranddust_1',
         phases=[186,190,198]
     )
 
@@ -276,7 +257,6 @@ if plot_temperaturecompare == 'y':
         gridpath='../r3dresults/st28gm06n052_pointtemperature/grid_distances.csv',
         amrpath='../r3dresults/st28gm06n052_pointtemperature/amr_grid.inp'
     )
-    cubesize = np.ceil(cellcoords[:,1].max()/AUcm )
     radii = cellcoords[:,0]/AUcm
     Nbins = 100
     radial_bins = np.linspace(0,radii.max(),Nbins+1)
@@ -367,7 +347,7 @@ if plot_temperaturecompare == 'y':
     # A vertical line at limit of grid
     for nn in range(3):
         # Grid cube
-        ax[nn].plot([cubesize,cubesize],[0,4100],'k:')
+        ax[nn].plot([cubesize,cubesize],[0,4100],'k:',linewidth=1)
         # And stellar radius
         ax[nn].plot([Rstar,Rstar],[0,4100],'r:',linewidth=1)
 
@@ -606,7 +586,7 @@ if plot_seds_point == 'y':
 
 
 # Plot 3 representative SEDer vid obskuration
-if plot_represenativeseds == 'y':
+if plot_seds_obscured == 'y':
 
 
     # Set up settings for plots
@@ -625,19 +605,21 @@ if plot_represenativeseds == 'y':
     ax[0].set_ylabel(r'$F$ (Jy at 1 pc)', fontsize=18)
     
 
-    # Links to files with "normal" SED
+    # Links to files with SED from opposite direction
     imagefiles = [
-        '../r3dresults/st28gm06n052_staranddust_nospikes/198/spectrum_i180_phi000.out',
-        '../r3dresults/st28gm06n052_nodust/198/spectrum_i180_phi000.out',
-        '../r3dresults/st28gm06n052_nostar/198/spectrum_i180_phi000.out'
+        '../r3dresults/st28gm06n052_staranddust_nospikes/198/spectrum_i090_phi270.out',
+        '../r3dresults/st28gm06n052_nodust/198/spectrum_i090_phi270.out',
+        '../r3dresults/st28gm06n052_nostar/198/spectrum_i090_phi270.out'
     ]
+    ax[0].text(x=5e0,y=7e7,s=r'\noindent CO5BOLD\\$i = 90$, $\phi = 270$')
+
+
     # Load and plot SEDs and wavelength grid
     for nn,imagefile in enumerate(imagefiles):
         wavelength,sed = a3d.load_spectrum(
             path = imagefile
         )
         ax[0].plot(wavelength,sed,linestyles[nn])
-    ax[0].text(x=5e0,y=7e7,s=r'\noindent CO5BOLD\\$i = 180$, $\phi = 0$')
 
     # Links to obscured cobold-sed
     imagefiles = [

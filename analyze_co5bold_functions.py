@@ -19,6 +19,7 @@ AUcm = cython.declare(cython.float ,1.49598e13) # cm
 Msol = 1.989e33 # g
 Rsol = 6.955e10 # cm
 Lsol = 3.828e26 # W
+cubesize = 222757675648155.62/AUcm
 
 # Note
 # Rstar = 1.651AU (355 Rsun)
@@ -778,8 +779,6 @@ def plot_grainsizeradius(
         amrpath=amr_path
     )
     radii = cellcoords[:,0]/AUcm
-    cubesize = np.ceil(cellcoords[:,1].max()/AUcm )
-
 
     # Load star's radius here
     Mstar,Rstar,Lstar = load_star_information(
