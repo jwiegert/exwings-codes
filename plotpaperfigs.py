@@ -24,6 +24,12 @@ Lsol = 3.828e26 # W
 cubesize = 222757675648155.62/AUcm # Yes, hardcoded to large grid, change if needed for 
                                    # other grids, ie, from amr_grid, first coordinate 
                                    # is courner coordinate of first base cell
+radian = 206264800 # milliasec
+baselineVLTI = 130 # metres
+diameterJWST = 6.5 # metres
+
+
+
 
 # Plot choices
 
@@ -45,17 +51,18 @@ plot_temperaturecompare = 'n'
 # Plot SEDs
 plot_seds_cobolddarwin = 'n'
 plot_seds_point = 'n'
-plot_seds_obscured = 'y'
+plot_seds_obscured = 'n'
 
 
 # Plot various images
 plot_images_examples = 'n'
 plot_images_darwinpoint = 'n'
 plot_images_obscured = 'n'
+plot_images_convolved = 'y'
 
 # Observables
 compute_luminosities = 'n'
-
+plot_resolutiondistance = 'y'
 
 
 # ----------------------------------------------------------------
@@ -927,6 +934,15 @@ if plot_images_obscured == 'y':
     #Save figure
     fig.savefig(f'figs/images_obscuredexamples.pdf', dpi=300, facecolor="white")
 
+# Plot figure with convolved images, ie as observed
+if plot_images_convolved == 'y':
+    print('Hej')
+
+
+
+
+
+
 
 # -------------------------------------------------------------------------------
 # Compute various observables
@@ -981,5 +997,11 @@ if compute_luminosities == 'y':
                 lumsum += luminosity
             
             print(f'    Average: {lumsum/len(spectra)}')
+
+if plot_resolutiondistance == 'y':
+
+
+
+    print('hej')
 
 
