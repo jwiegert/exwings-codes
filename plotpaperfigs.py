@@ -21,6 +21,7 @@ rc('ytick.minor',size=4)
 # Constants
 AUcm = 1.49598e13 # cm
 Lsol = 3.828e26 # W
+Rsolmeter = 6.955e8 # m
 cubesize = 222757675648155.62/AUcm # Yes, hardcoded to large grid, change if needed for 
                                    # other grids, ie, from amr_grid, first coordinate 
                                    # is courner coordinate of first base cell
@@ -62,7 +63,7 @@ plot_images_convolved = 'y'
 
 # Observables
 compute_luminosities = 'n'
-plot_resolutiondistance = 'y'
+plot_resolutiondistance = 'n'
 
 
 # ----------------------------------------------------------------
@@ -934,9 +935,37 @@ if plot_images_obscured == 'y':
     #Save figure
     fig.savefig(f'figs/images_obscuredexamples.pdf', dpi=300, facecolor="white")
 
-# Plot figure with convolved images, ie as observed
+
 if plot_images_convolved == 'y':
-    print('Hej')
+    # Plot figure with convolved images, ie as observed
+    # will make a few figures?
+
+    baselineVLTI = 130 # metre
+    diameterJWST = 6.5 # metre
+
+
+    imagelist_1um = [
+        '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_1um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_1um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/198/image_i000_phi000_1um.out'
+    ]
+    imagelist_10um = [
+        '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_10um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_10um.out',
+        '../r3dresults/st28gm06n052_staranddust_2/198/image_i000_phi000_10um.out',
+    ]
+    # 198 at 10um has a spike at default seed
+
+    # från plotten ser vi att det är vettigt att testa gränserna med dessa exempel:
+    # JWST vid 1um och 40pc
+    # VLTI vid 10um och 90pc
+    # samt
+    # VLTI vid 1um och 100pc som jämförelse
+
+
+
+
+
 
 
 
@@ -998,10 +1027,131 @@ if compute_luminosities == 'y':
             
             print(f'    Average: {lumsum/len(spectra)}')
 
+
+
 if plot_resolutiondistance == 'y':
+    # Plots image estimate of within which distance may
+    # one resolive surface features?
+    # papers to reference for this?
+
+    # Size of telescopes
+    baselineVLTI = 130 # metres
+    diameterJWST = 6.5 # metres
 
 
+    # Full-width at half-maximum in mas:  1.22*lambda/D 
+    fwhmVLTI_10um = 1.22 * 1e-5 / baselineVLTI * radian
+    fwhmJWST_10um =  1.22 * 1e-5 / diameterJWST * radian
+    fwhmVLTI_1um = 1.22 * 1e-6 / baselineVLTI * radian
+    fwhmJWST_1um =  1.22 * 1e-6 / diameterJWST * radian
 
-    print('hej')
+    print('FWHM')
+    print(f'{fwhmVLTI_10um} mas, VLTI at 10um')
+    print(f'{fwhmVLTI_1um} mas, VLTI at 1um')
+    print(f'{fwhmJWST_10um} mas, JWST at 10 um')
+    print(f'{fwhmJWST_1um} mas, JWST at 1 um')
+    print('')
+
+
+    # Beam area in mas2
+    areaVLTI_10um = np.pi * (0.5*fwhmVLTI_10um)**2
+    areaJWST_10um = np.pi * (0.5*fwhmJWST_10um)**2
+    areaVLTI_1um = np.pi * (0.5*fwhmVLTI_1um)**2
+    areaJWST_1um = np.pi * (0.5*fwhmJWST_1um)**2
+
+    print('Beam area (fwhm)')
+    print(f'{areaVLTI_10um} mas2, VLTI at 10um')
+    print(f'{areaVLTI_1um} mas2, VLTI at 1um')
+    print(f'{areaJWST_10um} mas2, JWST at 10um')
+    print(f'{areaJWST_1um} mas2, JWST at 1um')
+    print('')
+
+    # Stellar disc area as function of distance
+    distance = np.logspace(0,np.log10(2e3),1000)  # distance array in pc
+    detect_limit = np.linspace(4,4,1000)  # detect limit is area-ratio of 4
+    Rstar = 1.65 / distance * 1000  # Star radius in mas (au/pc)
+    Astar = np.pi*Rstar**2  # Star surface area in mas2
+
+    # Ratio between stellar disc and beam surfaces, or R^2
+    area_ratio_VLTI_10um = Astar / areaVLTI_10um
+    area_ratio_VLTI_1um = Astar / areaVLTI_1um
+    area_ratio_JWST_10um = Astar / areaJWST_10um
+    area_ratio_JWST_1um = Astar / areaJWST_1um
+
+    # Indeces of "resolution limits"
+    indeces_detected_VLTI_10um = np.where(area_ratio_VLTI_10um >= 4)[0]
+    indeces_detected_VLTI_1um = np.where(area_ratio_VLTI_1um >= 4)[0]
+    indeces_detected_JWST_10um = np.where(area_ratio_JWST_10um >= 4)[0]
+    indeces_detected_JWST_1um = np.where(area_ratio_JWST_1um >= 4)[0]
+
+    print(f'VLTI at  1um: <{distance[indeces_detected_VLTI_1um[-1]]} pc')
+    print(f'VLTI at 10um: <{distance[indeces_detected_VLTI_10um[-1]]} pc')
+    print(f'JWST at  1um: <{distance[indeces_detected_JWST_1um[-1]]} pc')
+    print(f'JWST at 10um: <{distance[indeces_detected_JWST_10um[-1]]} pc')
+
+
+    # Plot figure
+    fig,ax = plt.figure(), plt.axes()
+
+    # First fillbetween gave bugs in pdf, mitigated by plotting from index 300
+    ax.plot(distance,area_ratio_VLTI_1um,'b',linewidth = 2)
+    ax.fill_between(
+        distance[indeces_detected_VLTI_1um[300:]],
+        detect_limit[indeces_detected_VLTI_1um[300:]],
+        area_ratio_VLTI_1um[indeces_detected_VLTI_1um[300:]],
+        color='b',
+        alpha=1
+    )
+    ax.plot(distance,area_ratio_VLTI_10um,'c',linewidth = 2)
+    ax.fill_between(
+        distance[indeces_detected_VLTI_10um],
+        detect_limit[indeces_detected_VLTI_10um],
+        area_ratio_VLTI_10um[indeces_detected_VLTI_10um],
+        color='c',
+        alpha=1
+    )
+
+    ax.plot(distance,area_ratio_JWST_1um,'r',linewidth = 2)
+    ax.fill_between(
+        distance[indeces_detected_JWST_1um],
+        detect_limit[indeces_detected_JWST_1um],
+        area_ratio_JWST_1um[indeces_detected_JWST_1um],
+        color='r',
+        alpha=1
+    )
+    ax.plot(distance,area_ratio_JWST_10um,'orange',linewidth = 2)
+    ax.fill_between(
+        distance[indeces_detected_JWST_10um],
+        detect_limit[indeces_detected_JWST_10um],
+        area_ratio_JWST_10um[indeces_detected_JWST_10um],
+        color='orange',
+        alpha=1
+    )
+
+    ax.text(
+        x=1.5,y=6.5,
+        s=r'JWST: 10 \&\ 1$\mu$m',
+        backgroundcolor='white',
+        fontsize=15
+    )
+    ax.text(
+        x=40,y=7.5,
+        s=r'VLTI: 10 \&\ 1$\mu$m',
+        backgroundcolor='white',
+        fontsize=15
+    )
+
+    ax.plot(distance,detect_limit,'k--')
+    ax.set_ylim(1,10)
+    ax.set_xlim(1,2000)
+    ax.set_xscale('log')
+    ax.set_xlabel('Distance (pc)', fontsize=18)
+    ax.set_ylabel(r'$R_\star^2 / R_{\rm Beam}^2$', fontsize=18)
+    ax.tick_params(axis='both', which='major', labelsize=15)
+
+    fig.tight_layout()
+    fig.show()
+
+    fig.savefig(f'figs/plot_resolution.pdf', dpi=300, facecolor="white")
 
 
