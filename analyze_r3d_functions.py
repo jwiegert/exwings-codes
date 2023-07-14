@@ -680,6 +680,10 @@ def load_images(
         image:str='image.out',
         distance:float=1
     ):
+    """
+    TODO
+    info...
+    """
 
     # Automatically add / to end of path if it's missing
     if path[-1] != '/':
@@ -696,7 +700,7 @@ def load_images(
             if nl == 1:
                 npixels = int(line.split()[0])
             
-            # row 3: pixel size in cm, divide by AUcm for AU
+            # row 3: pixel size is in cm, divide by AUcm for AU
             if nl == 3:
                 pixelsize_au = float(line.split()[0])/AUcm
             
@@ -706,21 +710,27 @@ def load_images(
             #    wavelength = float(line)
 
             # row 6 onward: pixels
+            # image.out's pixels has unit
+            # erg s-1 cm-2 Hz-1 ster-1
             if nl > 5:
                 # Some rows are empty (and they contain space and \n, so strip them lines)
                 if len(line.strip()) > 0:
                     image1d.append(float(line.strip()))
 
     # Extract some useful quantities
-    # pixel size in mas
-    pixelsize_mas = pixelsize_au / distance
+    # pixel size in asec (pixelsize in au and distance in pc gives distance in asec)
+    pixelsize_as = pixelsize_au / distance
     
-    # Size of whole image in AU
+    # Size of whole image in AU and image-axis-scales
     size_au = pixelsize_au * npixels
     axisplot  = [0.5*size_au,-0.5*size_au,-0.5*size_au,0.5*size_au]
 
     # Total flux density of the image in Jy
-    totalflux = sum(image1d) * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
+    # Transoform to Jy/pix and sum all
+    # 1 Jy = 1e23 erg/(s cm2 Hz)
+    # 1 asec = 1/(180/pi * 3600)^2 ster
+    # 1 pixel = pixelsize_as^2  asec^2
+    totalflux = sum(image1d) * 1.e23 * 2.35044305391e-11 * pixelsize_as**2
 
     # Create 2D arrays
     image2d = np.zeros((npixels,npixels))
@@ -728,14 +738,15 @@ def load_images(
     nx,ny = 0,0
 
     for flux in image1d:
-        image2d[nx,ny] = flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2
+        # Convert image1d to 2d and change unit to Jy/asec2
+        image2d[nx,ny] = flux * 1.e23 * 2.35044305391e-11
         
         # Remove zeros before logging (1e-6 is small enough, probably)
         # Smallest number >0 is 1.1, so log10 is just larger than 0
         if image2d[nx,ny] == 0:
             image2dlog[nx,ny] = -6
         else:
-            image2dlog[nx,ny] = np.log10(flux * 1.e23 * 2.35044305391e-11 * pixelsize_mas**2)
+            image2dlog[nx,ny] = np.log10(flux * 1.e23 * 2.35044305391e-11)
 
         # Move nx and ny
         nx = nx + 1

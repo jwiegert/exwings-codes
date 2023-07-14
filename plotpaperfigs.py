@@ -1,6 +1,7 @@
 # Plots various figures for first co5bold-r3d-paper
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.ndimage
 import re
 
 from matplotlib import rc
@@ -60,6 +61,7 @@ plot_images_examples = 'n'
 plot_images_darwinpoint = 'n'
 plot_images_obscured = 'n'
 plot_images_convolved = 'y'
+
 
 # Observables
 compute_luminosities = 'n'
@@ -728,13 +730,14 @@ if plot_images_examples == 'y':
             image=imagefilename,
             distance=distance
         )
-
+        # Change to MJy per asec2
+        image2d = image2d*1e-6
 
         imlin = ax[0][nn].imshow(
             image2d, 
             origin='lower', extent=axisplot, 
             cmap=plt.get_cmap('hot'),
-            vmin=0,vmax=7000
+            vmin=0,vmax=1.5
         )
         ax[0][nn].set_title(f'{phase}', fontsize=15)
         ax[0][nn].tick_params(axis='both', which='major', labelsize=15)
@@ -743,7 +746,7 @@ if plot_images_examples == 'y':
             image2dlog, 
             origin='lower', extent=axisplot, 
             cmap=plt.get_cmap('hot'),
-            vmin=0,vmax=4.8
+            vmin=1,vmax=np.log10(2e6)
         )
         ax[1][nn].set_xlabel('Offset (au)',fontsize=18)
         ax[1][nn].tick_params(axis='both', which='major', labelsize=15)
@@ -757,14 +760,14 @@ if plot_images_examples == 'y':
     divider = make_axes_locatable(ax[0][-1])
     cax = divider.append_axes('right', size='5%', pad=0.05)
     cb0 = plt.colorbar(imlin, cax=cax, orientation = 'vertical',shrink=0.6,pad=0.15)
-    cb0.set_label(label = rf'$F$(Jy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc',fontsize= 15)
+    cb0.set_label(label = rf'$F$(MJy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc',fontsize= 15)
     cb0.ax.tick_params(labelsize=15)
 
     # Set colour bar settings and label
     divider = make_axes_locatable(ax[1][-1])
     cax = divider.append_axes('right', size='5%', pad=0.05)
     cb0 = plt.colorbar(imlog, cax=cax, orientation = 'vertical',shrink=0.6,pad=0.15)
-    cb0.set_label(label = rf'$\log F$(Jy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc',fontsize= 15)
+    cb0.set_label(label = rf'$\log F$(MJy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc',fontsize= 15)
     cb0.ax.tick_params(labelsize=15)
 
     fig.tight_layout()
@@ -815,12 +818,14 @@ if plot_images_darwinpoint == 'y':
             image=imagefilename,
             distance=distance
         )
+        # Change to MJy per asec2
+        image2d = image2d*1e-6
 
         imlin = ax[nn].imshow(
             image2d, 
             origin='lower', extent=axisplot, 
             cmap=plt.get_cmap('hot'),
-            vmin=0,vmax=7e3
+            vmin=0,vmax=0.7
         )
         ax[nn].tick_params(axis='both', which='major', labelsize=15)
     
@@ -847,21 +852,15 @@ if plot_images_darwinpoint == 'y':
     )
     #shrink=0.6,pad=0.15
     cb0.set_label(
-        label = rf'$F$(Jy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc', fontsize=15
+        label = rf'$F$(MJy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc', fontsize=15
     )
     cb0.ax.tick_params(labelsize=15)
 
     fig.tight_layout()
     #fig.show()
 
-
-
-    #Save figure
+    # Save figure
     fig.savefig(f'figs/images_10umdarwinpoint.pdf', dpi=300, facecolor="white")
-
-    # TODO
-    # Fontstorlekar
-    # flytta colourbar till mitten mellan båda?
 
 
 
@@ -882,7 +881,6 @@ if plot_images_obscured == 'y':
         Nplots,1,
         figsize = (5,13)
     )
-    #        dpi = 300, 
 
     # Load image data and save in various lists
     for nn,image in enumerate(imagelist):
@@ -915,9 +913,12 @@ if plot_images_obscured == 'y':
         imagedata = image2d
 
         # Plot image at spot nn, set title and axis labels
-        im0 = ax[nn].imshow(
+        # Use default vertical scale
+        ax[nn].imshow(
             imagedata, 
-            origin='lower', extent=axisplot, 
+            origin='lower', 
+            vmin= 0,
+            extent=axisplot, 
             cmap=plt.get_cmap('hot')
         )
         ax[nn].set(
@@ -943,6 +944,9 @@ if plot_images_convolved == 'y':
     baselineVLTI = 130 # metre
     diameterJWST = 6.5 # metre
 
+    distanceJWST = 40 # parsec
+    distanceVLTI = 100 # parsec
+
 
     imagelist_1um = [
         '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_1um.out',
@@ -956,21 +960,83 @@ if plot_images_convolved == 'y':
     ]
     # 198 at 10um has a spike at default seed
 
-    # från plotten ser vi att det är vettigt att testa gränserna med dessa exempel:
+
+    # First plot JWST-images
     # JWST vid 1um och 40pc
-    # VLTI vid 10um och 90pc
-    # samt
+    #
+    # Full-width at half-maximum: 1.22*lambda/D
+    fwhmJWST_1um = 1.22 * 1e-6 / diameterJWST * radian
+    sigmaJWST_1um = fwhmJWST_1um/2.355
+    
+    # Initialise fig-ax
+    figJWST_1um, axJWST_1um = plt.subplots(
+        1,3, 
+        figsize = (10,4),
+        num='JWST at 1um 40pc'
+    )
+
+    # Loop through and plot each image
+    for nn,image in enumerate(imagelist_1um):
+        distance = distanceJWST
+
+        # Extract path and imagename from image
+        imagestrings = re.split('/', image)
+
+        modelname = imagestrings[2]
+        imagefilename = imagestrings[4]
+        phase = imagestrings[3]
+
+        path = f'{imagestrings[0]}/{imagestrings[1]}/{modelname}/{phase}'
+
+        # Load image
+        image2d,image2dlog,flux,axisplot = a3d.load_images(
+            path=path,
+            image=imagefilename,
+            distance=distance
+        )
+        # TODO
+        # change to MJy/asec2?
+
+        # Extract props and compute distance-dependant scales
+        Npix = np.shape(image2d)[0] # Number of pixels along one side
+        auperpixel = 2*axisplot[0]/Npix  # number of au per pixel
+        asecperpixel = auperpixel/distance * 1000  # number of mas per pixel
+        size_milliasec = asecperpixel * Npix # size of image in mas
+
+        # Image axis-limits
+        axisplotmilliasec = [0.5*size_milliasec,-0.5*size_milliasec,-0.5*size_milliasec,0.5*size_milliasec]
+
+        # Change sigma to order in number of pixels
+        sigmaJWST_1um = sigmaJWST_1um / asecperpixel
+
+        # Convolve with Gaussian filter
+        image2d = scipy.ndimage.gaussian_filter(
+            image2d,
+            sigma = sigmaJWST_1um
+        )
+
+        # Plot image
+        imJWST_1um = axJWST_1um[nn].imshow(
+            image2d, 
+            origin='lower', extent=axisplotmilliasec, 
+            cmap=plt.get_cmap('hot'),
+            vmin=0
+        )
+        axJWST_1um[nn].tick_params(axis='both', which='major', labelsize=15)
+        axJWST_1um[nn].set_xlabel('Offset (mas)',fontsize=18)
+        axJWST_1um[nn].set_ylabel('Offset (mas)',fontsize=18)
+
+        # TODO
+        # imJWST_1um-colourbar!
+
+
+    # TODO
+    # VLTI vid 10um och 100pc
     # VLTI vid 1um och 100pc som jämförelse
 
 
 
-
-
-
-
-
-
-
+    figJWST_1um.show()
 
 
 # -------------------------------------------------------------------------------
