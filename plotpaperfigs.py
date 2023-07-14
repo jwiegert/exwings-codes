@@ -60,7 +60,8 @@ plot_seds_obscured = 'n'
 plot_images_examples = 'n'
 plot_images_darwinpoint = 'n'
 plot_images_obscured = 'n'
-plot_images_convolved = 'y'
+plot_images_convolved_jwst = 'n'
+plot_images_convolved_vlti = 'y'
 
 
 # Observables
@@ -937,15 +938,12 @@ if plot_images_obscured == 'y':
     fig.savefig(f'figs/images_obscuredexamples.pdf', dpi=300, facecolor="white")
 
 
-if plot_images_convolved == 'y':
+if plot_images_convolved_jwst == 'y':
     # Plot figure with convolved images, ie as observed
-    # will make a few figures?
+    # This one with 3 images with JWST, all phases, one wavelength
 
-    baselineVLTI = 130 # metre
     diameterJWST = 6.5 # metre
-
     distanceJWST = 40 # parsec
-    distanceVLTI = 100 # parsec
 
 
     imagelist_1um = [
@@ -953,15 +951,8 @@ if plot_images_convolved == 'y':
         '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_1um.out',
         '../r3dresults/st28gm06n052_staranddust_1/198/image_i000_phi000_1um.out'
     ]
-    imagelist_10um = [
-        '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_10um.out',
-        '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_10um.out',
-        '../r3dresults/st28gm06n052_staranddust_2/198/image_i000_phi000_10um.out',
-    ]
-    # 198 at 10um has a spike at default seed
 
 
-    # First plot JWST-images
     # JWST vid 1um och 40pc
     #
     # Full-width at half-maximum: 1.22*lambda/D
@@ -971,7 +962,7 @@ if plot_images_convolved == 'y':
     # Initialise fig-ax
     figJWST_1um, axJWST_1um = plt.subplots(
         1,3, 
-        figsize = (10,4),
+        figsize = (12,5),
         num='JWST at 1um 40pc'
     )
 
@@ -994,20 +985,20 @@ if plot_images_convolved == 'y':
             image=imagefilename,
             distance=distance
         )
-        # TODO
-        # change to MJy/asec2?
+        # Change to Jy/mas2
+        image2d = image2d * 1e-6
 
         # Extract props and compute distance-dependant scales
         Npix = np.shape(image2d)[0] # Number of pixels along one side
         auperpixel = 2*axisplot[0]/Npix  # number of au per pixel
-        asecperpixel = auperpixel/distance * 1000  # number of mas per pixel
-        size_milliasec = asecperpixel * Npix # size of image in mas
+        masperpixel = auperpixel/distance * 1000  # number of mas per pixel
+        size_milliasec = masperpixel * Npix # size of image in mas
 
         # Image axis-limits
         axisplotmilliasec = [0.5*size_milliasec,-0.5*size_milliasec,-0.5*size_milliasec,0.5*size_milliasec]
 
         # Change sigma to order in number of pixels
-        sigmaJWST_1um = sigmaJWST_1um / asecperpixel
+        sigmaJWST_1um = sigmaJWST_1um / masperpixel
 
         # Convolve with Gaussian filter
         image2d = scipy.ndimage.gaussian_filter(
@@ -1020,23 +1011,253 @@ if plot_images_convolved == 'y':
             image2d, 
             origin='lower', extent=axisplotmilliasec, 
             cmap=plt.get_cmap('hot'),
-            vmin=0
+            vmin=0, vmax=1.5
         )
         axJWST_1um[nn].tick_params(axis='both', which='major', labelsize=15)
         axJWST_1um[nn].set_xlabel('Offset (mas)',fontsize=18)
-        axJWST_1um[nn].set_ylabel('Offset (mas)',fontsize=18)
 
-        # TODO
-        # imJWST_1um-colourbar!
+        # FWHM-cirle to show beam
+        axJWST_1um[nn].add_patch(
+            plt.Circle((250,-250), 0.5*fwhmJWST_1um, color='cyan', fill=False)
+        )
+        # Star-radius-circle to show size of stellar disc
+        axJWST_1um[nn].add_patch(
+            plt.Circle((0,0), 1.65/distance*1000, color='lime', fill=False, linestyle=':')
+        )
 
+    # Set ylabel for first plot only
+    axJWST_1um[0].set_ylabel('Offset (mas)',fontsize=18)
 
-    # TODO
-    # VLTI vid 10um och 100pc
-    # VLTI vid 1um och 100pc som jämförelse
+    # Tight layout before colourbar
+    figJWST_1um.tight_layout()
 
+    # Set colour bar settings and label
+    cax = figJWST_1um.add_axes([0.33, 0.95, 0.4, 0.03])
+    cb0 = plt.colorbar(
+        imJWST_1um, 
+        cax=cax, 
+        orientation = 'horizontal', 
+    )
+    cb0.set_label(
+        label = rf'$F$(Jy/mas$^2$) at 1\,$\mu$m \& {distanceJWST}\,pc', fontsize=15
+    )
+    cb0.ax.tick_params(labelsize=15)
 
 
     figJWST_1um.show()
+    figJWST_1um.savefig(f'figs/images_JWST_1um40pc.pdf', dpi=300, facecolor="white")
+
+
+
+if plot_images_convolved_vlti == 'y':
+    #
+    # Plot figure with convolved images, ie as observed
+    # This one with 6 images with VLTI, all phases, two wavelength
+    # VLTI at 10um and 100pc
+    # VLTI at  1um and 100pc
+
+    baselineVLTI = 130 # metre
+    distanceVLTI = 90 # parsec
+
+    imagelist_1um = [
+        '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_1um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_1um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/198/image_i000_phi000_1um.out'
+    ]
+    imagelist_10um = [
+        '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_10um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_10um.out',
+        '../r3dresults/st28gm06n052_staranddust_2/198/image_i000_phi000_10um.out',
+    ]
+    # 198 at 10um has a spike at default seed
+
+    
+    # Full-width at half-maximum: 1.22*lambda/D
+    fwhmVLTI_1um = 1.22 * 1e-6 / baselineVLTI * radian
+    fwhmVLTI_10um = 1.22 * 1e-5 / baselineVLTI * radian
+    sigmaVLTI_1um = fwhmVLTI_1um/2.355
+    sigmaVLTI_10um = fwhmVLTI_10um/2.355
+
+
+
+    # Initialise fig-ax
+    figVLTI, axVLTI = plt.subplots(
+        2,3, 
+        figsize = (12,7),
+        num='VLTI at 90pc'
+    )
+    #         figsize = (12,7)   standard annars
+
+    distance = distanceVLTI
+    # Loop through and plot each 1um image
+    for nn,image in enumerate(imagelist_1um):
+
+        # Extract path and imagename from image
+        imagestrings = re.split('/', image)
+
+        modelname = imagestrings[2]
+        imagefilename = imagestrings[4]
+        phase = imagestrings[3]
+
+        path = f'{imagestrings[0]}/{imagestrings[1]}/{modelname}/{phase}'
+
+        # Load image
+        image2d,image2dlog,flux,axisplot = a3d.load_images(
+            path=path,
+            image=imagefilename,
+            distance=distance
+        )
+        # Change to Jy/mas2
+        image2d = image2d * 1e-6
+
+        # Extract props and compute distance-dependant scales
+        Npix = np.shape(image2d)[0] # Number of pixels along one side
+        auperpixel = 2*axisplot[0]/Npix  # number of au per pixel
+        masperpixel = auperpixel/distance * 1000  # number of mas per pixel
+        size_milliasec = masperpixel * Npix # size of image in mas
+
+        # Image axis-limits
+        axisplotmilliasec = [0.5*size_milliasec,-0.5*size_milliasec,-0.5*size_milliasec,0.5*size_milliasec]
+
+        # Change sigma to order in number of pixels
+        sigmaVLTI_1um = sigmaVLTI_1um / masperpixel
+
+        # Convolve with Gaussian filter
+        image2d = scipy.ndimage.gaussian_filter(
+            image2d,
+            sigma = sigmaVLTI_1um
+        )
+
+        # Plot image
+        imVLTI_1um = axVLTI[0][nn].imshow(
+            image2d, 
+            origin='lower', extent=axisplotmilliasec, 
+            cmap=plt.get_cmap('hot'),
+            vmin=0, vmax=1.5
+        )
+        axVLTI[0][nn].tick_params(axis='both', which='major', labelsize=15)
+
+        # FWHM-cirle to show beam
+        axVLTI[0][nn].add_patch(
+            plt.Circle((100,-100), radius=0.5*fwhmVLTI_1um, color='cyan', fill=False)
+        )
+        # Star-radius-circle to show size of stellar disc
+        axVLTI[0][nn].add_patch(
+            plt.Circle((0,0), radius=1.65/distance*1000, color='lime', fill=False, linestyle=':')
+        )
+
+
+
+    # Loop through and plot each 10um image
+    for nn,image in enumerate(imagelist_10um):
+
+        # Extract path and imagename from image
+        imagestrings = re.split('/', image)
+
+        modelname = imagestrings[2]
+        imagefilename = imagestrings[4]
+        phase = imagestrings[3]
+
+        path = f'{imagestrings[0]}/{imagestrings[1]}/{modelname}/{phase}'
+
+        # Load image
+        image2d,image2dlog,flux,axisplot = a3d.load_images(
+            path=path,
+            image=imagefilename,
+            distance=distance
+        )
+        # Change to Jy/mas2
+        image2d = image2d * 1e-6
+
+        # Extract props and compute distance-dependant scales
+        Npix = np.shape(image2d)[0] # Number of pixels along one side
+        auperpixel = 2*axisplot[0]/Npix  # number of au per pixel
+        masperpixel = auperpixel/distance * 1000  # number of mas per pixel
+        size_milliasec = masperpixel * Npix # size of image in mas
+
+        # Image axis-limits
+        axisplotmilliasec = [0.5*size_milliasec,-0.5*size_milliasec,-0.5*size_milliasec,0.5*size_milliasec]
+
+        # Change sigma to order in number of pixels
+        sigmaVLTI_10um = sigmaVLTI_10um / masperpixel
+
+        # Convolve with Gaussian filter
+        image2d = scipy.ndimage.gaussian_filter(
+            image2d,
+            sigma = sigmaVLTI_10um
+        )
+
+        # Plot image
+        imVLTI_10um = axVLTI[1][nn].imshow(
+            image2d, 
+            origin='lower', extent=axisplotmilliasec, 
+            cmap=plt.get_cmap('hot'),
+            vmin=0, vmax=0.55
+        )
+        axVLTI[1][nn].tick_params(axis='both', which='major', labelsize=15)
+
+        # FWHM-cirle to show beam
+        axVLTI[1][nn].add_patch(
+            plt.Circle((100,-100), radius=0.5*fwhmVLTI_10um, color='cyan', fill=False)
+        )
+        # Star-radius-circle to show size of stellar disc
+        axVLTI[1][nn].add_patch(
+            plt.Circle((0,0), radius=1.65/distance*1000, color='lime', fill=False, linestyle=':')
+        )
+        # Xlabel for bottom plots
+        axVLTI[1][nn].set_xlabel('Offset (mas)',fontsize=18)
+
+
+    # Set ylabel for first plots only
+    axVLTI[0][0].set_ylabel('Offset (mas)',fontsize=18)
+    axVLTI[1][0].set_ylabel('Offset (mas)',fontsize=18)
+    
+
+    # Set colour bar settings and label
+    # for 1um
+    divider = make_axes_locatable(axVLTI[0][-1])
+    cax = divider.append_axes(
+        'right', 
+        size='5%', 
+        pad=0.05
+    )
+    cb0 = plt.colorbar(
+        imVLTI_1um, 
+        cax=cax, 
+        orientation = 'vertical'
+    )
+    cb0.set_label(
+        label = rf'$F$(Jy/mas$^2$) at 1\,$\mu$m \& {distanceVLTI} pc',fontsize= 15
+    )
+    cb0.ax.tick_params(labelsize=15)
+
+    # For 10um
+    divider = make_axes_locatable(axVLTI[1][-1])
+    cax = divider.append_axes(
+        'right', 
+        size='5%', 
+        pad=0.05
+    )
+    cb0 = plt.colorbar(
+        imVLTI_10um, 
+        cax=cax, 
+        orientation = 'vertical'
+    )
+    cb0.set_label(
+        label = rf'$F$(Jy/mas$^2$) at 10\,$\mu$m \& {distanceVLTI} pc',fontsize= 15
+    )
+    cb0.ax.tick_params(labelsize=15)
+
+    figVLTI.tight_layout()
+    figVLTI.show()
+
+    #Save figure
+    figVLTI.savefig(f'figs/images_VLTI_90pc.pdf', dpi=300, facecolor="white")
+
+
+
+
+
 
 
 # -------------------------------------------------------------------------------

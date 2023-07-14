@@ -728,7 +728,7 @@ def load_images(
     # Total flux density of the image in Jy
     # Transoform to Jy/pix and sum all
     # 1 Jy = 1e23 erg/(s cm2 Hz)
-    # 1 asec = 1/(180/pi * 3600)^2 ster
+    # 1 asec = 1/(180/pi * 3600)^2 ster = 2.35044305391e-11 ster
     # 1 pixel = pixelsize_as^2  asec^2
     totalflux = sum(image1d) * 1.e23 * 2.35044305391e-11 * pixelsize_as**2
 
