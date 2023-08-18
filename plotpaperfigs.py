@@ -27,7 +27,7 @@ cubesize = 222757675648155.62/AUcm # Yes, hardcoded to large grid, change if nee
                                    # other grids, ie, from amr_grid, first coordinate 
                                    # is courner coordinate of first base cell
 radian = 206264800 # milliasec
-baselineVLTI = 130 # metres
+baselineVLTI = 130.23 # metres
 diameterJWST = 6.5 # metres
 
 
@@ -62,6 +62,7 @@ plot_images_darwinpoint = 'n'
 plot_images_obscured = 'n'
 plot_images_convolved_jwst = 'n'
 plot_images_convolved_vlti = 'y'
+
 
 
 # Observables
@@ -689,13 +690,13 @@ if plot_seds_obscured == 'y':
 # Plot various images
 
 if plot_images_examples == 'y':
-    # Plot 3 images at one walanvegth, one per phase, lin and log
+    # Plot 3 images at one walanvength, one per phase, lin and log
 
     # Chose wavelength here
-    wavelengthum = 10
+    wavelengthum = 1
 
-    distance=1
-    imagelist=[
+    distance = 1
+    imagelist = [
         f'../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_{wavelengthum}um.out',
         f'../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_{wavelengthum}um.out',
         f'../r3dresults/st28gm06n052_staranddust_2/198/image_i000_phi000_{wavelengthum}um.out'
@@ -707,7 +708,7 @@ if plot_images_examples == 'y':
     # Set fig-and-axis settings for subplots
     fig, ax = plt.subplots(
         2,Nplots,
-        figsize = (12,7)
+        figsize = (12,7.3),
     )
 
     # Load image data and save in various lists
@@ -734,11 +735,16 @@ if plot_images_examples == 'y':
         # Change to MJy per asec2
         image2d = image2d*1e-6
 
+        # Limits per wavelength suggestions:
+        #  1um: 0 -> 3   (lin), -10 -> 6 (log)
+        # 10um: 0 -> 1.5 (lin),  1  -> 6 (log)
+
+
         imlin = ax[0][nn].imshow(
             image2d, 
             origin='lower', extent=axisplot, 
             cmap=plt.get_cmap('hot'),
-            vmin=0,vmax=1.5
+            vmin=0,vmax=3
         )
         ax[0][nn].set_title(f'{phase}', fontsize=15)
         ax[0][nn].tick_params(axis='both', which='major', labelsize=15)
@@ -747,7 +753,7 @@ if plot_images_examples == 'y':
             image2dlog, 
             origin='lower', extent=axisplot, 
             cmap=plt.get_cmap('hot'),
-            vmin=1,vmax=np.log10(2e6)
+            vmin=-10,vmax=6
         )
         ax[1][nn].set_xlabel('Offset (au)',fontsize=18)
         ax[1][nn].tick_params(axis='both', which='major', labelsize=15)
@@ -755,32 +761,64 @@ if plot_images_examples == 'y':
     ax[0][0].set_ylabel('Offset (au)',fontsize=18)
     ax[1][0].set_ylabel('Offset (au)',fontsize=18)
 
+    # Remove "inbetween" axis labels
+    ax[0][1].axes.get_yaxis().set_visible(False)
+    ax[0][2].axes.get_yaxis().set_visible(False)
+
+    ax[0][0].axes.get_xaxis().set_visible(False)    
+    ax[0][1].axes.get_xaxis().set_visible(False)
+    ax[0][2].axes.get_xaxis().set_visible(False)
+
+    ax[1][1].axes.get_yaxis().set_visible(False)
+    ax[1][2].axes.get_yaxis().set_visible(False)
 
 
-    # Set colour bar settings and label
+
+
+    # Set colour bar settings and label, first row (linear)
     divider = make_axes_locatable(ax[0][-1])
-    cax = divider.append_axes('right', size='5%', pad=0.05)
-    cb0 = plt.colorbar(imlin, cax=cax, orientation = 'vertical',shrink=0.6,pad=0.15)
-    cb0.set_label(label = rf'$F$(MJy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc',fontsize= 15)
+    cax = divider.append_axes(
+        'right', 
+        size='5%', 
+        pad=0.05
+    )
+    cb0 = plt.colorbar(
+        imlin, 
+        cax=cax, 
+        orientation = 'vertical',
+    )
+    cb0.set_label(
+        label = rf'$F$(MJy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc',fontsize= 15
+    )
     cb0.ax.tick_params(labelsize=15)
 
-    # Set colour bar settings and label
+    # Set colour bar settings and label, second row (logarithmic)
     divider = make_axes_locatable(ax[1][-1])
-    cax = divider.append_axes('right', size='5%', pad=0.05)
-    cb0 = plt.colorbar(imlog, cax=cax, orientation = 'vertical',shrink=0.6,pad=0.15)
-    cb0.set_label(label = rf'$\log F$(MJy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc',fontsize= 15)
+    cax = divider.append_axes(
+        'right', 
+        size='5%', 
+        pad=0.05
+    )
+    cb0 = plt.colorbar(
+        imlog, 
+        cax=cax, 
+        orientation = 'vertical'
+    )
+    cb0.set_label(
+        label = rf'$\log F$(Jy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc',fontsize= 15
+    )
     cb0.ax.tick_params(labelsize=15)
 
     fig.tight_layout()
     #fig.show()
 
     #Save figure
-    fig.savefig(f'figs/images_10umexamples.pdf', dpi=300, facecolor="white")
+    fig.savefig(f'figs/images_{wavelengthum}umexamples.pdf', dpi=300, facecolor="white")
 
 
 
 if plot_images_darwinpoint == 'y':
-    # Plot Darwin-and-pointsource example images at 10um
+    # Plot Darwin-and-pointsource example images at 10um, of 190-phase
 
     imagelist=[
         '../r3dresults/st28gm06n052_darwinsource/190/image_i000_phi000_10um.out',
@@ -942,7 +980,6 @@ if plot_images_convolved_jwst == 'y':
     # Plot figure with convolved images, ie as observed
     # This one with 3 images with JWST, all phases, one wavelength
 
-    diameterJWST = 6.5 # metre
     distanceJWST = 40 # parsec
 
 
@@ -962,7 +999,7 @@ if plot_images_convolved_jwst == 'y':
     # Initialise fig-ax
     figJWST_1um, axJWST_1um = plt.subplots(
         1,3, 
-        figsize = (12,5),
+        figsize = (12,5.8),
         num='JWST at 1um 40pc'
     )
 
@@ -1024,9 +1061,16 @@ if plot_images_convolved_jwst == 'y':
         axJWST_1um[nn].add_patch(
             plt.Circle((0,0), 1.65/distance*1000, color='lime', fill=False, linestyle=':')
         )
+        # Phase in titles
+        axJWST_1um[nn].set_title(f'{phase}', fontsize=15)
+
 
     # Set ylabel for first plot only
     axJWST_1um[0].set_ylabel('Offset (mas)',fontsize=18)
+
+    # Remove label texts for yaxis on the rest
+    axJWST_1um[1].axes.get_yaxis().set_visible(False)
+    axJWST_1um[2].axes.get_yaxis().set_visible(False)
 
     # Tight layout before colourbar
     figJWST_1um.tight_layout()
@@ -1043,8 +1087,8 @@ if plot_images_convolved_jwst == 'y':
     )
     cb0.ax.tick_params(labelsize=15)
 
-
-    figJWST_1um.show()
+    # Show and save figure
+    #figJWST_1um.show()
     figJWST_1um.savefig(f'figs/images_JWST_1um40pc.pdf', dpi=300, facecolor="white")
 
 
@@ -1055,15 +1099,17 @@ if plot_images_convolved_vlti == 'y':
     # This one with 6 images with VLTI, all phases, two wavelength
     # VLTI at 10um and 100pc
     # VLTI at  1um and 100pc
+    #
+    distanceVLTI = 200 # parsec
+    shortwavelength = 1.625 # um
 
-    baselineVLTI = 130 # metre
-    distanceVLTI = 90 # parsec
 
     imagelist_1um = [
-        '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_1um.out',
-        '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_1um.out',
-        '../r3dresults/st28gm06n052_staranddust_1/198/image_i000_phi000_1um.out'
+        f'../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_{shortwavelength}um.out',
+        f'../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_{shortwavelength}um.out',
+        f'../r3dresults/st28gm06n052_staranddust_1/198/image_i000_phi000_{shortwavelength}um.out'
     ]
+
     imagelist_10um = [
         '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_10um.out',
         '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_10um.out',
@@ -1071,10 +1117,10 @@ if plot_images_convolved_vlti == 'y':
     ]
     # 198 at 10um has a spike at default seed
 
-    
-    # Full-width at half-maximum: 1.22*lambda/D
-    fwhmVLTI_1um = 1.22 * 1e-6 / baselineVLTI * radian
-    fwhmVLTI_10um = 1.22 * 1e-5 / baselineVLTI * radian
+
+    # Full-width at half-maximum: lambda/(2*baseline)
+    fwhmVLTI_1um = shortwavelength*1e-6 / (2*baselineVLTI) * radian
+    fwhmVLTI_10um = 1e-5 / (2*baselineVLTI) * radian
     sigmaVLTI_1um = fwhmVLTI_1um/2.355
     sigmaVLTI_10um = fwhmVLTI_10um/2.355
 
@@ -1083,7 +1129,7 @@ if plot_images_convolved_vlti == 'y':
     # Initialise fig-ax
     figVLTI, axVLTI = plt.subplots(
         2,3, 
-        figsize = (12,7),
+        figsize = (12,7.3),
         num='VLTI at 90pc'
     )
     #         figsize = (12,7)   standard annars
@@ -1133,20 +1179,28 @@ if plot_images_convolved_vlti == 'y':
             image2d, 
             origin='lower', extent=axisplotmilliasec, 
             cmap=plt.get_cmap('hot'),
-            vmin=0, vmax=1.5
+            vmin=0, vmax=2.6
         )
         axVLTI[0][nn].tick_params(axis='both', which='major', labelsize=15)
 
         # FWHM-cirle to show beam
         axVLTI[0][nn].add_patch(
-            plt.Circle((100,-100), radius=0.5*fwhmVLTI_1um, color='cyan', fill=False)
+            plt.Circle(
+                (0.75*axisplotmilliasec[0],0.75*axisplotmilliasec[1]), 
+                radius=0.5*fwhmVLTI_1um, color='cyan', fill=False)
         )
         # Star-radius-circle to show size of stellar disc
         axVLTI[0][nn].add_patch(
-            plt.Circle((0,0), radius=1.65/distance*1000, color='lime', fill=False, linestyle=':')
+            plt.Circle((0,0), radius=1.65/distance*1000, color='lime', fill=False, linestyle=':', linewidth=2)
+        )
+        axVLTI[0][nn].add_patch(
+            plt.Circle((0,0), radius=1.65/distance*1000, color='b', fill=False, linestyle=':', linewidth=1)
         )
 
+        axVLTI[0][nn].set_title(f'{phase}', fontsize=15)
 
+    # For reference, print FWHM:
+    print(f'VLTI {shortwavelength}um FWHM: {fwhmVLTI_1um}')
 
     # Loop through and plot each 10um image
     for nn,image in enumerate(imagelist_10um):
@@ -1192,26 +1246,44 @@ if plot_images_convolved_vlti == 'y':
             image2d, 
             origin='lower', extent=axisplotmilliasec, 
             cmap=plt.get_cmap('hot'),
-            vmin=0, vmax=0.55
+            vmin=0, vmax=0.4
         )
         axVLTI[1][nn].tick_params(axis='both', which='major', labelsize=15)
 
         # FWHM-cirle to show beam
         axVLTI[1][nn].add_patch(
-            plt.Circle((100,-100), radius=0.5*fwhmVLTI_10um, color='cyan', fill=False)
+            plt.Circle(
+                (0.75*axisplotmilliasec[0],0.75*axisplotmilliasec[1]), 
+                radius=0.5*fwhmVLTI_10um, color='cyan', fill=False)
         )
         # Star-radius-circle to show size of stellar disc
         axVLTI[1][nn].add_patch(
-            plt.Circle((0,0), radius=1.65/distance*1000, color='lime', fill=False, linestyle=':')
+            plt.Circle((0,0), radius=1.65/distance*1000, color='lime', fill=False, linestyle=':', linewidth=2)
+        )
+        axVLTI[1][nn].add_patch(
+            plt.Circle((0,0), radius=1.65/distance*1000, color='b', fill=False, linestyle=':', linewidth=1)
         )
         # Xlabel for bottom plots
         axVLTI[1][nn].set_xlabel('Offset (mas)',fontsize=18)
 
+    # For reference, print FWHM:
+    print(f'VLTI 10um FWHM: {fwhmVLTI_10um}')
 
     # Set ylabel for first plots only
     axVLTI[0][0].set_ylabel('Offset (mas)',fontsize=18)
     axVLTI[1][0].set_ylabel('Offset (mas)',fontsize=18)
-    
+
+    # Remove "inbetween" axis labels
+    axVLTI[0][1].axes.get_yaxis().set_visible(False)
+    axVLTI[0][2].axes.get_yaxis().set_visible(False)
+
+    axVLTI[0][0].axes.get_xaxis().set_visible(False)    
+    axVLTI[0][1].axes.get_xaxis().set_visible(False)
+    axVLTI[0][2].axes.get_xaxis().set_visible(False)
+
+    axVLTI[1][1].axes.get_yaxis().set_visible(False)
+    axVLTI[1][2].axes.get_yaxis().set_visible(False)
+
 
     # Set colour bar settings and label
     # for 1um
@@ -1227,7 +1299,7 @@ if plot_images_convolved_vlti == 'y':
         orientation = 'vertical'
     )
     cb0.set_label(
-        label = rf'$F$(Jy/mas$^2$) at 1\,$\mu$m \& {distanceVLTI} pc',fontsize= 15
+        label = rf'$F$(Jy/mas$^2$) at 1.6\,$\mu$m \& {distanceVLTI} pc',fontsize= 15
     )
     cb0.ax.tick_params(labelsize=15)
 
@@ -1249,15 +1321,10 @@ if plot_images_convolved_vlti == 'y':
     cb0.ax.tick_params(labelsize=15)
 
     figVLTI.tight_layout()
-    figVLTI.show()
+    #figVLTI.show()
 
     #Save figure
-    figVLTI.savefig(f'figs/images_VLTI_90pc.pdf', dpi=300, facecolor="white")
-
-
-
-
-
+    figVLTI.savefig(f'figs/images_VLTI_{distanceVLTI}pc.pdf', dpi=300, facecolor="white")
 
 
 # -------------------------------------------------------------------------------
@@ -1321,20 +1388,20 @@ if plot_resolutiondistance == 'y':
     # one resolive surface features?
     # papers to reference for this?
 
-    # Size of telescopes
-    baselineVLTI = 130 # metres
-    diameterJWST = 6.5 # metres
 
+    # TODO
+    # REDO THIS PLOT
 
     # Full-width at half-maximum in mas:  1.22*lambda/D 
-    fwhmVLTI_10um = 1.22 * 1e-5 / baselineVLTI * radian
+    # or for VLTI, lambda/2baseline
+    fwhmVLTI_10um = 1e-5 / (2*baselineVLTI) * radian
     fwhmJWST_10um =  1.22 * 1e-5 / diameterJWST * radian
-    fwhmVLTI_1um = 1.22 * 1e-6 / baselineVLTI * radian
+    fwhmVLTI_1um = 1.625*1e-6 / (2*baselineVLTI) * radian
     fwhmJWST_1um =  1.22 * 1e-6 / diameterJWST * radian
 
     print('FWHM')
     print(f'{fwhmVLTI_10um} mas, VLTI at 10um')
-    print(f'{fwhmVLTI_1um} mas, VLTI at 1um')
+    print(f'{fwhmVLTI_1um} mas, VLTI at 1.625um')
     print(f'{fwhmJWST_10um} mas, JWST at 10 um')
     print(f'{fwhmJWST_1um} mas, JWST at 1 um')
     print('')
@@ -1391,9 +1458,9 @@ if plot_resolutiondistance == 'y':
     )
     ax.plot(distance,area_ratio_VLTI_10um,'c',linewidth = 2)
     ax.fill_between(
-        distance[indeces_detected_VLTI_10um],
-        detect_limit[indeces_detected_VLTI_10um],
-        area_ratio_VLTI_10um[indeces_detected_VLTI_10um],
+        distance[indeces_detected_VLTI_10um[300:]],
+        detect_limit[indeces_detected_VLTI_10um[300:]],
+        area_ratio_VLTI_10um[indeces_detected_VLTI_10um[300:]],
         color='c',
         alpha=1
     )
