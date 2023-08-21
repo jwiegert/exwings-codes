@@ -61,13 +61,13 @@ plot_images_examples = 'n'
 plot_images_darwinpoint = 'n'
 plot_images_obscured = 'n'
 plot_images_convolved_jwst = 'n'
-plot_images_convolved_vlti = 'y'
+plot_images_convolved_vlti = 'n'
 
 
 
 # Observables
 compute_luminosities = 'n'
-plot_resolutiondistance = 'n'
+plot_resolutiondistance = 'y'
 
 
 # ----------------------------------------------------------------
@@ -1035,12 +1035,12 @@ if plot_images_convolved_jwst == 'y':
         axisplotmilliasec = [0.5*size_milliasec,-0.5*size_milliasec,-0.5*size_milliasec,0.5*size_milliasec]
 
         # Change sigma to order in number of pixels
-        sigmaJWST_1um = sigmaJWST_1um / masperpixel
+        sigmaJWST_1um_pixel = sigmaJWST_1um / masperpixel
 
         # Convolve with Gaussian filter
         image2d = scipy.ndimage.gaussian_filter(
             image2d,
-            sigma = sigmaJWST_1um
+            sigma = sigmaJWST_1um_pixel
         )
 
         # Plot image
@@ -1166,12 +1166,12 @@ if plot_images_convolved_vlti == 'y':
         axisplotmilliasec = [0.5*size_milliasec,-0.5*size_milliasec,-0.5*size_milliasec,0.5*size_milliasec]
 
         # Change sigma to order in number of pixels
-        sigmaVLTI_1um = sigmaVLTI_1um / masperpixel
+        sigmaVLTI_1um_pixels = sigmaVLTI_1um / masperpixel
 
         # Convolve with Gaussian filter
         image2d = scipy.ndimage.gaussian_filter(
             image2d,
-            sigma = sigmaVLTI_1um
+            sigma = sigmaVLTI_1um_pixels
         )
 
         # Plot image
@@ -1179,7 +1179,7 @@ if plot_images_convolved_vlti == 'y':
             image2d, 
             origin='lower', extent=axisplotmilliasec, 
             cmap=plt.get_cmap('hot'),
-            vmin=0, vmax=2.6
+            vmin=0, vmax=3
         )
         axVLTI[0][nn].tick_params(axis='both', which='major', labelsize=15)
 
@@ -1233,12 +1233,12 @@ if plot_images_convolved_vlti == 'y':
         axisplotmilliasec = [0.5*size_milliasec,-0.5*size_milliasec,-0.5*size_milliasec,0.5*size_milliasec]
 
         # Change sigma to order in number of pixels
-        sigmaVLTI_10um = sigmaVLTI_10um / masperpixel
+        sigmaVLTI_10um_pixels = sigmaVLTI_10um / masperpixel
 
         # Convolve with Gaussian filter
         image2d = scipy.ndimage.gaussian_filter(
             image2d,
-            sigma = sigmaVLTI_10um
+            sigma = sigmaVLTI_10um_pixels
         )
 
         # Plot image
@@ -1246,7 +1246,7 @@ if plot_images_convolved_vlti == 'y':
             image2d, 
             origin='lower', extent=axisplotmilliasec, 
             cmap=plt.get_cmap('hot'),
-            vmin=0, vmax=0.4
+            vmin=0, vmax=0.8
         )
         axVLTI[1][nn].tick_params(axis='both', which='major', labelsize=15)
 
@@ -1409,13 +1409,13 @@ if plot_resolutiondistance == 'y':
 
     # Beam area in mas2
     areaVLTI_10um = np.pi * (0.5*fwhmVLTI_10um)**2
-    areaJWST_10um = np.pi * (0.5*fwhmJWST_10um)**2
     areaVLTI_1um = np.pi * (0.5*fwhmVLTI_1um)**2
+    areaJWST_10um = np.pi * (0.5*fwhmJWST_10um)**2
     areaJWST_1um = np.pi * (0.5*fwhmJWST_1um)**2
 
     print('Beam area (fwhm)')
     print(f'{areaVLTI_10um} mas2, VLTI at 10um')
-    print(f'{areaVLTI_1um} mas2, VLTI at 1um')
+    print(f'{areaVLTI_1um} mas2, VLTI at 1.625um')
     print(f'{areaJWST_10um} mas2, JWST at 10um')
     print(f'{areaJWST_1um} mas2, JWST at 1um')
     print('')
@@ -1438,10 +1438,10 @@ if plot_resolutiondistance == 'y':
     indeces_detected_JWST_10um = np.where(area_ratio_JWST_10um >= 4)[0]
     indeces_detected_JWST_1um = np.where(area_ratio_JWST_1um >= 4)[0]
 
-    print(f'VLTI at  1um: <{distance[indeces_detected_VLTI_1um[-1]]} pc')
-    print(f'VLTI at 10um: <{distance[indeces_detected_VLTI_10um[-1]]} pc')
-    print(f'JWST at  1um: <{distance[indeces_detected_JWST_1um[-1]]} pc')
-    print(f'JWST at 10um: <{distance[indeces_detected_JWST_10um[-1]]} pc')
+    print(f'VLTI at  1.625um: <{distance[indeces_detected_VLTI_1um[-1]]} pc')
+    print(f'VLTI at 10    um: <{distance[indeces_detected_VLTI_10um[-1]]} pc')
+    print(f'JWST at  1    um: <{distance[indeces_detected_JWST_1um[-1]]} pc')
+    print(f'JWST at 10    um: <{distance[indeces_detected_JWST_10um[-1]]} pc')
 
 
     # Plot figure
@@ -1490,7 +1490,7 @@ if plot_resolutiondistance == 'y':
     )
     ax.text(
         x=40,y=7.5,
-        s=r'VLTI: 10 \&\ 1$\mu$m',
+        s=r'VLTI: 10 \&\ 1.625$\mu$m',
         backgroundcolor='white',
         fontsize=15
     )
