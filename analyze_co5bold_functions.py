@@ -884,7 +884,8 @@ def plot_grainsizeradius(
 
 def plot_grainsizemass_histogram(
         model:str='st28gm06n052',
-        phases:list=[186,190,198]
+        phases:list=[186,190,198],
+        phaselabels:list=[]
     ):
     """
     Plots histogram of total mass (gram) of each grain size bin (um)
@@ -965,8 +966,12 @@ def plot_grainsizemass_histogram(
 
         print(f'Finished figure object with phase {phase}')
     
-    # Legend instead of title
-    ax.legend(phases)    
+    # Legend with phase numbers (depending on if input is done correctly)
+    if len(phaselabels) < len(phases):
+        ax.legend(phases)
+        print('    No phaselabels input, uses phases for legend.')
+    else:    
+        ax.legend(phaselabels)
     # Tight layout for nicer image file
     fig.tight_layout()
 

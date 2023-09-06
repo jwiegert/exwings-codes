@@ -27,10 +27,16 @@ cubesize = 222757675648155.62/AUcm # Yes, hardcoded to large grid, change if nee
                                    # other grids, ie, from amr_grid, first coordinate 
                                    # is courner coordinate of first base cell
 radian = 206264800 # milliasec
-baselineVLTI = 130.23 # metres
+#baselineVLTI = 130.23 # metres
+baselineVLTI = 201.92 # metres
 diameterJWST = 6.5 # metres
 
-
+# Dust model snapshots labels
+phasetimes = [
+    '29.31 yrs',
+    '29.95 yrs',
+    '31.21 yrs'
+]
 
 
 # Plot choices
@@ -61,13 +67,13 @@ plot_images_examples = 'n'
 plot_images_darwinpoint = 'n'
 plot_images_obscured = 'n'
 plot_images_convolved_jwst = 'n'
-plot_images_convolved_vlti = 'n'
+plot_images_convolved_vlti = 'y'
 
 
 
 # Observables
 compute_luminosities = 'n'
-plot_resolutiondistance = 'y'
+plot_resolutiondistance = 'n'
 
 
 # ----------------------------------------------------------------
@@ -132,7 +138,8 @@ if plot_grainsizehist_one == 'y':
 
     fig,ax = a5d.plot_grainsizemass_histogram(
         model='st28gm06n052_staranddust_1',
-        phases=[186,190,198]
+        phases=[186,190,198],
+        phaselabels=phasetimes
     )
 
     ax.set_ylabel(r'Dust mass (g)',fontsize=18)    
@@ -157,17 +164,12 @@ if plot_grainsizeradius == 'y':
 
 
     #size_path='../r3dresults/st28gm06n052_staranddust_1/grid_cellsizes.csv',
-
-
-    ax[0].set_ylabel(fr'Grain sizes ($\mu$m), phase: {phases[0]}',fontsize=18)
-    ax[1].set_ylabel(fr'Grain sizes ($\mu$m), phase: {phases[1]}',fontsize=18)
-    ax[2].set_ylabel(fr'Grain sizes ($\mu$m), phase: {phases[2]}',fontsize=18)
+    for nn in range(len(phases)):
+        ax[nn].set_ylabel(fr'Grain sizes ($\mu$m), $t_{nn+1} = $\,{phasetimes[nn]}',fontsize=18)
+        ax[nn].tick_params(axis='both', which='major', labelsize=15)
     ax[0].set_xlabel(r'',fontsize=18)
     ax[1].set_xlabel(r'',fontsize=18)
     ax[2].set_xlabel(r'Distance (au)',fontsize=18)
-    ax[0].tick_params(axis='both', which='major', labelsize=15)
-    ax[1].tick_params(axis='both', which='major', labelsize=15)
-    ax[2].tick_params(axis='both', which='major', labelsize=15)
 
     fig.tight_layout()
     fig.savefig('figs/grainsizes_radius.pdf', dpi=300, facecolor="white")
@@ -231,7 +233,6 @@ if plot_temperaturecompare == 'y':
         3,1,
         figsize=(6,13)
     )
-
     phase = 186
 
 
@@ -251,12 +252,10 @@ if plot_temperaturecompare == 'y':
         numb_specie = 1,
         ax=ax[0]
     )
-    ax[0].set_ylabel(r'$T_{\rm CO5BOLD}$ (K)',fontsize=18)
+    ax[0].set_ylabel(r'$T({\rm CO5BOLD})$, K',fontsize=18)
     ax[0].set_xlabel(r'')
     ax[0].set(xlim=(0,26))
     ax[0].tick_params(axis='both', which='major', labelsize=15)
-
-
 
     # Load R3d-temperatures and bin each grain size's tmeperature
     # and take averages, max-min, stds of these
@@ -332,7 +331,7 @@ if plot_temperaturecompare == 'y':
     )
 
 
-    ax[1].set_ylabel(r'$T_{\rm RADMC-3D}$ (K)',fontsize=18)
+    ax[1].set_ylabel(r'$T({\rm point})$, K',fontsize=18)
     ax[1].set_xlabel(r'')
     ax[1].set(xlim=(0,26), ylim=(0,4000))
     ax[1].tick_params(axis='both', which='major', labelsize=15)
@@ -348,7 +347,7 @@ if plot_temperaturecompare == 'y':
         alpha=0.4
     )
     ax[2].plot([1.65,1.65],[0,10],'r:')
-    ax[2].set_ylabel(r'$T_{\rm CO5BOLD}$ / $T_{\rm RADMC-3D}$',fontsize=18)
+    ax[2].set_ylabel(r'$T({\rm CO5BOLD})$ / $T({\rm point})$',fontsize=18)
     ax[2].set_xlabel(r'Distance (au)',fontsize=18)
     ax[2].set(
         ylim=(1,3),
@@ -363,6 +362,12 @@ if plot_temperaturecompare == 'y':
         # And stellar radius
         ax[nn].plot([Rstar,Rstar],[0,4100],'r:',linewidth=1)
 
+
+    # Also plot theoretical comparison
+    #radius_theory = np.linspace(0,25)
+    #temperature_theory = 2800 * (1.65/(2*radius_theory))**0.5 * 0.5**0.25
+    #ax[0].plot(radius_theory,temperature_theory,'g:')
+    #ax[1].plot(radius_theory,temperature_theory,'g:')
 
     # Show all plots
     plt.tight_layout()
@@ -473,7 +478,7 @@ if plot_seds_cobolddarwin == 'y':
         # Line for the 1-1 correspondance
         ax[2][nn].plot([wavelength[0],wavelength[-1]],[0,0],'k:')
         # Phase number as title on top-plots
-        ax[0][nn].set_title(phases[nn], fontsize=16)
+        ax[0][nn].set_title(rf'$t_{nn+1} = $\,{phasetimes[nn]}', fontsize=16)
 
     ax[0][0].set_ylabel(r'$F({\rm CO5BOLD})$, Jy at 1 pc', fontsize=18)
     ax[1][0].set_ylabel(r'$F({\rm DARWIN})$, Jy at 1 pc', fontsize=18)
@@ -587,7 +592,7 @@ if plot_seds_point == 'y':
     )
     for nn in range(3):
         ax[-1][nn].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
-        ax[0][nn].set_title(phases[nn], fontsize=16)
+        ax[0][nn].set_title(rf'$t_{nn+1} = $\,{phasetimes[nn]}', fontsize=16)
     ax[0][2].legend(title=r'$i$, $\phi$')
 
     fig.tight_layout()
@@ -746,7 +751,7 @@ if plot_images_examples == 'y':
             cmap=plt.get_cmap('hot'),
             vmin=0,vmax=3
         )
-        ax[0][nn].set_title(f'{phase}', fontsize=15)
+        ax[0][nn].set_title(rf'$t_{nn+1} = $\,{phasetimes[nn]}', fontsize=15)
         ax[0][nn].tick_params(axis='both', which='major', labelsize=15)
 
         imlog = ax[1][nn].imshow(
@@ -761,16 +766,16 @@ if plot_images_examples == 'y':
     ax[0][0].set_ylabel('Offset (au)',fontsize=18)
     ax[1][0].set_ylabel('Offset (au)',fontsize=18)
 
-    # Remove "inbetween" axis labels
-    ax[0][1].axes.get_yaxis().set_visible(False)
-    ax[0][2].axes.get_yaxis().set_visible(False)
+    # In case I want to remove "inbetween" axis labels
+    #ax[0][1].axes.get_yaxis().set_visible(False)
+    #ax[0][2].axes.get_yaxis().set_visible(False)
 
-    ax[0][0].axes.get_xaxis().set_visible(False)    
-    ax[0][1].axes.get_xaxis().set_visible(False)
-    ax[0][2].axes.get_xaxis().set_visible(False)
+    #ax[0][0].axes.get_xaxis().set_visible(False)    
+    #ax[0][1].axes.get_xaxis().set_visible(False)
+    #ax[0][2].axes.get_xaxis().set_visible(False)
 
-    ax[1][1].axes.get_yaxis().set_visible(False)
-    ax[1][2].axes.get_yaxis().set_visible(False)
+    #ax[1][1].axes.get_yaxis().set_visible(False)
+    #ax[1][2].axes.get_yaxis().set_visible(False)
 
 
 
@@ -1197,7 +1202,7 @@ if plot_images_convolved_vlti == 'y':
             plt.Circle((0,0), radius=1.65/distance*1000, color='b', fill=False, linestyle=':', linewidth=1)
         )
 
-        axVLTI[0][nn].set_title(f'{phase}', fontsize=15)
+        axVLTI[0][nn].set_title(rf'$t_{nn+1} = $\,{phasetimes[nn]}', fontsize=15)
 
     # For reference, print FWHM:
     print(f'VLTI {shortwavelength}um FWHM: {fwhmVLTI_1um}')
@@ -1273,16 +1278,16 @@ if plot_images_convolved_vlti == 'y':
     axVLTI[0][0].set_ylabel('Offset (mas)',fontsize=18)
     axVLTI[1][0].set_ylabel('Offset (mas)',fontsize=18)
 
-    # Remove "inbetween" axis labels
-    axVLTI[0][1].axes.get_yaxis().set_visible(False)
-    axVLTI[0][2].axes.get_yaxis().set_visible(False)
-
-    axVLTI[0][0].axes.get_xaxis().set_visible(False)    
-    axVLTI[0][1].axes.get_xaxis().set_visible(False)
-    axVLTI[0][2].axes.get_xaxis().set_visible(False)
-
-    axVLTI[1][1].axes.get_yaxis().set_visible(False)
-    axVLTI[1][2].axes.get_yaxis().set_visible(False)
+    # To Remove "inbetween" axis labels
+    #axVLTI[0][1].axes.get_yaxis().set_visible(False)
+    #axVLTI[0][2].axes.get_yaxis().set_visible(False)
+    #
+    #axVLTI[0][0].axes.get_xaxis().set_visible(False)    
+    #axVLTI[0][1].axes.get_xaxis().set_visible(False)
+    #axVLTI[0][2].axes.get_xaxis().set_visible(False)
+    #
+    #axVLTI[1][1].axes.get_yaxis().set_visible(False)
+    #axVLTI[1][2].axes.get_yaxis().set_visible(False)
 
 
     # Set colour bar settings and label
@@ -1449,6 +1454,7 @@ if plot_resolutiondistance == 'y':
 
     # First fillbetween gave bugs in pdf, mitigated by plotting from index 300
     ax.plot(distance,area_ratio_VLTI_1um,'b',linewidth = 2)
+    ax.plot(distance,area_ratio_VLTI_1um,'k',linewidth = 1)
     ax.fill_between(
         distance[indeces_detected_VLTI_1um[300:]],
         detect_limit[indeces_detected_VLTI_1um[300:]],
@@ -1457,6 +1463,7 @@ if plot_resolutiondistance == 'y':
         alpha=1
     )
     ax.plot(distance,area_ratio_VLTI_10um,'c',linewidth = 2)
+    ax.plot(distance,area_ratio_VLTI_10um,'k--',linewidth = 1)
     ax.fill_between(
         distance[indeces_detected_VLTI_10um[300:]],
         detect_limit[indeces_detected_VLTI_10um[300:]],
@@ -1466,6 +1473,7 @@ if plot_resolutiondistance == 'y':
     )
 
     ax.plot(distance,area_ratio_JWST_1um,'r',linewidth = 2)
+    ax.plot(distance,area_ratio_JWST_1um,'k-.',linewidth = 1)
     ax.fill_between(
         distance[indeces_detected_JWST_1um],
         detect_limit[indeces_detected_JWST_1um],
@@ -1474,6 +1482,7 @@ if plot_resolutiondistance == 'y':
         alpha=1
     )
     ax.plot(distance,area_ratio_JWST_10um,'orange',linewidth = 2)
+    ax.plot(distance,area_ratio_JWST_10um,'k:',linewidth = 1)
     ax.fill_between(
         distance[indeces_detected_JWST_10um],
         detect_limit[indeces_detected_JWST_10um],
