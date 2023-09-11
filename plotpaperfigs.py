@@ -54,7 +54,7 @@ plot_absscat = 'n'
 
 #
 plot_temperatureradial = 'n' # Only cobold-T, no comparison, not used
-plot_temperaturecompare = 'n'
+plot_temperaturecompare = 'y'
 
 # Plot SEDs
 plot_seds_cobolddarwin = 'n'
@@ -67,7 +67,7 @@ plot_images_examples = 'n'
 plot_images_darwinpoint = 'n'
 plot_images_obscured = 'n'
 plot_images_convolved_jwst = 'n'
-plot_images_convolved_vlti = 'y'
+plot_images_convolved_vlti = 'n'
 
 
 
@@ -318,7 +318,7 @@ if plot_temperaturecompare == 'y':
         radial_range,
         Tr3d_min,
         Tr3d_max,
-        color='b',
+        color='r',
         alpha=0.2
     )
 
@@ -326,7 +326,7 @@ if plot_temperaturecompare == 'y':
         radial_range,
         Tr3d_avr-Tr3d_std,
         Tr3d_avr+Tr3d_std,
-        color='b',
+        color='r',
         alpha=0.4
     )
 
@@ -336,38 +336,50 @@ if plot_temperaturecompare == 'y':
     ax[1].set(xlim=(0,26), ylim=(0,4000))
     ax[1].tick_params(axis='both', which='major', labelsize=15)
 
-    # A plot with Tc5d / Tr3d
-    ax[2].plot(radial_range,T_c5d/Tr3d_avr,'b')
+    # A plot with Tc5d or Tr3d divided by T_theory
+    Teff = 2800   # Table1
+    pindex = -0.9 # Bladh 2012
+    temperature_theory = Teff * (Rstar/(2*radial_range))**(2/(4+pindex))
+
+    ax[2].plot(radial_range,T_c5d/temperature_theory,'b',linewidth=2)
+    ax[2].plot(radial_range,Tr3d_avr/temperature_theory,'r',linewidth=2)
 
     ax[2].fill_between(
         radial_range,
-        (T_c5d-Tstd_c5d)/(Tr3d_avr-Tr3d_std),
-        (T_c5d+Tstd_c5d)/(Tr3d_avr+Tr3d_std),
+        (T_c5d-Tstd_c5d)/temperature_theory,
+        (T_c5d+Tstd_c5d)/temperature_theory,
         color='b',
         alpha=0.4
     )
-    ax[2].plot([1.65,1.65],[0,10],'r:')
-    ax[2].set_ylabel(r'$T({\rm CO5BOLD})$ / $T({\rm point})$',fontsize=18)
+
+    ax[2].fill_between(
+        radial_range,
+        (Tr3d_avr-Tr3d_std)/temperature_theory,
+        (Tr3d_avr+Tr3d_std)/temperature_theory,
+        color='r',
+        alpha=0.4
+    )
+
+
+
+    ax[2].set_ylabel(r'$T({\rm simulated})$ / $T({\rm theory})$',fontsize=18)
     ax[2].set_xlabel(r'Distance (au)',fontsize=18)
     ax[2].set(
-        ylim=(1,3),
+        ylim=(0.5,2),
         xlim=(0,26)
     )
     ax[2].tick_params(axis='both', which='major', labelsize=15)
 
-    # A vertical line at limit of grid
+
+    # A vertical line at limit of grid for all subplots
     for nn in range(3):
         # Grid cube
         ax[nn].plot([cubesize,cubesize],[0,4100],'k:',linewidth=1)
         # And stellar radius
         ax[nn].plot([Rstar,Rstar],[0,4100],'r:',linewidth=1)
 
-
-    # Also plot theoretical comparison
-    #radius_theory = np.linspace(0,25)
-    #temperature_theory = 2800 * (1.65/(2*radius_theory))**0.5 * 0.5**0.25
-    #ax[0].plot(radius_theory,temperature_theory,'g:')
-    #ax[1].plot(radius_theory,temperature_theory,'g:')
+    # Horisontal line for 1
+    ax[2].plot([radial_range[0],radial_range[-1]],[1,1],'g:')
 
     # Show all plots
     plt.tight_layout()
@@ -376,6 +388,10 @@ if plot_temperaturecompare == 'y':
     #Save figure
     fig.savefig(f'figs/temperatures_{phase}.pdf', dpi=300, facecolor="white")
 
+    # Also plot Ttheory by itself for comparison
+    #plt.figure('Ttheory')
+    #plt.plot(radial_range,temperature_theory)
+    #plt.show()
 
 
 
