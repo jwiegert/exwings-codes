@@ -54,12 +54,16 @@ plot_absscat = 'n'
 
 #
 plot_temperatureradial = 'n' # Only cobold-T, no comparison, not used
-plot_temperaturecompare = 'y'
+plot_temperaturecompare = 'n'
 
 # Plot SEDs
-plot_seds_cobolddarwin = 'n'
-plot_seds_point = 'n'
+plot_seds_cobolddarwin = 'n'    # Old fig
+plot_seds_point = 'n'           # Old fig
 plot_seds_obscured = 'n'
+plot_seds_cobold = 'n'
+plot_seds_darwinpoint = 'n'
+
+
 
 
 # Plot various images
@@ -74,6 +78,7 @@ plot_images_convolved_vlti = 'n'
 # Observables
 compute_luminosities = 'n'
 plot_resolutiondistance = 'n'
+check_smoothedimage_radius = 'n'
 
 
 # ----------------------------------------------------------------
@@ -341,8 +346,14 @@ if plot_temperaturecompare == 'y':
     pindex = -0.9 # Bladh 2012
     temperature_theory = Teff * (Rstar/(2*radial_range))**(2/(4+pindex))
 
-    ax[2].plot(radial_range,T_c5d/temperature_theory,'b',linewidth=2)
-    ax[2].plot(radial_range,Tr3d_avr/temperature_theory,'r',linewidth=2)
+    legendlist = [
+        r'$T($CO5BOLD$)$',
+        r'$T($point$)$'
+    ]
+
+    ax[2].plot(radial_range,T_c5d/temperature_theory,'b',linewidth=2,label = legendlist[0])
+    ax[2].plot(radial_range,Tr3d_avr/temperature_theory,'r',linewidth=2,label = legendlist[1])
+    ax[2].legend()
 
     ax[2].fill_between(
         radial_range,
@@ -359,8 +370,6 @@ if plot_temperaturecompare == 'y':
         color='r',
         alpha=0.4
     )
-
-
 
     ax[2].set_ylabel(r'$T({\rm simulated})$ / $T({\rm theory})$',fontsize=18)
     ax[2].set_xlabel(r'Distance (au)',fontsize=18)
@@ -705,6 +714,25 @@ if plot_seds_obscured == 'y':
 
     #Save figure
     fig.savefig(f'figs/seds_obscuredexamples.pdf', dpi=300, facecolor="white")
+
+
+# Plot all SEDs of CO5BOLD data
+if plot_seds_cobold == 'y':
+    print('hej')
+
+
+
+
+
+
+
+# Plot t3-SEDs of Darwin and Point-source-data
+if plot_seds_darwinpoint == 'y':
+    print('hej')
+
+
+
+
 
 
 # ----------------------------------------------------------------------
@@ -1131,6 +1159,12 @@ if plot_images_convolved_vlti == 'y':
         f'../r3dresults/st28gm06n052_staranddust_1/198/image_i000_phi000_{shortwavelength}um.out'
     ]
 
+    imagelist_3um = [
+        '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_3.5um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_3.5um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/198/image_i000_phi000_3.5um.out',
+    ]
+
     imagelist_10um = [
         '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_10um.out',
         '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_10um.out',
@@ -1141,19 +1175,30 @@ if plot_images_convolved_vlti == 'y':
 
     # Full-width at half-maximum: lambda/(2*baseline)
     fwhmVLTI_1um = shortwavelength*1e-6 / (2*baselineVLTI) * radian
+    fwhmVLTI_3um = 3.5*1e-6 / (2*baselineVLTI) * radian
     fwhmVLTI_10um = 1e-5 / (2*baselineVLTI) * radian
     sigmaVLTI_1um = fwhmVLTI_1um/2.355
+    sigmaVLTI_3um = fwhmVLTI_3um/2.355
     sigmaVLTI_10um = fwhmVLTI_10um/2.355
 
 
 
     # Initialise fig-ax
     figVLTI, axVLTI = plt.subplots(
-        2,3, 
-        figsize = (12,7.3),
+        3,3, 
+        figsize = (11,10),
         num='VLTI at 90pc'
     )
-    #         figsize = (12,7)   standard annars
+    #         figsize = (12,7.3)  ifall jag har 3*2.bilder
+
+    # Create a new figure with contour-plots of convolved images
+    figcontour, axcontour = plt.subplots(
+        3,3, 
+        figsize = (11,10),
+        num='Contours at 90pc'
+    )
+
+
 
     distance = distanceVLTI
     # Loop through and plot each 1um image
@@ -1165,7 +1210,6 @@ if plot_images_convolved_vlti == 'y':
         modelname = imagestrings[2]
         imagefilename = imagestrings[4]
         phase = imagestrings[3]
-
         path = f'{imagestrings[0]}/{imagestrings[1]}/{modelname}/{phase}'
 
         # Load image
@@ -1200,7 +1244,7 @@ if plot_images_convolved_vlti == 'y':
             image2d, 
             origin='lower', extent=axisplotmilliasec, 
             cmap=plt.get_cmap('hot'),
-            vmin=0, vmax=3
+            vmin=0, vmax=4
         )
         axVLTI[0][nn].tick_params(axis='both', which='major', labelsize=15)
 
@@ -1220,8 +1264,98 @@ if plot_images_convolved_vlti == 'y':
 
         axVLTI[0][nn].set_title(rf'$t_{nn+1} = $\,{phasetimes[nn]}', fontsize=15)
 
+
+        # Plot contours in separate figure
+        contours_1um = axcontour[0][nn].contour(
+            image2d,
+            origin='lower', extent=axisplotmilliasec,
+            levels=[0.001,0.01,0.1,0.3,0.7,1.2,1.7,2.5,3.5],
+            vmin=0, vmax=4
+        )
+        # Flip x-axis
+        axcontour[0][nn].invert_xaxis()
+
+        # TODO
+        # annan färg på contours
+        # lägg in cirkel för stjärnans radie
+        # lägg in cirkel för 
+
+
+
+
+
+
+
+
     # For reference, print FWHM:
     print(f'VLTI {shortwavelength}um FWHM: {fwhmVLTI_1um}')
+
+
+
+    # Loop through and plot each 3.5um image
+    for nn,image in enumerate(imagelist_3um):
+
+        # Extract path and imagename from image
+        imagestrings = re.split('/', image)
+
+        modelname = imagestrings[2]
+        imagefilename = imagestrings[4]
+        phase = imagestrings[3]
+        path = f'{imagestrings[0]}/{imagestrings[1]}/{modelname}/{phase}'
+
+        # Load image
+        image2d,image2dlog,flux,axisplot = a3d.load_images(
+            path=path,
+            image=imagefilename,
+            distance=distance
+        )
+        # Change to Jy/mas2
+        image2d = image2d * 1e-6
+
+        # Extract props and compute distance-dependant scales
+        Npix = np.shape(image2d)[0] # Number of pixels along one side
+        auperpixel = 2*axisplot[0]/Npix  # number of au per pixel
+        masperpixel = auperpixel/distance * 1000  # number of mas per pixel
+        size_milliasec = masperpixel * Npix # size of image in mas
+
+        # Image axis-limits
+        axisplotmilliasec = [0.5*size_milliasec,-0.5*size_milliasec,-0.5*size_milliasec,0.5*size_milliasec]
+
+        # Change sigma to order in number of pixels
+        sigmaVLTI_3um_pixels = sigmaVLTI_3um / masperpixel
+
+        # Convolve with Gaussian filter
+        image2d = scipy.ndimage.gaussian_filter(
+            image2d,
+            sigma = sigmaVLTI_3um_pixels
+        )
+
+        # Plot image
+        imVLTI_3um = axVLTI[1][nn].imshow(
+            image2d, 
+            origin='lower', extent=axisplotmilliasec, 
+            cmap=plt.get_cmap('hot'),
+            vmin=0, vmax=4
+        )
+        axVLTI[1][nn].tick_params(axis='both', which='major', labelsize=15)
+
+        # FWHM-cirle to show beam
+        axVLTI[1][nn].add_patch(
+            plt.Circle(
+                (0.75*axisplotmilliasec[0],0.75*axisplotmilliasec[1]), 
+                radius=0.5*fwhmVLTI_3um, color='cyan', fill=False)
+        )
+        # Star-radius-circle to show size of stellar disc
+        axVLTI[1][nn].add_patch(
+            plt.Circle((0,0), radius=1.65/distance*1000, color='lime', fill=False, linestyle=':', linewidth=2)
+        )
+        axVLTI[1][nn].add_patch(
+            plt.Circle((0,0), radius=1.65/distance*1000, color='b', fill=False, linestyle=':', linewidth=1)
+        )
+
+    # For reference, print FWHM:
+    print(f'VLTI 3.5um FWHM: {fwhmVLTI_3um}')
+
 
     # Loop through and plot each 10um image
     for nn,image in enumerate(imagelist_10um):
@@ -1232,7 +1366,6 @@ if plot_images_convolved_vlti == 'y':
         modelname = imagestrings[2]
         imagefilename = imagestrings[4]
         phase = imagestrings[3]
-
         path = f'{imagestrings[0]}/{imagestrings[1]}/{modelname}/{phase}'
 
         # Load image
@@ -1263,36 +1396,36 @@ if plot_images_convolved_vlti == 'y':
         )
 
         # Plot image
-        imVLTI_10um = axVLTI[1][nn].imshow(
+        imVLTI_10um = axVLTI[2][nn].imshow(
             image2d, 
             origin='lower', extent=axisplotmilliasec, 
             cmap=plt.get_cmap('hot'),
-            vmin=0, vmax=0.8
+            vmin=0, vmax=1
         )
-        axVLTI[1][nn].tick_params(axis='both', which='major', labelsize=15)
+        axVLTI[2][nn].tick_params(axis='both', which='major', labelsize=15)
 
         # FWHM-cirle to show beam
-        axVLTI[1][nn].add_patch(
+        axVLTI[2][nn].add_patch(
             plt.Circle(
                 (0.75*axisplotmilliasec[0],0.75*axisplotmilliasec[1]), 
                 radius=0.5*fwhmVLTI_10um, color='cyan', fill=False)
         )
         # Star-radius-circle to show size of stellar disc
-        axVLTI[1][nn].add_patch(
+        axVLTI[2][nn].add_patch(
             plt.Circle((0,0), radius=1.65/distance*1000, color='lime', fill=False, linestyle=':', linewidth=2)
         )
-        axVLTI[1][nn].add_patch(
+        axVLTI[2][nn].add_patch(
             plt.Circle((0,0), radius=1.65/distance*1000, color='b', fill=False, linestyle=':', linewidth=1)
         )
         # Xlabel for bottom plots
-        axVLTI[1][nn].set_xlabel('Offset (mas)',fontsize=18)
+        axVLTI[2][nn].set_xlabel('Offset (mas)',fontsize=18)
 
     # For reference, print FWHM:
     print(f'VLTI 10um FWHM: {fwhmVLTI_10um}')
 
     # Set ylabel for first plots only
-    axVLTI[0][0].set_ylabel('Offset (mas)',fontsize=18)
-    axVLTI[1][0].set_ylabel('Offset (mas)',fontsize=18)
+    for nn in range(3):
+        axVLTI[nn][0].set_ylabel('Offset (mas)',fontsize=18)
 
     # To Remove "inbetween" axis labels
     #axVLTI[0][1].axes.get_yaxis().set_visible(False)
@@ -1320,12 +1453,29 @@ if plot_images_convolved_vlti == 'y':
         orientation = 'vertical'
     )
     cb0.set_label(
-        label = rf'$F$(Jy/mas$^2$) at 1.6\,$\mu$m \& {distanceVLTI} pc',fontsize= 15
+        label = rf'$F$(Jy/mas$^2$) at 1.6\,$\mu$m',fontsize= 15
+    )
+    cb0.ax.tick_params(labelsize=15)
+
+    # for 3.5um
+    divider = make_axes_locatable(axVLTI[1][-1])
+    cax = divider.append_axes(
+        'right', 
+        size='5%', 
+        pad=0.05
+    )
+    cb0 = plt.colorbar(
+        imVLTI_3um, 
+        cax=cax, 
+        orientation = 'vertical'
+    )
+    cb0.set_label(
+        label = rf'$F$(Jy/mas$^2$) at 3.5\,$\mu$m',fontsize= 15
     )
     cb0.ax.tick_params(labelsize=15)
 
     # For 10um
-    divider = make_axes_locatable(axVLTI[1][-1])
+    divider = make_axes_locatable(axVLTI[2][-1])
     cax = divider.append_axes(
         'right', 
         size='5%', 
@@ -1337,7 +1487,7 @@ if plot_images_convolved_vlti == 'y':
         orientation = 'vertical'
     )
     cb0.set_label(
-        label = rf'$F$(Jy/mas$^2$) at 10\,$\mu$m \& {distanceVLTI} pc',fontsize= 15
+        label = rf'$F$(Jy/mas$^2$) at 10\,$\mu$m',fontsize= 15
     )
     cb0.ax.tick_params(labelsize=15)
 
@@ -1346,6 +1496,9 @@ if plot_images_convolved_vlti == 'y':
 
     #Save figure
     figVLTI.savefig(f'figs/images_VLTI_{distanceVLTI}pc.pdf', dpi=300, facecolor="white")
+
+
+    figcontour.show()
 
 
 # -------------------------------------------------------------------------------
@@ -1532,5 +1685,123 @@ if plot_resolutiondistance == 'y':
     fig.show()
 
     fig.savefig(f'figs/plot_resolution.pdf', dpi=300, facecolor="white")
+
+
+# Check "radius" of source at various images
+if check_smoothedimage_radius == 'y':
+
+
+    # TODO
+    # add 3.5um images here
+
+    # Standard images
+    #
+    #    '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_1.625um.out'
+    #    '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_1.625um.out'
+    #    '../r3dresults/st28gm06n052_staranddust_1/198/image_i000_phi000_1.625um.out'
+    #
+    #    '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_10um.out'
+    #    '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_10um.out'
+    #    '../r3dresults/st28gm06n052_staranddust_2/198/image_i000_phi000_10um.out'
+
+    distance = 200 # parsec
+    wavelength = 1.625 # um
+    image = '../r3dresults/st28gm06n052_staranddust_1/198/image_i000_phi000_1.625um.out'
+
+    # Angular resolution of "beam" is then approx:
+    fwhmVLTI = wavelength*1e-6 / (2*baselineVLTI) * radian
+    sigmaVLTI = fwhmVLTI/2.355
+
+
+    # Load star's radius here (for comparison plot)
+    # Mstar: gram
+    # Rstar: cm
+    # Lstar: W
+    Mstar,Rstar,Lstar = a5d.load_star_information(
+        savpath='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        printoutput='n'
+    )
+    Rstar /= AUcm
+
+
+    # Extract path and imagename from image
+    imagestrings = re.split('/', image)
+    modelname = imagestrings[2]
+    imagefilename = imagestrings[4]
+    phase = imagestrings[3]
+    path = f'{imagestrings[0]}/{imagestrings[1]}/{modelname}/{phase}'
+
+    # Load image
+    image2d,image2dlog,flux,axisplot = a3d.load_images(
+        path=path,
+        image=imagefilename,
+        distance=distance
+    )
+    # Change to Jy/mas2
+    image2d = image2d * 1e-6
+
+
+    # TODO some of these are not used, remove.
+    # Extract props and compute distance-dependant scales
+    Npix = np.shape(image2d)[0] # Number of pixels along one side
+    auperpixel = 2*axisplot[0]/Npix  # number of au per pixel
+    masperpixel = auperpixel/distance * 1000  # number of mas per pixel
+    #size_milliasec = masperpixel * Npix # size of image in mas
+    size_au = auperpixel * Npix # Size of image in au
+
+
+    # Change sigma to order in number of pixels
+    sigmaVLTI_pixels = sigmaVLTI / masperpixel
+
+    # Convolve with Gaussian filter
+    image2d = scipy.ndimage.gaussian_filter(
+        image2d,
+        sigma = sigmaVLTI_pixels
+    )
+
+
+    # Number of circular annulii are a quarter to make 
+    # sure there are enough pixels in each annulus
+    # And range is half the size of the image
+    radial_range = np.linspace(auperpixel,size_au*0.5,Npix*0.25)
+    radial_fluxes = np.zeros(int(Npix*0.25))
+    radial_npixels = np.zeros(int(Npix*0.25))
+
+    # List of pixel numbers with 0 in centrum, radially and along each axis
+    rpix = list(range(0,int(Npix*0.5),2))
+    xpix = list(range(int(-Npix*0.5),int(Npix*0.5)))
+    ypix = list(range(int(-Npix*0.5),int(Npix*0.5)))
+
+
+    # Loop through annulii, add fluxes of each
+    for nn,nr in enumerate(rpix):
+        for nx in xpix:
+            for ny in ypix:
+                if np.sqrt(nx**2 + ny**2) > nr and \
+                    np.sqrt(nx**2 + ny**2) <= nr+2:
+                    
+                    imagex = int(nx+Npix*0.5)
+                    imagey = int(ny+Npix*0.5)
+
+                    # Add fluxes of each annulus and number of pixels
+                    radial_fluxes[nn] += image2d[imagey,imagex]
+                    radial_npixels[nn] += 1
+
+    # Average flux per annulus
+    radial_fluxes /= radial_npixels
+
+    # At what radius is half maximum? Or 25%?
+    fluxlimit = 0.25*radial_fluxes.max()
+    radius_fluxlimit = radial_range[np.where(radial_fluxes > fluxlimit)[0].max()]
+    print('')
+    print(f'{modelname}_{phase}, {imagefilename}')
+    print(f'Obs-radius: {radius_fluxlimit} AU')
+
+    # Plot to check
+    plt.plot(radial_range,radial_fluxes)
+    plt.plot([Rstar,Rstar],[0,radial_fluxes.max()])
+    plt.plot([radius_fluxlimit,radius_fluxlimit],[0,fluxlimit])
+    plt.xlim(0,4)
+    plt.show()
 
 
