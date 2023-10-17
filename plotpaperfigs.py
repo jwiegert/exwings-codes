@@ -71,15 +71,17 @@ plot_images_examples = 'n'
 plot_images_darwinpoint = 'n'
 plot_images_obscured = 'n'
 plot_images_convolved_jwst = 'n'
-plot_images_convolved_vlti = 'n'
+plot_images_convolved_vlti = 'y'
 
 
 
 # Observables
 compute_luminosities = 'n'
+compute_tenmicronfluxdensities = 'n'
+measuredustcloudflux = 'n'
 plot_resolutiondistance = 'n'
-check_smoothedimage_radius = 'y'
-
+check_smoothedimage_radius = 'n'
+plot_smoothedimage_radius = 'n'
 
 # ----------------------------------------------------------------
 # FIG Cut through of CO5BOLD grid for st28gm06n052 with cell 
@@ -872,7 +874,7 @@ if plot_images_examples == 'y':
     # Plot 3 images at one walanvength, one per phase, lin and log
 
     # Chose wavelength here
-    wavelengthum = 1
+    wavelengthum = 10
 
     distance = 1
     imagelist = [
@@ -923,7 +925,7 @@ if plot_images_examples == 'y':
             image2d, 
             origin='lower', extent=axisplot, 
             cmap=plt.get_cmap('hot'),
-            vmin=0,vmax=3
+            vmin=0,vmax=1.5
         )
         ax[0][nn].set_title(rf'$t_{nn+1} = $\,{phasetimes[nn]}', fontsize=15)
         ax[0][nn].tick_params(axis='both', which='major', labelsize=15)
@@ -932,7 +934,7 @@ if plot_images_examples == 'y':
             image2dlog, 
             origin='lower', extent=axisplot, 
             cmap=plt.get_cmap('hot'),
-            vmin=-10,vmax=6
+            vmin=1,vmax=6
         )
         ax[1][nn].set_xlabel('Offset (au)',fontsize=18)
         ax[1][nn].tick_params(axis='both', which='major', labelsize=15)
@@ -1467,6 +1469,12 @@ if plot_images_convolved_vlti == 'y':
         axVLTI[nwave][0].set_ylabel('Offset (mas)',fontsize=18)
         axcontour[nwave][0].set_ylabel('Offset (mas)',fontsize=18)
 
+        # Add text in figure with wavelength
+        axcontour[nwave][0].text(
+            x = -10, y = 60,
+            s = rf'\noindent $\lambda = ${wavelengths[nwave]}\,$\mu$m',
+            fontsize = 13
+        )
 
         # Set colour bar settings and label
         divider = make_axes_locatable(axVLTI[nwave][-1])
@@ -1485,13 +1493,33 @@ if plot_images_convolved_vlti == 'y':
         )
         cb0.ax.tick_params(labelsize=15)
 
-    # Final settings for figures, save and show if you want to
+    # Add patches for the areas I take flux densities from
+    # 186:
+    # x: -5.5 till -4     -> mas  -27.5 -> -20
+    # y: -4.5 till -3     -> mas  -22.5 -> -15
+    axcontour[-1][0].add_patch(
+        plt.Rectangle((-27.5,-22.5), 7.5, 7.5, color='orange', fill=False, zorder=10)
+    )
+    # 190:
+    # x: 1 till 4       -> mas  5 -> 20  (15)
+    # y: -2.5 till 0.5  -> mas  -12.5 -> 2.5 (15)
+    axcontour[-1][1].add_patch(
+        plt.Rectangle((5,-12.5), 15, 15, color='orange', fill=False, zorder=10)
+    )
+    # 198:
+    # x: 1 - 6      -> mas  5 -> 30 (25)
+    # y: -6.5 - -5  -> mas  -32.5 -> -25 (7.5)
+    axcontour[-1][2].add_patch(
+        plt.Rectangle((5,-32.5), 25, 7.5, color='orange', fill=False, zorder=10)
+    )
 
+
+    # Final settings for figures, save and show if you want to
     figVLTI.tight_layout()
     figcontour.tight_layout()
 
     #Save figure
-    #figVLTI.savefig(f'figs/images_VLTI_{distanceVLTI}pc.pdf', dpi=300, facecolor="white")
+    figVLTI.savefig(f'figs/images_VLTI_{distanceVLTI}pc.pdf', dpi=300, facecolor="white")
     figcontour.savefig(f'figs/contours_VLTI_{distanceVLTI}pc.pdf', dpi=300, facecolor="white")
 
     #figVLTI.show()
@@ -1553,6 +1581,183 @@ if compute_luminosities == 'y':
             print(f'    Average: {lumsum/len(spectra)}')
 
 
+if compute_tenmicronfluxdensities == 'y':
+
+    # Computes total stellar flux density in various directions at only 10um
+    # and totalt dust flux density in various directions (and wavelengths?)
+    # lists these and Fdust/Fstar-ratios
+    #
+    # In debris discs we used Ldust/Lstar-ratios also...
+
+    # Load stellar flux denisty:
+    # r3dresults/st28gm06n052_nodust
+
+    # Load dust flux density:
+    # r3dresults/st28gm06n052_nostar
+
+    models = [
+        'st28gm06n052_nodust',
+        'st28gm06n052_nostar'
+    ]
+    contents = [
+        'Stellar flux',
+        'Dust flux'
+    ]
+    phases = [
+        '186',
+        '190',
+        '198'
+    ]
+    spectra = [
+        'spectrum_i000_phi000.out',
+        'spectrum_i090_phi000.out',
+        'spectrum_i090_phi090.out',
+        'spectrum_i090_phi270.out',
+        'spectrum_i180_phi000.out',
+        'spectrum_i270_phi000.out'
+    ]
+    angles = [
+        '0-0',
+        '90-0',
+        '90-90',
+        '90-270',
+        '180-0',
+        '270-0'
+    ]
+
+    # Loop through models and print lsits for tables
+    print('Stellar Flux                   Dust flux                   Contrast (Fd/F*)                Ratio (Ld/L*)')
+    for phase in phases:
+        print(f'  {phase}                            {phase}                     {phase}')
+
+        for nangle,spectrum in enumerate(spectra):
+
+            # Reset numbers
+            starflux = 0
+            dustflux = 0
+
+            # Load stellar fluxes, at 200pc, comparing to images I show
+            wavelengths,starfluxes = a3d.load_spectrum(
+                path = f'../r3dresults/st28gm06n052_nodust/{phase}/{spectrum}',
+                distance = 200
+            )
+            tenmicron = np.where(np.array(wavelengths) > 10)[0][0]
+            starflux = 0.5 * (
+                starfluxes[tenmicron-1] + starfluxes[tenmicron]
+            )
+            # Also load stellar luminosity
+            starlum = a3d.compute_sed_luminosity(
+                path = f'../r3dresults/st28gm06n052_nodust/{phase}/{spectrum}',
+                distance = 200
+            )
+
+
+
+            # Load dust fluxes
+            wavelengths,dustfluxes = a3d.load_spectrum(
+                path = f'../r3dresults/st28gm06n052_nostar/{phase}/{spectrum}',
+                distance = 200
+            )
+            tenmicron = np.where(np.array(wavelengths) > 10)[0][0]
+            dustflux = 0.5 * (
+                dustfluxes[tenmicron-1] + dustfluxes[tenmicron]
+            )
+            # Also load dust luminosity
+            dustlum = a3d.compute_sed_luminosity(
+                path = f'../r3dresults/st28gm06n052_nostar/{phase}/{spectrum}',
+                distance = 200
+            )
+
+            # Print everything
+            print(f'    {angles[nangle]}: {starflux}           {dustflux}           {dustflux/starflux}           {dustlum/starlum}')
+
+
+
+if measuredustcloudflux == 'y':
+    # Measures dust flux densities in patches that I define
+    # Also plots the patches for reference
+
+    fig, ax = a3d.plot_imagesubplots(
+        imagelist = [
+            '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_10um.out',
+            '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_10um.out',
+            '../r3dresults/st28gm06n052_staranddust_2/198/image_i000_phi000_10um.out',
+        ],
+        distance = 1,
+        scale = 'lin'
+    )
+
+    # 186:
+    # x: -5.5 till -4
+    # y: -4.5 till -3
+    ax[0].add_patch(
+        plt.Rectangle((-5.5,-4.5), 1.5, 1.5, color='cyan', fill=False)
+    )
+
+    # 190:
+    # x: 1 till 4
+    # y: -2.5 till 0.5
+    ax[1].add_patch(
+        plt.Rectangle((1,-2.5), 3, 3, color='cyan', fill=False)
+    )
+
+    # 198:
+    # x: 1 - 6
+    # y: -6.5 - -5
+    ax[2].add_patch(
+        plt.Rectangle((1,-6.5), 5, 1.5, color='cyan', fill=False)
+    )
+
+    # Extract fluxes of these areas
+    phases = [186,190,198]
+
+    xranges = [
+        [-5.5,-4],
+        [1,4],
+        [1,6]
+    ]
+    yranges = [
+        [-4.5,-3],
+        [-2.5,0.5],
+        [-6.5,-5]
+    ]
+
+    # Initilize a second figure to check that I actually measure the correct areas
+    fig2, ax2 = plt.subplots(1,3)
+
+    # Loop over phases
+    for nphase,phase in enumerate(phases):
+
+        # Load images themselves
+        image2d,image2dlog,totalflux,axisplot = a3d.load_images(
+            path = f'../r3dresults/st28gm06n052_staranddust_1/{phase}/',
+            image = 'image_i000_phi000_10um.out',
+            distance = 200
+        )
+        # Change to Jy/mas2
+        image2d = image2d * 1e-6
+
+        # Create axis-array
+        axscale = np.linspace(axisplot[0],axisplot[1],image2d.shape[0])
+
+        # rectangle-ranges:
+        xrange = np.where((axscale <= xranges[nphase][1]) & (axscale >= xranges[nphase][0]))[0]
+        yrange = np.where((-axscale >= yranges[nphase][0]) & (-axscale <= yranges[nphase][1]))[0]
+
+        # Fluxes within
+        fluxes = image2d[yrange[0]:yrange[-1],xrange[0]:xrange[-1]]
+
+        print(f'{phase}, x: {xranges[nphase][0]} to {xranges[nphase][1]}')
+        print(f'     y: {yranges[nphase][0]} to {yranges[nphase][1]}')
+        print(f'     max: {fluxes.max()}     mean: {fluxes.mean()} Jy mas-2')
+
+        ax2[nphase].imshow(fluxes, origin='lower', cmap=plt.get_cmap('hot'))
+
+
+    fig.show()
+    fig2.show()
+
+
 
 if plot_resolutiondistance == 'y':
     # Plots image estimate of within which distance may
@@ -1562,6 +1767,7 @@ if plot_resolutiondistance == 'y':
 
     # TODO
     # REDO THIS PLOT
+    # remove this plot? Not used any longer
 
     # Full-width at half-maximum in mas:  1.22*lambda/D 
     # or for VLTI, lambda/2baseline
@@ -1688,8 +1894,6 @@ if plot_resolutiondistance == 'y':
 if check_smoothedimage_radius == 'y':
 
 
-    # TODO
-    # add 3.5um images here
 
     # Standard images
     #
@@ -1706,10 +1910,16 @@ if check_smoothedimage_radius == 'y':
     #    '../r3dresults/st28gm06n052_staranddust_2/198/image_i000_phi000_10um.out'
 
     distance = 200 # parsec
-    relativelimit = 0.25
-    phase = 186
+    relativelimit = 0.1
+    phase = 198
     wavelength = 10 # um
-    image = f'../r3dresults/st28gm06n052_staranddust_1/{phase}/image_i000_phi000_{wavelength}um.out'
+
+    # Load correct seed also
+    if phase == 198 and wavelength == 10:
+        seed = 2
+    else:
+        seed = 1
+    image = f'../r3dresults/st28gm06n052_staranddust_{seed}/{phase}/image_i000_phi000_{wavelength}um.out'
 
     # Angular resolution of "beam" is then approx:
     fwhmVLTI = wavelength*1e-6 / (2*baselineVLTI) * radian
@@ -1795,10 +2005,14 @@ if check_smoothedimage_radius == 'y':
     # Average flux per annulus
     radial_fluxes /= radial_npixels
 
-    # At what radius is half maximum? Or 25%?
-    fluxlimit = relativelimit*radial_fluxes.max()
-    radius_fluxlimit = radial_range[np.where(radial_fluxes > fluxlimit)[0].max()]
+    # At what radius is half maximum? Or 25%? Or 10%?
+    fluxlimit = relativelimit*image2d.max()
+    if fluxlimit < radial_fluxes.max():
+        radius_fluxlimit = radial_range[np.where(radial_fluxes >= fluxlimit)[0].max()]
+    else:
+        radius_fluxlimit = 0
     print('')
+    print(f'Max-flux ratio (image2d/annulus): {image2d.max()/radial_fluxes.max()}')
     print(f'{modelname}_{phase}, {imagefilename}')
     print(f'Obs-radius: {radius_fluxlimit} AU')
 
@@ -1809,4 +2023,58 @@ if check_smoothedimage_radius == 'y':
     plt.xlim(0,4)
     plt.show()
 
+    plt.plot(radial_range,radial_npixels,'.')
+
+
+if plot_smoothedimage_radius == 'y':
+
+    # To plot source-radius vs wavelength
+    wavelengths = [1.6,3.5,10.0]
+
+    t1_50perc = [0,2.0587,2.4116]
+    t2_50perc = [np.nan,np.nan,1.7057]
+    t3_50perc = [0,1.4704,2.0071]
+
+    t1_25perc = [1.9410,2.6469,2.9999]
+    t2_25perc = [1.2351,1.9410,2.4116]  # This
+    t3_25perc = [0,2.1763,2.6469]
+
+    t1_10perc = [2.5293,2.9999,3.3528]
+    t2_10perc = [1.9410,2.4116,3.5881]  # This
+    t3_10perc = [2.0587,2.6469,3.1175]
+
+    # Manually change these to whatever you want to plot
+    plot_these_lists = [t2_50perc,t2_25perc,t2_10perc]
+    legendlist = [
+        r'50\,\%',
+        r'25\,\%',
+        r'10\,\%'
+    ]
+
+    # Initialise plot (add more styles if needed)
+    fig, ax = plt.figure(figsize=(6, 4)), plt.axes()
+    linestyles = ['-','--','-.',':']
+    markerstyles = ['v','o','*','^']
+
+    for nn,sourceradius in enumerate(plot_these_lists):
+
+        ax.plot(
+            wavelengths,sourceradius,
+            linestyle=linestyles[nn],marker=markerstyles[nn],
+            markersize = 8,
+            label = legendlist[nn]
+        )
+
+    ax.plot([1,11],[1.65,1.65],'k:')
+    ax.legend(fontsize=13)
+
+    ax.set_xlabel(r'Wavelength ($\mu$m)',fontsize=18)
+    ax.set_ylabel(r'Source radius (au)',fontsize=18,)
+    ax.set_xlim([1,11])
+    ax.tick_params(axis='both', which='major', labelsize=15)
+
+    fig.tight_layout()
+
+    fig.savefig('figs/source_radius.pdf', dpi=300, facecolor="white")
+    fig.show()
 

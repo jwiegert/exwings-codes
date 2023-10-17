@@ -681,6 +681,8 @@ def load_images(
         distance:float=1
     ):
     """
+    Loads and outputs array of one image in linear and log-scale, and some numbers.
+    
     TODO
     info...
     """
@@ -1728,7 +1730,7 @@ def plot_imagesubplots(
             cmap=plt.get_cmap('hot')
         )
         ax[nn].set(
-            title=f'{modelname}_{phase}: i:{incl}, phi:{phi}, {wavelengthum} um', 
+            title=f'{phase}: i:{incl}, phi:{phi}, {wavelengthum} um', 
             xlabel='Offset (AU)',
             ylabel='Offset (AU)',
         )
