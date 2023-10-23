@@ -355,7 +355,7 @@ if plot_temperaturecompare == 'y':
 
     ax[2].plot(radial_range,T_c5d/temperature_theory,'b',linewidth=2,label = legendlist[0])
     ax[2].plot(radial_range,Tr3d_avr/temperature_theory,'r',linewidth=2,label = legendlist[1])
-    ax[2].legend()
+    ax[2].legend(fontsize=13)
 
     ax[2].fill_between(
         radial_range,
@@ -507,15 +507,15 @@ if plot_seds_cobolddarwin == 'y':
         # Phase number as title on top-plots
         ax[0][nn].set_title(rf'$t_{nn+1} = $\,{phasetimes[nn]}', fontsize=16)
 
-    ax[0][0].set_ylabel(r'$F({\rm CO5BOLD})$, Jy at 1 pc', fontsize=18)
-    ax[1][0].set_ylabel(r'$F({\rm DARWIN})$, Jy at 1 pc', fontsize=18)
+    ax[0][0].set_ylabel(r'$F_\nu({\rm CO5BOLD})$, Jy at 1 pc', fontsize=18)
+    ax[1][0].set_ylabel(r'$F_\nu({\rm DARWIN})$, Jy at 1 pc', fontsize=18)
     ax[2][0].set_ylabel(
         r'$\frac{F({\rm DARWIN}) - F({\rm CO5BOLD})}{F({\rm CO5BOLD}}$', 
         fontsize=18
     )
     for nn in range(3):
         ax[-1][nn].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
-    ax[0][2].legend(title=r'$i$, $\phi$')
+    ax[0][2].legend(title=r'$i$, $\phi$', fontsize=13)
 
     fig.tight_layout()
     fig.show()
@@ -612,7 +612,7 @@ if plot_seds_point == 'y':
         ax[1][nphase].set_xlim(5e-1,6e1)
         ax[1][nphase].tick_params(axis='both', which='major', labelsize=15)
 
-    ax[0][0].set_ylabel(r'$F({\rm point})$, Jy at 1 pc', fontsize=18)
+    ax[0][0].set_ylabel(r'$F_\nu({\rm point})$, Jy at 1 pc', fontsize=18)
     ax[1][0].set_ylabel(
         r'$\frac{F({\rm point}) - F({\rm CO5BOLD})}{F({\rm CO5BOLD})}$', 
         fontsize=18
@@ -620,7 +620,7 @@ if plot_seds_point == 'y':
     for nn in range(3):
         ax[-1][nn].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
         ax[0][nn].set_title(rf'$t_{nn+1} = $\,{phasetimes[nn]}', fontsize=16)
-    ax[0][2].legend(title=r'$i$, $\phi$')
+    ax[0][2].legend(title=r'$i$, $\phi$', fontsize=13)
 
     fig.tight_layout()
     fig.show()
@@ -646,7 +646,7 @@ if plot_seds_obscured == 'y':
         ax[nn].set_ylim(5e5,1.3e8)
         ax[nn].tick_params(axis='both', which='major', labelsize=15)
         ax[nn].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
-    ax[0].set_ylabel(r'$F$ (Jy at 1 pc)', fontsize=18)
+    ax[0].set_ylabel(r'$F_\nu$ (Jy at 1 pc)', fontsize=18)
     
 
     # Links to files with SED from opposite direction
@@ -741,7 +741,7 @@ if plot_seds_cobold == 'y':
         '180, 0',
         '270, 0',
     ]
-    fig,ax = plt.subplots(1,len(phases), figsize = (13, 5))
+    fig,ax = plt.subplots(1,len(phases), figsize = (13, 4.5))
 
     sedscobold = []
     sedcoboldnumbers = []
@@ -774,7 +774,7 @@ if plot_seds_cobold == 'y':
         ax[nphase].set_title(rf'$t_{nphase+1} = $\,{phasetimes[nphase]}', fontsize=16)
 
     # Ylabel and legend with angles
-    ax[0].set_ylabel(r'$F({\rm CO5BOLD})$, Jy at 1 pc', fontsize=18)
+    ax[0].set_ylabel(r'$F_\nu({\rm CO5BOLD})$, Jy at 1 pc', fontsize=18)
     ax[2].legend(title=r'$i$, $\phi$', fontsize=13)
 
     fig.tight_layout()
@@ -849,8 +849,8 @@ if plot_seds_darwinpoint == 'y':
     ax[0].set_title(rf'$t_3 = $\,{phasetimes[2]}', fontsize=16)
 
 
-    ax[0].set_ylabel(r'$F({\rm DARWIN})$, Jy at 1 pc', fontsize=18)
-    ax[1].set_ylabel(r'$F({\rm point})$, Jy at 1 pc', fontsize=18)
+    ax[0].set_ylabel(r'$F_\nu({\rm DARWIN})$, Jy at 1 pc', fontsize=18)
+    ax[1].set_ylabel(r'$F_\nu({\rm point})$, Jy at 1 pc', fontsize=18)
     ax[1].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
     ax[1].legend(title=r'$i$, $\phi$', fontsize=13)
 
@@ -969,7 +969,7 @@ if plot_images_examples == 'y':
         orientation = 'vertical',
     )
     cb0.set_label(
-        label = rf'$F$(MJy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc',fontsize= 15
+        label = rf'$F_\nu$(MJy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc',fontsize= 15
     )
     cb0.ax.tick_params(labelsize=15)
 
@@ -1072,7 +1072,7 @@ if plot_images_darwinpoint == 'y':
     )
     #shrink=0.6,pad=0.15
     cb0.set_label(
-        label = rf'$F$(MJy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc', fontsize=15
+        label = rf'$F_\nu$(MJy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc', fontsize=15
     )
     cb0.ax.tick_params(labelsize=15)
 
@@ -1264,7 +1264,7 @@ if plot_images_convolved_jwst == 'y':
         orientation = 'horizontal', 
     )
     cb0.set_label(
-        label = rf'$F$(Jy/mas$^2$) at 1\,$\mu$m \& {distanceJWST}\,pc', fontsize=15
+        label = rf'$F_\nu$(Jy/mas$^2$) at 1\,$\mu$m \& {distanceJWST}\,pc', fontsize=15
     )
     cb0.ax.tick_params(labelsize=15)
 
@@ -1277,9 +1277,10 @@ if plot_images_convolved_jwst == 'y':
 if plot_images_convolved_vlti == 'y':
     #
     # Plot figure with convolved images, ie as observed
-    # This one with 6 images with VLTI, all phases, two wavelength
-    # VLTI at 10um and 100pc
-    # VLTI at  1um and 100pc
+    # This one with 6 images with VLTI, all phases, three wavelength
+    # VLTI at 10um and 200pc
+    # VLTI at 3.5um and 200pc
+    # VLTI at  1um and 200pc
     #
     distanceVLTI = 200 # parsec
     shortwavelength = 1.625 # um
@@ -1312,8 +1313,8 @@ if plot_images_convolved_vlti == 'y':
     ]
     # Contour levels
     starlevels = [
-        [0.5,1.5,2.5,3.5,4.5,5.5,6.5],
-        [0.5,1.5,2.5,3.5,4.5,5.5],
+        [0.2,1.2,2.2,3.2,4.2,5.2,6.2],
+        [0.2,1.2,2.2,3.2,4.2,5.2],
         [0.2,0.4,0.6,0.8,1.0,1.2,1.4]
     ]
     backlevels = [
@@ -1489,7 +1490,7 @@ if plot_images_convolved_vlti == 'y':
             orientation = 'vertical'
         )
         cb0.set_label(
-            label = rf'$F$(Jy/mas$^2$) at {wavelengths[nwave]}\,$\mu$m',fontsize= 15
+            label = rf'$F_\nu$(Jy/mas$^2$) at {wavelengths[nwave]}\,$\mu$m',fontsize= 15
         )
         cb0.ax.tick_params(labelsize=15)
 
@@ -1596,10 +1597,12 @@ if compute_tenmicronfluxdensities == 'y':
     # r3dresults/st28gm06n052_nostar
 
     models = [
+        'st28gm06n052_staranddust_nospikes',
         'st28gm06n052_nodust',
         'st28gm06n052_nostar'
     ]
     contents = [
+        'Total flux'
         'Stellar flux',
         'Dust flux'
     ]
@@ -1626,15 +1629,29 @@ if compute_tenmicronfluxdensities == 'y':
     ]
 
     # Loop through models and print lsits for tables
-    print('Stellar Flux                   Dust flux                   Contrast (Fd/F*)                Ratio (Ld/L*)')
+    print('Total flux                   Stellar Flux                   Dust flux                   Contrast (Fd/F*)                Ratio (Ld/L*)')
     for phase in phases:
         print(f'  {phase}                            {phase}                     {phase}')
 
         for nangle,spectrum in enumerate(spectra):
 
             # Reset numbers
+            totalflux = 0
             starflux = 0
             dustflux = 0
+
+            # Load total fluxes, at 200pc
+            # Load stellar fluxes, at 200pc, comparing to images I show
+            wavelengths,totalfluxes = a3d.load_spectrum(
+                path = f'../r3dresults/st28gm06n052_staranddust_nospikes/{phase}/{spectrum}',
+                distance = 200
+            )
+            tenmicron = np.where(np.array(wavelengths) > 10)[0][0]
+            totalflux = 0.5 * (
+                totalfluxes[tenmicron-1] + totalfluxes[tenmicron]
+            )
+
+
 
             # Load stellar fluxes, at 200pc, comparing to images I show
             wavelengths,starfluxes = a3d.load_spectrum(
@@ -1669,7 +1686,7 @@ if compute_tenmicronfluxdensities == 'y':
             )
 
             # Print everything
-            print(f'    {angles[nangle]}: {starflux}           {dustflux}           {dustflux/starflux}           {dustlum/starlum}')
+            print(f'    {angles[nangle]}:{totalflux}           {starflux}           {dustflux}           {dustflux/starflux}           {dustlum/starlum}')
 
 
 
