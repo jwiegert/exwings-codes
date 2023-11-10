@@ -43,7 +43,8 @@ a5d.create_stars(
     phases = [phase]
 )
 
-# Remove negative spikes in opacity and density to correct final luminosity
+# Remove negative spikes in opacity and density and pos in temperature 
+# to correct final luminosity
 a5d.smooth_stellardata(
     path = path,
     phases = [phase],

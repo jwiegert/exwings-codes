@@ -700,8 +700,9 @@ def load_images(
             
             # row 1: pixels by pixels
             if nl == 1:
-                npixels = int(line.split()[0])
-            
+                npixels_x = int(line.split()[0])
+                npixels_y = int(line.split()[1])
+                npixels = max([npixels_x,npixels_y])            
             # row 3: pixel size is in cm, divide by AUcm for AU
             if nl == 3:
                 pixelsize_au = float(line.split()[0])/AUcm
@@ -752,7 +753,7 @@ def load_images(
 
         # Move nx and ny
         nx = nx + 1
-        if nx == npixels:
+        if nx == npixels_x:
             nx = 0
             ny = ny + 1
 
@@ -1412,7 +1413,8 @@ def plot_allkappa(
     ):
     """
     TODO write more info
-    Load and plots absorption/scattering/scattering angles of all species in dustopac at folder of path
+    Load and plots absorption/scattering/scattering angles of all species in dustopac 
+    at folder of path
     
     ARGUMENTS
       path: path to folder containing dustkappa and dustopac-files
@@ -1510,6 +1512,10 @@ def plot_allkappa(
             )
         counter += nkappa
     
+    # Change scattering angles to linear scale
+    if max(Nkappa) > 3:
+        ax[3].set(yscale='linear')
+
     # Change specie name strings:
     grainsizes_legend = []
     for grainsize in specie_names:

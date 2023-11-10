@@ -50,7 +50,7 @@ plot_opticalthickness = 'n'
 # Grain properties
 plot_grainsizehist_one = 'n'
 plot_grainsizeradius = 'n'
-plot_absscat = 'n'
+plot_absscat = 'y'
 
 #
 plot_temperatureradial = 'n' # Only cobold-T, no comparison, not used
@@ -71,7 +71,7 @@ plot_images_examples = 'n'
 plot_images_darwinpoint = 'n'
 plot_images_obscured = 'n'
 plot_images_convolved_jwst = 'n'
-plot_images_convolved_vlti = 'y'
+plot_images_convolved_vlti = 'n'
 
 
 
@@ -80,7 +80,7 @@ compute_luminosities = 'n'
 compute_tenmicronfluxdensities = 'n'
 measuredustcloudflux = 'n'
 plot_resolutiondistance = 'n'
-check_smoothedimage_radius = 'n'
+check_smoothedimage_radius = 'y'
 plot_smoothedimage_radius = 'n'
 
 # ----------------------------------------------------------------
@@ -190,7 +190,7 @@ if plot_grainsizeradius == 'y':
 if plot_absscat == 'y':
 
     fig,ax = a3d.plot_allkappa(
-        path='../r3dresults/opacities_st28gm06n052/'
+        path='../r3dresults/opacities_mie_st28gm06n052/'
     )
 
     ax[0].set_ylabel(r'$\kappa_{\rm abs}$ (cm$^2$/g)',fontsize=18)    
@@ -1910,8 +1910,6 @@ if plot_resolutiondistance == 'y':
 # Check "radius" of source at various images
 if check_smoothedimage_radius == 'y':
 
-
-
     # Standard images
     #
     #    '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_1.625um.out'
@@ -2029,6 +2027,7 @@ if check_smoothedimage_radius == 'y':
     else:
         radius_fluxlimit = 0
     print('')
+    print(f'Max flux of smoothed image: {image2d.max()} Jy')
     print(f'Max-flux ratio (image2d/annulus): {image2d.max()/radial_fluxes.max()}')
     print(f'{modelname}_{phase}, {imagefilename}')
     print(f'Obs-radius: {radius_fluxlimit} AU')

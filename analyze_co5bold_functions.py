@@ -1146,13 +1146,14 @@ def plot_grainsizemass_distribution(
 
 # Extract data on star and create r3d-files from it
 def create_star(
-        savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        savpath:str='../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
         amrpath:str='../amr_grid.inp',
         gridpath:str='../grid_distances.csv',
         sizepath:str='../grid_cellsizes.csv',
     ):
     """
-    Extracts data from Co5bold sav-files and creates a dust_star for Radmc3d.
+    Extracts data from Co5bold sav-files, and npy-files and creates a dust_star for Radmc3d.
+    Must use "a5d.heavydata" first if npy-files are not already saved
 
     INPUT
     -----
@@ -1486,6 +1487,11 @@ def create_staropadensity(
 # function only does this for the opacity and density since the temperature 
 # smoothing gives sketchy results and I don't trust them. Too many artifacts with
 # very little smoothing in the r3d-data, and not much changes in luminosity.
+#
+# 20231106: 
+# above seems to be wrong, I smooth also (postive spikes) the temperature
+# with the settings set below.
+# The "strangeness" was mitigated by limiting myself to within 1.01Rstar
 
 
 # Main stellar-data-smoothing function, smooths opacity and density from negative spikes
