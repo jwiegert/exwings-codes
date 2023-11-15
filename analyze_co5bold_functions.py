@@ -172,7 +172,7 @@ cubesize = 222757675648155.62/AUcm
 # Functions that load C5D-data and saves them in arrays
 
 def load_c5dheavydata(
-       savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+       savpath:str='../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
        Nspecies:int = 1,
        gas_density:bool=True,
        dust_density:bool=True,
@@ -273,7 +273,7 @@ def load_c5dheavydata(
 # Load c5d grid properties
 @cython.cfunc
 def load_grid_properties(
-        savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
+        savpath:str='../../exwings_archivedata/co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
     ):
     """
     TODO INFO
@@ -349,7 +349,7 @@ def load_grid_properties(
 
 # function that outputs star's props, but instead lum, mass, temperature, radius
 def load_star_information(
-        savpath:str='../co5bold_data/dst28gm06n056/st28gm06n056_140.sav',
+        savpath:str='../../exwings_archivedata/co5bold_data/dst28gm06n056/st28gm06n056_140.sav',
         printoutput:str='y'
     ):
     """
@@ -387,7 +387,7 @@ def load_star_information(
 
 # Function that just lists the number and names of the dust species available in the data
 def load_dustspecies_names(
-        savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav'
+        savpath:str='../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_186.sav'
     ):
     """
     Extract number of dust species and corresponding list of specie-names from c5d-data
@@ -589,7 +589,7 @@ def plot_densitytemperature(
     path = f'../r3dresults/{modelname}/{phase}/'
 
     Mstar,Rstar,Lstar = load_star_information(
-        savpath = f'../co5bold_data/d{modelname}/{modelname}_{phase}.sav'
+        savpath = f'../../exwings_archivedata/co5bold_data/d{modelname}/{modelname}_{phase}.sav'
     )
 
     # Get paths to necessary files
@@ -749,11 +749,12 @@ def plot_grainsize_distribution(
 
 
 def plot_grainsizeradius(
-        grainsizes_folder='../../exwings_archivedata/st28gm06n052_generaldata/',
-        grid_path='../r3dresults/st28gm06n052_staranddust_1/grid_distances.csv',
-        amr_path='../r3dresults/st28gm06n052_staranddust_1/amr_grid.inp',
-        phases=['186'],
-        ax=0
+        grainsizes = '../../exwings_archivedata/r3dresults/st28gm06n052_generaldata/grain_sizes_186.dat',
+        savpath = '../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        grid_path = '../r3dresults/st28gm06n052_staranddust_1/grid_distances.csv',
+        amr_path = '../r3dresults/st28gm06n052_staranddust_1/amr_grid.inp',
+        phases = ['186'],
+        axcheck=0
     ):
     """
     Plots grain size vs radial distance to centre of grid of all phases of a data set.
@@ -767,10 +768,6 @@ def plot_grainsizeradius(
 
     """
 
-    # Automatically add / to end of path if it's missing
-    if grainsizes_folder[-1] != '/':
-        grainsizes_folder += '/'
-
     # Load grid info
     # Load radial coordinates of R3D-cells and change to AU
     # Load half-size of cube to show where shells are partially outside the cube
@@ -782,14 +779,14 @@ def plot_grainsizeradius(
 
     # Load star's radius here
     Mstar,Rstar,Lstar = load_star_information(
-        savpath='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        savpath = savpath,
         printoutput='n'
     )
     Rstar /= AUcm
 
 
     # If needed, initiate fig-ax-objects
-    if ax.any() == 0:
+    if axcheck.any() == 0:
         # Create figure-ax-objects
         fig, ax = plt.subplots(
             len(phases),1,
@@ -809,7 +806,7 @@ def plot_grainsizeradius(
 
         # Load grainsizes
         grain_sizes,Ncells = a3d.load_grainsizes(
-            grainsize_path = f'{grainsizes_folder}grain_sizes_{phase}.dat'
+            grainsize_path = grainsizes
         )
         # Change to um
         grain_sizes *= 1e4
@@ -1349,7 +1346,7 @@ def create_stars(
 
             print(f'    Translating C5D star model {modelname} and phase {phase} to R3D')
 
-            savpath = f'../co5bold_data/d{modelname}/{modelname}_{phase}.sav'
+            savpath = f'../../exwings_archivedata/co5bold_data/d{modelname}/{modelname}_{phase}.sav'
             path = f'../r3dresults/{modelname}/'
 
             create_star(
@@ -1822,7 +1819,7 @@ def smooth_density(
 
 
 def create_dustfiles(
-        savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        savpath:str='../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
         amrpath:str='../amr_grid.inp',
         gridpath:str='../grid_distances.csv',
         sizepath:str='../grid_cellsizes.csv',
@@ -2054,7 +2051,7 @@ def extract_grainsizes(
         amrpath:str='../r3dresults/st28gm06n052/amr_grid.inp',
         gridpath:str='../r3dresults/st28gm06n052/grid_distances.csv',
         sizepath:str='../r3dresults/st28gm06n052/grid_cellsizes.csv',
-        savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        savpath:str='../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
         Amon:float=2.3362e-22,
         rhomon:float=3.27,
         ndnH:float=3e-16,

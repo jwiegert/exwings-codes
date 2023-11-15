@@ -1242,7 +1242,7 @@ def plot_temperaturebins_radius(
 
     # Load star's radius here
     Mstar,Rstar,Lstar = a5d.load_star_information(
-        savpath='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        savpath='../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
         printoutput='n'
     )
     Rstar /= AUcm

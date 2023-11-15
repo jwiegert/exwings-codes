@@ -33,7 +33,9 @@ diameterJWST = 6.5 # metres
 
 # Dust model snapshots labels
 phasetimes = [
-    '29.95 yrs'
+    '29.31 yrs',
+    '29.95 yrs',
+    '31.21 yrs'
 ]
 
 
@@ -46,20 +48,29 @@ plot_coboldgrid = 'n'
 plot_opticalthickness = 'n'
 
 # Grain properties
-plot_grainsizehist = 'y'
+plot_grainsizehist_one = 'n'
 plot_grainsizeradius = 'n'
-plot_absscat = 'n'
+plot_absscat = 'y'
+
+#
+plot_temperatureradial = 'n' # Only cobold-T, no comparison, not used
 plot_temperaturecompare = 'n'
 
 # Plot SEDs
-plot_seds_coboldplot_seds_darwinpoint = 'n'
+plot_seds_cobolddarwin = 'n'    # Old fig
+plot_seds_point = 'n'           # Old fig
+plot_seds_obscured = 'n'
+plot_seds_cobold = 'n'
+plot_seds_darwinpoint = 'n'
+
+
+
 
 # Plot various images
 plot_images_examples = 'n'
 plot_images_darwinpoint = 'n'
-
-
-# Merge contour and images, only t2
+plot_images_obscured = 'n'
+plot_images_convolved_jwst = 'n'
 plot_images_convolved_vlti = 'n'
 
 
@@ -69,10 +80,8 @@ compute_luminosities = 'n'
 compute_tenmicronfluxdensities = 'n'
 measuredustcloudflux = 'n'
 plot_resolutiondistance = 'n'
-check_smoothedimage_radius = 'n'
+check_smoothedimage_radius = 'y'
 plot_smoothedimage_radius = 'n'
-
-
 
 # ----------------------------------------------------------------
 # FIG Cut through of CO5BOLD grid for st28gm06n052 with cell 
@@ -131,67 +140,14 @@ if plot_opticalthickness == 'y':
 # Warning: slow because of loading lots dust densities
 
 
-# Plots 
-if plot_grainsizehist == 'y':
+# This plots histogram of mass of grain size bins
+if plot_grainsizehist_one == 'y':
 
-    # Initiate fig-axes-object
-    fig,ax = plt.figure(
-        figsize=(6, 4)
-    ), plt.axes()
-
-
-    # Load binned grain sizes per cell
-    grain_sizes,Ncells = a3d.load_grainsizes(
-        grainsize_path = '../r3dresults/st28gm06n052_staranddust_1/grain_sizes_binned_190.dat'
+    fig,ax = a5d.plot_grainsizemass_histogram(
+        model='st28gm06n052_staranddust_1',
+        phases=[186,190,198],
+        phaselabels=phasetimes
     )
-
-    # And save grain sizes in um
-    grainsize_bins = np.unique(grain_sizes[np.where(grain_sizes > 0)[0]])*1e4
-
-    # And number of grain sizes, ie species
-    Nspecies = np.size(grainsize_bins)
-
-    # And create array for masses per grain size bin
-    dustmass_bins = np.zeros(Nspecies)
-
-    # Compute volume per cell - load cell sizes
-    cell_sizes = a3d.load_cellsizes(
-        sizepath = '../r3dresults/st28gm06n052_staranddust_1/grid_cellsizes.csv',
-        amrpath = '../r3dresults/st28gm06n052_staranddust_1/amr_grid.inp'
-    )
-
-    # Cell volumes
-    cell_volumes = cell_sizes**3
-
-    # Skip header, star, and load all dust data
-    # (much faster with a custom density loader since my other density loader
-    # opens and closes the file too much.)
-    with open(f'../r3dresults/st28gm06n052_staranddust_1/190/dust_density.inp') as f:
-        for nn,line in enumerate(f.readlines()):
-            if nn > 3+Ncells:
-
-                # Only look at cells with dust:
-                data = float(line)
-
-                if data > 0:
-
-                    # Then we are at this species number
-                    nspecie = int((nn-3-Ncells)/Ncells)
-
-                    # And this cell
-                    ncell = (nn-3-Ncells) - nspecie*Ncells
-
-                    # Add the total dust mass of this cell to the size bin
-                    dustmass_bins[nspecie] += cell_volumes[ncell]*data
-                    # This is then the dust mass in grams per grain size
-
-    # Plot figures as step-plot with symbols in the moddel
-    ax.step(grainsize_bins,dustmass_bins,'b-o',where='mid')
-
-    print(f'Finished figure object')
-    
-    # Tight layout for nicer image file
-    fig.tight_layout()
 
     ax.set_ylabel(r'Dust mass (g)',fontsize=18)    
     ax.set_xlabel(r'Grain size ($\mu$m)',fontsize=18)
@@ -206,100 +162,21 @@ if plot_grainsizehist == 'y':
 # Plot figure with grain sizes vs R
 if plot_grainsizeradius == 'y':
 
-    grainsizes = '../../exwings_archivedata/r3dresults/st28gm06n052_generaldata/grain_sizes_190.dat'
-    savpath = '../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_190.sav'
-    grid_path = '../r3dresults/st28gm06n052_staranddust_1/grid_distances.csv'
-    amr_path = '../r3dresults/st28gm06n052_staranddust_1/amr_grid.inp'
-    phase = '190'
-    fig, ax = plt.figure(figsize=(6,4)), plt.axes()
-
-
-
-    # Load grid info
-    # Load radial coordinates of R3D-cells and change to AU
-    # Load half-size of cube to show where shells are partially outside the cube
-    cellcoords = a3d.load_griddistances(
-        gridpath=grid_path,
-        amrpath=amr_path
+    phases = ['186','190','198']
+    fig, ax = plt.subplots(
+        len(phases),1,
+        figsize=(6,13)
     )
-    radii = cellcoords[:,0]/AUcm
-
-    # Load star's radius here
-    Mstar,Rstar,Lstar = a5d.load_star_information(
-        savpath = savpath,
-        printoutput='n'
-    )
-    Rstar /= AUcm
+    a5d.plot_grainsizeradius(phases=phases,ax=ax)
 
 
-    # Fill plots
-    Nbins = 100
-
-
-    # Load grainsizes
-    grain_sizes,Ncells = a3d.load_grainsizes(
-        grainsize_path = grainsizes
-    )
-    # Change to um
-    grain_sizes *= 1e4
-
-
-    # N radial bins, set up radial grid
-    radial_bins = np.linspace(0,radii.max(),Nbins+1)
-    radial_range = np.zeros(Nbins)
-    grainsize_bins = np.zeros(Nbins)
-    grainsize_max = np.zeros(Nbins)
-    grainsize_min = np.zeros(Nbins)
-    grainsize_std = np.zeros(Nbins)
-
-
-    # Loop through bins and save binned data
-    for nn in range(Nbins):
-        ncells = np.where((radii >= radial_bins[nn]) & (radii < radial_bins[nn+1]))[0]
-        grainsize_bins[nn] = grain_sizes[ncells].mean()
-        grainsize_max[nn] = grain_sizes[ncells].max()
-        grainsize_min[nn] = grain_sizes[ncells].min()
-        grainsize_std[nn] = grain_sizes[ncells].std()
-        radial_range[nn] = radial_bins[nn] + 0.5 * radial_bins[1]
-
-
-    
-    # Plot max-min-range of grain sizes
-    ax.fill_between(
-        radial_range,
-        grainsize_min,
-        grainsize_max,
-        color='g',
-        alpha=0.2
-    )
-
-    # Plot std-range of grain sizes
-    ax.fill_between(
-        radial_range,
-        grainsize_bins-grainsize_std,
-        grainsize_bins+grainsize_std,
-        color='g',
-        alpha=0.4
-    )
-
-    # Plot average value
-    ax.plot(radial_range,grainsize_bins,'k')
-
-    # Add line for stellar surface and edge of cube
-    ax.plot([Rstar,Rstar],[0,grainsize_max.max()+0.05],'r:',linewidth=1)
-    ax.plot([cubesize,cubesize],[0,grainsize_max.max()+0.05],'k:',linewidth=1)
-
-    
-    # Plot settings
-    ax.set_ylabel(r'Grain sizes ($\mu$m)',fontsize=18)
-    ax.set_xlabel(r'Distance (au)',fontsize=18)
-    ax.set(
-        xlim=(0,radial_range.max()+0.5),
-        ylim=(0,grainsize_max.max()+0.05)
-    )
-    ax.tick_params(axis='both', which='major', labelsize=15)
-
-    print('Grain size fig object is finished, show with fig.show()')
+    #size_path='../r3dresults/st28gm06n052_staranddust_1/grid_cellsizes.csv',
+    for nn in range(len(phases)):
+        ax[nn].set_ylabel(fr'Grain sizes ($\mu$m), $t_{nn+1} = $\,{phasetimes[nn]}',fontsize=18)
+        ax[nn].tick_params(axis='both', which='major', labelsize=15)
+    ax[0].set_xlabel(r'',fontsize=18)
+    ax[1].set_xlabel(r'',fontsize=18)
+    ax[2].set_xlabel(r'Distance (au)',fontsize=18)
 
     fig.tight_layout()
     fig.savefig('figs/grainsizes_radius.pdf', dpi=300, facecolor="white")
@@ -337,24 +214,39 @@ if plot_absscat == 'y':
 #
 # Plot Figure with radial dependence of temperatures
 
+if plot_temperatureradial == 'y':
+    fig,ax, Tbins,Tstd,Tminmax,radial_range = a3d.plot_temperaturebins_radius(
+        temperature_path='../r3dresults/st28gm06n052_staranddust/186/dust_temperature.dat',
+        grid_path='../r3dresults/st28gm06n052_staranddust/grid_distances.csv',
+        amr_path='../r3dresults/st28gm06n052_staranddust/amr_grid.inp',
+        numb_specie=1
+    )
+
+    ax.set_ylabel(r'Gas \&  dust temperature (K)',fontsize=18)
+    ax.set_xlabel(r'Distance (au)',fontsize=18)
+
+    ax.tick_params(axis='both', which='major', labelsize=15)
+    fig.tight_layout()
+    fig.savefig('figs/temperature_radial.pdf', dpi=300, facecolor="white")
+
+    fig.show()
+
 
 # Plot comparisons of temperature between co5bold and radmc3d
 if plot_temperaturecompare == 'y':
-
-    # Chose phase-designation
-    phase = 190
 
     # Set up subplots
     fig,ax = plt.subplots(
         3,1,
         figsize=(6,13)
     )
+    phase = 186
 
 
     # Load star's radius here
     Mstar,Rstar,Lstar = a5d.load_star_information(
-        savpath = f'../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_{phase}.sav',
-        printoutput = 'n'
+        savpath='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        printoutput='n'
     )
     Rstar /= AUcm
 
@@ -516,21 +408,323 @@ if plot_temperaturecompare == 'y':
 
 # ----------------------------------------------------------------
 #
+# Plot Figure subplots of co5bold-darwin Seds
 
+if plot_seds_cobolddarwin == 'y':
 
-# Plot all t2-SEDs
-if plot_seds_coboldplot_seds_darwinpoint == 'y':
-
-    # Initiate figure
-    fig,ax = plt.subplots(1,3, figsize = (13, 4.5))
-
-    # Set path info for SEDs
     paths = [
         '../r3dresults/st28gm06n052_staranddust_nospikes/',
         '../r3dresults/st28gm06n052_darwinsource/',
-        '../r3dresults/st28gm06n052_pointtemperature/'
     ]
-    phase = '190'
+    
+    
+    phases = ['186','190','198']
+    spectra = [
+        '/spectrum_i000_phi000.out',
+        '/spectrum_i090_phi000.out',
+        '/spectrum_i090_phi090.out',
+        '/spectrum_i090_phi270.out',
+        '/spectrum_i180_phi000.out',
+        '/spectrum_i270_phi000.out'
+    ]
+
+    legendlist = [
+        '0, 0',
+        '90, 0',
+        '90, 90',
+        '90, 270',
+        '180, 0',
+        '270, 0',
+    ]
+    fig,ax = plt.subplots(len(paths)+1,len(phases), figsize = (12, 10))
+
+    
+    sedscobold = []
+    sedcoboldnumbers = []
+    
+    sedsdarwin = []
+    sedsdarwinnumbers = []
+
+    # Extract SEDs and fill figure-axes-objects
+    for nphase,phase in enumerate(phases):
+        for npath,path in enumerate(paths):
+            print(path)
+            for nangle,spectrum in enumerate(spectra):
+
+                wavelength,sed = a3d.load_spectrum(
+                    path = path+phase+spectrum
+                )
+                
+                # Print all sed-luminosities
+                luminosity = a3d.compute_luminosity(
+                    wavelengths=wavelength,
+                    spectrum=sed
+                )
+                print(f'{phase}{spectrum}: {luminosity/Lsol}')
+
+
+                if npath == 0:
+                    sedscobold.append(sed)
+                    sedcoboldnumbers.append(f'{nphase} {nangle}')
+                    
+                if npath == 1:
+                    sedsdarwin.append(sed)
+                    sedsdarwinnumbers.append(f'{nphase} {nangle}')
+
+
+                ax[npath][nphase].plot(wavelength,sed,label = legendlist[nangle])
+
+            ax[npath][nphase].set(xscale='log',yscale='log')
+            ax[npath][nphase].set_xlim(5e-1,6e1)
+            ax[npath][nphase].set_ylim(1e6,1.3e8)
+            ax[npath][nphase].tick_params(axis='both', which='major', labelsize=15)
+
+
+
+    # Compute chi2-numbers of each SED and add to plots
+    for nn in range(len(sedcoboldnumbers)):
+        if sedcoboldnumbers[nn] == sedsdarwinnumbers[nn]:
+            
+            #chisq_array, chiaq_reduced = a3d.compute_chisquare(
+            #    simulation = np.array(sedsdarwin[nn]),
+            #    observation = np.array(sedscobold[nn]),
+            #    obssigma = np.array(sedscobold[nn])
+            #)
+
+            chisq_array = (np.array(sedsdarwin[nn]) - np.array(sedscobold[nn]))/np.array(sedscobold[nn])
+            
+            # Plot line (angle order should be the same as above)
+            nphase = int(sedcoboldnumbers[nn][0])
+            ax[2][nphase].plot(wavelength,chisq_array)
+            ax[2][nphase].set(xscale='log',yscale='linear')
+            ax[2][nphase].set_xlim(5e-1,6e1)
+            #ax[2][nphase].set_ylim(0,3)
+            ax[2][nphase].tick_params(axis='both', which='major', labelsize=15)
+    
+    for nn in range(3):
+        # Line for the 1-1 correspondance
+        ax[2][nn].plot([wavelength[0],wavelength[-1]],[0,0],'k:')
+        # Phase number as title on top-plots
+        ax[0][nn].set_title(rf'$t_{nn+1} = $\,{phasetimes[nn]}', fontsize=16)
+
+    ax[0][0].set_ylabel(r'$F_\nu({\rm CO5BOLD})$, Jy at 1 pc', fontsize=18)
+    ax[1][0].set_ylabel(r'$F_\nu({\rm DARWIN})$, Jy at 1 pc', fontsize=18)
+    ax[2][0].set_ylabel(
+        r'$\frac{F({\rm DARWIN}) - F({\rm CO5BOLD})}{F({\rm CO5BOLD}}$', 
+        fontsize=18
+    )
+    for nn in range(3):
+        ax[-1][nn].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
+    ax[0][2].legend(title=r'$i$, $\phi$', fontsize=13)
+
+    fig.tight_layout()
+    fig.show()
+    
+    #Save figure
+    fig.savefig(f'figs/seds_all_cobold_darwin.pdf', dpi=300, facecolor="white")
+
+
+
+
+
+# Plots SEDs of point-source-temperature
+if plot_seds_point == 'y':
+
+    paths = [
+        '../r3dresults/st28gm06n052_pointtemperature/',
+        '../r3dresults/st28gm06n052_staranddust_nospikes/',
+    ]
+    
+    
+    phases = ['186','190','198']
+    spectra = [
+        '/spectrum_i000_phi000.out',
+        '/spectrum_i090_phi000.out',
+        '/spectrum_i090_phi090.out',
+        '/spectrum_i090_phi270.out',
+        '/spectrum_i180_phi000.out',
+        '/spectrum_i270_phi000.out'
+    ]
+
+    legendlist = [
+        '0, 0',
+        '90, 0',
+        '90, 90',
+        '90, 270',
+        '180, 0',
+        '270, 0',
+    ]
+    fig,ax = plt.subplots(len(paths),len(phases), figsize = (12, 6))
+
+    print(paths[0])
+    # Loop through phases
+    for nphase,phase in enumerate(phases):
+        # Loop through spectra
+        for nangle,spectrum in enumerate(spectra):
+
+            # Load all point source seds
+            wavelength,sed = a3d.load_spectrum(
+                path = paths[0]+phase+spectrum
+            )
+            
+            # Print all sed-luminosities
+            luminosity = a3d.compute_luminosity(
+                wavelengths=wavelength,
+                spectrum=sed
+            )
+            print(f'{phase}{spectrum}: {luminosity/Lsol}')
+
+            # Plot on first row
+            ax[0][nphase].plot(wavelength,sed,label = legendlist[nangle])
+        
+        # Set settings for first row
+        ax[0][nphase].set(xscale='log',yscale='log')
+        ax[0][nphase].set_xlim(5e-1,6e1)
+        ax[0][nphase].set_ylim(1e6,1.3e8)
+        ax[0][nphase].tick_params(axis='both', which='major', labelsize=15)
+
+
+    # Compute chi2-numbers of each SED and add to plots
+    # (Yes I load the point-seds twice, whatev)
+    for nphase,phase in enumerate(phases):
+        for spectrum in spectra:
+
+            # Load each spectra
+            wavelength,sedpoint = a3d.load_spectrum(
+                path = paths[0]+phase+spectrum
+            )
+            wavelength,sedcobold = a3d.load_spectrum(
+                path = paths[1]+phase+spectrum
+            )
+
+            # Compute comparisons
+            #chisq_array, chiaq_reduced = a3d.compute_chisquare(
+            #    simulation = np.array(sedpoint),
+            #    observation = np.array(sedcobold),
+            #    obssigma = np.array(sedcobold)
+            #)
+            chisq_array = (np.array(sedpoint) - np.array(sedcobold))/np.array(sedcobold)
+            
+            # Plot line (angle order should be the same as above)
+            ax[1][nphase].plot(wavelength,chisq_array)
+        ax[1][nphase].plot([wavelength[0],wavelength[-1]],[0,0],'k:')
+        ax[1][nphase].set(xscale='log',yscale='linear')
+        ax[1][nphase].set_xlim(5e-1,6e1)
+        ax[1][nphase].tick_params(axis='both', which='major', labelsize=15)
+
+    ax[0][0].set_ylabel(r'$F_\nu({\rm point})$, Jy at 1 pc', fontsize=18)
+    ax[1][0].set_ylabel(
+        r'$\frac{F({\rm point}) - F({\rm CO5BOLD})}{F({\rm CO5BOLD})}$', 
+        fontsize=18
+    )
+    for nn in range(3):
+        ax[-1][nn].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
+        ax[0][nn].set_title(rf'$t_{nn+1} = $\,{phasetimes[nn]}', fontsize=16)
+    ax[0][2].legend(title=r'$i$, $\phi$', fontsize=13)
+
+    fig.tight_layout()
+    fig.show()
+    
+    #Save figure
+    fig.savefig(f'figs/seds_all_pointtemperature.pdf', dpi=300, facecolor="white")
+
+
+# Plot 3 representative SEDer vid obskuration
+if plot_seds_obscured == 'y':
+
+
+    # Set up settings for plots
+    fig,ax = plt.subplots(1,4, figsize = (12, 4))
+    linestyles = [
+        'b-',
+        'k:',
+        'k--'
+    ]
+    for nn in range(len(ax)):
+        ax[nn].set(xscale='log',yscale='log')
+        ax[nn].set_xlim(3e-1,6e1)
+        ax[nn].set_ylim(5e5,1.3e8)
+        ax[nn].tick_params(axis='both', which='major', labelsize=15)
+        ax[nn].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
+    ax[0].set_ylabel(r'$F_\nu$ (Jy at 1 pc)', fontsize=18)
+    
+
+    # Links to files with SED from opposite direction
+    imagefiles = [
+        '../r3dresults/st28gm06n052_staranddust_nospikes/198/spectrum_i090_phi270.out',
+        '../r3dresults/st28gm06n052_nodust/198/spectrum_i090_phi270.out',
+        '../r3dresults/st28gm06n052_nostar/198/spectrum_i090_phi270.out'
+    ]
+    ax[0].text(x=5e0,y=7e7,s=r'\noindent CO5BOLD\\$i = 90$, $\phi = 270$')
+
+
+    # Load and plot SEDs and wavelength grid
+    for nn,imagefile in enumerate(imagefiles):
+        wavelength,sed = a3d.load_spectrum(
+            path = imagefile
+        )
+        ax[0].plot(wavelength,sed,linestyles[nn])
+
+    # Links to obscured cobold-sed
+    imagefiles = [
+        '../r3dresults/st28gm06n052_staranddust_nospikes/198/spectrum_i090_phi090.out',
+        '../r3dresults/st28gm06n052_nodust/198/spectrum_i090_phi090.out',
+        '../r3dresults/st28gm06n052_nostar/198/spectrum_i090_phi090.out'
+    ]
+    # Load and plot SEDs and wavelength grid
+    for nn,imagefile in enumerate(imagefiles):
+        wavelength,sed = a3d.load_spectrum(
+            path = imagefile
+        )
+        ax[1].plot(wavelength,sed,linestyles[nn])
+    ax[1].text(x=5e0,y=7e7,s=r'\noindent CO5BOLD\\$i = 90$, $\phi = 90$')
+
+
+    # Links to DARWIN-version of same LOS
+    imagefiles = [
+        '../r3dresults/st28gm06n052_darwinsource/198/spectrum_i090_phi090.out',
+        '../r3dresults/st28gm06n052_darwinnodust/10/spectrum_i000_phi000.out',
+        '../r3dresults/st28gm06n052_nostar/198/spectrum_i090_phi090.out'
+    ]
+    # Load and plot SEDs and wavelength grid
+    for nn,imagefile in enumerate(imagefiles):
+        wavelength,sed = a3d.load_spectrum(
+            path = imagefile
+        )
+        ax[2].plot(wavelength,sed,linestyles[nn])
+    ax[2].text(x=5e0,y=7e7,s=r'\noindent DARWIN\\$i = 90$, $\phi = 90$')
+
+
+    # Links to r3d-temperature-version of same LOS
+    imagefiles = [
+        '../r3dresults/st28gm06n052_pointtemperature/198/spectrum_i090_phi090.out',
+        '../r3dresults/st28gm06n052_pointtemperature/198/spectrum_i090_phi090_nodust.out',
+        '../r3dresults/st28gm06n052_pointtemperature/198/spectrum_i090_phi090_nostar.out',
+    ]
+    # Load and plot SEDs and wavelength grid
+    for nn,imagefile in enumerate(imagefiles):
+        wavelength,sed = a3d.load_spectrum(
+            path = imagefile
+        )
+        ax[3].plot(wavelength,sed,linestyles[nn])
+    ax[3].text(x=5e0,y=7e7,s=r'\noindent Point source\\$i = 90$, $\phi = 90$')
+
+
+
+    fig.tight_layout()
+    fig.show()
+
+    #Save figure
+    fig.savefig(f'figs/seds_obscuredexamples.pdf', dpi=300, facecolor="white")
+
+
+# Plot all SEDs of CO5BOLD data
+if plot_seds_cobold == 'y':
+
+    path = '../r3dresults/st28gm06n052_staranddust_nospikes/'
+    phases = [
+        '186','190','198'
+    ]
     spectra = [
         '/spectrum_i000_phi000.out',
         '/spectrum_i090_phi000.out',
@@ -547,10 +741,13 @@ if plot_seds_coboldplot_seds_darwinpoint == 'y':
         '180, 0',
         '270, 0',
     ]
+    fig,ax = plt.subplots(1,len(phases), figsize = (13, 4.5))
 
+    sedscobold = []
+    sedcoboldnumbers = []
+    
     # Extract SEDs and fill figure-axes-objects
-    for npath,path in enumerate(paths):
-
+    for nphase,phase in enumerate(phases):
         for nangle,spectrum in enumerate(spectra):
 
             wavelength,sed = a3d.load_spectrum(
@@ -562,31 +759,106 @@ if plot_seds_coboldplot_seds_darwinpoint == 'y':
                 wavelengths=wavelength,
                 spectrum=sed
             )
-            print(f'{path}{spectrum}: {luminosity/Lsol}')
+            print(f'{phase}{spectrum}: {luminosity/Lsol}')
+
+            sedscobold.append(sed)
+            sedcoboldnumbers.append(f'{nphase} {nangle}')
                 
+            ax[nphase].plot(wavelength,sed,label = legendlist[nangle])
+
+        ax[nphase].set(xscale='log',yscale='log')
+        ax[nphase].set_xlim(5e-1,6e1)
+        ax[nphase].set_ylim(1e6,1.3e8)
+        ax[nphase].tick_params(axis='both', which='major', labelsize=15)
+        ax[nphase].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)    
+        ax[nphase].set_title(rf'$t_{nphase+1} = $\,{phasetimes[nphase]}', fontsize=16)
+
+    # Ylabel and legend with angles
+    ax[0].set_ylabel(r'$F_\nu({\rm CO5BOLD})$, Jy at 1 pc', fontsize=18)
+    ax[2].legend(title=r'$i$, $\phi$', fontsize=13)
+
+    fig.tight_layout()
+    fig.show()
+    
+    #Save figure
+    fig.savefig(f'figs/seds_all_cobold.pdf', dpi=300, facecolor="white")
+
+
+
+
+
+
+
+
+
+
+# Plot t3-SEDs of Darwin and Point-source-data
+if plot_seds_darwinpoint == 'y':
+    
+    paths = [
+        '../r3dresults/st28gm06n052_darwinsource/',
+        '../r3dresults/st28gm06n052_pointtemperature/'
+    ]
+    phase = '198'
+    spectra = [
+        '/spectrum_i000_phi000.out',
+        '/spectrum_i090_phi000.out',
+        '/spectrum_i090_phi090.out',
+        '/spectrum_i090_phi270.out',
+        '/spectrum_i180_phi000.out',
+        '/spectrum_i270_phi000.out'
+    ]
+    legendlist = [
+        '0, 0',
+        '90, 0',
+        '90, 90',
+        '90, 270',
+        '180, 0',
+        '270, 0',
+    ]
+    fig,ax = plt.subplots(len(paths),1, figsize = (5, 8))
+    
+    sedsdarwin = []
+    sedspoint = []
+
+
+    # Extract SEDs and fill figure-axes-objects
+    for npath,path in enumerate(paths):
+        print(path)
+        for nangle,spectrum in enumerate(spectra):
+
+            wavelength,sed = a3d.load_spectrum(
+                path = path+phase+spectrum
+            )
+            
+            # Print all sed-luminosities
+            luminosity = a3d.compute_luminosity(
+                wavelengths=wavelength,
+                spectrum=sed
+            )
+            print(f'{phase}{spectrum}: {luminosity/Lsol}')
+
             ax[npath].plot(wavelength,sed,label = legendlist[nangle])
 
         ax[npath].set(xscale='log',yscale='log')
         ax[npath].set_xlim(5e-1,6e1)
         ax[npath].set_ylim(1e6,1.3e8)
         ax[npath].tick_params(axis='both', which='major', labelsize=15)
-        ax[npath].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)    
-        
-    # Ylabel, titles and legend with angles
-    ax[0].set_ylabel(r'$F_\nu$, Jy at 1 pc', fontsize=18)
 
-    ax[0].set_title(rf'CO5BOLD', fontsize=16)
-    ax[1].set_title(rf'DARWIN', fontsize=16)
-    ax[2].set_title(rf'Point source', fontsize=16)
+    # Time stamp above
+    ax[0].set_title(rf'$t_3 = $\,{phasetimes[2]}', fontsize=16)
 
-    ax[0].legend(title=r'$i$, $\phi$', fontsize=13)
+
+    ax[0].set_ylabel(r'$F_\nu({\rm DARWIN})$, Jy at 1 pc', fontsize=18)
+    ax[1].set_ylabel(r'$F_\nu({\rm point})$, Jy at 1 pc', fontsize=18)
+    ax[1].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
+    ax[1].legend(title=r'$i$, $\phi$', fontsize=13)
 
     fig.tight_layout()
     fig.show()
     
     #Save figure
-    fig.savefig(f'figs/seds_all.pdf', dpi=300, facecolor="white")
-
+    fig.savefig(f'figs/seds_darwin_point.pdf', dpi=300, facecolor="white")
 
 
 
@@ -599,39 +871,29 @@ if plot_seds_coboldplot_seds_darwinpoint == 'y':
 # Plot various images
 
 if plot_images_examples == 'y':
-    # Plot 2 images at each walanvength, one phase, lin and log
+    # Plot 3 images at one walanvength, one per phase, lin and log
 
-    # Chose wavelengths here
-    wavelengths = [1,10]
+    # Chose wavelength here
+    wavelengthum = 10
 
-    # Suggested flux density limits for plots
-    # lin and log
-    fluxlimitslin = [
-        [0,4],
-        [0,1.7]
+    distance = 1
+    imagelist = [
+        f'../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_{wavelengthum}um.out',
+        f'../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_{wavelengthum}um.out',
+        f'../r3dresults/st28gm06n052_staranddust_2/198/image_i000_phi000_{wavelengthum}um.out'
     ]
-    fluxlimitslog = [
-        [-9,7],
-        [1,7]
-    ]
-    # Old numbers
-    #  1um: 0 -> 3   (lin), -10 -> 6 (log)
-    # 10um: 0 -> 1.5 (lin),  1  -> 6 (log)
+    
+    # Number of plots
+    Nplots = len(imagelist)
 
-    # Initialise fig
+    # Set fig-and-axis settings for subplots
     fig, ax = plt.subplots(
-        2,len(wavelengths),
-        figsize = (9,7.3),
+        2,Nplots,
+        figsize = (12,7.3),
     )
 
-    # Chose distnace
-    distance = 1
-
-    # Loop through wavelengths and plot images
-    for nwave,wavelengthum in enumerate(wavelengths):
-
-        # Image file name:
-        image = f'../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_{wavelengthum}um.out'
+    # Load image data and save in various lists
+    for nn,image in enumerate(imagelist):
 
         # Extract path and imagename from image
         imagestrings = re.split('/', image)
@@ -654,67 +916,79 @@ if plot_images_examples == 'y':
         # Change to MJy per asec2
         image2d = image2d*1e-6
 
-        # Plot linear scale image
-        imlin = ax[0][nwave].imshow(
+        # Limits per wavelength suggestions:
+        #  1um: 0 -> 3   (lin), -10 -> 6 (log)
+        # 10um: 0 -> 1.5 (lin),  1  -> 6 (log)
+
+
+        imlin = ax[0][nn].imshow(
             image2d, 
             origin='lower', extent=axisplot, 
             cmap=plt.get_cmap('hot'),
-            vmin=fluxlimitslin[nwave][0],
-            vmax=fluxlimitslin[nwave][1]
+            vmin=0,vmax=1.5
         )
-        ax[0][nwave].set_title(rf'{wavelengthum}\,$\mu$m', fontsize=15)
-        ax[0][nwave].tick_params(axis='both', which='major', labelsize=15)
+        ax[0][nn].set_title(rf'$t_{nn+1} = $\,{phasetimes[nn]}', fontsize=15)
+        ax[0][nn].tick_params(axis='both', which='major', labelsize=15)
 
-        # Plot log-scale image
-        imlog = ax[1][nwave].imshow(
+        imlog = ax[1][nn].imshow(
             image2dlog, 
             origin='lower', extent=axisplot, 
             cmap=plt.get_cmap('hot'),
-            vmin=fluxlimitslog[nwave][0],
-            vmax=fluxlimitslog[nwave][1]
+            vmin=1,vmax=6
         )
-        ax[1][nwave].set_xlabel('Offset (au)',fontsize=18)
-        ax[1][nwave].tick_params(axis='both', which='major', labelsize=15)
-
-
-
-        # Set colour bar settings and label, first row (linear)
-        divider = make_axes_locatable(ax[0][nwave])
-        cax = divider.append_axes(
-            'right', 
-            size='5%', 
-            pad=0.05
-        )
-        cb0 = plt.colorbar(
-            imlin, 
-            cax=cax, 
-            orientation = 'vertical',
-        )
-        cb0.set_label(
-            label = rf'$F_\nu$(MJy/asec$^2$) at {distance} pc',fontsize= 15
-        )
-        cb0.ax.tick_params(labelsize=15)
-
-        # Set colour bar settings and label, second row (logarithmic)
-        divider = make_axes_locatable(ax[1][nwave])
-        cax = divider.append_axes(
-            'right', 
-            size='5%', 
-            pad=0.05
-        )
-        cb0 = plt.colorbar(
-            imlog, 
-            cax=cax, 
-            orientation = 'vertical'
-        )
-        cb0.set_label(
-            label = rf'$\log F$(Jy/asec$^2$) at {distance} pc',fontsize= 15
-        )
-        cb0.ax.tick_params(labelsize=15)
-
+        ax[1][nn].set_xlabel('Offset (au)',fontsize=18)
+        ax[1][nn].tick_params(axis='both', which='major', labelsize=15)
 
     ax[0][0].set_ylabel('Offset (au)',fontsize=18)
     ax[1][0].set_ylabel('Offset (au)',fontsize=18)
+
+    # In case I want to remove "inbetween" axis labels
+    #ax[0][1].axes.get_yaxis().set_visible(False)
+    #ax[0][2].axes.get_yaxis().set_visible(False)
+
+    #ax[0][0].axes.get_xaxis().set_visible(False)    
+    #ax[0][1].axes.get_xaxis().set_visible(False)
+    #ax[0][2].axes.get_xaxis().set_visible(False)
+
+    #ax[1][1].axes.get_yaxis().set_visible(False)
+    #ax[1][2].axes.get_yaxis().set_visible(False)
+
+
+
+
+    # Set colour bar settings and label, first row (linear)
+    divider = make_axes_locatable(ax[0][-1])
+    cax = divider.append_axes(
+        'right', 
+        size='5%', 
+        pad=0.05
+    )
+    cb0 = plt.colorbar(
+        imlin, 
+        cax=cax, 
+        orientation = 'vertical',
+    )
+    cb0.set_label(
+        label = rf'$F_\nu$(MJy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc',fontsize= 15
+    )
+    cb0.ax.tick_params(labelsize=15)
+
+    # Set colour bar settings and label, second row (logarithmic)
+    divider = make_axes_locatable(ax[1][-1])
+    cax = divider.append_axes(
+        'right', 
+        size='5%', 
+        pad=0.05
+    )
+    cb0 = plt.colorbar(
+        imlog, 
+        cax=cax, 
+        orientation = 'vertical'
+    )
+    cb0.set_label(
+        label = rf'$\log F$(Jy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc',fontsize= 15
+    )
+    cb0.ax.tick_params(labelsize=15)
 
     fig.tight_layout()
     #fig.show()
@@ -810,66 +1084,117 @@ if plot_images_darwinpoint == 'y':
 
 
 
+if plot_images_obscured == 'y':
 
+    imagelist=[
+        '../r3dresults/st28gm06n052_staranddust_1/198/image_i090_phi090_1um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/198/image_i090_phi090_2um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/198/image_i090_phi090_5um.out',
+    ]
+    distance=1
 
+    # Number of plots
+    Nplots = len(imagelist)
 
-if plot_images_convolved_vlti == 'y':
-    #
-    # Plot figure with convolved images, ie as observed
-    # This one with 6 images with VLTI, all phases, three wavelength
-    # VLTI at 10um and 200pc
-    # VLTI at 3.5um and 200pc
-    # VLTI at  1um and 200pc
-    #
-    # 198 at 10um has a spike at default seed
-    #
-    distance = 200 # parsec
-    shortwavelength = 1.625 # um
-    wavelengths = [1.6,3.5,10]
-
-    imagelist = [
-        f'../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_{shortwavelength}um.out',
-        '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_3.5um.out',
-        '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_10um.out',
-    ]
-    # Maximum vertical scales
-    vmaxima = [
-        4,4,1
-    ]
-    # Contour levels (per wavelength)
-    starlevels = [
-        [0.2,1.2,2.2,3.2,4.2,5.2,6.2],
-        [0.2,1.2,2.2,3.2,4.2,5.2],
-        [0.2,0.4,0.6,0.8,1.0,1.2,1.4]
-    ]
-    backlevels = [
-        [0.0000001,0.00001,0.001,0.1],
-        [0.00001,0.0001,0.001,0.01,0.1],
-        [0.00001,0.0001,0.001,0.01,0.1]
-    ]
-    # Initialise fig-ax for normal images
-    figVLTI, axVLTI = plt.subplots(
-        2,3, 
-        figsize = (12,7.3),
+    # Set fig-and-axis settings for subplots
+    fig, ax = plt.subplots(
+        Nplots,1,
+        figsize = (5,13)
     )
 
-
-    # Loop through wavelengths/images
-    for nwave,image in enumerate(imagelist):
-
-        # Full-width at half-maximum: lambda/(2*baseline)
-        fwhmVLTI = wavelengths[nwave]*1e-6 / (2*baselineVLTI) * radian
-        sigmaVLTI = fwhmVLTI/2.355
-
-        # For reference, print FWHM:
-        print(f'VLTI {wavelengths[nwave]}um FWHM: {fwhmVLTI} mas')
-
+    # Load image data and save in various lists
+    for nn,image in enumerate(imagelist):
 
         # Extract path and imagename from image
         imagestrings = re.split('/', image)
+        path = f'{imagestrings[0]}/{imagestrings[1]}/'
+        modelname = imagestrings[2]
+        phase = imagestrings[3]
+        imagefilename = imagestrings[4]
+
+        # extract inclination and wavelength
+        imagestrings = re.split('_', imagefilename)
+        incl = imagestrings[1][1:]
+        phi = imagestrings[2][3:]
+        wavelengthum = imagestrings[3][:-6]
+
+        # Remove 0 if first character in incl and phi
+        incl = (incl[1:] if incl.startswith('0') else incl)
+        phi = (phi[1:] if phi.startswith('0') else phi)
+
+        # Load data
+        image2d,image2dlog,flux,axisplot = a3d.load_images(
+            path=f'{path}{modelname}/{phase}',
+            image=imagefilename,
+            distance=distance
+        )
+
+        # Save linear data in list (list of arrays)
+        imagedata = image2d
+
+        # Plot image at spot nn, set title and axis labels
+        # Use default vertical scale
+        ax[nn].imshow(
+            imagedata, 
+            origin='lower', 
+            vmin= 0,
+            extent=axisplot, 
+            cmap=plt.get_cmap('hot')
+        )
+        ax[nn].set(
+            xlim=(-7,7),
+            ylim=(-7,7)
+        )
+        ax[nn].set_ylabel(rf'Offset (au), $\lambda =$ {wavelengthum} $\mu$m', fontsize=18)
+        ax[nn].tick_params(axis='both', which='major', labelsize=15)
+    ax[-1].set_xlabel('Offset (au)', fontsize=18)
+    
+
+    fig.tight_layout()
+    #fig.show()
+
+    #Save figure
+    fig.savefig(f'figs/images_obscuredexamples.pdf', dpi=300, facecolor="white")
+
+
+if plot_images_convolved_jwst == 'y':
+    # Plot figure with convolved images, ie as observed
+    # This one with 3 images with JWST, all phases, one wavelength
+
+    distanceJWST = 40 # parsec
+
+
+    imagelist_1um = [
+        '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_1um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_1um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/198/image_i000_phi000_1um.out'
+    ]
+
+
+    # JWST vid 1um och 40pc
+    #
+    # Full-width at half-maximum: 1.22*lambda/D
+    fwhmJWST_1um = 1.22 * 1e-6 / diameterJWST * radian
+    sigmaJWST_1um = fwhmJWST_1um/2.355
+    
+    # Initialise fig-ax
+    figJWST_1um, axJWST_1um = plt.subplots(
+        1,3, 
+        figsize = (12,5.8),
+        num='JWST at 1um 40pc'
+    )
+
+    # Loop through and plot each image
+    for nn,image in enumerate(imagelist_1um):
+        distance = distanceJWST
+
+        # Extract path and imagename from image
+        imagestrings = re.split('/', image)
+
         modelname = imagestrings[2]
         imagefilename = imagestrings[4]
         phase = imagestrings[3]
+
         path = f'{imagestrings[0]}/{imagestrings[1]}/{modelname}/{phase}'
 
         # Load image
@@ -891,92 +1216,269 @@ if plot_images_convolved_vlti == 'y':
         axisplotmilliasec = [0.5*size_milliasec,-0.5*size_milliasec,-0.5*size_milliasec,0.5*size_milliasec]
 
         # Change sigma to order in number of pixels
-        sigmaVLTI_pixels = sigmaVLTI / masperpixel
+        sigmaJWST_1um_pixel = sigmaJWST_1um / masperpixel
 
         # Convolve with Gaussian filter
         image2d = scipy.ndimage.gaussian_filter(
             image2d,
-            sigma = sigmaVLTI_pixels
+            sigma = sigmaJWST_1um_pixel
         )
 
         # Plot image
-        imVLTI = axVLTI[0][nwave].imshow(
+        imJWST_1um = axJWST_1um[nn].imshow(
             image2d, 
             origin='lower', extent=axisplotmilliasec, 
             cmap=plt.get_cmap('hot'),
-            vmin=0, vmax=vmaxima[nwave]
+            vmin=0, vmax=1.5
         )
-        axVLTI[0][nwave].tick_params(axis='both', which='major', labelsize=15)
+        axJWST_1um[nn].tick_params(axis='both', which='major', labelsize=15)
+        axJWST_1um[nn].set_xlabel('Offset (mas)',fontsize=18)
 
         # FWHM-cirle to show beam
-        axVLTI[0][nwave].add_patch(
-            plt.Circle(
-                (0.75*axisplotmilliasec[0],0.75*axisplotmilliasec[1]), 
-                radius=0.5*fwhmVLTI, color='cyan', fill=True)
-        )
-        # Star-radius-circle to show size of stellar disc (two circles to make it more visible)
-        axVLTI[0][nwave].add_patch(
-            plt.Circle(
-                (0,0), 
-                radius=1.65/distance*1000, 
-                color='lime', fill=False, linestyle=':', linewidth=2
-            )
-        )
-        axVLTI[0][nwave].add_patch(
-            plt.Circle(
-                (0,0), 
-                radius=1.65/distance*1000, 
-                color='b', fill=False, linestyle=':', linewidth=1
-            )
-        )
-
-        # Plot contours in next line, first with background
-        axVLTI[1][nwave].contour(
-            image2d,
-            origin='lower', extent=axisplotmilliasec,
-            colors='k',
-            levels=backlevels[nwave],
-            linewidths=1
-        )
-        # Then contours for the star
-        axVLTI[1][nwave].contour(
-            image2d,
-            origin='lower', extent=axisplotmilliasec,
-            colors='r',
-            levels=starlevels[nwave],
-            linewidths=1
-        )
-        # Flip x-axis
-        axVLTI[1][nwave].invert_xaxis()
-        # Force equal axis
-        axVLTI[1][nwave].set_aspect('equal', 'box')
-
-        # FWHM-cirle to show beam
-        axVLTI[1][nwave].add_patch(
-            plt.Circle(
-                (0.75*axisplotmilliasec[0],0.75*axisplotmilliasec[1]), 
-                radius=0.5*fwhmVLTI, color='green', fill=True, zorder=10)
+        axJWST_1um[nn].add_patch(
+            plt.Circle((250,-250), 0.5*fwhmJWST_1um, color='cyan', fill=False)
         )
         # Star-radius-circle to show size of stellar disc
-        axVLTI[1][nwave].add_patch(
-            plt.Circle(
-                (0,0), 
-                radius=1.65/distance*1000, 
-                color='b', fill=False, linestyle='--', linewidth=2, 
-                zorder=10
-            )
+        axJWST_1um[nn].add_patch(
+            plt.Circle((0,0), 1.65/distance*1000, color='lime', fill=False, linestyle=':')
         )
-        axVLTI[1][nwave].tick_params(axis='both', which='major', labelsize=15)
+        # Phase in titles
+        axJWST_1um[nn].set_title(f'{phase}', fontsize=15)
 
 
-        # Set titles for first row for both figs
-        axVLTI[0][nwave].set_title(rf'{wavelengths[nwave]}\,$\mu$m', fontsize=15)
+    # Set ylabel for first plot only
+    axJWST_1um[0].set_ylabel('Offset (mas)',fontsize=18)
 
-        # Set xlabels for final row for both figs
-        axVLTI[1][nwave].set_xlabel('Offset (mas)',fontsize=18)
+    # Remove label texts for yaxis on the rest
+    axJWST_1um[1].axes.get_yaxis().set_visible(False)
+    axJWST_1um[2].axes.get_yaxis().set_visible(False)
+
+    # Tight layout before colourbar
+    figJWST_1um.tight_layout()
+
+    # Set colour bar settings and label
+    cax = figJWST_1um.add_axes([0.33, 0.95, 0.4, 0.03])
+    cb0 = plt.colorbar(
+        imJWST_1um, 
+        cax=cax, 
+        orientation = 'horizontal', 
+    )
+    cb0.set_label(
+        label = rf'$F_\nu$(Jy/mas$^2$) at 1\,$\mu$m \& {distanceJWST}\,pc', fontsize=15
+    )
+    cb0.ax.tick_params(labelsize=15)
+
+    # Show and save figure
+    #figJWST_1um.show()
+    figJWST_1um.savefig(f'figs/images_JWST_1um40pc.pdf', dpi=300, facecolor="white")
+
+
+
+if plot_images_convolved_vlti == 'y':
+    #
+    # Plot figure with convolved images, ie as observed
+    # This one with 6 images with VLTI, all phases, three wavelength
+    # VLTI at 10um and 200pc
+    # VLTI at 3.5um and 200pc
+    # VLTI at  1um and 200pc
+    #
+    distanceVLTI = 200 # parsec
+    shortwavelength = 1.625 # um
+    wavelengths = [1.6,3.5,10]
+
+    imagelist_1um = [
+        f'../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_{shortwavelength}um.out',
+        f'../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_{shortwavelength}um.out',
+        f'../r3dresults/st28gm06n052_staranddust_1/198/image_i000_phi000_{shortwavelength}um.out'
+    ]
+
+    imagelist_3um = [
+        '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_3.5um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_3.5um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/198/image_i000_phi000_3.5um.out',
+    ]
+
+    imagelist_10um = [
+        '../r3dresults/st28gm06n052_staranddust_1/186/image_i000_phi000_10um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_10um.out',
+        '../r3dresults/st28gm06n052_staranddust_2/198/image_i000_phi000_10um.out',
+    ]
+    # 198 at 10um has a spike at default seed
+    imagelists = [
+        imagelist_1um,imagelist_3um,imagelist_10um
+    ]
+    # Maximum vertical scales
+    vmaxima = [
+        4,4,1
+    ]
+    # Contour levels
+    starlevels = [
+        [0.2,1.2,2.2,3.2,4.2,5.2,6.2],
+        [0.2,1.2,2.2,3.2,4.2,5.2],
+        [0.2,0.4,0.6,0.8,1.0,1.2,1.4]
+    ]
+    backlevels = [
+        [0.0000001,0.00001,0.001,0.1],
+        [0.00001,0.0001,0.001,0.01,0.1],
+        [0.00001,0.0001,0.001,0.01,0.1]
+    ]
+    # Initialise fig-ax for normal images
+    figVLTI, axVLTI = plt.subplots(
+        3,3, 
+        figsize = (11,10),
+        num='VLTI at 90pc'
+    )
+    #         figsize = (12,7.3)  ifall jag har 3*2.bilder
+
+    # Create a new figure with contour-plots of convolved images
+    figcontour, axcontour = plt.subplots(
+        3,3, 
+        figsize = (11,10),
+        num='Contours at 90pc'
+    )
+
+
+
+    distance = distanceVLTI
+
+    # Loop through wavelengths/images
+    for nwave,imagelist in enumerate(imagelists):
+
+        # Full-width at half-maximum: lambda/(2*baseline)
+        fwhmVLTI = wavelengths[nwave]*1e-6 / (2*baselineVLTI) * radian
+        sigmaVLTI = fwhmVLTI/2.355
+
+        # For reference, print FWHM:
+        print(f'VLTI {wavelengths[nwave]}um FWHM: {fwhmVLTI} mas')
+
+        # Loop through images/phases
+        for nn,image in enumerate(imagelist):
+
+            # Extract path and imagename from image
+            imagestrings = re.split('/', image)
+
+            modelname = imagestrings[2]
+            imagefilename = imagestrings[4]
+            phase = imagestrings[3]
+            path = f'{imagestrings[0]}/{imagestrings[1]}/{modelname}/{phase}'
+
+            # Load image
+            image2d,image2dlog,flux,axisplot = a3d.load_images(
+                path=path,
+                image=imagefilename,
+                distance=distance
+            )
+            # Change to Jy/mas2
+            image2d = image2d * 1e-6
+
+            # Extract props and compute distance-dependant scales
+            Npix = np.shape(image2d)[0] # Number of pixels along one side
+            auperpixel = 2*axisplot[0]/Npix  # number of au per pixel
+            masperpixel = auperpixel/distance * 1000  # number of mas per pixel
+            size_milliasec = masperpixel * Npix # size of image in mas
+
+            # Image axis-limits
+            axisplotmilliasec = [0.5*size_milliasec,-0.5*size_milliasec,-0.5*size_milliasec,0.5*size_milliasec]
+
+            # Change sigma to order in number of pixels
+            sigmaVLTI_pixels = sigmaVLTI / masperpixel
+
+            # Convolve with Gaussian filter
+            image2d = scipy.ndimage.gaussian_filter(
+                image2d,
+                sigma = sigmaVLTI_pixels
+            )
+
+            # Plot image
+            imVLTI = axVLTI[nwave][nn].imshow(
+                image2d, 
+                origin='lower', extent=axisplotmilliasec, 
+                cmap=plt.get_cmap('hot'),
+                vmin=0, vmax=vmaxima[nwave]
+            )
+            axVLTI[nwave][nn].tick_params(axis='both', which='major', labelsize=15)
+
+            # FWHM-cirle to show beam
+            axVLTI[nwave][nn].add_patch(
+                plt.Circle(
+                    (0.75*axisplotmilliasec[0],0.75*axisplotmilliasec[1]), 
+                    radius=0.5*fwhmVLTI, color='cyan', fill=True)
+            )
+            # Star-radius-circle to show size of stellar disc (two circles to make it more visible)
+            axVLTI[nwave][nn].add_patch(
+                plt.Circle(
+                    (0,0), 
+                    radius=1.65/distance*1000, 
+                    color='lime', fill=False, linestyle=':', linewidth=2
+                )
+            )
+            axVLTI[nwave][nn].add_patch(
+                plt.Circle(
+                    (0,0), 
+                    radius=1.65/distance*1000, 
+                    color='b', fill=False, linestyle=':', linewidth=1
+                )
+            )
+
+            # Plot contours in separate figure, first with background
+            axcontour[nwave][nn].contour(
+                image2d,
+                origin='lower', extent=axisplotmilliasec,
+                colors='k',
+                levels=backlevels[nwave],
+                linewidths=1
+            )
+            # Then contours for the star
+            axcontour[nwave][nn].contour(
+                image2d,
+                origin='lower', extent=axisplotmilliasec,
+                colors='r',
+                levels=starlevels[nwave],
+                linewidths=1
+            )
+            # Flip x-axis
+            axcontour[nwave][nn].invert_xaxis()
+
+            # FWHM-cirle to show beam
+            axcontour[nwave][nn].add_patch(
+                plt.Circle(
+                    (0.75*axisplotmilliasec[0],0.75*axisplotmilliasec[1]), 
+                    radius=0.5*fwhmVLTI, color='green', fill=True, zorder=10)
+            )
+            # Star-radius-circle to show size of stellar disc
+            axcontour[nwave][nn].add_patch(
+                plt.Circle(
+                    (0,0), 
+                    radius=1.65/distance*1000, 
+                    color='b', fill=False, linestyle='--', linewidth=2, 
+                    zorder=10
+                )
+            )
+            axcontour[nwave][nn].tick_params(axis='both', which='major', labelsize=15)
+
+
+            # Set titles for first row for both figs
+            if nwave == 0:
+                axVLTI[nwave][nn].set_title(rf'$t_{nn+1} = $\,{phasetimes[nn]}', fontsize=15)
+                axcontour[nwave][nn].set_title(rf'$t_{nn+1} = $\,{phasetimes[nn]}', fontsize=15)
+            # Set xlabels for final row for both figs
+            if nwave == 2:
+                axVLTI[nwave][nn].set_xlabel('Offset (mas)',fontsize=18)
+                axcontour[nwave][nn].set_xlabel('Offset (mas)',fontsize=18)
+
+
+        axVLTI[nwave][0].set_ylabel('Offset (mas)',fontsize=18)
+        axcontour[nwave][0].set_ylabel('Offset (mas)',fontsize=18)
+
+        # Add text in figure with wavelength
+        axcontour[nwave][0].text(
+            x = -10, y = 60,
+            s = rf'\noindent $\lambda = ${wavelengths[nwave]}\,$\mu$m',
+            fontsize = 13
+        )
 
         # Set colour bar settings and label
-        divider = make_axes_locatable(axVLTI[0][nwave])
+        divider = make_axes_locatable(axVLTI[nwave][-1])
         cax = divider.append_axes(
             'right', 
             size='5%', 
@@ -987,36 +1489,39 @@ if plot_images_convolved_vlti == 'y':
             cax=cax, 
             orientation = 'vertical'
         )
-        if nwave == 2:
-            cb0.set_label(
-                label = rf'$F_\nu$(Jy/mas$^2$) at {distance}\,pc',fontsize= 15
-            )
+        cb0.set_label(
+            label = rf'$F_\nu$(Jy/mas$^2$) at {wavelengths[nwave]}\,$\mu$m',fontsize= 15
+        )
         cb0.ax.tick_params(labelsize=15)
 
-
-
-
-    # Set ylabels
-    axVLTI[0][0].set_ylabel('Offset (mas)',fontsize=18)
-    axVLTI[1][0].set_ylabel('Offset (mas)',fontsize=18)
-
-
-    # 190 at 10um
+    # Add patches for the areas I take flux densities from
+    # 186:
+    # x: -5.5 till -4     -> mas  -27.5 -> -20
+    # y: -4.5 till -3     -> mas  -22.5 -> -15
+    axcontour[-1][0].add_patch(
+        plt.Rectangle((-27.5,-22.5), 7.5, 7.5, color='orange', fill=False, zorder=10)
+    )
+    # 190:
     # x: 1 till 4       -> mas  5 -> 20  (15)
     # y: -2.5 till 0.5  -> mas  -12.5 -> 2.5 (15)
-    axVLTI[1][2].add_patch(
+    axcontour[-1][1].add_patch(
         plt.Rectangle((5,-12.5), 15, 15, color='orange', fill=False, zorder=10)
     )
-
-
-
+    # 198:
+    # x: 1 - 6      -> mas  5 -> 30 (25)
+    # y: -6.5 - -5  -> mas  -32.5 -> -25 (7.5)
+    axcontour[-1][2].add_patch(
+        plt.Rectangle((5,-32.5), 25, 7.5, color='orange', fill=False, zorder=10)
+    )
 
 
     # Final settings for figures, save and show if you want to
     figVLTI.tight_layout()
+    figcontour.tight_layout()
 
     #Save figure
-    figVLTI.savefig(f'figs/images_VLTI.pdf', dpi=300, facecolor="white")
+    figVLTI.savefig(f'figs/images_VLTI_{distanceVLTI}pc.pdf', dpi=300, facecolor="white")
+    figcontour.savefig(f'figs/contours_VLTI_{distanceVLTI}pc.pdf', dpi=300, facecolor="white")
 
     #figVLTI.show()
     #figcontour.show()
