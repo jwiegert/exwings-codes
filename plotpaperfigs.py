@@ -39,24 +39,31 @@ phasetimes = [
 
 # Plot choices
 
-# 
+# Processinginfo
 plot_coboldgrid = 'n'
-
-#
 plot_opticalthickness = 'n'
+list_smoothingchanges = 'n'     # TODO
 
 # Grain properties
-plot_grainsizehist = 'y'
+plot_grainsizehist = 'n'
 plot_grainsizeradius = 'n'
 plot_absscat = 'n'
 plot_temperaturecompare = 'n'
 
-# Plot SEDs
-plot_seds_coboldplot_seds_darwinpoint = 'n'
-
-# Plot various images
+# Plot co5bold-figs
+plot_coboldsed = 'n'
 plot_images_examples = 'n'
-plot_images_darwinpoint = 'n'
+
+
+
+# Plot symmetric figs
+plot_darwin_imagesed = 'y'
+plot_point_imagesed = 'y'
+
+
+
+
+
 
 
 # Merge contour and images, only t2
@@ -81,7 +88,8 @@ plot_smoothedimage_radius = 'n'
 if plot_coboldgrid == 'y':
 
     c5dgrid,cellcourners,cellsize = a5d.load_grid_properties(
-        savpath='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav'
+        savpath='../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_186.sav'
+    #    savpath='../../exwings_archivedata/co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
     )
     Ncourners = cellcourners[:,0].size - 1
     cellsizes = np.zeros(Ncourners)
@@ -516,20 +524,16 @@ if plot_temperaturecompare == 'y':
 
 # ----------------------------------------------------------------
 #
+# Plot figs for co5bold-results
 
+if plot_coboldsed == 'y':
 
-# Plot all t2-SEDs
-if plot_seds_coboldplot_seds_darwinpoint == 'y':
 
     # Initiate figure
-    fig,ax = plt.subplots(1,3, figsize = (13, 4.5))
+    fig, ax = plt.figure(figsize=(6,5)), plt.axes()
 
     # Set path info for SEDs
-    paths = [
-        '../r3dresults/st28gm06n052_staranddust_nospikes/',
-        '../r3dresults/st28gm06n052_darwinsource/',
-        '../r3dresults/st28gm06n052_pointtemperature/'
-    ]
+    path = '../r3dresults/st28gm06n052_staranddust_nospikes/'
     phase = '190'
     spectra = [
         '/spectrum_i000_phi000.out',
@@ -548,56 +552,40 @@ if plot_seds_coboldplot_seds_darwinpoint == 'y':
         '270, 0',
     ]
 
-    # Extract SEDs and fill figure-axes-objects
-    for npath,path in enumerate(paths):
+    for nangle,spectrum in enumerate(spectra):
 
-        for nangle,spectrum in enumerate(spectra):
-
-            wavelength,sed = a3d.load_spectrum(
-                path = path+phase+spectrum
-            )
+        wavelength,sed = a3d.load_spectrum(
+            path = path+phase+spectrum
+        )
+        
+        # Print all sed-luminosities
+        luminosity = a3d.compute_luminosity(
+            wavelengths=wavelength,
+            spectrum=sed
+        )
+        print(f'{path}{spectrum}: {luminosity/Lsol}')
             
-            # Print all sed-luminosities
-            luminosity = a3d.compute_luminosity(
-                wavelengths=wavelength,
-                spectrum=sed
-            )
-            print(f'{path}{spectrum}: {luminosity/Lsol}')
-                
-            ax[npath].plot(wavelength,sed,label = legendlist[nangle])
+        ax.plot(wavelength,sed,label = legendlist[nangle])
 
-        ax[npath].set(xscale='log',yscale='log')
-        ax[npath].set_xlim(5e-1,6e1)
-        ax[npath].set_ylim(1e6,1.3e8)
-        ax[npath].tick_params(axis='both', which='major', labelsize=15)
-        ax[npath].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)    
+    ax.set(xscale='log',yscale='log')
+    ax.set_xlim(5e-1,6e1)
+    ax.set_ylim(1e6,1.3e8)
+    ax.tick_params(axis='both', which='major', labelsize=15)
+    ax.set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)    
         
     # Ylabel, titles and legend with angles
-    ax[0].set_ylabel(r'$F_\nu$, Jy at 1 pc', fontsize=18)
-
-    ax[0].set_title(rf'CO5BOLD', fontsize=16)
-    ax[1].set_title(rf'DARWIN', fontsize=16)
-    ax[2].set_title(rf'Point source', fontsize=16)
-
-    ax[0].legend(title=r'$i$, $\phi$', fontsize=13)
+    ax.set_ylabel(r'$F_\nu$, Jy at 1 pc', fontsize=18)
+    ax.set_title(rf'CO5BOLD', fontsize=16)
+    ax.legend(title=r'$i$, $\phi$', fontsize=13)
 
     fig.tight_layout()
-    fig.show()
-    
+    #fig.show()
+   
     #Save figure
-    fig.savefig(f'figs/seds_all.pdf', dpi=300, facecolor="white")
+    fig.savefig(f'figs/seds_c5d.pdf', dpi=300, facecolor="white")
 
 
-
-
-
-
-
-
-
-# ----------------------------------------------------------------------
-# Plot various images
-
+# Plot co5bold-images
 if plot_images_examples == 'y':
     # Plot 2 images at each walanvength, one phase, lin and log
 
@@ -724,93 +712,255 @@ if plot_images_examples == 'y':
 
 
 
-if plot_images_darwinpoint == 'y':
-    # Plot Darwin-and-pointsource example images at 10um, of 190-phase
 
-    imagelist=[
-        '../r3dresults/st28gm06n052_darwinsource/190/image_i000_phi000_10um.out',
-        '../r3dresults/st28gm06n052_pointtemperature/190/image_i000_phi000_10um.out'
+
+# ------------------------------------------------------------------------------
+# Plot symmetric figs
+
+# Plot Darwin SED and image
+if plot_darwin_imagesed == 'y':
+
+    # Initiate figure
+    fig,ax = plt.subplots(2,1, figsize = (6, 10))
+
+    # Set path info for SEDs
+    path = '../r3dresults/st28gm06n052_darwinsource/'
+    phase = '190'
+    spectra = [
+        '/spectrum_i000_phi000.out',
+        '/spectrum_i090_phi000.out',
+        '/spectrum_i090_phi090.out',
+        '/spectrum_i090_phi270.out',
+        '/spectrum_i180_phi000.out',
+        '/spectrum_i270_phi000.out'
     ]
-    distance=1
+    legendlist = [
+        '0, 0',
+        '90, 0',
+        '90, 90',
+        '90, 270',
+        '180, 0',
+        '270, 0',
+    ]
+    # Set path and info for 10um image
+    image = '../r3dresults/st28gm06n052_darwinsource/190/image_i000_phi000_10um.out'
+    distance = 1 # 1 pc
 
-    # Number of plots
-    Nplots = len(imagelist)
 
-    # Set fig-and-axis settings for subplots
-    fig, ax = plt.subplots(
-        Nplots,1,
-        figsize = (5.5,8.3),
+    # Plot SED
+    for nangle,spectrum in enumerate(spectra):
+
+        wavelength,sed = a3d.load_spectrum(
+            path = path+phase+spectrum
+        )
+        
+        # Print all sed-luminosities
+        luminosity = a3d.compute_luminosity(
+            wavelengths=wavelength,
+            spectrum=sed
+        )
+        print(f'{path}{spectrum}: {luminosity/Lsol}')
+            
+        ax[0].plot(wavelength,sed,label = legendlist[nangle])
+
+    # Set SED axis settings
+    ax[0].set(xscale='log',yscale='log')
+    ax[0].set_xlim(5e-1,6e1)
+    ax[0].set_ylim(1e6,1.3e8)
+    ax[0].tick_params(axis='both', which='major', labelsize=15)
+    ax[0].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)    
+        
+    # Ylabel, titles and legend with angles
+    ax[0].set_ylabel(r'$F_\nu$, Jy at 1 pc', fontsize=18)
+    ax[0].set_title(rf'DARWIN', fontsize=16)
+    ax[0].legend(title=r'$i$, $\phi$', fontsize=13)
+
+
+    # Plot image
+
+    # Extract path and imagename from image
+    imagestrings = re.split('/', image)
+    path = f'{imagestrings[0]}/{imagestrings[1]}/'
+    modelname = imagestrings[2]
+    phase = imagestrings[3]
+    imagefilename = imagestrings[4]
+
+    # extract inclination and wavelength
+    imagestrings = re.split('_', imagefilename)
+    incl = imagestrings[1][1:]
+    phi = imagestrings[2][3:]
+    wavelengthum = imagestrings[3][:-6]
+
+    # Load data
+    image2d,image2dlog,flux,axisplot = a3d.load_images(
+        path=f'{path}{modelname}/{phase}',
+        image=imagefilename,
+        distance=distance
+    )
+    # Change to MJy per asec2
+    image2d = image2d*1e-6
+
+    # Plot image
+    imlin = ax[1].imshow(
+        image2d, 
+        origin='lower', extent=axisplot, 
+        cmap=plt.get_cmap('hot'),
+        vmin=0,vmax=0.7
     )
 
-    # Load image data and save in various lists
-    for nn,image in enumerate(imagelist):
-
-        # Extract path and imagename from image
-        imagestrings = re.split('/', image)
-        path = f'{imagestrings[0]}/{imagestrings[1]}/'
-        modelname = imagestrings[2]
-        phase = imagestrings[3]
-        imagefilename = imagestrings[4]
-
-        # extract inclination and wavelength
-        imagestrings = re.split('_', imagefilename)
-        incl = imagestrings[1][1:]
-        phi = imagestrings[2][3:]
-        wavelengthum = imagestrings[3][:-6]
-
-        # Load data
-        image2d,image2dlog,flux,axisplot = a3d.load_images(
-            path=f'{path}{modelname}/{phase}',
-            image=imagefilename,
-            distance=distance
-        )
-        # Change to MJy per asec2
-        image2d = image2d*1e-6
-
-        imlin = ax[nn].imshow(
-            image2d, 
-            origin='lower', extent=axisplot, 
-            cmap=plt.get_cmap('hot'),
-            vmin=0,vmax=0.7
-        )
-        ax[nn].tick_params(axis='both', which='major', labelsize=15)
-    
-    ax[0].set_title(r'M2n315u6 \&\ dust', fontsize=15)
-    ax[1].set_title(r'Point source \&\ dust', fontsize=15)
+    # Set axis settings
+    ax[1].tick_params(axis='both', which='major', labelsize=15)
     ax[1].set_xlabel('Offset (au)', fontsize=18)
-    ax[0].set_ylabel('Offset (au)', fontsize=18)
     ax[1].set_ylabel('Offset (au)', fontsize=18)
 
-
     # Set colour bar settings and label
-    #divider = make_axes_locatable(ax[1])
-    #cax = divider.append_axes(
-    #    'right', 
-    #    size='5%', 
-    #    pad=0.05,
-    #)
-    # [Xcoord, Ycoord, Width, Height]
-    cax = fig.add_axes([0.83, 0.17, 0.03, 0.7])
+    divider = make_axes_locatable(ax[1])
+    cax = divider.append_axes(
+        'right', 
+        size='4%', 
+        pad=0.05,
+    )
     cb0 = plt.colorbar(
         imlin, 
         cax=cax, 
         orientation = 'vertical', 
     )
-    #shrink=0.6,pad=0.15
     cb0.set_label(
         label = rf'$F_\nu$(MJy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc', fontsize=15
     )
     cb0.ax.tick_params(labelsize=15)
 
     fig.tight_layout()
-    #fig.show()
-
-    # Save figure
-    fig.savefig(f'figs/images_10umdarwinpoint.pdf', dpi=300, facecolor="white")
-
-
+    fig.show()
+    
+    #Save figure
+    fig.savefig(f'figs/sedimage_darwin.pdf', dpi=300, facecolor="white")
 
 
+# Plot point source SED and image
+if plot_point_imagesed == 'y':
+
+    # Initiate figure
+    fig,ax = plt.subplots(2,1, figsize = (6, 10))
+
+    # Set path info for SEDs
+    path = '../r3dresults/st28gm06n052_pointtemperature/'
+    phase = '190'
+    spectra = [
+        '/spectrum_i000_phi000.out',
+        '/spectrum_i090_phi000.out',
+        '/spectrum_i090_phi090.out',
+        '/spectrum_i090_phi270.out',
+        '/spectrum_i180_phi000.out',
+        '/spectrum_i270_phi000.out'
+    ]
+    legendlist = [
+        '0, 0',
+        '90, 0',
+        '90, 90',
+        '90, 270',
+        '180, 0',
+        '270, 0',
+    ]
+    # Set path and info for 10um image
+    image = '../r3dresults/st28gm06n052_pointtemperature/190/image_i000_phi000_10um.out'
+    distance = 1 # 1 pc
+
+
+    # Plot SED
+    for nangle,spectrum in enumerate(spectra):
+
+        wavelength,sed = a3d.load_spectrum(
+            path = path+phase+spectrum
+        )
+        
+        # Print all sed-luminosities
+        luminosity = a3d.compute_luminosity(
+            wavelengths=wavelength,
+            spectrum=sed
+        )
+        print(f'{path}{spectrum}: {luminosity/Lsol}')
+            
+        ax[0].plot(wavelength,sed,label = legendlist[nangle])
+
+    # Set SED axis settings
+    ax[0].set(xscale='log',yscale='log')
+    ax[0].set_xlim(5e-1,6e1)
+    ax[0].set_ylim(1e6,1.3e8)
+    ax[0].tick_params(axis='both', which='major', labelsize=15)
+    ax[0].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)    
+        
+    # Ylabel, titles and legend with angles
+    ax[0].set_ylabel(r'$F_\nu$, Jy at 1 pc', fontsize=18)
+    ax[0].set_title(rf'Point source', fontsize=16)
+    ax[0].legend(title=r'$i$, $\phi$', fontsize=13)
+
+
+    # Plot image
+
+    # Extract path and imagename from image
+    imagestrings = re.split('/', image)
+    path = f'{imagestrings[0]}/{imagestrings[1]}/'
+    modelname = imagestrings[2]
+    phase = imagestrings[3]
+    imagefilename = imagestrings[4]
+
+    # extract inclination and wavelength
+    imagestrings = re.split('_', imagefilename)
+    incl = imagestrings[1][1:]
+    phi = imagestrings[2][3:]
+    wavelengthum = imagestrings[3][:-6]
+
+    # Load data
+    image2d,image2dlog,flux,axisplot = a3d.load_images(
+        path=f'{path}{modelname}/{phase}',
+        image=imagefilename,
+        distance=distance
+    )
+    # Change to MJy per asec2
+    image2d = image2d*1e-6
+
+    # Plot image
+    imlin = ax[1].imshow(
+        image2d, 
+        origin='lower', extent=axisplot, 
+        cmap=plt.get_cmap('hot'),
+        vmin=0,vmax=0.7
+    )
+
+    # Set axis settings
+    ax[1].tick_params(axis='both', which='major', labelsize=15)
+    ax[1].set_xlabel('Offset (au)', fontsize=18)
+    ax[1].set_ylabel('Offset (au)', fontsize=18)
+
+    # Set colour bar settings and label
+    divider = make_axes_locatable(ax[1])
+    cax = divider.append_axes(
+        'right', 
+        size='4%', 
+        pad=0.05,
+    )
+    cb0 = plt.colorbar(
+        imlin, 
+        cax=cax, 
+        orientation = 'vertical', 
+    )
+    cb0.set_label(
+        label = rf'$F_\nu$(MJy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc', fontsize=15
+    )
+    cb0.ax.tick_params(labelsize=15)
+
+    fig.tight_layout()
+    fig.show()
+    
+    #Save figure
+    fig.savefig(f'figs/sedimage_point.pdf', dpi=300, facecolor="white")
+
+
+
+
+# -----------------------------------------------------------------------
+# Plot things to the Applications parts
 
 
 if plot_images_convolved_vlti == 'y':
