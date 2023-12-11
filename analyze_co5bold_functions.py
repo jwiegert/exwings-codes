@@ -88,6 +88,7 @@ cubesize = 222757675648155.62/AUcm
 # Functions to create r3d-data from c5d-data
 # ------------------------------------------
 #
+#   This translates density and opacity to r3d-grid and saves them separately
 # create_star(
 #    savpath:str='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
 #    amrpath:str='../amr_grid.inp',
@@ -95,10 +96,7 @@ cubesize = 222757675648155.62/AUcm
 #    sizepath:str='../grid_cellsizes.csv',
 # )
 #
-# NOTE New function, combines star's density and Rosseland Opacity into R3D-density
-#      Star's Opacity is then 1 for all Wavelengths
-# TODO Change the opacity later to some normalized function that varies realistically
-#      to reproduce the star's SED more than as a BB/Grey body
+#   This takes density and opacity as translated to r3d-grid and combines them
 # create_staropadensity(
 #    pathopacity:str='../star_opacities.dat',
 #    pathstardensity:str='../dust_density_onestarstar.inp',
@@ -1379,7 +1377,8 @@ def create_stars(
             )
 
 
-# Takes the stellar density data and opacity data from c5d
+# Takes the stellar density data and opacity data from c5d, as translated to an
+# r3d-grid.
 # creates a density_star-file where the "density" depends on each cell's mass density
 # and the opacity-kappa of each cell as given by c5d.
 # Creates ONE kappa_star that is only = 1 over all wavelengths.
