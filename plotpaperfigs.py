@@ -40,9 +40,9 @@ phasetimes = [
 # Plot choices
 
 # Processinginfo
-plot_coboldgrid = 'n'
+plot_coboldgrid = 'y'
 plot_opticalthickness = 'n'
-list_smoothingchanges = 'n'     # TODO
+list_smoothingchanges = 'n'     # TODO (clean up and make it work)
 
 # Grain properties
 plot_grainsizehist = 'n'
@@ -54,22 +54,14 @@ plot_temperaturecompare = 'n'
 plot_coboldsed = 'n'
 plot_images_examples = 'n'
 
-
-
 # Plot symmetric figs
-plot_darwin_imagesed = 'y'
-plot_point_imagesed = 'y'
-
-
-
-
+plot_darwin_imagesed = 'n'
+plot_point_imagesed = 'n'
 
 
 
 # Merge contour and images, only t2
 plot_images_convolved_vlti = 'n'
-
-
 
 # Observables
 compute_luminosities = 'n'
@@ -131,6 +123,431 @@ if plot_opticalthickness == 'y':
     fig.tight_layout()
     fig.savefig('figs/optthick_los.pdf', dpi=300, facecolor="white")
     fig.show()
+
+
+
+
+
+
+# List some numbers on max-changes to due to smoothing in the star
+if list_smoothingchanges == 'y':
+    # TODO
+    # clean up this and make it work
+
+
+    # Temperature smoothing
+
+    # Load c5d-temperature in r3d
+    Ncells, Nspecies, temperatures = a3d.load_temperature(
+        path='../dust_temperature_onestar_190.dat',
+        numb_specie=1
+    )
+
+    # load starradius
+    Mstar,starradius,Lstar = a5d.load_star_information(
+        savpath='../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_190.sav',
+        printoutput = 'n'
+    )
+    AUcm = 1.49598e13 # cm
+
+    # Load grid-distances
+    gridcoords = a3d.load_griddistances(
+        amrpath='../r3dresults/st28gm06n052_staranddust_1/amr_grid.inp',
+        gridpath='../r3dresults/st28gm06n052_staranddust_1/grid_distances.csv',
+    )
+    griddistances = gridcoords[:,0]
+
+    # Extract position of and strength of spikes (see func "smooth_stellardata")
+    smooth_out = 10
+    smooth_in = 2
+    smooth_tolerance = 1.0
+
+    # search and list "deviation-number" vs cell-number
+    deviationlist = []
+            
+    # Loop over grid cells of each specie (except the outermost cells)
+    for ncell in range(smooth_out,Ncells-smooth_out):
+
+        # Check if nn is inside the star (plus a small tolerance factor)
+        if griddistances[ncell] < 1.01*starradius:
+
+            # Index of cell in total list (leftover from function)
+            nn = ncell
+
+            nindeces = [
+                nmedian for nmedian in range(nn-smooth_out,nn+smooth_out+1) if nmedian < (nn-smooth_in) or nmedian > (nn+smooth_in)
+            ]
+            median_list = []
+
+            for nmedian in nindeces:
+                median_list.append(temperatures[nmedian])
+
+            median_temperature = np.median(np.array(median_list))
+
+            # Save deviating cell-number, temperature, deviation and corresponding median T
+            if temperatures[nn] > smooth_tolerance * median_temperature:
+                deviationlist.append([
+                    nn,
+                    temperatures[nn],
+                    temperatures[nn]/median_temperature,
+                    median_temperature
+                ])
+
+    # Change to array
+    spikearray = np.zeros((len(deviationlist),4))
+    for nn,line in enumerate(deviationlist):
+        spikearray[nn,0] = int(line[0])
+        spikearray[nn,1] = line[1]
+        spikearray[nn,2] = line[2]
+        spikearray[nn,3] = line[3]
+
+
+    # Find maximum spike cellnumber, in terms of temperature and not deviation
+    maxspike = (spikearray[:,1]).argmax()
+    nn_maxspike = int(spikearray[
+        maxspike,0
+    ])
+
+
+    # Print coords of max-spike
+    print('Max-spike-coords:')
+    print(f'    R: {gridcoords[nn_maxspike,0]/AUcm}')
+    print(f'    X: {gridcoords[nn_maxspike,1]/AUcm}')
+    print(f'    Y: {gridcoords[nn_maxspike,2]/AUcm}')
+    print(f'    Z: {gridcoords[nn_maxspike,3]/AUcm}')
+    print(f'    Tbefore: {spikearray[maxspike,1]}')
+    print(f'    Tafter:  {spikearray[maxspike,3]}')
+    print('')
+
+
+    # Set up cell-index-numbers
+    nn_range = 500
+    nn_cells = np.linspace(
+        nn_maxspike-nn_range+1,
+        nn_maxspike+nn_range,
+        nn_range*2
+    )
+
+    # Plot cell-temperatures in range
+    plt.figure(1)
+    plt.plot(nn_cells,temperatures[nn_maxspike-nn_range:nn_maxspike+nn_range],'b.',markersize=1)
+    # and vs radius
+    plt.figure(2)
+    plt.plot(
+        gridcoords[nn_cells.astype(int),0]/AUcm,
+        temperatures[nn_maxspike-nn_range:nn_maxspike+nn_range],
+        'b.',markersize=1
+    )
+
+    # Plot tmeperature of "spike-cells" before smoothing
+    #print('R, X, Y, Z')
+    for nn_deviation,nn_spikes in enumerate(spikearray[:,0]):
+
+        nn_spikes = int(nn_spikes)
+
+        for nn in nn_cells:
+            if nn == nn_spikes:
+
+                # Mark smoothed cells
+                plt.figure(1)
+                plt.plot(nn_spikes,temperatures[nn_spikes],'r.',markersize=2)
+                plt.figure(2)
+                plt.plot(
+                    gridcoords[nn_spikes,0]/AUcm,
+                    temperatures[nn_spikes],
+                    'r.',markersize=2
+                )
+                # Plot new values to show change
+                plt.plot(
+                    gridcoords[nn_spikes,0]/AUcm,
+                    spikearray[nn_deviation,3],
+                    'g.',markersize=2
+                )
+
+
+
+
+    # Density-smoothing
+
+    # Load c5d-density in r3d
+    Ncells, Nspecies, densities = a3d.load_dustdensity(
+        path='../dust_density_onestar_190.inp',
+        numb_specie=1
+    )
+
+    # load starradius
+    Mstar,starradius,Lstar = a5d.load_star_information(
+        savpath='../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_190.sav',
+        printoutput = 'n'
+    )
+    AUcm = 1.49598e13 # cm
+
+    # Load grid-distances
+    gridcoords = a3d.load_griddistances(
+        amrpath='../r3dresults/st28gm06n052_staranddust_1/amr_grid.inp',
+        gridpath='../r3dresults/st28gm06n052_staranddust_1/grid_distances.csv',
+    )
+    griddistances = gridcoords[:,0]
+
+
+    # Extract position of and strength of spikes (see func "smooth_stellardata")
+    smooth_out = 37
+    smooth_in = 36
+    smooth_tolerance = 0.4
+
+    # search and list "deviation-number" vs cell-number
+    deviationlist = []
+            
+    # Loop over grid cells of each specie (except the outermost cells)
+    for nn in range(smooth_out,Ncells-smooth_out):
+
+        # Check if nn is inside the star (plus a small tolerance factor)
+        if griddistances[nn] < 1.01*starradius:
+
+            nindeces = [
+                nmedian for nmedian in range(nn-smooth_out,nn+smooth_out+1) if nmedian < (nn-smooth_in) or nmedian > (nn+smooth_in)
+            ]
+            median_list = []
+
+            for nmedian in nindeces:
+                median_list.append(densities[nmedian])
+
+            median_densities = np.median(np.array(median_list))
+
+            # Save deviating cell-number, density, deviation and corresponding median T
+            if densities[nn] < smooth_tolerance * median_densities:
+                deviationlist.append([
+                    nn,
+                    densities[nn],
+                    densities[nn]/median_densities,
+                    median_densities
+                ])
+
+
+    # Change to array
+    spikearray = np.zeros((len(deviationlist),4))
+    for nn,line in enumerate(deviationlist):
+        spikearray[nn,0] = int(line[0])
+        spikearray[nn,1] = line[1]
+        spikearray[nn,2] = line[2]
+        spikearray[nn,3] = line[3]
+
+
+    # Find maximum spike cellnumber, in terms of temperature and not deviation
+    maxspike = (spikearray[:,1]).argmax()
+    nn_maxspike = int(spikearray[
+        maxspike,0
+    ])
+
+
+    # Print coords of max-spike
+    print('Max-spike-coords:')
+    print(f'    R: {gridcoords[nn_maxspike,0]/AUcm}')
+    print(f'    X: {gridcoords[nn_maxspike,1]/AUcm}')
+    print(f'    Y: {gridcoords[nn_maxspike,2]/AUcm}')
+    print(f'    Z: {gridcoords[nn_maxspike,3]/AUcm}')
+    print(f'    RHObefore: {spikearray[maxspike,1]}')
+    print(f'    RHOafter:  {spikearray[maxspike,3]}')
+    print('')
+
+
+
+    # Set up cell-index-numbers
+    nn_range = 1000
+    nn_cells = np.linspace(
+        nn_maxspike-nn_range+1,
+        nn_maxspike+nn_range,
+        nn_range*2
+    )
+
+    # Plot cell-density in range
+    plt.figure(1)
+    plt.plot(
+        nn_cells,
+        densities[nn_maxspike-nn_range:nn_maxspike+nn_range],
+        'b.',markersize=1
+    )
+    # and vs radius
+    plt.figure(2)
+    plt.plot(
+        gridcoords[nn_cells.astype(int),0]/AUcm,
+        densities[nn_maxspike-nn_range:nn_maxspike+nn_range],
+        'b.',markersize=1
+    )
+
+    # Plot tmeperature of "spike-cells" before smoothing
+    #print('R, X, Y, Z')
+    for nn_deviation,nn_spikes in enumerate(spikearray[:,0]):
+
+        nn_spikes = int(nn_spikes)
+
+        for nn in nn_cells:
+            if nn == nn_spikes:
+
+                # Mark smoothed cells
+                plt.figure(1)
+                plt.plot(
+                    nn_spikes,
+                    densities[nn_spikes],
+                    'r.',markersize=2
+                )
+                plt.figure(2)
+                plt.plot(
+                    gridcoords[nn_spikes,0]/AUcm,
+                    densities[nn_spikes],
+                    'r.',markersize=2
+                )
+                # Plot new values to show change
+                plt.plot(
+                    gridcoords[nn_spikes,0]/AUcm,
+                    spikearray[nn_deviation,3],
+                    'g.',markersize=2
+                )
+
+
+
+    # Opacity-smoothing
+
+    # Load c5d-opacity in r3d
+    opacity = c3d.load_staropacities(
+        path='../star_opacities_190.dat',
+    )
+    Ncells = opacity.size
+
+    # load starradius
+    Mstar,starradius,Lstar = a5d.load_star_information(
+        savpath='../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_190.sav',
+        printoutput = 'n'
+    )
+    AUcm = 1.49598e13 # cm
+
+    # Load grid-distances
+    gridcoords = a3d.load_griddistances(
+        amrpath='../r3dresults/st28gm06n052_staranddust_1/amr_grid.inp',
+        gridpath='../r3dresults/st28gm06n052_staranddust_1/grid_distances.csv',
+    )
+    griddistances = gridcoords[:,0]
+
+
+    # Extract position of and strength of spikes (see func "smooth_stellardata")
+    smooth_out = 7
+    smooth_in = 6
+    smooth_tolerance_log = 0
+
+    # search and list "deviation-number" vs cell-number
+    deviationlist = []
+            
+    # Loop over grid cells of each specie (except the outermost cells)
+    for nn in range(smooth_out,Ncells-smooth_out):
+
+        # Check if nn is inside the star (plus a small tolerance factor)
+        if griddistances[nn] < 1.01*starradius:
+
+            nindeces = [
+                nmedian for nmedian in range(nn-smooth_out,nn+smooth_out+1) if nmedian < (nn-smooth_in) or nmedian > (nn+smooth_in)
+            ]
+            median_list = []
+
+            for nmedian in nindeces:
+                median_list.append(opacity[nmedian])
+
+            median_opacity = np.median(np.array(median_list))
+
+            # Save deviating cell-number, opacity, deviation and corresponding median T
+            if opacity[nn] < 10**-smooth_tolerance_log * median_opacity :
+                deviationlist.append([
+                    nn,
+                    opacity[nn],
+                    opacity[nn]/median_opacity,
+                    median_opacity
+                ])
+
+
+    # Change to array
+    spikearray = np.zeros((len(deviationlist),4))
+    for nn,line in enumerate(deviationlist):
+        spikearray[nn,0] = int(line[0])
+        spikearray[nn,1] = line[1]
+        spikearray[nn,2] = line[2]
+        spikearray[nn,3] = line[3]
+
+    # Find maximum spike cellnumber, in terms of temperature and not deviation
+    maxspike = (spikearray[:,1]).argmax()
+    nn_maxspike = int(spikearray[
+        maxspike,0
+    ])
+
+
+    # Print coords of max-spike
+    print('Max-spike-coords:')
+    print(f'    R: {gridcoords[nn_maxspike,0]/AUcm}')
+    print(f'    X: {gridcoords[nn_maxspike,1]/AUcm}')
+    print(f'    Y: {gridcoords[nn_maxspike,2]/AUcm}')
+    print(f'    Z: {gridcoords[nn_maxspike,3]/AUcm}')
+    print(f'    KAPPAbefore: {spikearray[maxspike,1]}')
+    print(f'    KAPPAafter:  {spikearray[maxspike,3]}')
+    print('')
+
+
+    # Set up cell-index-numbers
+    nn_range = 1000
+    nn_cells = np.linspace(
+        nn_maxspike-nn_range+1,
+        nn_maxspike+nn_range,
+        nn_range*2
+    )
+
+    # Plot cell-opacity in range
+    plt.figure(1)
+    plt.plot(
+        nn_cells,
+        opacity[nn_maxspike-nn_range:nn_maxspike+nn_range],
+        'b.',markersize=1
+    )
+    # and vs radius
+    plt.figure(2)
+    plt.plot(
+        gridcoords[nn_cells.astype(int),0]/AUcm,
+        opacity[nn_maxspike-nn_range:nn_maxspike+nn_range],
+        'b.',markersize=1
+    )
+
+    # Plot tmeperature of "spike-cells" before smoothing
+    #print('R, X, Y, Z')
+    for nn_deviation,nn_spikes in enumerate(spikearray[:,0]):
+
+        nn_spikes = int(nn_spikes)
+
+        for nn in nn_cells:
+            if nn == nn_spikes:
+
+                # Mark smoothed cells
+                plt.figure(1)
+                plt.plot(
+                    nn_spikes,
+                    opacity[nn_spikes],
+                    'r.',markersize=2
+                )
+                plt.figure(2)
+                plt.plot(
+                    gridcoords[nn_spikes,0]/AUcm,
+                    opacity[nn_spikes],
+                    'r.',markersize=2
+                )
+                # Plot new values to show change
+                plt.plot(
+                    gridcoords[nn_spikes,0]/AUcm,
+                    spikearray[nn_deviation,3],
+                    'g.',markersize=2
+                )
+
+    print('hej')
+
+
+
+
+
+
 
 # ----------------------------------------------------------------
 #
@@ -352,11 +769,23 @@ if plot_temperaturecompare == 'y':
     # Chose phase-designation
     phase = 190
 
-    # Set up subplots
+
+    # Set up subplots for figure with only temperature (ratio later in another fig)
     fig,ax = plt.subplots(
-        3,1,
-        figsize=(6,13)
+        2,1,
+        figsize=(6,9)
     )
+    # Initiate figobjects for ratio-plot
+    figratio, axratio = plt.figure(
+        figsize=(6,5)
+    ), plt.axes()
+
+    # Set legends
+    legendlist = [
+        r'$T($CO5BOLD$)$',
+        r'$T($point$)$',
+        r'$T($theory$)$'
+    ]
 
 
     # Load star's radius here
@@ -453,27 +882,33 @@ if plot_temperaturecompare == 'y':
         alpha=0.4
     )
 
-
     ax[1].set_ylabel(r'$T({\rm point})$, K',fontsize=18)
-    ax[1].set_xlabel(r'')
+    ax[1].set_xlabel(r'Distance (au)',fontsize=18)
     ax[1].set(xlim=(0,26), ylim=(0,4000))
     ax[1].tick_params(axis='both', which='major', labelsize=15)
+
 
     # A plot with Tc5d or Tr3d divided by T_theory
     Teff = 2800   # Table1
     pindex = -0.9 # Bladh 2012
     temperature_theory = Teff * (Rstar/(2*radial_range))**(2/(4+pindex))
 
-    legendlist = [
-        r'$T($CO5BOLD$)$',
-        r'$T($point$)$'
-    ]
+    # A vertical line at limit of grid for all subplots
+    for nn in range(2):
+        # Grid cube
+        ax[nn].plot([cubesize,cubesize],[0,4100],'k:',linewidth=1)
+        # And stellar radius
+        ax[nn].plot([Rstar,Rstar],[0,4100],'r:',linewidth=1)
 
-    ax[2].plot(radial_range,T_c5d/temperature_theory,'b',linewidth=2,label = legendlist[0])
-    ax[2].plot(radial_range,Tr3d_avr/temperature_theory,'r',linewidth=2,label = legendlist[1])
-    ax[2].legend(fontsize=13)
 
-    ax[2].fill_between(
+
+    # Plot separate figure with temperature-ratios
+    axratio.plot(radial_range,T_c5d/temperature_theory,'b',linewidth=2,label = legendlist[0])
+    axratio.plot(radial_range,Tr3d_avr/temperature_theory,'r',linewidth=2,label = legendlist[1])
+    axratio.plot([radial_range[0],radial_range[-1]],[1,1],'g:', label = legendlist[2])
+    axratio.legend(fontsize=13)
+
+    axratio.fill_between(
         radial_range,
         (T_c5d-Tstd_c5d)/temperature_theory,
         (T_c5d+Tstd_c5d)/temperature_theory,
@@ -481,7 +916,7 @@ if plot_temperaturecompare == 'y':
         alpha=0.4
     )
 
-    ax[2].fill_between(
+    axratio.fill_between(
         radial_range,
         (Tr3d_avr-Tr3d_std)/temperature_theory,
         (Tr3d_avr+Tr3d_std)/temperature_theory,
@@ -489,36 +924,45 @@ if plot_temperaturecompare == 'y':
         alpha=0.4
     )
 
-    ax[2].set_ylabel(r'$T({\rm simulated})$ / $T({\rm theory})$',fontsize=18)
-    ax[2].set_xlabel(r'Distance (au)',fontsize=18)
-    ax[2].set(
+    axratio.set_ylabel(r'$T({\rm simulated})$ / $T({\rm theory})$',fontsize=18)
+    axratio.set_xlabel(r'Distance (au)',fontsize=18)
+    axratio.set(
         ylim=(0.5,2),
         xlim=(0,26)
     )
-    ax[2].tick_params(axis='both', which='major', labelsize=15)
+    axratio.tick_params(axis='both', which='major', labelsize=15)
 
+    # A vertical line at limit of grid
+    # Grid cube
+    axratio.plot([cubesize,cubesize],[0,3],'k:',linewidth=1)
+    # And stellar radius
+    axratio.plot([Rstar,Rstar],[0,3],'r:',linewidth=1)
 
-    # A vertical line at limit of grid for all subplots
-    for nn in range(3):
-        # Grid cube
-        ax[nn].plot([cubesize,cubesize],[0,4100],'k:',linewidth=1)
-        # And stellar radius
-        ax[nn].plot([Rstar,Rstar],[0,4100],'r:',linewidth=1)
-
-    # Horisontal line for 1
-    ax[2].plot([radial_range[0],radial_range[-1]],[1,1],'g:')
 
     # Show all plots
-    plt.tight_layout()
+    fig.tight_layout()
+    figratio.tight_layout()
     fig.show()
+    figratio.show()
 
     #Save figure
     fig.savefig(f'figs/temperatures_{phase}.pdf', dpi=300, facecolor="white")
+    figratio.savefig(f'figs/temperatureratio_{phase}.pdf', dpi=300, facecolor="white")
 
-    # Also plot Ttheory by itself for comparison
-    #plt.figure('Ttheory')
-    #plt.plot(radial_range,temperature_theory)
-    #plt.show()
+    # Print some temperatures and ratios for a table in the paper
+    # at 3 au, 6au, 9 au
+
+    three_au = np.where(radial_range > 3)[0][0] - 1
+    six_au = np.where(radial_range > 6)[0][0] - 1
+    nine_au = np.where(radial_range > 9)[0][0] - 1
+    fifteen_au = np.where(radial_range > 15)[0][0] - 1
+
+    print(f' 3 au. Tc5d: {T_c5d[three_au]}   Tr3d: {Tr3d_avr[three_au]}   Tc5d/Tr3d: {T_c5d[three_au]/Tr3d_avr[three_au]}   Tc5d/Ttheory: {T_c5d[three_au]/temperature_theory[three_au]}   Tr3d/Ttheory: {Tr3d_avr[three_au]/temperature_theory[three_au]}')
+    print(f' 6 au. Tc5d: {T_c5d[six_au]}   Tr3d: {Tr3d_avr[six_au]}   Tc5d/Tr3d: {T_c5d[six_au]/Tr3d_avr[six_au]}   Tc5d/Ttheory: {T_c5d[six_au]/temperature_theory[six_au]}   Tr3d/Ttheory: {Tr3d_avr[six_au]/temperature_theory[six_au]}')
+    print(f' 9 au. Tc5d: {T_c5d[nine_au]}   Tr3d: {Tr3d_avr[nine_au]}   Tc5d/Tr3d: {T_c5d[nine_au]/Tr3d_avr[nine_au]}   Tc5d/Ttheory: {T_c5d[nine_au]/temperature_theory[nine_au]}   Tr3d/Ttheory: {Tr3d_avr[nine_au]/temperature_theory[nine_au]}')
+    print(f'15 au. Tc5d: {T_c5d[fifteen_au]}   Tr3d: {Tr3d_avr[fifteen_au]}   Tc5d/Tr3d: {T_c5d[fifteen_au]/Tr3d_avr[fifteen_au]}   Tc5d/Ttheory: {T_c5d[fifteen_au]/temperature_theory[fifteen_au]}   Tr3d/Ttheory: {Tr3d_avr[fifteen_au]/temperature_theory[fifteen_au]}')
+
+
 
 
 
@@ -721,7 +1165,7 @@ if plot_images_examples == 'y':
 if plot_darwin_imagesed == 'y':
 
     # Initiate figure
-    fig,ax = plt.subplots(2,1, figsize = (6, 10))
+    fig,ax = plt.subplots(2,1, figsize = (6, 9))
 
     # Set path info for SEDs
     path = '../r3dresults/st28gm06n052_darwinsource/'
@@ -841,7 +1285,7 @@ if plot_darwin_imagesed == 'y':
 if plot_point_imagesed == 'y':
 
     # Initiate figure
-    fig,ax = plt.subplots(2,1, figsize = (6, 10))
+    fig,ax = plt.subplots(2,1, figsize = (6, 9))
 
     # Set path info for SEDs
     path = '../r3dresults/st28gm06n052_pointtemperature/'
