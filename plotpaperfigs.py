@@ -9,7 +9,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import analyze_co5bold_functions as a5d
 import analyze_r3d_functions as a3d
-
+import create_r3d_functions as c3d
 
 # Figure settings
 rc('font',**{'family':'serif','serif':['serif']})

@@ -2073,7 +2073,7 @@ def extract_grainsizes(
       CONSTANTS
         Amon = 2.3362e-22 # g
         rhomon = 3.27 # g cm-3
-        nHnd = 3e-16
+        ndnH = 3e-16
         mP = 1.6726e-24 # g (mH = 1.6736e-24 # g)
         epsilonHe = 0.1
 
