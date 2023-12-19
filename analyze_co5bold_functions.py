@@ -2207,10 +2207,10 @@ def extract_grainsizes(
 
 # Function that bins the grain sizes and saves them in another file
 def bin_grainsizes(
-        grainsizepath:str='../grain_sizes_186.dat',
-        phase:str='186',
-        nbins:int=10,
-        lin:str='y'
+        grainsizepath:str = '../grain_sizes_186.dat',
+        phase:str = '186',
+        nbins:int = 10,
+        lin:str = 'y'
     ):
     """
     TODO
@@ -2255,7 +2255,7 @@ def bin_grainsizes(
         fsizes.write('# List of BINNED grain sizes of each cell.\n')
         fsizes.write(f'# Phase is {phase}.\n')
         fsizes.write('# Same order as in R3D density and temperature files.\n')
-        fsizes.write(f'# As extracted from {grainsizepath} in {nbins} size bins (ie species).\n')
+        fsizes.write(f'# As extracted from\n#    {grainsizepath}\n# in {nbins} size bins (ie species).\n')
         if lin == 'y':
             fsizes.write('# In LINear grain size scale.\n#\n')
         elif lin == 'n':

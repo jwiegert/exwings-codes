@@ -2,8 +2,11 @@
 # In cm
 import numpy as np
 import pickle
-import analyze_r3d_functions as a3d
 import os
+
+import analyze_r3d_functions as a3d
+import create_r3d_functions as c3d
+
 
 AUcm = 1.49598e13 # AU in cm cm
 monomermass = 2.3362e-22 # Forsterite mass in g
@@ -26,11 +29,11 @@ def create_dustapproximation(
         ndnH:float = 3e-16,
         mH:float = 1.6736e-24,
         epsilonHe:float = 0.1
-
     ):
     """
     Creates R3D-files dust_density, dust_temperature and grain sizes per grid cell
     from pickles-files with approximated (ellipsoidal) dust distributions
+    with only one dust-bin.
 
     ARGUMENTS
     Paths:
@@ -101,9 +104,13 @@ def create_dustapproximation(
         cloud_coordsZ = np.array(ellipsoid_dict['coord_d_list'][nellipsoid][:,2])
 
         # Extract lists of 
+        #
+        # TODO
+        # number density of the cloud is probably not monomer per cm3 here
+        # is this number of monomers per cell?
         cloud_densities = np.array(ellipsoid_dict['filled_nmonomer'][nellipsoid][:])
         cloud_temperatures = np.array(ellipsoid_dict['filled_temp'][nellipsoid][:])
-        cloud_concenfrac = np.array(ellipsoid_dict['filled_quc'][nellipsoid][:])
+        cloud_condenfrac = np.array(ellipsoid_dict['filled_quc'][nellipsoid][:])
 
 
         # Extract cellindeces for r3d-cells around/in the cloud
@@ -135,7 +142,7 @@ def create_dustapproximation(
             if len(cloudcell) > 0:
                 r3d_densities[nr3d] = cloud_densities[cloudcell].mean() * monomermass
                 r3d_temperatures[nr3d] = cloud_temperatures[cloudcell].mean()
-                r3d_condenfrac[nr3d] = cloud_concenfrac[cloudcell].mean()
+                r3d_condenfrac[nr3d] = cloud_condenfrac[cloudcell].mean()
 
     # Compute grain sizes
     print('  Computes grain sizes')
@@ -149,7 +156,7 @@ def create_dustapproximation(
 
     with open(f'../dust_density_approx.inp', 'w') as fdensity, \
          open(f'../dust_temperature_approx.dat', 'w') as ftemperature, \
-         open(f'../grainsizes_approx.dat', 'w') as fgrainsizes:
+         open(f'../grain_sizes_approx.dat', 'w') as fgrainsizes:
 
         # Write headers:
 
@@ -167,7 +174,7 @@ def create_dustapproximation(
 
         # Grain sizes
         # Just some info
-        fgrainsizes.write('# List of grain sizes in cm\n# Same order as standard R3D-input files')
+        fgrainsizes.write('# List of grain sizes in cm\n# Same order as standard R3D-input files\n')
 
         for nr3d in range(nleafs):
             fdensity.write(f'{r3d_densities[nr3d]}\n')
@@ -176,3 +183,116 @@ def create_dustapproximation(
 
     print('Done at:')
     os.system('date')
+
+
+
+def bin_inpdata(
+        grainsizes_path:str = '../grain_sizes_binned.dat',
+        density_path:str = '../dust_density_approx.inp',
+        temperature_path:str = '../dust_temperature_approx.dat',
+        wavelength_path:str = '../wavelength_micron.inp'
+    ):
+    """
+    INFO
+    ARGUMENTS
+      grainsizes_path: path to dat-file containing the list of binned grainsizes per grid cell
+                       as outputted by create_dustapproximation() above
+      density_path: path the dust_density.inp file with all dust in one species as
+                    outputted by create_dustapproximation() above
+      temperature_path: path the dust_temperature.dat file with all dust in one species as
+                        outputted by create_dustapproximation() above
+      wavelength_path: path to your wavelength_micron.inp file
+    RETURNS    
+    """
+    print('Start binning of density and temperature')
+
+    # Load binned grain sizes per grid cell
+    grainsizes_grid = []
+    with open(grainsizes_path, 'r') as fgrainsizes:
+        for line in fgrainsizes.readlines():
+            if line[0] != '#':
+                grainsizes_grid.append(float(line))
+    grainsizes_grid = np.array(grainsizes_grid)
+
+    # Extract unique sizes. Change unit from cm to um. Save in list due to formatting
+    # later on.
+    grainsizes_list = np.unique(grainsizes_grid)*1e4
+    grainsizes_list = grainsizes_list[np.where(grainsizes_list > 0)[0]].tolist()
+    Nbins = len(grainsizes_list)
+
+
+    # Load density and temperature, extract nleafs (number of cells)
+    nleafs, Nspecies, densities_1bin = a3d.load_dustdensity(
+        path = density_path,
+        numb_specie = 1
+    )
+    nleafs, Nspecies, temperatures_1bin = a3d.load_temperature(
+        path = temperature_path,
+        numb_specie = 1
+    )
+
+
+    # Write optool-script and dustopac file
+    c3d.create_optoolscript(
+        wavelength_path = wavelength_path,
+        phase = 'approx',
+        grainum_sizes = grainsizes_list,
+        grainsize_type = 'normal',
+        grainsize_na = 21,
+        specie = 'mg2sio4',
+        grain_type = 'dhs',
+        polarisation_matrix = 'n',
+    )
+
+
+    # Loop through grid and create and write new density and temperature-files
+    # All empty cells are with 0s, rest are separated by species
+
+    densities_bins = np.zeros(Nbins*nleafs)
+    temperatures_bins = np.zeros(Nbins*nleafs)
+
+    # Loop through each grain size
+    for nbin,agrain in enumerate(grainsizes_list):
+
+        # Loop through whole grid (for each grain size)
+        for nn in range(nleafs):
+
+            # Save densities at positions of each species bin (in cm)
+            if grainsizes_grid[nn] == agrain*1e-4:
+
+                nntotal = nbin*nleafs + nn
+                densities_bins[nntotal] = densities_1bin[nn]
+                temperatures_bins[nntotal] = temperatures_1bin[nn]
+
+
+    # Print new dust_density and dust_temperature-files
+    print('  writing ...')
+    with open(f'../dust_density_approx_{Nbins}bins.inp', 'w') as fdensity, \
+        open(f'../dust_temperature_approx_{Nbins}bins.dat', 'w') as ftemperature:
+
+        # Write headers:
+        #
+        # Density:
+        # 1
+        # nleafs
+        # number dust species
+        fdensity.write(f'1\n{int(nleafs)}\n{int(Nbins)}\n')
+
+        # Temperature:
+        # 1
+        # nleafs
+        # number dust species
+        ftemperature.write(f'1\n{int(nleafs)}\n{int(Nbins)}\n')
+
+        for nn in range(Nbins*nleafs):
+            fdensity.write(f'{densities_bins[nn]}\n')
+            ftemperature.write(f'{temperatures_bins[nn]}\n')
+
+    print(f'  ../dust_density_approx_{Nbins}bins.inp\n  ../dust_temperature_approx_{Nbins}bins.dat\nDONE!')
+
+
+
+
+
+
+
