@@ -1,5 +1,57 @@
-# Loop through coords of one of the ellipsoids and save in the r3d-grid
-# In cm
+#I have now uploaded two pickle files on the phy-exwings server, located in: 
+# /home/ariah/dat/caucus (sidenote: caucus stands for ChAracterising dUst CloUdS hahaha):
+#
+#    filled-mean-ellipsoids_st28gm06n052-032.pickle – ellipsoids filled in with 
+#    mean values (i.e. uniform distribution)
+#    filled-radialdistribution-ellipsoids_st28gm06n052-032.pickle – ellipsoids 
+#    filled in with an inverse radial distribution (e.g. gas density higher 
+#    further away from the star)
+#
+# These are for the snapshot 032 of the model st28gm06n052. I restructured the data 
+# format following your suggestion yesterday, about separating each ellipsoids into
+# different arrays rather than having one big [679^3] domain – which saved a lot of
+# space! Now the data is mostly in a list of arrays. You can load the pickle files
+# as follows:
+#
+###
+#
+#import pickle
+#
+#with open('[INSERTDIRECTORY]/filled-mean-ellipsoids_lists.pickle', 'rb') as handle:
+#    b = pickle.load(handle)
+#
+###
+#
+# where you would have loaded a dictionary with the keys:
+#
+#    'centre_ellipsoid' (2D array): indices of the centre of the ellipsoids [X,Y,Z]
+#    'distance_centre_grid' (1D array): distance from of the centre of the ellipsoids 
+#       to the star (in cm)
+#    'coord_list' (list of arrays): each element in the list is an array of the 
+#       relevant indices for the eliipsoids
+#    'coord_d_list' (list of arrays): each element in the list is an array of the 
+#       distances from the star [X,Y,Z] (in cm)
+#    'filled_rho' (list of arrays): each element in the list is an array for the 
+#       values of the gas density in each coordinate
+#    'filled_temp' (list of arrays): each element in the list is an array for the
+#       values of the temperature in each coordinate
+#    'filled_quc' (list of arrays): each element in the list is an array for the
+#       values of the condensation fraction in each coordinate
+#    'filled_nmonomer’ (list of arrays): each element in the list is an array for 
+#       the values of the number of monomers in each coordinate
+#
+# There are a total of 22 ellipsoids in this snapshot. If you would like the data
+# above in the format of the whole [679^3] domain, I have a small function which
+# can do this -- please refer to function attached. If things are confusing then
+# please let me know, we can look through the data together sometime today or
+# whenever you get to this! Thank you :- )
+#
+# Important
+#    `filled_nmonomer’ should be the total number of monomers, per grain; per cell
+#    `filled_quc’ is actually just the monomer number density (cm-3); per cell
+
+
+# Import standard packages
 import numpy as np
 import pickle
 import os
@@ -8,10 +60,9 @@ import analyze_r3d_functions as a3d
 import create_r3d_functions as c3d
 
 
-AUcm = 1.49598e13 # AU in cm cm
+# Define some constants
+AUcm = 1.49598e13 # AU in cm
 monomermass = 2.3362e-22 # Forsterite mass in g
-
-
 
 
 
@@ -88,7 +139,7 @@ def create_dustapproximation(
     # condenfrac is condensationfraction used to get grain size
     r3d_densities = np.zeros(nleafs)
     r3d_temperatures = np.zeros(nleafs)
-    r3d_condenfrac = np.zeros(nleafs)
+    r3d_monomergasratio = np.zeros(nleafs)
 
 
     # Loop through each cloud
@@ -104,13 +155,9 @@ def create_dustapproximation(
         cloud_coordsZ = np.array(ellipsoid_dict['coord_d_list'][nellipsoid][:,2])
 
         # Extract lists of 
-        #
-        # TODO
-        # number density of the cloud is probably not monomer per cm3 here
-        # is this number of monomers per cell?
-        cloud_densities = np.array(ellipsoid_dict['filled_nmonomer'][nellipsoid][:])
+        cloud_densities = np.array(ellipsoid_dict['filled_quc'][nellipsoid][:])
         cloud_temperatures = np.array(ellipsoid_dict['filled_temp'][nellipsoid][:])
-        cloud_condenfrac = np.array(ellipsoid_dict['filled_quc'][nellipsoid][:])
+        cloud_gasdensity = np.array(ellipsoid_dict['filled_rho'][nellipsoid][:])
 
 
         # Extract cellindeces for r3d-cells around/in the cloud
@@ -142,13 +189,13 @@ def create_dustapproximation(
             if len(cloudcell) > 0:
                 r3d_densities[nr3d] = cloud_densities[cloudcell].mean() * monomermass
                 r3d_temperatures[nr3d] = cloud_temperatures[cloudcell].mean()
-                r3d_condenfrac[nr3d] = cloud_condenfrac[cloudcell].mean()
+                r3d_monomergasratio[nr3d] = cloud_densities[cloudcell].mean() / cloud_gasdensity[cloudcell].mean()
 
-    # Compute grain sizes
+    # Compute grain sizes (in cm)
     print('  Computes grain sizes')
     nHnd = 1./ndnH
     grainsize_constants = 3/(4*np.pi) * Amon/rhomon * nHnd * mH * (1+epsilonHe)
-    r3d_grainsizes = (grainsize_constants * r3d_condenfrac)**(1/3)
+    r3d_grainsizes = (grainsize_constants * r3d_monomergasratio)**(1/3)
 
     # Write all data files
     print('  Prints r3d-files')
@@ -184,8 +231,10 @@ def create_dustapproximation(
     print('Done at:')
     os.system('date')
 
-
-
+# -----------------------------------------------------------------------------
+# Func to write new density-temperature files where dust is binned in species
+# based on grain size bins
+#
 def bin_inpdata(
         grainsizes_path:str = '../grain_sizes_binned.dat',
         density_path:str = '../dust_density_approx.inp',
@@ -196,7 +245,7 @@ def bin_inpdata(
     INFO
     ARGUMENTS
       grainsizes_path: path to dat-file containing the list of binned grainsizes per grid cell
-                       as outputted by create_dustapproximation() above
+                       as outputted by a5d.bin_grainsizes()
       density_path: path the dust_density.inp file with all dust in one species as
                     outputted by create_dustapproximation() above
       temperature_path: path the dust_temperature.dat file with all dust in one species as

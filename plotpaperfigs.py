@@ -20,6 +20,7 @@ rc('ytick.major',size=8)
 rc('ytick.minor',size=4)
 
 # Constants
+c = 2.998e8 # m/s
 AUcm = 1.49598e13 # cm
 Lsol = 3.828e26 # W
 Rsolmeter = 6.955e8 # m
@@ -40,7 +41,7 @@ phasetimes = [
 # Plot choices
 
 # Processinginfo
-plot_coboldgrid = 'y'
+plot_coboldgrid = 'n'
 plot_opticalthickness = 'n'
 list_smoothingchanges = 'n'     # TODO (clean up and make it work)
 
@@ -66,6 +67,7 @@ plot_images_convolved_vlti = 'n'
 # Observables
 compute_luminosities = 'n'
 compute_tenmicronfluxdensities = 'n'
+compute_spectralindeces = 'y'
 measuredustcloudflux = 'n'
 plot_resolutiondistance = 'n'
 check_smoothedimage_radius = 'n'
@@ -1777,6 +1779,83 @@ if compute_tenmicronfluxdensities == 'y':
             # Print everything
             print(f'    {angles[nangle]}:{totalflux}           {starflux}           {dustflux}           {dustflux/starflux}           {dustlum/starlum}')
 
+
+if compute_spectralindeces == 'y':
+    #
+    # https://en.wikipedia.org/wiki/Spectral_index
+    # Given frequency \nu in Hz and radiative flux density S_{\nu } in Jy,
+    # the spectral index \alpha is given implicitly by 
+    # a = d log(S) / d log(freq)
+    #
+    # so that
+    # S propto freq^a
+    #
+    # a spectral index of -0.1 to 2 at radio frequencies often indicates thermal emission,
+    # for example, a black body, i the RJ-regime is
+    # B propto freq^2
+
+    # Load SEDs:
+    # Normal with dust
+    # Normal, no dust
+    # Darwin with dust
+    modelpaths = [
+        '../r3dresults/st28gm06n052_staranddust_nospikes/',
+        '../r3dresults/st28gm06n052_nodust/',
+        '../r3dresults/st28gm06n052_darwinsource/'
+    ]
+
+    for modelpath in modelpaths:
+
+        paths = [
+            f'{modelpath}190/spectrum_i000_phi000.out',
+            f'{modelpath}190/spectrum_i090_phi000.out',
+            f'{modelpath}190/spectrum_i090_phi090.out',
+            f'{modelpath}190/spectrum_i090_phi270.out',
+            f'{modelpath}190/spectrum_i180_phi000.out',
+            f'{modelpath}190/spectrum_i270_phi000.out',
+        ]
+
+
+        print(modelpath)
+
+        for path in paths:
+
+            # Load wavelength(um) and spectrum(Jy)
+            wavelengths,spectrum = a3d.load_spectrum(
+                path = path,
+                distance = 1
+            )
+            wavelengths = np.array(wavelengths)
+            spectrum = np.array(spectrum)
+
+            # Extract some wavelengths
+            thirtymicron = np.where(wavelengths > 30)[0][0]-1
+            fiftymicron = np.where(wavelengths > 50)[0][0]
+            hundredmicron =  np.where(wavelengths > 100)[0][0]-1
+            twohundredmicron =  np.where(wavelengths > 200)[0][0]
+
+            # Extract frequency
+            freq = c/(wavelengths*1e-6)
+
+            # Compute spectral indeces
+            deltafreq = np.log10(freq[thirtymicron] - freq[fiftymicron])
+            deltaflux = np.log10(spectrum[thirtymicron] - spectrum[fiftymicron])
+            index_fifty = deltaflux/deltafreq
+
+            deltafreq = np.log10(freq[thirtymicron] - freq[hundredmicron])
+            deltaflux = np.log10(spectrum[thirtymicron] - spectrum[hundredmicron])
+            index_hundred = deltaflux/deltafreq
+
+            deltafreq = np.log10(freq[thirtymicron] - freq[twohundredmicron])
+            deltaflux = np.log10(spectrum[thirtymicron] - spectrum[twohundredmicron])
+            index_twohundred = deltaflux/deltafreq
+
+            print(f'  {path[-24:-4]}')
+            print(f'    30- 50um: {index_fifty}')
+            print(f'    30-100um: {index_hundred}')
+            print(f'    30-200um: {index_twohundred}')
+
+        print()
 
 
 if measuredustcloudflux == 'y':
