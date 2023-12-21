@@ -255,7 +255,7 @@ def bin_inpdata(
     """
     print('Start binning of density and temperature')
 
-    # Load binned grain sizes per grid cell
+    # Load binned grain sizes per grid cell in cm
     grainsizes_grid = []
     with open(grainsizes_path, 'r') as fgrainsizes:
         for line in fgrainsizes.readlines():
@@ -263,11 +263,15 @@ def bin_inpdata(
                 grainsizes_grid.append(float(line))
     grainsizes_grid = np.array(grainsizes_grid)
 
-    # Extract unique sizes. Change unit from cm to um. Save in list due to formatting
-    # later on.
-    grainsizes_list = np.unique(grainsizes_grid)*1e4
-    grainsizes_list = grainsizes_list[np.where(grainsizes_list > 0)[0]].tolist()
-    Nbins = len(grainsizes_list)
+    # Extract unique sizes
+    grainsizes = np.unique(grainsizes_grid)
+    # Only save the grainsizes that aren't zero
+    grainsizes = grainsizes[np.where(grainsizes > 0)[0]]
+    Nbins = len(grainsizes)
+    # Save separate list with grainsizes in um
+    grainsizes_list_um = (grainsizes*1e4).tolist()
+    
+
 
 
     # Load density and temperature, extract nleafs (number of cells)
@@ -285,7 +289,7 @@ def bin_inpdata(
     c3d.create_optoolscript(
         wavelength_path = wavelength_path,
         phase = 'approx',
-        grainum_sizes = grainsizes_list,
+        grainum_sizes = grainsizes_list_um,
         grainsize_type = 'normal',
         grainsize_na = 21,
         specie = 'mg2sio4',
@@ -297,27 +301,36 @@ def bin_inpdata(
     # Loop through grid and create and write new density and temperature-files
     # All empty cells are with 0s, rest are separated by species
 
+    # TODO add a counter to theck the number of cells per bin, warn if it's zero!
+    #      write grain size and bin number in warning
+
     densities_bins = np.zeros(Nbins*nleafs)
     temperatures_bins = np.zeros(Nbins*nleafs)
 
     # Loop through each grain size
-    for nbin,agrain in enumerate(grainsizes_list):
+    for nbin,agrain in enumerate(grainsizes):
+
+        # Grin cell counter for error checking
+        graincell_counter = 0
 
         # Loop through whole grid (for each grain size)
         for nn in range(nleafs):
 
             # Save densities at positions of each species bin (in cm)
-            if grainsizes_grid[nn] == agrain*1e-4:
-
+            if grainsizes_grid[nn] == agrain:
+                graincell_counter += 1
                 nntotal = nbin*nleafs + nn
                 densities_bins[nntotal] = densities_1bin[nn]
                 temperatures_bins[nntotal] = temperatures_1bin[nn]
 
+        # For each grain size bin, check if any data were saved
+        if graincell_counter == 0:
+            print(f'\n  WARNING: no data saved for grain size number {nbin+1}: {agrain*1e4}um\n')
 
     # Print new dust_density and dust_temperature-files
     print('  writing ...')
     with open(f'../dust_density_approx_{Nbins}bins.inp', 'w') as fdensity, \
-        open(f'../dust_temperature_approx_{Nbins}bins.dat', 'w') as ftemperature:
+         open(f'../dust_temperature_approx_{Nbins}bins.dat', 'w') as ftemperature:
 
         # Write headers:
         #
