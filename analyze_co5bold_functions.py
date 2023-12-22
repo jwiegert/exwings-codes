@@ -1141,27 +1141,27 @@ def plot_grainsizemass_distribution(
 
 # Extract data on star and create r3d-files from it
 def create_star(
-        savpath:str='../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
-        amrpath:str='../amr_grid.inp',
-        gridpath:str='../grid_distances.csv',
-        sizepath:str='../grid_cellsizes.csv',
+        savpath:str = '../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
+        npypath:str = '../',
+        amrpath:str = '../amr_grid.inp',
+        gridpath:str = '../grid_distances.csv',
+        sizepath:str = '../grid_cellsizes.csv',
     ):
     """
     Extracts data from Co5bold sav-files, and npy-files and creates a dust_star for Radmc3d.
     Must use "a5d.heavydata" first if npy-files are not already saved
 
-    INPUT
-    -----
-    amrpath: path to amr_grid.inp
-    gridpath: path to grid_distances.csv
-    sizepath: path to grid_cellsizes.csv
-    savpath: path to co5bold sav-file
-
-    OUTPUT
-    ------
-    R3D density file: dust_density_onestar.inp
-    R3D temperature file: dust_temperature_onestar.dat
-    Useful file with list of extracted opacities 'kappa': star_opacities.dat
+    ARGUMENTS
+      savpath: path to co5bold sav-file
+      npypath: Path to folder with .npy files (from load_c5dheavydata)
+      amrpath: path to amr_grid.inp
+      gridpath: path to grid_distances.csv
+      sizepath: path to grid_cellsizes.csv
+    
+    RETURNS
+      R3D density file: dust_density_onestar.inp
+      R3D temperature file: dust_temperature_onestar.dat
+      Useful file with list of extracted opacities 'kappa': star_opacities.dat
     """
 
     # Extract phase-designation from savpath
@@ -1206,14 +1206,14 @@ def create_star(
         print('Loading C5D star properties (density, temperature, opacity)')
 
         # Check if files exists first
-        if os.path.exists(f'../c5dgas_density_{phase}.npy') == True and \
-           os.path.exists(f'../c5d_temperature_{phase}.npy') == True and \
-           os.path.exists(f'../c5dgas_opacity_{phase}.npy') == True :
-            c5dstar_densities = np.load(f'../c5dgas_density_{phase}.npy')
-            c5dstar_temperatures = np.load(f'../c5d_temperature_{phase}.npy')
-            c5dstar_opacities = np.load(f'../c5dgas_opacity_{phase}.npy')
+        if os.path.exists(f'{npypath}c5dgas_density_{phase}.npy') == True and \
+           os.path.exists(f'{npypath}c5d_temperature_{phase}.npy') == True and \
+           os.path.exists(f'{npypath}c5dgas_opacity_{phase}.npy') == True :
+            c5dstar_densities = np.load(f'{npypath}c5dgas_density_{phase}.npy')
+            c5dstar_temperatures = np.load(f'{npypath}c5d_temperature_{phase}.npy')
+            c5dstar_opacities = np.load(f'{npypath}c5dgas_opacity_{phase}.npy')
         else:
-            print(f'ERROR: One of these files doesnt exist, did you run a5d.load_c5dheavydata() before?\n    ../c5dgas_density.npy_{phase}, ../c5d_temperature_{phase}.npy, ../c5dgas_opacity_{phase}.npy\n')
+            print(f'  \nERROR: One of these files doesnt exist, did you run a5d.load_c5dheavydata() before?\n    ../c5dgas_density.npy_{phase}, ../c5d_temperature_{phase}.npy, ../c5dgas_opacity_{phase}.npy\n')
 
 
         # Start working :)
@@ -1384,21 +1384,26 @@ def create_stars(
 # Creates ONE kappa_star that is only = 1 over all wavelengths.
 def create_staropadensity(
         pathopacity:str='../star_opacities.dat',
-        pathstardensity:str='../dust_density_onestarstar.inp',
+        pathstardensity:str='../dust_density_onestar.inp',
         pathwavelength:str='../wavelength_micron.inp',
         phase:str=1,
         corrfac:float=1.0
     ):
     """
-    INPUT
-    pathopacity: path to star_opacities.dat',
-    pathstardensity: path to dust_density_onestarstar.inp',
-    pathwavelength: path to wavelength_micron.inp',
+    Combines gas density and gas opacity from c5d (as translated to r3d-grid) and
+    combines them to a dust_density.inp-file where each cell contains the gas's
+    optical thickness per grid cell.
 
-    OUTPUT
-    dust_density_opastar_{phase}.inp
-    dustopac_star_{phase}.inp
-    dustkappa_opastar_{phase}.inp
+    ARGUMENTS
+      pathopacity: path to star_opacities.dat',
+      pathstardensity: path to dust_density_onestarstar.inp',
+      pathwavelength: path to wavelength_micron.inp',
+      corrfac: in case you want to reduce/increase optical thickness for some reason
+
+    RETURNS
+      dust_density_opastar_{phase}.inp
+      dustopac_star_{phase}.inp
+      dustkappa_opastar_{phase}.inp
     """
 
     print('Loading density, opacity, wavelengths')

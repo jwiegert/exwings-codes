@@ -55,3 +55,19 @@ ael.bin_inpdata(
 
 
 # TODO merge with a chosen stellar gas-model
+#c3d.merge_dustdensities(
+#    filenames=[
+#        '../../../r3dsims/co5bold_tests/05-lowergridres/unmerged/dust_density_star.inp',
+#        '../../../r3dsims/co5bold_tests/05-lowergridres/unmerged/dust_density_dust.inp'
+#    ],
+#    modelname='st28gm06n052_staranddust_1',
+#    phases=[0],
+#)
+#c3d.merge_dusttemperatures(
+#    filenames=[
+#        '../../../r3dsims/co5bold_tests/05-lowergridres/unmerged/dust_temperature_star.dat',
+#        '../../../r3dsims/co5bold_tests/05-lowergridres/unmerged/dust_temperature_dust.dat'
+#    ],
+#    modelname='st28gm06n052_staranddust_1',
+#    phases=[0],
+#)
