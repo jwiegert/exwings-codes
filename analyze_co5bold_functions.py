@@ -2221,6 +2221,9 @@ def bin_grainsizes(
     TODO
     write info here
 
+    RETURNS
+      grain_sizes_binned_{phase}.dat: File with binned grain size per grid cell in list in
+                                      same order as standard r3d-input
     """
     # Load grainsizes
     sizes,Nleafs = a3d.load_grainsizes(
@@ -2257,9 +2260,9 @@ def bin_grainsizes(
     with open(f'../grain_sizes_binned_{phase}.dat', 'w') as fsizes:
 
         # Write header
-        fsizes.write('# List of BINNED grain sizes of each cell.\n')
+        fsizes.write( '# List of BINNED grain sizes of each cell.\n')
         fsizes.write(f'# Phase is {phase}.\n')
-        fsizes.write('# Same order as in R3D density and temperature files.\n')
+        fsizes.write( '# Same order as in R3D density and temperature files.\n')
         fsizes.write(f'# As extracted from\n#    {grainsizepath}\n# in {nbins} size bins (ie species).\n')
         if lin == 'y':
             fsizes.write('# In LINear grain size scale.\n#\n')

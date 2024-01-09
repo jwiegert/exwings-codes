@@ -301,9 +301,6 @@ def bin_inpdata(
     # Loop through grid and create and write new density and temperature-files
     # All empty cells are with 0s, rest are separated by species
 
-    # TODO add a counter to theck the number of cells per bin, warn if it's zero!
-    #      write grain size and bin number in warning
-
     densities_bins = np.zeros(Nbins*nleafs)
     temperatures_bins = np.zeros(Nbins*nleafs)
 
