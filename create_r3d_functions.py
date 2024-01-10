@@ -1500,6 +1500,7 @@ def merge_dustdensities(
     ):
     """
     Merges listed dust_density-files in a workfolder into one inp-file
+    Species in the same order as in the list of filenames.
 
     ARGUMENTS
       workfolder:str = path to specific work/project folder
@@ -1581,7 +1582,7 @@ def merge_dustdensities(
                     f_dust.write(f'{density}\n')
 
         # Mode the new dust_density to its folder
-        os.system(f'mv ../dust_density_merged.inp {workpath}dust_density_merged.inp')
+        os.system(f'mv ../dust_density_merged.inp {workpath}')
 
         # Print final message
         print(f'merge_dustdensities:\n    {workpath}dust_density_merged.inp\nDONE\n')
@@ -1590,9 +1591,8 @@ def merge_dustdensities(
 # Function for merging a list of dustopac.inp files
 # TODO rewrite so that it works with a specific path instead! more adaptable
 def merge_dustopac(
+        workpath:str = '../r3dresults',
         filenames:list=['dustopac.inp'],
-        modelname:str='st28gm06n052',
-        phases:list=[186,190,198],
     ):
     """
     Given a model, phase, and list of dustopac*.inp-files this
@@ -1623,77 +1623,73 @@ def merge_dustopac(
     10-----------------------------
     etc
     """
-    # Path to r3dresults-folder
-    path = '../r3dresults/'
+    # Automatically add / to end of path if it's missing
+    if workpath[-1] != '/':
+        workpath += '/'
 
     # Number of density files to merge
     Nfiles = len(filenames)
 
-    for phase in phases:
+    if Nfiles < 2:
+        print(f'Number of dustopac files is {Nfiles}. There is nothing to merge')
 
-        if Nfiles < 2:
-            print(f'Number of dustopac files (phase: {phase}) is {Nfiles}. There is nothing to merge')
+    else:
+        print(f'Merging {Nfiles} dustopac_*.inp files in {workpath}')
 
-        else:
-            print(f'Merging {Nfiles} dustopac_*.inp files for phase {phase}')
+        specienames = []            
+        Nspeclist = []
 
-            specienames = []            
-            Nspeclist = []
+        # First extract number of species in the files
+        for filename in filenames:
+            with open(f'{workpath}{filename}', 'r') as f_read:
+                for nl,line in enumerate(f_read.readlines()):
+                    if nl == 1:
+                        # Line 1 is nspecies, number of species included here
+                        Nspeclist.append(int(line))
 
-            # First extract number of species in the files
-            for filename in filenames:
-                with open(f'{path}{modelname}/{phase}/{filename}', 'r') as f_read:
-                    for nl,line in enumerate(f_read.readlines()):
-                        if nl == 1:
-                            # Line 1 is nspecies, number of species included here
-                            Nspeclist.append(int(line))
+        # Total number of species
+        Nspecies = sum(Nspeclist)
 
-            # Total number of species
-            Nspecies = sum(Nspeclist)
+        # Then extract the specie-names
+        # These are on lines 5, 9, 13
+        # ie, 1+4*(nspecie+1)
+        for nf,filename in enumerate(filenames):
+            with open(f'{workpath}{filename}', 'r') as f_read:
+                for nl,line in enumerate(f_read.readlines()):
+                    for nspecie in range(Nspeclist[nf]):
+                        if nl == 1+4*(nspecie+1):
+                            specienames.append(line.rstrip())
 
-            # Then extract the specie-names
-            # These are on lines 5, 9, 13
-            # ie, 1+4*(nspecie+1)
-            for nf,filename in enumerate(filenames):
-                with open(f'{path}{modelname}/{phase}/{filename}', 'r') as f_read:
-                    for nl,line in enumerate(f_read.readlines()):
-                        for nspecie in range(Nspeclist[nf]):
-                            if nl == 1+4*(nspecie+1):
-                                specienames.append(line.rstrip())
+        # Write new dust_opac:
+        with open(f'../dustopac_merged.inp','w') as f_opac:
+            # Header
+            f_opac.write(f'2\n{Nspecies}\n-----------------------------\n')
+            # Then each specie
+            for speciename in specienames:
+                f_opac.write(f'1\n0\n{speciename}\n-----------------------------\n')
 
-            # Write new dust_opac:
-            with open(f'../dustopac_{phase}.inp','w') as f_opac:
-                # Header
-                f_opac.write(f'2\n{Nspecies}\n-----------------------------\n')
-                # Then each specie
-                for speciename in specienames:
-                    f_opac.write(f'1\n0\n{speciename}\n-----------------------------\n')
+        # Move new file to final folder
+        os.system(f'mv ../dustopac_merged.inp {workpath}')
 
-            # Move new file to final folder
-            os.system(f'mv ../dustopac_{phase}.inp {path}{modelname}/{phase}/dustopac.inp')
-
-            # Print final message
-            print(f'merge_dustopac:\n    {path}{modelname}/{phase}/dustopac.inp\nDONE\n')
+        # Print final message
+        print(f'merge_dustopac:\n    {workpath}dustopac_merged.inp\nDONE\n')
 
 
 # Function that merges dust_temperature-files in a given folder
 def merge_dusttemperatures(
+        workpath:str = '../r3dresults/',
         filenames:list=['dust_temperature.dat'],
-        modelname:str='st28gm06n052',
-        phases:list=[186,190,198],
     ):
     """
-    Given a model, phase, and list of dust_temperature*.dat-files this
-    will merge them into one, species in the same order as in
-    the list of filenames.
+    Merges listed dust_temperature-files in a workfolder into one dat-file
+    Species in the same order as in the list of filenames.
 
     ARGUMENTS
+      workfolder:str = path to specific work/project folder
       filenames:list = list of dust_temperature-filenames
-      modelname:str = co5bold-model-name (folder in r3dresults)
-      phases:list = list of phase-designations to loop through (folders inside modelfolder)
     
     RETURNS
-      one dust_temperature.dat for each phase in phases-list, moved to each phase-folder
+      one dust_temperature.dat moved to work folder
 
     INFO:
       structure (and line numbers) of dust_temperature.dat is the following (with line
@@ -1705,101 +1701,74 @@ def merge_dusttemperatures(
     3 and onwards, temperatures of cells in K, starting at 0,0,0, listed in same order
       as in filenames-list.
     """
-    '''
-            workpath:str = '../r3dresults/',
-            filenames:list=['dust_density.inp'],
-        ):
-        """
-        Merges listed dust_density-files in a workfolder into one inp-file
 
-        ARGUMENTS
-        workfolder:str = path to specific work/project folder
-        filenames:list = list of dust_density-filenames
-        
-        RETURNS
-        One dust_density.inp for each phase in phases-list moved to work folder
-        
-        INFO
-        Structure of dust_density is as follows (and line numbers)
-
-        0 1 (yes, the number 1, nothing more or less)
-        1 number of leafs (or cells)
-        2 number dust species
-        3 onward-> list of densities in g/cm3 starting from cell 0,0,0
-        and in order of dust specie. Must be the same order as in dustopac.inp
-        """
-    '''
-
-
-
-
-    # Path to r3dresults-folder
-    path = '../r3dresults/'
+    # Automatically add / to end of path if it's missing
+    if workpath[-1] != '/':
+        workpath += '/'
 
     # Number of density files to merge
     Nfiles = len(filenames)
 
-    for phase in phases:
+    if Nfiles < 2:
+        print(f'Number of dustopac files is {Nfiles}. There is nothing to merge')
 
-        if Nfiles < 2:
-            print(f'Number of dustopac files (phase: {phase}) is {Nfiles}. There is nothing to merge')
+    else:
+        print(f'Merging {Nfiles} dust_temperature_*.dat files in {workpath}')
+
+        temperaturelist = []
+        nleafslist = []
+        Nspeclist = []
+
+        # Open each file in filenames
+        for filename in filenames:
+            with open(f'{workpath}{filename}', 'r') as f_read:
+                #
+                # read lines:
+                # skip line 0
+                #  
+                # lines 3 to nleafs+3 are temperatures for spec1
+                # lines nspecie*(nleafs+3) to (nspecie+1)*(nleafs+3) are for species n
+                #
+                for nl,line in enumerate(f_read.readlines()):
+                    if nl == 1:
+                        # Line 1 is nleafs, number of grid cells
+                        nleafslist.append(int(line))
+                    if nl == 2:
+                        # Line 2 is Nspecies, number of species within temperature file
+                        Nspeclist.append(int(line))
+                    if nl > 2:
+                        # The rest are densities, one specie after another
+                        # IE, the order IS IMPORTANT
+                        temperaturelist.append(float(line))
+
+        # Total number of species is the sum of them then
+        Nspecies = sum(Nspeclist)
+
+        # Check that number of cells (nleafs) doesn't vary with density-file
+        if nleafslist[0] != sum(nleafslist)/len(filenames):
+            print(f'Number of cells (nleafs) varies:\n    {nleafslist}')
+            nleafs = 0
 
         else:
-            print(f'Merging {Nfiles} dust_temperature_*.dat files for phase {phase}')
+            # Number of leafs are correct then continue here
+            nleafs = nleafslist[0]
 
-            temperaturelist = []
-            nleafslist = []
-            Nspeclist = []
+            # Write the new total dust_density-file:
+            # Open new dust_temperature:
+            with open(f'../dust_temperature_merged.dat','w') as f_temperature:
 
-            # Open each file in filenames
-            for filename in filenames:
-                with open(f'{path}{modelname}/{phase}/{filename}', 'r') as f_read:
-                    #
-                    # read lines:
-                    # skip line 0
-                    #  
-                    # lines 3 to nleafs+3 are temperatures for spec1
-                    # lines nspecie*(nleafs+3) to (nspecie+1)*(nleafs+3) are for species n
-                    #
-                    for nl,line in enumerate(f_read.readlines()):
-                        if nl == 1:
-                            # Line 1 is nleafs, number of grid cells
-                            nleafslist.append(int(line))
-                        if nl == 2:
-                            # Line 2 is Nspecies, number of species within temperature file
-                            Nspeclist.append(int(line))
-                        if nl > 2:
-                            # The rest are densities, one specie after another
-                            # IE, the order IS IMPORTANT
-                            temperaturelist.append(float(line))
+                # Write header
+                # 1
+                # nleafs
+                # number dust species
+                f_temperature.write(f'1\n{int(nleafs)}\n{int(Nspecies)}\n')
 
-            # Total number of species is the sum of them then
-            Nspecies = sum(Nspeclist)
+                for temperature in temperaturelist:
+                    f_temperature.write(f'{temperature}\n')
 
-            # Check that number of cells (nleafs) doesn't vary with density-file
-            if nleafslist[0] != sum(nleafslist)/len(filenames):
-                print(f'Number of cells (nleafs) varies:\n    {nleafslist}')
-                nleafs = 0
+    # Mode the new dust_density to its folder
+    os.system(f'mv ../dust_temperature_merged.dat {workpath}')
 
-            else:
-                # Number of leafs are correct then continue here
-                nleafs = nleafslist[0]
+    # Print final message
+    print(f'merge_dustdensities:\n    {workpath}dust_temperature.dat\nDONE\n')
 
-                # Write the new total dust_density-file:
-                # Open new dust_temperature:
-                with open(f'../dust_temperature_{phase}.dat','w') as f_temperature:
-
-                    # Write header
-                    # 1
-                    # nleafs
-                    # number dust species
-                    f_temperature.write(f'1\n{int(nleafs)}\n{int(Nspecies)}\n')
-
-                    for temperature in temperaturelist:
-                        f_temperature.write(f'{temperature}\n')
-
-        # Mode the new dust_density to its folder
-        os.system(f'mv ../dust_temperature_{phase}.dat {path}{modelname}/{phase}/dust_temperature.dat')
-
-        # Print final message
-        print(f'merge_dustdensities:\n    {path}{modelname}/{phase}/dust_temperature.dat\nDONE\n')

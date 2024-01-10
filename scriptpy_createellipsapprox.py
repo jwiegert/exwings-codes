@@ -1,5 +1,6 @@
 import analyze_ellipsoidapprox as ael
 import analyze_co5bold_functions as a5d
+import create_r3d_functions as c3d
 import sys
 import os
 
@@ -7,10 +8,11 @@ import os
 # INSTRUCTIONS
 #
 # > python3 scriptpy_createellipsapprox.py $picklepath $workpath
-
-
-
-
+#    picklepath: where to get ellisoidal dust data from
+#    workpath: where everything should end up and where co5bold-star-dust-data are gathered
+#
+# Example:
+# > python3 scriptpy_createellipsapprox.py '../../exwings_archivedata/co5bold_data/st28gm06n052_arief_tests/filled-radialdistribution-ellipsoids_st28gm06n052-032.pickle' '../r3dresults/st28gm06n052_arief_tests/032_186_radial_combine/' 
 
 
 # Path to pickle-file
@@ -21,6 +23,7 @@ workpath = sys.argv[2]
 # Automatically add / to end of path if it's missing
 if workpath[-1] != '/':
     workpath += '/'
+
 
 
 # Paths to grid files
@@ -95,6 +98,10 @@ os.system(f'mv ../optool_script_approx.sh {workpath}')
 os.system(f'mv ../dustopac_mg2sio4_approx.inp {workpath}')
 
 
+# MERGE DATA
+#
+# Merge ellips-dust-data with a stellar model from co5bold
+
 
 # densities to merge:
 # dust_density_approx_{Nbins}bins.inp
@@ -104,28 +111,30 @@ os.system(f'mv ../dustopac_mg2sio4_approx.inp {workpath}')
 # dust_temperature_approx_{Nbins}bins.dat
 # and a c5d-star-temperature
 
-# TODO merge with a chosen stellar gas-model
-#c3d.merge_dustdensities(
-#    workpath:str = '../r3dresults/',
-#    filenames=[
-#        'dust_density_star.inp',
-#        'dust_density_dust.inp'
-#    ],
-#)
 
+c3d.merge_dustdensities(
+    workpath = workpath,
+    filenames=[
+        'dust_density_c5d.inp',
+        'dust_density_approx.inp'
+    ],
+)
+c3d.merge_dusttemperatures(
+    workpath = workpath,
+    filenames=[
+        '../../../r3dsims/co5bold_tests/05-lowergridres/unmerged/dust_temperature_star.dat',
+        '../../../r3dsims/co5bold_tests/05-lowergridres/unmerged/dust_temperature_dust.dat'
+    ],
+)
+# merge dustopac also
+c3d.merge_dustopac(
+    workpath = workpath,
+    filenames = [
+        'dustopac_c5d.inp',
+        'dustopac_mg2sio4_approx.inp'
+    ]
+)
+# NOTE
+# Moves the merged files back to work folder
 
-
-#c3d.merge_dusttemperatures(
-#    filenames=[
-#        '../../../r3dsims/co5bold_tests/05-lowergridres/unmerged/dust_temperature_star.dat',
-#        '../../../r3dsims/co5bold_tests/05-lowergridres/unmerged/dust_temperature_dust.dat'
-#    ],
-#    modelname='st28gm06n052_staranddust_1',
-#    phases=[0],
-#)
-
-# TODO
-# move the merged files too
-
-
-# print some output, like "don, everything is in workpath, clean up and order your files"
+print(f'DONE:\n  Files moved to {workpath}. Clean up and order your files for radmc3d-runs.\n  Run optool-script to create all opacity data')
