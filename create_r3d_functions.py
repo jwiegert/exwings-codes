@@ -871,6 +871,7 @@ def create_optoolscript(
                           'y' : -s is included in optool-script and dustopac.inp is adapted for this
                           'n' : default setting, no polarisation matrix, standard dustopac.inp
     """
+    print('Running create_optoolscript:')
 
     lnk_path = f'~/program/optool/my_lnk_data/{specie}.lnk'
 
@@ -902,7 +903,7 @@ def create_optoolscript(
             print(f'    Grain sizes are (um):\n{grainum_sizes}')
     
     elif type(grainum_sizes) == list:
-        print(f'    Grain sizes are (um):\n{grainum_sizes}')
+        print(f'  Grain sizes are (um):\n{grainum_sizes}')
     
     else:
         print('ERROR! grainum_sizes must be either list or string (even with only one grain size)')
@@ -933,7 +934,6 @@ def create_optoolscript(
         midsize = 0.5 * (grainum_sizes[0]+grainum_sizes[1]) - grainum_sizes[0]
         if midsize < grainum_sizes[0]:
             amin_um = [grainum_sizes[0] - midsize]
-            print('yes')
         else: 
             amin_um = [0.1*grainum_sizes[0]]
         # Old alternative
@@ -1083,7 +1083,7 @@ def create_optoolscript(
     # Make into executable
     os.system(f'chmod +x ../optool_script_{phase}.sh')
 
-    print(f'create_optoolscript:\n    ../optool_script_{phase}.sh\n    ../dustopac_{specie}_{phase}.inp\nDONE\n')
+    print(f'  ../optool_script_{phase}.sh\n  ../dustopac_{specie}_{phase}.inp\nDONE\n')
 
 
 

@@ -104,7 +104,7 @@ def create_dustapproximation(
     RETURNS
       dust_density_approx.inp
       dust_temperature_approx.dat
-      grainsizes_approx.dat
+      grain_sizes_approx.dat
     """
 
     # Some output (tests the time it takes also)
@@ -253,7 +253,7 @@ def bin_inpdata(
       wavelength_path: path to your wavelength_micron.inp file
     RETURNS    
     """
-    print('Start binning of density and temperature')
+    print('Start binning density and temperature')
 
     # Load binned grain sizes per grid cell in cm
     grainsizes_grid = []
@@ -272,8 +272,6 @@ def bin_inpdata(
     grainsizes_list_um = (grainsizes*1e4).tolist()
     
 
-
-
     # Load density and temperature, extract nleafs (number of cells)
     nleafs, Nspecies, densities_1bin = a3d.load_dustdensity(
         path = density_path,
@@ -286,6 +284,7 @@ def bin_inpdata(
 
 
     # Write optool-script and dustopac file
+    print('  Writing optool script and dustopac-files')
     c3d.create_optoolscript(
         wavelength_path = wavelength_path,
         phase = 'approx',
@@ -300,6 +299,7 @@ def bin_inpdata(
 
     # Loop through grid and create and write new density and temperature-files
     # All empty cells are with 0s, rest are separated by species
+    print('  Creating new density and temperature arrays.')
 
     densities_bins = np.zeros(Nbins*nleafs)
     temperatures_bins = np.zeros(Nbins*nleafs)
@@ -325,7 +325,7 @@ def bin_inpdata(
             print(f'\n  WARNING: no data saved for grain size number {nbin+1}: {agrain*1e4}um\n')
 
     # Print new dust_density and dust_temperature-files
-    print('  writing ...')
+    print('  Writing new density and temperature inp-files')
     with open(f'../dust_density_approx_{Nbins}bins.inp', 'w') as fdensity, \
          open(f'../dust_temperature_approx_{Nbins}bins.dat', 'w') as ftemperature:
 
@@ -347,7 +347,7 @@ def bin_inpdata(
             fdensity.write(f'{densities_bins[nn]}\n')
             ftemperature.write(f'{temperatures_bins[nn]}\n')
 
-    print(f'  ../dust_density_approx_{Nbins}bins.inp\n  ../dust_temperature_approx_{Nbins}bins.dat\nDONE!')
+    print(f'  ../dust_density_approx_{Nbins}bins.inp\n  ../dust_temperature_approx_{Nbins}bins.dat\nDONE')
 
 
 

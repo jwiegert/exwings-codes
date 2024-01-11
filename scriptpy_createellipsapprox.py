@@ -15,6 +15,9 @@ import os
 # > python3 scriptpy_createellipsapprox.py '../../exwings_archivedata/co5bold_data/st28gm06n052_arief_tests/filled-radialdistribution-ellipsoids_st28gm06n052-032.pickle' '../r3dresults/st28gm06n052_arief_tests/032_186_radial_combine/' 
 
 
+# Empty line to make output more readable
+print()
+
 # Path to pickle-file
 picklepath = sys.argv[1]
 
@@ -59,7 +62,7 @@ ael.create_dustapproximation(
 # Move files to work folder
 os.system(f'mv ../dust_density_approx.inp {workpath}')
 os.system(f'mv ../dust_temperature_approx.dat {workpath}')
-os.system(f'mv ../grainsizes_approx.dat {workpath}')
+os.system(f'mv ../grain_sizes_approx.dat {workpath}')
 
 
 # BIN GRAIN SIZES
@@ -92,6 +95,14 @@ ael.bin_inpdata(
 #   optool_script_approx.sh
 #   dustopac_mg2sio4_approx.inp
 #
+# Extract new number of size-bins from second line of 
+# ../dustopac_mg2sio4_approx.inp
+with open('../dustopac_mg2sio4_approx.inp', 'r') as fdustopac:
+    for nline,opacline in enumerate(fdustopac.readlines()):
+        if nline == 1:
+            Nbins = int(opacline)
+print(f'  There are now {Nbins} size bins after grain size binning.')
+
 os.system(f'mv ../dust_density_approx_{Nbins}bins.inp {workpath}')
 os.system(f'mv ../dust_temperature_approx_{Nbins}bins.dat {workpath}')
 os.system(f'mv ../optool_script_approx.sh {workpath}')
@@ -101,29 +112,20 @@ os.system(f'mv ../dustopac_mg2sio4_approx.inp {workpath}')
 # MERGE DATA
 #
 # Merge ellips-dust-data with a stellar model from co5bold
-
-
-# densities to merge:
-# dust_density_approx_{Nbins}bins.inp
-# and a c5d-star-file (opastar etc)
-
-# temperatures to merge:
-# dust_temperature_approx_{Nbins}bins.dat
-# and a c5d-star-temperature
-
+print('\n  Merging density and temperature files with existing CO5BOLD star model.')
 
 c3d.merge_dustdensities(
     workpath = workpath,
     filenames=[
         'dust_density_c5d.inp',
-        'dust_density_approx.inp'
+        f'dust_density_approx_{Nbins}bins.inp'
     ],
 )
 c3d.merge_dusttemperatures(
     workpath = workpath,
     filenames=[
-        '../../../r3dsims/co5bold_tests/05-lowergridres/unmerged/dust_temperature_star.dat',
-        '../../../r3dsims/co5bold_tests/05-lowergridres/unmerged/dust_temperature_dust.dat'
+        'dust_temperature_c5d.dat',
+        f'dust_temperature_approx_{Nbins}bins.dat'
     ],
 )
 # merge dustopac also
@@ -134,7 +136,7 @@ c3d.merge_dustopac(
         'dustopac_mg2sio4_approx.inp'
     ]
 )
-# NOTE
-# Moves the merged files back to work folder
-
-print(f'DONE:\n  Files moved to {workpath}. Clean up and order your files for radmc3d-runs.\n  Run optool-script to create all opacity data')
+# These also move the merged files back to work folder
+print(f'  Files moved to {workpath}.\n    Clean up and order your files for radmc3d-runs.')
+print('    Run optool-script to create all opacity data.')
+print('DONE')
