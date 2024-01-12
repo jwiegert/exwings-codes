@@ -108,6 +108,11 @@ cubesize = 222757675648155.62/AUcm
 # Smoothing of stellar data
 # -------------------------
 #
+# reduce_coretemperature(
+# TODO
+#
+# )
+#
 # smooth_stellardata(
 #    path = '../r3dresults/st28gm06n056/',
 #    phases = [140,141,142]
@@ -1493,6 +1498,83 @@ def create_staropadensity(
 # above seems to be wrong, I smooth also (postive spikes) the temperature
 # with the settings set below.
 # The "strangeness" was mitigated by limiting myself to within 1.01Rstar
+
+
+# Alternative function, instead only reduce temperature of the inner 0.9Rstar
+# This gives similar results as smoothing but is simpler, quicker and probably
+# more consistent.
+def reduce_coretemperature(
+        savpath:list = '../../exwings_archivedata/co5bold_data/dst28gm06n056/st28gm06n056_140.sav',
+        temperaturepath:str = '../r3dresults/st28gm06n056_temperaturetests/140/dust_temperature_onestar.dat',
+        gridpath:str = '../r3dresults/st28gm06n056_temperaturetests/grid_distances.csv',
+        amrpath:str = '../r3dresults/st28gm06n056_temperaturetests/amr_grid.inp',
+        Rin = 0.9,
+        Tin = 1000
+    ):
+    """
+    Maximises the temperature within Rin*Rstar of the grid to Tin. This reduces
+    problems with hot photon packages leaking from the core of the star when
+    using RADMC3D, so that luminosity is more "correct". Correct meaning, close
+    to the "tabulated" e.g. 7000Lsol of the 1Msol models I started with.
+
+    ARGUMENTS
+      savpath         : path to current sav-file
+      temperaturepath : path to current dust_temperature-file with only gas data
+      gridpath        : path to grid_distances.csv
+      amrpath         : path to amr_grid.inp
+      Rin             : fraction of Rstar that should be changes
+      Tin             : maximum temperature of R < Rin*Rstar.
+
+    RETURNS
+      A new modified temperature-file with only gas data
+    """
+    print('Running reduce_coretemperature() to reduce central gas temperature.')
+
+    # Load header stellar radius, mass and luminosity
+    Mstar,Rstar,Lstar = load_star_information(
+        savpath = savpath,
+        printoutput = 'n'
+    )
+    # Load gas-temperatures
+    Ncells,Nspecies,gastemperature = a3d.load_temperature(
+        path = temperaturepath
+    )
+    # Load radial distances to all cells: griddistances[:,0]
+    griddistances = a3d.load_griddistances(
+        gridpath = gridpath,
+        amrpath = amrpath,
+    )
+    radialdistances = griddistances[:,0]
+
+
+    # Check so that Rin is < 1 (for functions later)
+    if Rin > 1.01:
+        print(f'ERROR! Rin is > Rstar, aborts!')
+    else:
+        # Create new T-file
+        with open(f'../dust_temperature_{Rin}Rstar_{Tin}K.dat', 'w') as ftemperature:
+            # Write headers:
+            # 1
+            # nleafs(Ncells)
+            # number dust species
+            ftemperature.write(f'1\n{int(Ncells)}\n{1}\n')
+
+            # Create (or reset) arrays to write new temperatures
+            newtemperature = gastemperature.copy()
+
+            # Set temperatures within radius to be Tin or lower
+            changed_cells = np.where((radialdistances < Rin*Rstar) & (gastemperature > Tin))[0]
+
+            if len(changed_cells) > 0:
+                newtemperature[changed_cells] = Tin
+
+            # Write new temperatures
+            for temperature in newtemperature:
+                ftemperature.write(f'{temperature}\n')
+
+    # Some final output
+    print(f'  ../dust_temperature_{Rin}Rstar_{Tin}K.dat\nDONE')
+
 
 
 # Main stellar-data-smoothing function, smooths opacity and density from negative spikes
