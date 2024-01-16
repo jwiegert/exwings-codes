@@ -1589,7 +1589,6 @@ def merge_dustdensities(
 
 
 # Function for merging a list of dustopac.inp files
-# TODO rewrite so that it works with a specific path instead! more adaptable
 def merge_dustopac(
         workpath:str = '../r3dresults',
         filenames:list=['dustopac.inp'],

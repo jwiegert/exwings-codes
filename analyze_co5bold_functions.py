@@ -1326,62 +1326,6 @@ def create_star(
     print(f'C5D Dust-star:\n    dust_density_onestar_{phase}.inp\n    dust_temperature_onestar_{phase}.dat\n    star_opacities_{phase}.dat\nDONE\n')
 
 
-# For when creating several stars/phases
-def create_stars(
-        modelnames:list = ['st28gm06n056'],
-        phases:list = [140,141,142]
-    ):
-    """
-    Function for creating many star-models, from lists of them. 
-    Also moves files to correct folders. Also useful when only doing one model and phase.
-        NOTE this is not implemented correctly yet, only do one model (several phases are OK)!
-
-    ARGUMENTS
-      modelnames:list = list of modelnames - NOTE this is not implemented correctly yet, only do one model!
-      phases:list = list of phases, listed in the same order as models are listed
-    
-    RETURNS
-      Files... TODO write
-    """
-
-    for modelname in modelnames:
-        for phase in phases:
-
-            print(f'    Translating C5D star model {modelname} and phase {phase} to R3D')
-
-            savpath = f'../../exwings_archivedata/co5bold_data/d{modelname}/{modelname}_{phase}.sav'
-            path = f'../r3dresults/{modelname}/'
-
-            create_star(
-                savpath = savpath,
-                amrpath = f'{path}amr_grid.inp',
-                gridpath = f'{path}grid_distances.csv',
-                sizepath = f'{path}grid_cellsizes.csv'
-            )
-
-            # Move files to specific folders
-            print('Moving files\n')
-
-            # Files from create star
-            os.system(
-                f'mv ../dust_density_onestar_{phase}.inp {path}{phase}/dust_density_onestar.inp'
-            )
-            os.system(
-                f'mv ../dust_temperature_onestar_{phase}.dat {path}{phase}/dust_temperature_onestar.dat'
-            )
-            os.system(
-                f'mv ../star_opacities_{phase}.dat {path}{phase}/star_opacities.dat'
-            )
-
-            # Copy files from create grid-part above to phase-folders
-            os.system(
-                f'cp {path}amr_grid.inp {path}{phase}/'
-            )
-            os.system(
-                f'cp {path}wavelength_micron.inp {path}{phase}/'
-            )
-
-
 # Takes the stellar density data and opacity data from c5d, as translated to an
 # r3d-grid.
 # creates a density_star-file where the "density" depends on each cell's mass density
@@ -1504,12 +1448,12 @@ def create_staropadensity(
 # This gives similar results as smoothing but is simpler, quicker and probably
 # more consistent.
 def reduce_coretemperature(
-        savpath:list = '../../exwings_archivedata/co5bold_data/dst28gm06n056/st28gm06n056_140.sav',
+        savpath:str = '../../exwings_archivedata/co5bold_data/dst28gm06n056/st28gm06n056_140.sav',
         temperaturepath:str = '../r3dresults/st28gm06n056_temperaturetests/140/dust_temperature_onestar.dat',
         gridpath:str = '../r3dresults/st28gm06n056_temperaturetests/grid_distances.csv',
         amrpath:str = '../r3dresults/st28gm06n056_temperaturetests/amr_grid.inp',
-        Rin = 0.9,
-        Tin = 1000
+        Rin:float = 0.9,
+        Tin:float = 1000
     ):
     """
     Maximises the temperature within Rin*Rstar of the grid to Tin. This reduces
@@ -1529,6 +1473,9 @@ def reduce_coretemperature(
       A new modified temperature-file with only gas data
     """
     print('Running reduce_coretemperature() to reduce central gas temperature.')
+
+    # Extract phase-designation from savpath
+    phase = savpath.split('_')[-1].split('.')[0]
 
     # Load header stellar radius, mass and luminosity
     Mstar,Rstar,Lstar = load_star_information(
@@ -1552,7 +1499,7 @@ def reduce_coretemperature(
         print(f'ERROR! Rin is > Rstar, aborts!')
     else:
         # Create new T-file
-        with open(f'../dust_temperature_{Rin}Rstar_{Tin}K.dat', 'w') as ftemperature:
+        with open(f'../dust_temperature_{phase}_{Rin}Rstar_{Tin}K.dat', 'w') as ftemperature:
             # Write headers:
             # 1
             # nleafs(Ncells)
@@ -1573,7 +1520,7 @@ def reduce_coretemperature(
                 ftemperature.write(f'{temperature}\n')
 
     # Some final output
-    print(f'  ../dust_temperature_{Rin}Rstar_{Tin}K.dat\nDONE')
+    print(f'  ../dust_temperature_{phase}_{Rin}Rstar_{Tin}K.dat\nDONE')
 
 
 
@@ -1928,7 +1875,6 @@ def create_dustfiles(
     RETURNS
       dust_density_dust_{phase}.inp
       dust_temperature_dust_{phase}.dat
-      dustopac_dust_{phase}.inp
     """
 
     # Extract phase-designation from savpath

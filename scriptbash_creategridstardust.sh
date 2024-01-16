@@ -19,6 +19,8 @@ phase0=186
 phase1=190
 phase2=198
 
+# Create folders
+# TODO
 
 # Create R3D-grid
 python3 scriptpy_creategrid.py $modelname $phase0 $phase1 $phase2 &
@@ -38,7 +40,7 @@ wait
 python3 scriptpy_createstar.py $modelname $phase0 &
 python3 scriptpy_createstar.py $modelname $phase1 &
 python3 scriptpy_createstar.py $modelname $phase2 &
-# Extract and create dust-files
+# Extract and create dust-files    TODO adapt dust-temperature to theory-model!
 python3 scriptpy_createdust.py $modelname $phase0 &
 python3 scriptpy_createdust.py $modelname $phase1 &
 python3 scriptpy_createdust.py $modelname $phase2 &
@@ -49,7 +51,7 @@ wait
 # Remove all npy-files
 rm ../*.npy &
 
-# and merge star and dust data
+# and merge star and dust density and temperature data
 python3 scriptpy_mergedata.py $modelname $phase0 &
 python3 scriptpy_mergedata.py $modelname $phase1 &
 python3 scriptpy_mergedata.py $modelname $phase2 &
@@ -57,6 +59,13 @@ python3 scriptpy_mergedata.py $modelname $phase2 &
 
 wait
 
+
+# Create dust opacity files and merge them with gas opacity
+python3 scriptpy_createopacity.py $modelname $phase0 &
+python3 scriptpy_createopacity.py $modelname $phase1 &
+python3 scriptpy_createopacity.py $modelname $phase2 &
+
 # Write r3d-runscripts
-python3 scriptpy_write_r3d_runscripts.py $modelname $phase0 $phase1 $phase2
+#python3 scriptpy_write_r3d_runscripts.py $modelname $phase0 $phase1 $phase2
+
 

@@ -36,7 +36,7 @@ Mstar,Rstar,Lstar = a5d.load_star_information(
     printoutput = 'y'
 )
 
-# Extract minimu cellsize
+# Extract minimum cellsize
 c5dgrid,cellcourners,cellsize = a5d.load_grid_properties(
     savpath = f'../co5bold_data/d{modelname}/{modelname}_{phases[0]}.sav'
 )

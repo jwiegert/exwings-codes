@@ -48,7 +48,8 @@ a5d.bin_grainsizes(
 # Output is ../grain_sizes_binned_{phase}.dat
 
 
-# Then create dust files 
+# Then create dust files
+# The Nspecies is the number of chemical species of dust, not number of grain sizes
 a5d.create_dustfiles(
     savpath=f'../co5bold_data/d{modelname}/{modelname}_{phase}.sav',
     amrpath=f'../r3dresults/{modelname}/amr_grid.inp',
@@ -70,9 +71,9 @@ os.system(f'mv ../dust_temperature_dust_{phase}.dat ../r3dresults/{modelname}/{p
 
 # Clean up
 os.system(f'rm ../grain_sizes_{phase}.dat')
-# Binned .dat is used for optool, save for that
-#os.system(f'rm ../grain_sizes_binned_{phase}.dat')
-
+# Do not remove
+# ../grain_sizes_binned_{phase}.dat 
+# It is used for optool
 
 # NOTE
 # Resulting files are, for each ../r3dresults/[modelname]/[phase]/

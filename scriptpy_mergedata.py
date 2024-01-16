@@ -34,6 +34,7 @@ c3d.merge_dusttemperatures(
 
 # NOTE
 # Resulting files are, for each ../r3dresults/[modelname]/[phase]/
+# Ie, these moves the new files automatically to the correct work folder
 #
 #   dust_density.inp
 #   dust_temperature.dat
