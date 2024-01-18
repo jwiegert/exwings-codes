@@ -21,14 +21,24 @@ include_dust = sys.argv[3]
 
 import analyze_co5bold_functions as a5d
 
-a5d.load_c5dheavydata(
-   savpath = f'../co5bold_data/d{modelname}/{modelname}_{phase}.sav',
-   Nspecies = 1,
-   gas_density = True,
-   dust_density = include_dust,
-   gas_opacity = True,
-   temperature = True
-)
+if include_dust == 'yes':
+    a5d.load_c5dheavydata(
+       savpath = f'../../exwings_archivedata/co5bold_data/d{modelname}/{modelname}_{phase}.sav',
+       Nspecies = 1,
+       gas_density = True,
+       dust_density = True,
+       gas_opacity = True,
+       temperature = True
+    )
+else:
+    a5d.load_c5dheavydata(
+       savpath = f'../../exwings_archivedata/co5bold_data/d{modelname}/{modelname}_{phase}.sav',
+       Nspecies = 1,
+       gas_density = True,
+       dust_density = False,
+       gas_opacity = True,
+       temperature = True
+    )
 
 # NOTE
 # Resulting files are, for each [modelname] & [phase]

@@ -34,8 +34,10 @@ import os
 # Declare dust specie
 specie='mg2sio4'
 
+path=f'../r3dresults/{modelname}/'
+
 c3d.create_optoolscript(
-    wavelength_path=f'../r3dresults/{modelname}/wavelength_micron.inp',
+    wavelength_path=f'{path}wavelength_micron.inp',
     phase=phase,
     grainum_sizes=f'../grain_sizes_binned_{phase}.dat',
     grainsize_type='normal',
@@ -45,27 +47,27 @@ c3d.create_optoolscript(
 )
 
 # Move dustopac-file
-os.system(f'mv ../dustopac_{specie}_{phase}.inp ../r3dresults/{modelname}/{phase}/dustopac_dust.inp')
+os.system(f'mv ../dustopac_{specie}_{phase}.inp {path}{phase}/dustopac_dust.inp')
 
 # Merge with opastar dustopac-file
 c3d.merge_dustopac(
-    workpath = f'../r3dresults/{modelname}/{phase}/',
+    workpath = f'{path}{phase}/',
     filenames = ['dustopac_opastar.inp','dustopac_dust.inp']
 )
 
 
 # Move optool script to phase-folder
-os.system(f'mv ../optool_script_{phase}.sh ../r3dresults/{modelname}/{phase}/optool_script.sh')
+os.system(f'mv ../optool_script_{phase}.sh {path}{phase}/optool_script.sh')
 
 # Run script
-os.system(f'../r3dresults/{modelname}/{phase}/optool_script.sh')
+os.system(f'{path}{phase}/optool_script.sh')
 
 # Check results
 print('\nList of all opacity files:\n')
 os.system(f'ls -1 *{specie}*')
 
 # Move results
-os.system(f'mv *mg2sio4* ../r3dresults/{modelname}/{phase}/')
+os.system(f'mv *mg2sio4* {path}{phase}/')
 
 # Clean up?
 #os.system(f'rm ../grain_sizes_binned_{phase}.dat')

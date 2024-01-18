@@ -270,7 +270,16 @@ def load_c5dheavydata(
                 fix_imports=False
             )
 
-    print(f'load_c5dheavydata:\n    c5dgas_density_{phase}.npy\n    c5ddust_density_{phase}.npy\n    c5dgas_opacity_{phase}.npy\n    c5d_temperature_{phase}.npy\nDONE\n')
+    print(f'load_c5dheavydata:')    
+    if gas_density==True:
+        print('    c5dgas_density_{phase}.npy')
+    if dust_density==True:
+        print('    c5ddust_density_{phase}.npy')
+    if gas_opacity==True:
+        print('    c5dgas_opacity_{phase}.npy')
+    if temperature==True:
+        print('    c5d_temperature_{phase}.npy')
+    print('DONE')
 
 
 # Load c5d grid properties

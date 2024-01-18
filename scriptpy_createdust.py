@@ -29,7 +29,7 @@ a5d.extract_grainsizes(
     amrpath=f'{path}amr_grid.inp',
     gridpath=f'{path}grid_distances.csv',
     sizepath=f'{path}grid_cellsizes.csv',
-    savpath=f'../co5bold_data/d{modelname}/{modelname}_{phase}.sav',
+    savpath=f'../../exwings_archivedata/co5bold_data/d{modelname}/{modelname}_{phase}.sav',
     Amon=2.3362e-22,
     rhomon=3.27,
     ndnH=3e-16,
@@ -51,10 +51,10 @@ a5d.bin_grainsizes(
 # Then create dust files
 # The Nspecies is the number of chemical species of dust, not number of grain sizes
 a5d.create_dustfiles(
-    savpath=f'../co5bold_data/d{modelname}/{modelname}_{phase}.sav',
-    amrpath=f'../r3dresults/{modelname}/amr_grid.inp',
-    gridpath=f'../r3dresults/{modelname}/grid_distances.csv',
-    sizepath=f'../r3dresults/{modelname}/grid_cellsizes.csv',
+    savpath=f'../../exwings_archivedata/co5bold_data/d{modelname}/{modelname}_{phase}.sav',
+    amrpath=f'{path}amr_grid.inp',
+    gridpath=f'{path}grid_distances.csv',
+    sizepath=f'{path}grid_cellsizes.csv',
     grainsizepath=f'../grain_sizes_binned_{phase}.dat',
     Nspecies=1,
     monomermasses=[2.3362e-22]
@@ -64,9 +64,13 @@ a5d.create_dustfiles(
 #      dust_temperature_dust_{phase}.dat
 
 
+# TODO normalise radial profile of dust-temperatures with T(R)-Bladh HERE!
+
+
+
 # Move them to correct folder
-os.system(f'mv ../dust_density_dust_{phase}.inp ../r3dresults/{modelname}/{phase}/dust_density_dust.inp')
-os.system(f'mv ../dust_temperature_dust_{phase}.dat ../r3dresults/{modelname}/{phase}/dust_temperature_dust.dat')
+os.system(f'mv ../dust_density_dust_{phase}.inp {path}{phase}/dust_density_dust.inp')
+os.system(f'mv ../dust_temperature_dust_{phase}.dat {path}{phase}/dust_temperature_dust.dat')
 
 
 # Clean up

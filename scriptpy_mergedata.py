@@ -23,13 +23,12 @@ import create_r3d_functions as c3d
 
 # Then merge them with stellar files
 c3d.merge_dustdensities(
-    workpath = f'../r3dresults/{modelname}/{phase}/'
+    workpath = f'../r3dresults/{modelname}/{phase}/',
     filenames=['dust_density_opastar.inp','dust_density_dust.inp'],
 )
-
 c3d.merge_dusttemperatures(
-    workpath = f'../r3dresults/{modelname}/{phase}/'
-    filenames=['dust_temperature_onestar_smoothed.dat','dust_temperature_dust.dat'],
+    workpath = f'../r3dresults/{modelname}/{phase}/',
+    filenames=['dust_temperature_0.9Rstar_1000K.dat','dust_temperature_dust.dat'],
 )
 
 # NOTE

@@ -19,9 +19,10 @@ phase = sys.argv[2]
 
 import analyze_co5bold_functions as a5d
 import analyze_r3d_functions as a3d
+import os
 
 path = f'../r3dresults/{modelname}/'
-savpath = f'../co5bold_data/d{modelname}/{modelname}_{phase}.sav'
+savpath = f'../../exwings_archivedata/co5bold_data/d{modelname}/{modelname}_{phase}.sav'
 AUcm = 1.49598e13 # cm
 
 # Extract star's radius
@@ -78,7 +79,7 @@ os.system(
 # using monte carlo radiative transfer
 a5d.reduce_coretemperature(
     savpath = savpath,
-    temperaturepath = f'{path}{phase}/dust_temperature_onestar.dat,
+    temperaturepath = f'{path}{phase}/dust_temperature_onestar.dat',
     gridpath = f'{path}grid_distances.csv',
     amrpath = f'{path}amr_grid.inp',
     Rin = 0.9,
@@ -87,9 +88,9 @@ a5d.reduce_coretemperature(
 # OUTPUT
 #   dust_temperature_{phase}_{Rin}Rstar_{Tin}K.dat
 #
-# Move temperature-file
+# Move temperature-file (to phase-folder and remove phase from filename)
 os.system(
-    f'mv ../dust_temperature_{phase}_0.9Rstar_1000K.dat {path}{phase}/'
+    f'mv ../dust_temperature_{phase}_0.9Rstar_1000K.dat {path}{phase}/dust_temperature_0.9Rstar_1000K.dat'
 )
 
 

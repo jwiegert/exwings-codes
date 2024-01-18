@@ -32,13 +32,13 @@ for phase in phases:
 
 # Extract star's radius for each phase
 Mstar,Rstar,Lstar = a5d.load_star_information(
-    savpath = f'../co5bold_data/d{modelname}/{modelname}_{phases[0]}.sav',
+    savpath = f'../../exwings_archivedata/co5bold_data/d{modelname}/{modelname}_{phases[0]}.sav',
     printoutput = 'y'
 )
 
 # Extract minimum cellsize
 c5dgrid,cellcourners,cellsize = a5d.load_grid_properties(
-    savpath = f'../co5bold_data/d{modelname}/{modelname}_{phases[0]}.sav'
+    savpath = f'../../exwings_archivedata/co5bold_data/d{modelname}/{modelname}_{phases[0]}.sav'
 )
 
 # Create spatial grid
