@@ -57,7 +57,8 @@ c5dgrid,cellcourners,cellsize = a5d.load_grid_properties(
 # heavy c5d-data: cube side ~ 30AU ~ 18Rstar > max radius 9Rstar
 # Settings for the grid
 r3dedge = 2 * cellcourners.max() / AUcm # Size of whole grid in AU
-basecell = 1.001 * cellsize * 2**4 / AUcm # Size of base cells as based on smallest cells
+#basecell = 1.001 * cellsize * 2**4 / AUcm # Size of base cells as based on smallest cells
+basecell = 0.501 * cellsize * 2**4 / AUcm # Size of base cells as based on smallest cells
 nxyz = r3dedge/basecell # Number of base cells along one side of the cube
 
 # Radial distances to refinements based on stellar radius

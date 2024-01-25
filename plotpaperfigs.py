@@ -49,7 +49,7 @@ list_smoothingchanges = 'n'     # TODO (clean up and make it work)
 plot_grainsizehist = 'n'
 plot_grainsizeradius = 'n'
 plot_absscat = 'n'
-plot_temperaturecompare = 'n'
+plot_temperaturecompare = 'y'
 
 # Plot co5bold-figs
 plot_coboldsed = 'n'
@@ -59,15 +59,13 @@ plot_images_examples = 'n'
 plot_darwin_imagesed = 'n'
 plot_point_imagesed = 'n'
 
-
-
 # Merge contour and images, only t2
 plot_images_convolved_vlti = 'n'
 
 # Observables
 compute_luminosities = 'n'
 compute_tenmicronfluxdensities = 'n'
-compute_spectralindeces = 'y'
+compute_spectralindeces = 'n'
 measuredustcloudflux = 'n'
 plot_resolutiondistance = 'n'
 check_smoothedimage_radius = 'n'
@@ -771,7 +769,6 @@ if plot_temperaturecompare == 'y':
     # Chose phase-designation
     phase = 190
 
-
     # Set up subplots for figure with only temperature (ratio later in another fig)
     fig,ax = plt.subplots(
         2,1,
@@ -907,7 +904,7 @@ if plot_temperaturecompare == 'y':
     # Plot separate figure with temperature-ratios
     axratio.plot(radial_range,T_c5d/temperature_theory,'b',linewidth=2,label = legendlist[0])
     axratio.plot(radial_range,Tr3d_avr/temperature_theory,'r',linewidth=2,label = legendlist[1])
-    axratio.plot([radial_range[0],radial_range[-1]],[1,1],'g:', label = legendlist[2])
+    axratio.plot([Rstar,radial_range[-1]],[1,1],'g:', label = legendlist[2])
     axratio.legend(fontsize=13)
 
     axratio.fill_between(
