@@ -44,8 +44,7 @@ sigma = 5.670374419e-8
 # -----------------------------------
 
 def load_darwindata(
-        modelname:str='M2n315u6',
-        timestep:str='230791'
+        rtkpath:str = '../darwin_data/M2n315u6_kappaross/model.230791.rtk'
     ):
     """
     Loads and extracts densities and temperatures of one model and timestep
@@ -60,14 +59,12 @@ def load_darwindata(
       average_temperature: np.array with time-averaged radial dependant gas temperatures in K
     """
 
-    filename = f'../darwin_data/{modelname}_kappaross/model.{timestep}.rtk'
-
     radius_cm = []
     gas_density = []
     gas_temperature = []
     gas_opacity = []
 
-    with open(filename, 'r') as f:
+    with open(rtkpath, 'r') as f:
         for nn,line in enumerate(f.readlines()):
             # 18 lines are the header
             if nn > 8:

@@ -109,8 +109,7 @@ cubesize = 222757675648155.62/AUcm
 # -------------------------
 #
 # reduce_coretemperature(
-# TODO
-#
+#       TODO - ie fill info here
 # )
 #
 # smooth_stellardata(
