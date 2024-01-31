@@ -97,6 +97,7 @@ def darwin_to_radmc3d(
         darwin_opacity:list,
         input_radius:float,
         input_luminosity:float,
+        coreT_nTeff:float=1.0,
         gridpath:str='../grid_distances.csv',
         amrpath:str='../amr_grid.inp'
     ):
@@ -112,7 +113,8 @@ def darwin_to_radmc3d(
 
       input_radius:float: Rint, radius of Darwin-star in meters
       input_luminosity:float: Lext, (bol) luminosity of star in Watts
-
+      coreT_nTeff:float: Temperature of stellar core in number of Teff (default=1)
+      
       gridpath:str: Path to grid_distances.csv of your radmc3d-model
       amrpath:str: Path to amr_grid.inp of your radmc3d-model
 
@@ -156,8 +158,8 @@ def darwin_to_radmc3d(
     print('rho-kappa divide by R^2 and T-cut')
     darwin_densityopacity = darwin_density * darwin_opacity * (AUcm / darwin_radius)**4
     darwin_temperature[
-        np.where(darwin_temperature >= effective_temperature)[0]
-    ] = effective_temperature
+        np.where(darwin_temperature >= coreT_nTeff*effective_temperature)[0]
+    ] = coreT_nTeff*effective_temperature
 
     
     # Interpolate darwin-1d-data to r3d-radial grid
