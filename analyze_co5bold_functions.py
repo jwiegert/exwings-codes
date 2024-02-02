@@ -1997,8 +1997,8 @@ def create_dustfiles(
                     # Loop over the r3d-grid
                     for nr3d in range(nleafs):
 
-                        # Check if we have any grain size lists
-                        # Then check if the grain size is correct
+                        # Check if we have any grain size lists at all
+                        # or check if the grain size is correct
                         if len(grainsizes) == 1 or grainsizes[nr3d] == size:
 
                             # Else: density and temperature is written as zero
@@ -2034,12 +2034,11 @@ def create_dustfiles(
                             for nnz in c5dzrange:
                                 for nny in c5dyrange:
                                     for nnx in c5dxrange:
-                                        # Sum all densities and temperatures (only those with data)
+                                        # Sum all densities
+                                        r3d_density += c5ddensities[0,nnx,nny,nnz]
+                                        ndustcells += 1
 
-                                        if c5ddensities[0,nnx,nny,nnz] > 0:
-                                            r3d_density += c5ddensities[0,nnx,nny,nnz]
-                                            ndustcells += 1
-
+                                        # and temperatures: only those with data
                                         if c5ddensities[0,nnx,nny,nnz] > 0:
                                             r3d_temperature += c5dtemperatures[nnx,nny,nnz]
                                             ntempcells += 1
