@@ -14,6 +14,9 @@ import os
 # Example:
 # > python3 scriptpy_createellipsapprox.py '../../exwings_archivedata/co5bold_data/st28gm06n052_arief_tests/filled-radialdistribution-ellipsoids_st28gm06n052-032.pickle' '../r3dresults/st28gm06n052_arief_tests/032_186_radial_combine/' 
 
+# 20240207:
+# python3 scriptpy_createellipsapprox.py '../../exwings_archivedata/co5bold_data/st28gm06n052_arief_tests/filled-radialdistribution-ellipsoids_st28gm06n052-032.pickle' '../r3dresults/st28gm06n052_arief/032_star_ellipsoid/'
+
 
 # Empty line to make output more readable
 print()
@@ -30,9 +33,9 @@ if workpath[-1] != '/':
 
 
 # Paths to grid files
-amrpath = f'{workpath}amr_grid.inp'
-gridpath = f'{workpath}grid_distances.csv'
-sizepath = f'{workpath}grid_cellsizes.csv'
+amrpath = f'{workpath}../amr_grid.inp'
+gridpath = f'{workpath}../grid_distances.csv'
+sizepath = f'{workpath}../grid_cellsizes.csv'
 # e.g.
 #    amrpath = '../r3dresults/st28gm06n052_arief_tests/amr_grid.inp',
 #    gridpath = '../r3dresults/st28gm06n052_arief_tests/grid_distances.csv',
@@ -41,7 +44,8 @@ sizepath = f'{workpath}grid_cellsizes.csv'
 
 # FIRST STEP
 #
-# Create initial R3D-files dust_density, dust_temperature and grain sizes per grid cell
+# Create initial R3D-files dust_density, dust_temperature and grain sizes per 
+# grid cell
 ael.create_dustapproximation(
     picklepath = picklepath,
     amrpath = amrpath,
@@ -67,7 +71,8 @@ os.system(f'mv ../grain_sizes_approx.dat {workpath}')
 
 # BIN GRAIN SIZES
 #
-# for simplicity I just put everything in the same folder, sometimes I have final data in a subfolder
+# for simplicity I just put everything in the same folder, sometimes I have 
+# final data in a subfolder
 Nbins = 10
 a5d.bin_grainsizes(
     grainsizepath = f'{workpath}grain_sizes_approx.dat',
@@ -98,9 +103,7 @@ ael.bin_inpdata(
 # Extract new number of size-bins from second line of 
 # ../dustopac_mg2sio4_approx.inp
 with open('../dustopac_mg2sio4_approx.inp', 'r') as fdustopac:
-    for nline,opacline in enumerate(fdustopac.readlines()):
-        if nline == 1:
-            Nbins = int(opacline)
+    Nbins = int(opaclinefdustopac.readlines()[1])
 print(f'  There are now {Nbins} size bins after grain size binning.')
 
 os.system(f'mv ../dust_density_approx_{Nbins}bins.inp {workpath}')

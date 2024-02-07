@@ -1533,6 +1533,7 @@ def reduce_coretemperature(
     # Some final output
     print(f'  ../dust_temperature_{phase}_{Rin}Rstar_{Tin}K.dat\nDONE')
 
+
 # Alternative to smoothing schemes.
 # Reduces kappa to 1 within 0.9Rstar. Works best in combination with
 # reduce core temperature above
