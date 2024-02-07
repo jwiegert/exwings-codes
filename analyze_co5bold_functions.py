@@ -1549,11 +1549,17 @@ def reduce_corekappa(
     walk within the star that gives unrealistic high luminosities.
 
     ARGUMENTS
-
-
-    RETURNS
-
+      savpath  : path to current sav-file
+      opacity  : path to un-changed (original) opacity file as returned by create_star()
+      gridpath : path to file with grid distances to get radial distances
+      amrpath  : path to r3d-file amr_grid.inp
+      Rin      : radial limit to changes in number of Rstar
+      kappa_in : maximum value of Rosseland opacity within Rin
     
+    RETURNS
+      ../star_opacities_{phase}_{Rin}Rstar_{kappa_in}kappa.dat
+      new opacity file to use to combine with gas-densities in dust_density_onestar.inp
+      from create_star()
     """
     print('Running reduce_corekappa() to reduce central opacity.')
 

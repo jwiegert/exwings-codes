@@ -5,10 +5,15 @@
 # necessary python scripts.
 #
 # Define variables
-modelname=st28gm06n056
+
+modelname=st28gm06n052
+phase1=032
 #phase0=186
-phase1=140
+#phase1=190
 #phase2=198
+
+#modelname=st28gm06n056
+#phase1=140
 
 # Create R3D-grid
 #python3 scriptpy_creategrid.py $modelname $phase0 $phase1 $phase2

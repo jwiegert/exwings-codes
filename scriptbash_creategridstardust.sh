@@ -14,9 +14,12 @@
 # $ nice -n 19 ./scriptbash_creategridstardust.sh | cat > logoutput.txt cat 2> logerror.txt
 #
 # Define variables
+
 modelname=st28gm06n052
+phase0=032
+
 #phase0=186
-phase0=190
+#phase1=190
 #phase2=198
 
 

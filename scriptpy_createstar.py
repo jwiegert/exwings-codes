@@ -93,11 +93,29 @@ os.system(
     f'mv ../dust_temperature_{phase}_0.9Rstar_1000K.dat {path}{phase}/dust_temperature_0.9Rstar_1000K.dat'
 )
 
+# Reduce core Rosseland opacity (kappa_ross) to 1 to compensate for high 
+# luminosity when using monte carlo radiative transfer
+a5d.reduce_corekappa(
+    savpath = savpath,
+    opacitypath = f'{path}{phase}/star_opacities.dat',
+    gridpath = f'{path}grid_distances.csv',
+    amrpath = f'{path}amr_grid.inp',
+    Rin = 0.9,
+    kappa_in = 1
+)
+# OUTPUT
+#   star_opacities_{phase}_{Rin}Rstar_{kappa_in}kappa.dat
+#
+# Move opacity file and simplify name
+os.system(
+    f'mv ../star_opacities_{phase}_0.9Rstar_1kappa.dat {path}{phase}/star_opacities_0.9Rstar_1kappa.dat'
+)
+
 
 # Combine gas density and gas opacity into gas-optical-thickness, included as a
-# dust_density-file in the R3D-forman.
+# dust_density-file in the R3D-format.
 a5d.create_staropadensity(
-    pathopacity = f'{path}{phase}/star_opacities.dat',
+    pathopacity = f'{path}{phase}/star_opacities_0.9Rstar_1kappa.dat',
     pathstardensity = f'{path}{phase}/dust_density_onestar.inp',
     pathwavelength = f'{path}wavelength_micron.inp',
     phase = phase,
