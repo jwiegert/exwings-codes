@@ -1417,7 +1417,7 @@ def create_staropadensity(
             fdensity.write(f'{dens}\n')
 
     # Print new dustopac_starbins.inp file
-    print('Writing opacity files for the binned star.')
+    print('Writing opacity files for the star.')
     with open(f'../dustopac_star_{phase}.inp', 'w') as fopac:
 
         # Print header
@@ -1452,16 +1452,19 @@ def create_staropadensity(
 # The "strangeness" was mitigated by limiting myself to within 1.01Rstar
 
 
-# Alternative function, instead only reduce temperature of the inner 0.9Rstar
+# Alternative function to smoothing schemes, instead only reduce temperature 
+# of the inner 0.9Rstar.
 # This gives similar results as smoothing but is simpler, quicker and probably
 # more consistent.
+# Best is to combine reduce_coretemperature with 0.9Rstar and 2800K with
+# reduce_corekappa with 0.9Rstar and kappa=1. 
 def reduce_coretemperature(
         savpath:str = '../../exwings_archivedata/co5bold_data/dst28gm06n056/st28gm06n056_140.sav',
         temperaturepath:str = '../r3dresults/st28gm06n056_temperaturetests/140/dust_temperature_onestar.dat',
         gridpath:str = '../r3dresults/st28gm06n056_temperaturetests/grid_distances.csv',
         amrpath:str = '../r3dresults/st28gm06n056_temperaturetests/amr_grid.inp',
         Rin:float = 0.9,
-        Tin:float = 1000
+        Tin:float = 2800
     ):
     """
     Maximises the temperature within Rin*Rstar of the grid to Tin. This reduces
@@ -1529,6 +1532,72 @@ def reduce_coretemperature(
 
     # Some final output
     print(f'  ../dust_temperature_{phase}_{Rin}Rstar_{Tin}K.dat\nDONE')
+
+# Alternative to smoothing schemes.
+# Reduces kappa to 1 within 0.9Rstar. Works best in combination with
+# reduce core temperature above
+def reduce_corekappa(
+        savpath:str = '../../exwings_archivedata/co5bold_data/dst28gm06n056/st28gm06n056_140.sav',
+        opacitypath:str = '../r3dresults/st28gm06n056/140/star_opacities.dat',
+        gridpath:str = '../r3dresults/st28gm06n056/grid_distances.csv',
+        amrpath:str = '../r3dresults/st28gm06n056/amr_grid.inp',
+        Rin:float = 0.9,
+        kappa_in:float = 1
+    ):
+    """
+    Reduces kappa -> kappa_in within R = Rin*Rstar. To counteract problems with random
+    walk within the star that gives unrealistic high luminosities.
+
+    ARGUMENTS
+
+
+    RETURNS
+
+    
+    """
+    print('Running reduce_corekappa() to reduce central opacity.')
+
+    # Extract phase-designation from savpath
+    phase = savpath.split('_')[-1].split('.')[0]
+
+    # Load header stellar radius, mass and luminosity
+    Mstar,Rstar,Lstar = load_star_information(
+        savpath = savpath,
+        printoutput = 'n'
+    )
+    # Load radial distances to all cells: griddistances[:,0]
+    griddistances = a3d.load_griddistances(
+        gridpath = gridpath,
+        amrpath = amrpath,
+    )
+    radialdistances = griddistances[:,0]
+    # Load {modelpath}{phase}/star_opacities_{phase}.dat
+    opacities = c3d.load_staropacities(
+        path = opacitypath
+    )
+
+    # Check so that Rin is < 1 (for functions later)
+    if Rin > 1.01:
+        print(f'ERROR! Rin is > Rstar, aborts!')
+    else:
+        # Loop through grid, if R <= 0.1 Rstar -> kappa(R) = 1
+        for nr,radius in enumerate(radialdistances):
+            if radius < 0.9*Rstar and opacities[nr] > 1:
+                opacities[nr] = 1
+
+        # Save new star_opacities_{phase}.dat-file
+        with open(f'../star_opacities_{phase}_{Rin}Rstar_{kappa_in}kappa.dat', 'w') as fopac:
+            fopac.write('# List of c5d-opacities translated to r3d-spatial grid.\n')
+            fopac.write('# Use as input when separating one-specie-density_star-file into several species\n')
+            fopac.write('# and creating dust-star opacity files.\n#\n')
+            fopac.write('# Gas kappa = 1 within 0.9 Rstar\n')
+            for opacity in opacities:
+                fopac.write(f'{opacity}\n')
+
+
+    # Some final output
+    print(f'  ../star_opacities_{phase}_{Rin}Rstar_{kappa_in}kappa.dat\nDONE')
+
 
 
 
