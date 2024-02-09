@@ -70,4 +70,6 @@ python3 scriptpy_createopacity.py $modelname $phase0 &
 # Write r3d-runscripts
 #python3 scriptpy_write_r3d_runscripts.py $modelname $phase0 $phase1 $phase2
 
+wait
+echo 'All done, press enter to finish.'
 

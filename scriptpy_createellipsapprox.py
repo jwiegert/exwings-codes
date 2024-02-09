@@ -103,7 +103,7 @@ ael.bin_inpdata(
 # Extract new number of size-bins from second line of 
 # ../dustopac_mg2sio4_approx.inp
 with open('../dustopac_mg2sio4_approx.inp', 'r') as fdustopac:
-    Nbins = int(opaclinefdustopac.readlines()[1])
+    Nbins = int(fdustopac.readlines()[1])
 print(f'  There are now {Nbins} size bins after grain size binning.')
 
 os.system(f'mv ../dust_density_approx_{Nbins}bins.inp {workpath}')
