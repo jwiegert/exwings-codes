@@ -2196,8 +2196,13 @@ def remove_sedspikes(
     variations in e.g. number of cores or photons.
 
     ARGUMENTS
+        paths: list of paths to the SEDs you want to combine into one
+        save: False or True if you want to save the combined SED into a new file
+              This file is put in the subfolder of your script.
 
     RETURNS
+        wavelengths: list or array with wavelength grid in um
+        sed_final: list or array with combined SEDs flux densities in Jy
     """
 
     # Declare list of SEDs

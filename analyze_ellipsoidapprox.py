@@ -350,6 +350,11 @@ def bin_inpdata(
     print(f'  ../dust_density_approx_{Nbins}bins.inp\n  ../dust_temperature_approx_{Nbins}bins.dat\nDONE')
 
 
+# TODO
+# Function that extracts largest radial distance to dust and limits co5bold
+# dust data to this radius
+#
+
 
 
 
