@@ -44,6 +44,7 @@ phasetimes = [
 plot_coboldgrid = 'n'
 plot_opticalthickness = 'n'
 list_smoothingchanges = 'n'     # TODO (clean up and make it work)
+plot_2dslices = 'n'
 
 # Grain properties
 plot_grainsizehist = 'n'
@@ -133,7 +134,7 @@ if plot_opticalthickness == 'y':
 if list_smoothingchanges == 'y':
     # TODO
     # clean up this and make it work
-
+    # Skip this all?
 
     # Temperature smoothing
 
@@ -544,6 +545,227 @@ if list_smoothingchanges == 'y':
     print('hej')
 
 
+# Plot (in model-info part) unmodified pristine data
+if plot_2dslices == 'y':
+    # TODO lägg till och fixa koden här
+    # - linjär temperaturskala, klippt vid t.ex. 5kK
+    # - vertikala colour bars, kanske oanför sublotsen för det blir för trångt?
+    # - vmin-max-värden till de 3 figurerna
+    # 2D slices of input data to r3d
+
+    # Set up paths to data to plot
+    gasdensitypath = '../r3dresults/st28gm06n052_staranddust_1/190/dust_density_onestar_190.inp'
+    gastemperaturepath = '../r3dresults/st28gm06n052_staranddust_1/190/dust_temperature_onestar_190.dat'
+    grainsizespath = '../r3dresults/st28gm06n052_staranddust_1/grain_sizes_190.dat'
+
+    # And paths to grid information
+    gridcoordspath = '../r3dresults/st28gm06n052_staranddust_1/grid_distances.csv'
+    gridsizepath = '../r3dresults/st28gm06n052_staranddust_1/grid_cellsizes.csv'
+    amrpath = '../r3dresults/st28gm06n052_staranddust_1/amr_grid.inp'
+
+    # Load all cellsizes
+    gridsizes = a3d.load_cellsizes(gridsizepath,amrpath)
+
+    # Load coordinates of all cells
+    gridcoords = a3d.load_griddistances(gridcoordspath,amrpath)
+    # gridcoords[:,1] 2] and 3] : x,y, and z distances
+    
+    # Extract indeces of all at Z = 0
+    #
+    # NOTE: This is harcoded:
+    # From amr_grid, middle plane is within
+    # 0.5*-6187713212448.75 cm
+    # and
+    # 0.5*6187713212448.781 cm
+    # and
+    # N cells along outer edge: 72
+    #
+    # Or rather, the largest cells are in a plane within 0 and 6187713212448.781
+    # And its middle is at  0.5**(1+0)6187713212448.781
+    # Middle of 1st refine: 0.5**(1+1)*6187713212448.781
+    # THe rest are within 0.5 and 0.25 then!
+    #
+    # Extract cells with centrum between 0 and -0.5*0.618...
+    #
+    # Refinement levels
+    # Radial distances to refinement 1: 0.2475659768178719 - 13.203518763619835 AU
+    # Radial distances to refinement 2: 0.4951319536357438 - 9.902639072714877 AU
+    # Radial distances to refinement 3: 0.7426979304536157 - 6.601759381809917 AU
+    # Radial distances to refinement 4: 0.9902639072714876 - 3.3008796909049587 AU
+
+    """
+    # TODO
+    # gör en forloop och ifsatser för varje refinementlevel?
+    Ncells = np.size(gridcoords)[:,0]
+
+    refinement1 = [0.2475659768178719*AUcm,13.203518763619835*AUcm]
+    refinement2 = [0.4951319536357438*AUcm, 9.902639072714877 *AUcm]
+    refinement3 = [0.7426979304536157*AUcm, 6.601759381809917 *AUcm]
+    refinement4 = [0.9902639072714876*AUcm, 3.3008796909049587 *AUcm]
+
+    NNzeroZ = []
+    for ncell in range(Ncells):
+
+        # Unrefined cells (0)
+        if gridcoords[:,0] >= refinement1[1] or gridcoords[:,0] <= refinement1[0]:
+            if gridcoords[:,0] <= -0.45*6187713212448.75 and gridcoords[:,0] >= -0.55*6187713212448.75:
+                NNzeroZ.append(ncell)
+
+        # 1st refined cells
+        if gridcoords[:,0] >= refinement1[1] or gridcoords[:,0] <= refinement1[0]:
+            if gridcoords[:,0] <= -0.45*6187713212448.75 and gridcoords[:,0] >= -0.55*6187713212448.75:
+                NNzeroZ.append(ncell)
+    """;
+
+    # Positions of refinement 0 cells
+    NNzeroZ_0 = np.argwhere(
+        (gridcoords[:,3] <= -0.49*6187713212448.75) & \
+        (gridcoords[:,3] >= -0.51*6187713212448.75)
+    )
+    # Positions of refinement 1 cells
+    NNzeroZ_1 = np.argwhere(
+        (gridcoords[:,3] <= -0.24*6187713212448.75) & \
+        (gridcoords[:,3] >= -0.26*6187713212448.75)
+    )
+    # Positions of refinement 2 cells
+    NNzeroZ_2 = np.argwhere(
+        (gridcoords[:,3] <= -(0.12+0.25)*6187713212448.75) & \
+        (gridcoords[:,3] >= -(0.13+0.25)*6187713212448.75)
+    )
+    # Positions of refinement 3 cells
+    NNzeroZ_3 = np.argwhere(
+        (gridcoords[:,3] <= -(0.060+0.25+0.125)*6187713212448.75) & \
+        (gridcoords[:,3] >= -(0.065+0.25+0.125)*6187713212448.75)
+    )
+    # Positions of refinement 4 cells
+    NNzeroZ_4 = np.argwhere(
+        (gridcoords[:,3] <= -(0.0310+0.25+0.125+0.0625)*6187713212448.75) & \
+        (gridcoords[:,3] >= -(0.0315+0.25+0.125+0.0625)*6187713212448.75)
+    )
+    # Merge arrays
+    NNzeroZ = np.concatenate((
+        NNzeroZ_0,
+        NNzeroZ_1,
+        NNzeroZ_2,
+        NNzeroZ_3,
+        NNzeroZ_4,        
+    ))
+
+    # NOTE: hardcoded
+    # Create 2D array of X-Y-grid
+    Nside = 72*4    # Number of cells along one side -> number of pixels along image side
+    gridcourner = 222757675648155.62    # Coords of grid courner in cm
+    gridcournerAU = gridcourner/AUcm    # Same but in AU
+    gridsize = gridcourner*2            # Length of image and grid size
+
+    # Edges of image (for plot and translation)
+    axisplot  = [gridcournerAU,-gridcournerAU,-gridcournerAU,gridcournerAU]
+    xrange = np.linspace(-gridcourner,gridcourner,Nside)
+    yrange = np.linspace(-gridcourner,gridcourner,Nside)
+
+    # Minimum cell size
+    mincellsize = np.min(gridsizes)
+
+    # Load densities
+    gasdensity = a3d.load_dustdensity(
+        path = gasdensitypath
+    )[2]
+    densities2D = np.zeros((Nside,Nside))
+
+    # Load temperature
+    gastemperatures = a3d.load_temperature(
+        path=gastemperaturepath,
+    )[2]
+    temperatures2D = np.zeros((Nside,Nside))
+
+    # Load grain sizes in cm
+    grainsizes = a3d.load_grainsizes(
+        grainsize_path=grainsizespath
+    )[0]
+    grainsizes2D = np.zeros((Nside,Nside))
+
+    # Save Z=0-densities in 2D-arrays
+    for nn in NNzeroZ:
+        xindex = np.int(np.round((gridcoords[nn,1]+gridcourner) / gridsize * Nside))-1
+        yindex = np.int(np.round((gridcoords[nn,2]+gridcourner) / gridsize * Nside))-1
+
+        # Number of pixels for each cell is
+        npixels = int(0.5*(gridsizes[nn]/mincellsize)[0])
+
+        # Fill cells
+        # Log of densities
+        # temperatures
+        # grain sies in um
+        if npixels > 0:
+            densities2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = np.log10(gasdensity[nn])
+            temperatures2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = np.log10(gastemperatures[nn])
+            grainsizes2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = grainsizes[nn]*1e4
+
+        else:
+            densities2D[xindex,yindex] = np.log10(gasdensity[nn])
+            temperatures2D[xindex,yindex] = np.log10(gastemperatures[nn])
+            grainsizes2D[xindex,yindex] = grainsizes[nn]*1e4
+
+    # Initialise fig-ax for normal images
+    imbar = []
+    colourbarlabels = [
+        r'log10$($ Gas density [g\,cm$^{-3}$] $)$',
+        r'log10$($ Gas temperature [K] $)$',
+        r'Grain size ($\mu$m)'
+    ]
+    fig, ax = plt.subplots(
+        1,3, 
+        figsize = (13,5),
+    )
+    imbar.append(ax[0].imshow(
+        densities2D,
+        origin='lower', extent=axisplot, 
+        cmap=plt.get_cmap('pink'),
+        vmin=-17,
+        vmax=-6
+    ))
+    imbar.append(ax[1].imshow(
+        temperatures2D,
+        origin='lower', extent=axisplot, 
+        cmap=plt.get_cmap('hot'),
+        vmin=2.5,
+        vmax=4.7
+    ))
+    imbar.append(ax[2].imshow(
+        grainsizes2D,
+        origin='lower', extent=axisplot, 
+        cmap=plt.get_cmap('bone'),
+    ))
+    # Set y-label text, only for first
+    ax[0].set_ylabel('Offset (au)',fontsize=18)
+    for nn in range(3):
+        # Set xlabel text and tick params for all
+        ax[nn].set_xlabel('Offset (au)',fontsize=18)
+        ax[nn].tick_params(axis='both', which='major', labelsize=15)
+
+        # Set colour bar settings and label
+        divider = make_axes_locatable(ax[nn])
+        cax = divider.append_axes(
+            'top', 
+            size='4%', 
+            pad=0.7,
+        )
+        cb0 = plt.colorbar(
+            imbar[nn], 
+            cax=cax, 
+            orientation = 'horizontal', 
+        )
+        cb0.set_label(
+            label = colourbarlabels[nn], fontsize=15
+        )
+        cb0.ax.tick_params(labelsize=15)
+
+    fig.tight_layout()
+    fig.show()
+    
+    #Save figure
+    fig.savefig(f'figs/co5bold_2dslices.pdf', dpi=300, facecolor="white")
+
 
 
 
@@ -711,7 +933,7 @@ if plot_grainsizeradius == 'y':
     ax.plot(radial_range,grainsize_bins,'k')
 
     # Add line for stellar surface and edge of cube
-    ax.plot([Rstar,Rstar],[0,grainsize_max.max()+0.05],'r:',linewidth=1)
+    #ax.plot([Rstar,Rstar],[0,grainsize_max.max()+0.05],'r:',linewidth=1)
     ax.plot([cubesize,cubesize],[0,grainsize_max.max()+0.05],'k:',linewidth=1)
 
     
@@ -719,7 +941,7 @@ if plot_grainsizeradius == 'y':
     ax.set_ylabel(r'Grain sizes ($\mu$m)',fontsize=18)
     ax.set_xlabel(r'Distance (au)',fontsize=18)
     ax.set(
-        xlim=(0,radial_range.max()+0.5),
+        xlim=(Rstar,radial_range.max()+0.5),
         ylim=(0,grainsize_max.max()+0.05)
     )
     ax.tick_params(axis='both', which='major', labelsize=15)
@@ -766,6 +988,10 @@ if plot_absscat == 'y':
 # Plot comparisons of temperature between co5bold and radmc3d
 if plot_temperaturecompare == 'y':
 
+    # The lowest altitude for dust formation at the included time snapshot corresponds 
+    # to 3.4\,au, or 2.1\,$R_\star$, from the grid centre.
+    # SO I start these plots at 3au.
+
     # Chose phase-designation
     phase = 190
 
@@ -805,7 +1031,7 @@ if plot_temperaturecompare == 'y':
     )
     ax[0].set_ylabel(r'$T({\rm CO5BOLD})$, K',fontsize=18)
     ax[0].set_xlabel(r'')
-    ax[0].set(xlim=(0,26))
+    ax[0].set(xlim=(3,26))
     ax[0].tick_params(axis='both', which='major', labelsize=15)
 
     # Load R3d-temperatures and bin each grain size's tmeperature
@@ -883,7 +1109,7 @@ if plot_temperaturecompare == 'y':
 
     ax[1].set_ylabel(r'$T({\rm point})$, K',fontsize=18)
     ax[1].set_xlabel(r'Distance (au)',fontsize=18)
-    ax[1].set(xlim=(0,26), ylim=(0,4000))
+    ax[1].set(xlim=(3,26), ylim=(0,4000))
     ax[1].tick_params(axis='both', which='major', labelsize=15)
 
 
@@ -927,7 +1153,7 @@ if plot_temperaturecompare == 'y':
     axratio.set_xlabel(r'Distance (au)',fontsize=18)
     axratio.set(
         ylim=(0.5,2),
-        xlim=(0,26)
+        xlim=(3,26)
     )
     axratio.tick_params(axis='both', which='major', labelsize=15)
 
@@ -987,12 +1213,12 @@ if plot_coboldsed == 'y':
         '/spectrum_i270_phi000.out'
     ]
     legendlist = [
-        '0, 0',
-        '90, 0',
-        '90, 90',
-        '90, 270',
-        '180, 0',
-        '270, 0',
+        r'0, 0; \hspace{5mm} 3759',
+        r'90, 0; \hspace{3mm} 4597',
+        r'90, 90; \hspace{1mm} 5471',
+        r'90, 270; 7821',
+        r'180, 0; \hspace{1mm} 8559',
+        r'270, 0; \hspace{1mm} 6631',
     ]
 
     for nangle,spectrum in enumerate(spectra):
@@ -1019,7 +1245,7 @@ if plot_coboldsed == 'y':
     # Ylabel, titles and legend with angles
     ax.set_ylabel(r'$F_\nu$, Jy at 1 pc', fontsize=18)
     ax.set_title(rf'CO5BOLD', fontsize=16)
-    ax.legend(title=r'$i$, $\phi$', fontsize=13)
+    ax.legend(title=r'$i$, $\phi$;   Int. flux dens. ($L_\odot$)', fontsize=13)
 
     fig.tight_layout()
     #fig.show()
@@ -1204,19 +1430,18 @@ if plot_darwin_imagesed == 'y':
         )
         print(f'{path}{spectrum}: {luminosity/Lsol}')
             
-        ax[0].plot(wavelength,sed,label = legendlist[nangle])
+        ax[1].plot(wavelength,sed,label = legendlist[nangle])
 
     # Set SED axis settings
-    ax[0].set(xscale='log',yscale='log')
-    ax[0].set_xlim(5e-1,6e1)
-    ax[0].set_ylim(1e6,1.3e8)
-    ax[0].tick_params(axis='both', which='major', labelsize=15)
-    ax[0].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)    
+    ax[1].set(xscale='log',yscale='log')
+    ax[1].set_xlim(5e-1,6e1)
+    ax[1].set_ylim(1e6,1.3e8)
+    ax[1].tick_params(axis='both', which='major', labelsize=15)
+    ax[1].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)    
         
     # Ylabel, titles and legend with angles
-    ax[0].set_ylabel(r'$F_\nu$, Jy at 1 pc', fontsize=18)
-    ax[0].set_title(rf'DARWIN', fontsize=16)
-    ax[0].legend(title=r'$i$, $\phi$', fontsize=13)
+    ax[1].set_ylabel(r'$F_\nu$, Jy at 1 pc', fontsize=18)
+    ax[1].legend(title=r'$i$, $\phi$', fontsize=13)
 
 
     # Plot image
@@ -1244,7 +1469,7 @@ if plot_darwin_imagesed == 'y':
     image2d = image2d*1e-6
 
     # Plot image
-    imlin = ax[1].imshow(
+    imlin = ax[0].imshow(
         image2d, 
         origin='lower', extent=axisplot, 
         cmap=plt.get_cmap('hot'),
@@ -1252,12 +1477,16 @@ if plot_darwin_imagesed == 'y':
     )
 
     # Set axis settings
-    ax[1].tick_params(axis='both', which='major', labelsize=15)
-    ax[1].set_xlabel('Offset (au)', fontsize=18)
-    ax[1].set_ylabel('Offset (au)', fontsize=18)
+    ax[0].tick_params(axis='both', which='major', labelsize=15)
+    ax[0].set_xlabel('Offset (au)', fontsize=18)
+    ax[0].set_ylabel('Offset (au)', fontsize=18)
+
+    # Set title
+    ax[0].set_title(rf'DARWIN', fontsize=16)
+
 
     # Set colour bar settings and label
-    divider = make_axes_locatable(ax[1])
+    divider = make_axes_locatable(ax[0])
     cax = divider.append_axes(
         'right', 
         size='4%', 
@@ -1324,19 +1553,18 @@ if plot_point_imagesed == 'y':
         )
         print(f'{path}{spectrum}: {luminosity/Lsol}')
             
-        ax[0].plot(wavelength,sed,label = legendlist[nangle])
+        ax[1].plot(wavelength,sed,label = legendlist[nangle])
 
     # Set SED axis settings
-    ax[0].set(xscale='log',yscale='log')
-    ax[0].set_xlim(5e-1,6e1)
-    ax[0].set_ylim(1e6,1.3e8)
-    ax[0].tick_params(axis='both', which='major', labelsize=15)
-    ax[0].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)    
+    ax[1].set(xscale='log',yscale='log')
+    ax[1].set_xlim(5e-1,6e1)
+    ax[1].set_ylim(1e6,1.3e8)
+    ax[1].tick_params(axis='both', which='major', labelsize=15)
+    ax[1].set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)    
         
     # Ylabel, titles and legend with angles
-    ax[0].set_ylabel(r'$F_\nu$, Jy at 1 pc', fontsize=18)
-    ax[0].set_title(rf'Point source', fontsize=16)
-    ax[0].legend(title=r'$i$, $\phi$', fontsize=13)
+    ax[1].set_ylabel(r'$F_\nu$, Jy at 1 pc', fontsize=18)
+    ax[1].legend(title=r'$i$, $\phi$', fontsize=13)
 
 
     # Plot image
@@ -1364,7 +1592,7 @@ if plot_point_imagesed == 'y':
     image2d = image2d*1e-6
 
     # Plot image
-    imlin = ax[1].imshow(
+    imlin = ax[0].imshow(
         image2d, 
         origin='lower', extent=axisplot, 
         cmap=plt.get_cmap('hot'),
@@ -1372,12 +1600,15 @@ if plot_point_imagesed == 'y':
     )
 
     # Set axis settings
-    ax[1].tick_params(axis='both', which='major', labelsize=15)
-    ax[1].set_xlabel('Offset (au)', fontsize=18)
-    ax[1].set_ylabel('Offset (au)', fontsize=18)
+    ax[0].tick_params(axis='both', which='major', labelsize=15)
+    ax[0].set_xlabel('Offset (au)', fontsize=18)
+    ax[0].set_ylabel('Offset (au)', fontsize=18)
+
+    # Set title
+    ax[0].set_title(rf'Point source', fontsize=16)
 
     # Set colour bar settings and label
-    divider = make_axes_locatable(ax[1])
+    divider = make_axes_locatable(ax[0])
     cax = divider.append_axes(
         'right', 
         size='4%', 
