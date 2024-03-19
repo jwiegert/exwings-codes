@@ -998,11 +998,11 @@ if plot_temperaturecompare == 'y':
     # Set up subplots for figure with only temperature (ratio later in another fig)
     fig,ax = plt.subplots(
         2,1,
-        figsize=(6,9)
+        figsize=(6,8)
     )
     # Initiate figobjects for ratio-plot
     figratio, axratio = plt.figure(
-        figsize=(6,5)
+        figsize=(6,4)
     ), plt.axes()
 
     # Set legends
@@ -1031,7 +1031,7 @@ if plot_temperaturecompare == 'y':
     )
     ax[0].set_ylabel(r'$T({\rm CO5BOLD})$, K',fontsize=18)
     ax[0].set_xlabel(r'')
-    ax[0].set(xlim=(3,26))
+    ax[0].set(xlim=(3,26), ylim=(0,3000))
     ax[0].tick_params(axis='both', which='major', labelsize=15)
 
     # Load R3d-temperatures and bin each grain size's tmeperature
@@ -1109,7 +1109,7 @@ if plot_temperaturecompare == 'y':
 
     ax[1].set_ylabel(r'$T({\rm point})$, K',fontsize=18)
     ax[1].set_xlabel(r'Distance (au)',fontsize=18)
-    ax[1].set(xlim=(3,26), ylim=(0,4000))
+    ax[1].set(xlim=(3,26), ylim=(0,3000))
     ax[1].tick_params(axis='both', which='major', labelsize=15)
 
 
@@ -1152,7 +1152,7 @@ if plot_temperaturecompare == 'y':
     axratio.set_ylabel(r'$T({\rm simulated})$ / $T({\rm theory})$',fontsize=18)
     axratio.set_xlabel(r'Distance (au)',fontsize=18)
     axratio.set(
-        ylim=(0.5,2),
+        ylim=(0.5,1.7),
         xlim=(3,26)
     )
     axratio.tick_params(axis='both', which='major', labelsize=15)
