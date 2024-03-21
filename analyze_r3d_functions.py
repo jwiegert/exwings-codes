@@ -726,7 +726,7 @@ def load_images(
     
     # Size of whole image in AU and image-axis-scales
     size_au = pixelsize_au * npixels
-    axisplot  = [0.5*size_au,-0.5*size_au,-0.5*size_au,0.5*size_au]
+    axisplot  = [-0.5*size_au,0.5*size_au,-0.5*size_au,0.5*size_au]
 
     # Total flux density of the image in Jy
     # Transoform to Jy/pix and sum all

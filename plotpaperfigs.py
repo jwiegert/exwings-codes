@@ -1,5 +1,6 @@
 # Plots various figures for first co5bold-r3d-paper
 import matplotlib.pyplot as plt
+from scipy import ndimage
 import numpy as np
 import scipy.ndimage
 import re
@@ -44,13 +45,13 @@ phasetimes = [
 plot_coboldgrid = 'n'
 plot_opticalthickness = 'n'
 list_smoothingchanges = 'n'     # TODO (clean up and make it work)
-plot_2dslices = 'n'
+plot_2dslices = 'y'
 
 # Grain properties
 plot_grainsizehist = 'n'
 plot_grainsizeradius = 'n'
 plot_absscat = 'n'
-plot_temperaturecompare = 'y'
+plot_temperaturecompare = 'n'
 
 # Plot co5bold-figs
 plot_coboldsed = 'n'
@@ -547,10 +548,6 @@ if list_smoothingchanges == 'y':
 
 # Plot (in model-info part) unmodified pristine data
 if plot_2dslices == 'y':
-    # TODO lägg till och fixa koden här
-    # - linjär temperaturskala, klippt vid t.ex. 5kK
-    # - vertikala colour bars, kanske oanför sublotsen för det blir för trångt?
-    # - vmin-max-värden till de 3 figurerna
     # 2D slices of input data to r3d
 
     # Set up paths to data to plot
@@ -570,7 +567,8 @@ if plot_2dslices == 'y':
     gridcoords = a3d.load_griddistances(gridcoordspath,amrpath)
     # gridcoords[:,1] 2] and 3] : x,y, and z distances
     
-    # Extract indeces of all at Z = 0
+    # Extract indeces of all close to Z = 0, or actually as close as possible to
+    # base cell centre.
     #
     # NOTE: This is harcoded:
     # From amr_grid, middle plane is within
@@ -593,54 +591,37 @@ if plot_2dslices == 'y':
     # Radial distances to refinement 3: 0.7426979304536157 - 6.601759381809917 AU
     # Radial distances to refinement 4: 0.9902639072714876 - 3.3008796909049587 AU
 
-    """
-    # TODO
-    # gör en forloop och ifsatser för varje refinementlevel?
-    Ncells = np.size(gridcoords)[:,0]
+    # Chose observed axis
+    los_axis = 1
+    # Below or above Z=0?
+    basecell = 6187713212448.75
+    #basecell = 6187713212448.781
 
-    refinement1 = [0.2475659768178719*AUcm,13.203518763619835*AUcm]
-    refinement2 = [0.4951319536357438*AUcm, 9.902639072714877 *AUcm]
-    refinement3 = [0.7426979304536157*AUcm, 6.601759381809917 *AUcm]
-    refinement4 = [0.9902639072714876*AUcm, 3.3008796909049587 *AUcm]
 
-    NNzeroZ = []
-    for ncell in range(Ncells):
-
-        # Unrefined cells (0)
-        if gridcoords[:,0] >= refinement1[1] or gridcoords[:,0] <= refinement1[0]:
-            if gridcoords[:,0] <= -0.45*6187713212448.75 and gridcoords[:,0] >= -0.55*6187713212448.75:
-                NNzeroZ.append(ncell)
-
-        # 1st refined cells
-        if gridcoords[:,0] >= refinement1[1] or gridcoords[:,0] <= refinement1[0]:
-            if gridcoords[:,0] <= -0.45*6187713212448.75 and gridcoords[:,0] >= -0.55*6187713212448.75:
-                NNzeroZ.append(ncell)
-    """;
-
-    # Positions of refinement 0 cells
+    # Positions of refinement 0 cells (-1/2)
     NNzeroZ_0 = np.argwhere(
-        (gridcoords[:,3] <= -0.49*6187713212448.75) & \
-        (gridcoords[:,3] >= -0.51*6187713212448.75)
+        (gridcoords[:,los_axis] <= -0.99*(0.5)*basecell) & \
+        (gridcoords[:,los_axis] >= -1.01*(0.5)*basecell)
     )
-    # Positions of refinement 1 cells
+    # Positions of refinement 1 cells (-1/4)
     NNzeroZ_1 = np.argwhere(
-        (gridcoords[:,3] <= -0.24*6187713212448.75) & \
-        (gridcoords[:,3] >= -0.26*6187713212448.75)
+        (gridcoords[:,los_axis] <= -0.99*(0.5+0.25)*basecell) & \
+        (gridcoords[:,los_axis] >= -1.01*(0.5+0.25)*basecell)
     )
-    # Positions of refinement 2 cells
+    # Positions of refinement 2 cells (-1/4 -1/8)
     NNzeroZ_2 = np.argwhere(
-        (gridcoords[:,3] <= -(0.12+0.25)*6187713212448.75) & \
-        (gridcoords[:,3] >= -(0.13+0.25)*6187713212448.75)
+        (gridcoords[:,los_axis] <= -0.99*(0.5+0.25+0.125)*basecell) & \
+        (gridcoords[:,los_axis] >= -1.01*(0.5+0.25+0.125)*basecell)
     )
-    # Positions of refinement 3 cells
+    # Positions of refinement 3 cells (-1/4 -1/8 -1/16)
     NNzeroZ_3 = np.argwhere(
-        (gridcoords[:,3] <= -(0.060+0.25+0.125)*6187713212448.75) & \
-        (gridcoords[:,3] >= -(0.065+0.25+0.125)*6187713212448.75)
+        (gridcoords[:,los_axis] <= -0.99*(0.5+0.25+0.125+0.0625)*basecell) & \
+        (gridcoords[:,los_axis] >= -1.01*(0.5+0.25+0.125+0.0625)*basecell)
     )
-    # Positions of refinement 4 cells
+    # Positions of refinement 4 cells (-1/4 -1/8 -1/16 -1/32)
     NNzeroZ_4 = np.argwhere(
-        (gridcoords[:,3] <= -(0.0310+0.25+0.125+0.0625)*6187713212448.75) & \
-        (gridcoords[:,3] >= -(0.0315+0.25+0.125+0.0625)*6187713212448.75)
+        (gridcoords[:,los_axis] <= -0.99*(0.5+0.25+0.125+0.0625+0.03125)*basecell) & \
+        (gridcoords[:,los_axis] >= -1.01*(0.5+0.25+0.125+0.0625+0.03125)*basecell)
     )
     # Merge arrays
     NNzeroZ = np.concatenate((
@@ -659,7 +640,6 @@ if plot_2dslices == 'y':
     gridsize = gridcourner*2            # Length of image and grid size
 
     # Edges of image (for plot and translation)
-    axisplot  = [gridcournerAU,-gridcournerAU,-gridcournerAU,gridcournerAU]
     xrange = np.linspace(-gridcourner,gridcourner,Nside)
     yrange = np.linspace(-gridcourner,gridcourner,Nside)
 
@@ -686,8 +666,19 @@ if plot_2dslices == 'y':
 
     # Save Z=0-densities in 2D-arrays
     for nn in NNzeroZ:
-        xindex = np.int(np.round((gridcoords[nn,1]+gridcourner) / gridsize * Nside))-1
-        yindex = np.int(np.round((gridcoords[nn,2]+gridcourner) / gridsize * Nside))-1
+        # Rotate "xy"-coordinates depending on los_axis
+        if los_axis == 3:
+            los_xaxis = 1
+            los_yaxis = 2
+        if los_axis == 2:
+            los_xaxis = 1
+            los_yaxis = 3
+        if los_axis == 1:
+            los_xaxis = 3
+            los_yaxis = 2
+
+        xindex = np.int(np.round((gridcoords[nn,los_xaxis]+gridcourner) / gridsize * Nside))-1
+        yindex = np.int(np.round((gridcoords[nn,los_yaxis]+gridcourner) / gridsize * Nside))-1
 
         # Number of pixels for each cell is
         npixels = int(0.5*(gridsizes[nn]/mincellsize)[0])
@@ -705,6 +696,16 @@ if plot_2dslices == 'y':
             densities2D[xindex,yindex] = np.log10(gasdensity[nn])
             temperatures2D[xindex,yindex] = np.log10(gastemperatures[nn])
             grainsizes2D[xindex,yindex] = grainsizes[nn]*1e4
+
+    # TEMP
+    # Rotate image by 90 deg
+    densities2D = ndimage.rotate(densities2D, 90)
+    temperatures2D = ndimage.rotate(temperatures2D, 90)
+    grainsizes2D = ndimage.rotate(grainsizes2D, 90)
+
+    # Set new axis ranges based on all the rotations and reversed axis.
+    axisplot  = [-gridcournerAU,gridcournerAU,gridcournerAU,-gridcournerAU]
+
 
     # Initialise fig-ax for normal images
     imbar = []
@@ -736,6 +737,11 @@ if plot_2dslices == 'y':
         origin='lower', extent=axisplot, 
         cmap=plt.get_cmap('bone'),
     ))
+    # If needed, rotate axis
+    for nn in range(3):
+        ax[nn].invert_xaxis()
+        ax[nn].invert_yaxis()
+        ax[nn].invert_xaxis()
     # Set y-label text, only for first
     ax[0].set_ylabel('Offset (au)',fontsize=18)
     for nn in range(3):
@@ -765,10 +771,6 @@ if plot_2dslices == 'y':
     
     #Save figure
     fig.savefig(f'figs/co5bold_2dslices.pdf', dpi=300, facecolor="white")
-
-
-
-
 
 
 # ----------------------------------------------------------------
@@ -1707,7 +1709,7 @@ if plot_images_convolved_vlti == 'y':
 
         # Extract props and compute distance-dependant scales
         Npix = np.shape(image2d)[0] # Number of pixels along one side
-        auperpixel = 2*axisplot[0]/Npix  # number of au per pixel
+        auperpixel = np.abs(2*axisplot[0]/Npix)  # number of au per pixel
         masperpixel = auperpixel/distance * 1000  # number of mas per pixel
         size_milliasec = masperpixel * Npix # size of image in mas
 
