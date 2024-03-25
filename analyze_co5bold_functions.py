@@ -151,6 +151,10 @@ cubesize = 222757675648155.62/AUcm
 #    monomermasses:list=[2.3362e-22]
 # )
 #
+# modify_dusttemperature(
+#   TODO FILLE
+#)
+#
 # extract_grainsizes(
 #    amrpath:str='../r3dresults/st28gm06n052/amr_grid.inp',
 #    gridpath:str='../r3dresults/st28gm06n052/grid_distances.csv',
@@ -373,16 +377,21 @@ def load_star_information(
       Mstar in gram
       Rstar in cm
       Lstar in Watt
+      Tstar in K
     """
     # NOTE
     # with heavier 052 data, takes 5 seconds
 
     c5ddata = readsav(savpath)
     c5ddata = c5ddata['ful']
+    # Extract effective temperature
+    Tstar = float(c5ddata['PAR'][0][0][4])
+
+    # Extract 
     c5ddata = str(c5ddata['PAR'][0][0][2][1])[1:]
 
     if printoutput == 'y':
-        print(f'Stellar info: {c5ddata}')
+        print(f'Stellar info: {c5ddata}, Teff={Tstar} K')
 
     # Extract all numbers in string
     numbers = re.findall("[0-9]+", c5ddata)
@@ -392,7 +401,7 @@ def load_star_information(
     Rstar = float(numbers[2]) * Rsol
     Lstar = float(numbers[3]) * Lsol
 
-    return Mstar,Rstar,Lstar
+    return Mstar,Rstar,Lstar,Tstar
 
 
 
@@ -599,7 +608,7 @@ def plot_densitytemperature(
     # Set path to r3d-data
     path = f'../r3dresults/{modelname}/{phase}/'
 
-    Mstar,Rstar,Lstar = load_star_information(
+    Mstar,Rstar,Lstar,Tstar = load_star_information(
         savpath = f'../../exwings_archivedata/co5bold_data/d{modelname}/{modelname}_{phase}.sav'
     )
 
@@ -789,7 +798,7 @@ def plot_grainsizeradius(
     radii = cellcoords[:,0]/AUcm
 
     # Load star's radius here
-    Mstar,Rstar,Lstar = load_star_information(
+    Mstar,Rstar,Lstar,Tstar = load_star_information(
         savpath = savpath,
         printoutput='n'
     )
@@ -1489,7 +1498,7 @@ def reduce_coretemperature(
     phase = savpath.split('_')[-1].split('.')[0]
 
     # Load header stellar radius, mass and luminosity
-    Mstar,Rstar,Lstar = load_star_information(
+    Mstar,Rstar,Lstar,Tstar = load_star_information(
         savpath = savpath,
         printoutput = 'n'
     )
@@ -1568,7 +1577,7 @@ def reduce_corekappa(
     phase = savpath.split('_')[-1].split('.')[0]
 
     # Load header stellar radius, mass and luminosity
-    Mstar,Rstar,Lstar = load_star_information(
+    Mstar,Rstar,Lstar,Tstar = load_star_information(
         savpath = savpath,
         printoutput = 'n'
     )
@@ -2159,6 +2168,125 @@ def create_dustfiles(
 
     # End functions with acknowledgements
     print(f'C5D Dust-data:\n    dust_density_dust_{phase}.inp\n    dust_temperature_dust_{phase}.dat\nDONE\n')
+
+
+# Function that modifies the dust temperature (before binning)
+# to include non-grey effects via Bladh2012-radial profile approximation
+    
+def modify_dusttemperature(
+        dusttemperature_path:str='../dust_temperature.dat',
+        griddistance_path:str='../grid_distances.csv',
+        sav_path:str='../st28gm06n052_190.sav',
+        amr_path:str='../amr_grid.inp',
+    ):
+    # not-binned dust temperature i r3d-format
+    # cell coords
+    # model star props
+    # p-factor in (1/R)**(2/(4+p)), default MgSiO4, -0.9
+    # grid props (to refinements and such, how many refinements)
+
+    # Load dust temperature, unmodified, unbinned temperature (ie original gas temperature)
+    Ncells,Nspecies,dusttemperature = a3d.load_temperature(
+        path = dusttemperature_path,
+        numb_specie = 1
+    )
+
+    # Load cell coords
+    cellcoords = a3d.load_griddistances(
+        gridpath = griddistance_path,
+        amrpath = amr_path
+    )
+    radii = cellcoords[:,0]/AUcm
+
+    # Load model properties
+    Mstar,Rstar,Lstar,Tstar = load_star_information(
+        savpath = sav_path,
+        printoutput = 'n'
+    )
+
+    # Load grid proprties
+    
+
+
+    # Set up a shell-distance array (along diagonal)
+
+    # Radii to each refinement
+    Rmax = 0.5*np.sqrt(3)*29.780836060395945
+    # Add all radial distances to refinements in a list
+    R0 = 13.203518763619835
+    R1 =  9.902639072714877
+    R2 =  6.601759381809917
+    R3 =  3.3008796909049587
+    R4 =  3.0   #  Add a last shell that always be 3 au (No dust within 2Rstar)
+                # Perhaps set this to 2 or 1.5 or 1.75*Rstar?
+
+    # Diagonal of each cell size
+    DiagCells0 = np.sqrt(3)*0.4136227230610557
+    DiagCells1 = np.sqrt(3)*0.20681136153052784
+    DiagCells2 = np.sqrt(3)*0.10340568076526392
+    DiagCells3 = np.sqrt(3)*0.05170284038263196
+    DiagCells4 = np.sqrt(3)*0.02585142019131598
+
+    # Number of cells along diagonal (for reach refinement)
+    Ncells0 = np.round((Rmax - R0)/DiagCells0)
+    Ncells1 = np.round((R0   - R1)/DiagCells1)
+    Ncells2 = np.round((R1   - R2)/DiagCells2)
+    Ncells3 = np.round((R2   - R3)/DiagCells3)
+    Ncells4 = np.round((R3   - R4)/DiagCells4)
+
+    print(Ncells0)
+    print(Ncells1)
+    print(Ncells2)
+    print(Ncells3)
+    print(Ncells4)
+
+    # linspaces for each refinement-range
+    radii0 = np.linspace(R0+DiagCells0,Rmax,Ncells0)
+    radii1 = np.linspace(R1+DiagCells1,R0,Ncells1)
+    radii2 = np.linspace(R2+DiagCells2,R1,Ncells2)
+    radii3 = np.linspace(R3+DiagCells3,R2,Ncells3)
+    radii4 = np.linspace(R4+DiagCells4,R3,Ncells4)
+    diagonal_distances = np.concatenate([radii4,radii3,radii2,radii1,radii0])
+
+
+    # Compute TtheoryR and average shell temperatures along diagonal_distances
+
+    # Number of radial shell edges
+    Nradii = np.size(diagonal_distances)
+
+    # Arrays for average temperatures and final modified temperatures
+    diagonal_temperatures = np.zeros(Nradii-1)
+    dusttemperature_modified = np.zeros(Ncells)
+
+
+
+    for nnradius in range(Nradii - 1):
+        
+
+        # Extract all cells at R + deltaR
+        cell_index = np.where(
+            (dusttemperature != 0) & \
+            (radii >= diagonal_distances[nnradius]) & \
+            (radii <  diagonal_distances[nnradius+1])
+        )
+        if np.size(cell_index) > 0:
+            
+            # Save average temperature of each shell
+            diagonal_temperatures[nnradius] = np.sum(dusttemperature[cell_index])/np.size(cell_index)
+
+            # Loop through cells at R+deltaR and apply "dust temperature correction" via
+            #   Tcell-final(xyz) = Tcell-c5d(xyz) * Ttheory(R) / < Tcell-c5d >(R+deltaR)
+            for ncell in cell_index:
+                TtheoryR = Tstar * (Rstar / (2*diagonal_distances[nnradius]))**(2/(4+p))
+                dusttemperature_modified[ncell] = dusttemperature[ncell] * TtheoryR / diagonal_temperatures[nnradius]
+
+    # Save array with modified dust temperatures in
+    # dust_temperature_onedust_modified.dat
+
+
+    print('Hej')
+
+
 
 
 # Function that extracts and saves grain sizes per R3d-Cell

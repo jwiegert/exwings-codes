@@ -146,7 +146,7 @@ if list_smoothingchanges == 'y':
     )
 
     # load starradius
-    Mstar,starradius,Lstar = a5d.load_star_information(
+    Mstar,starradius,Lstar,Tstar = a5d.load_star_information(
         savpath='../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_190.sav',
         printoutput = 'n'
     )
@@ -278,7 +278,7 @@ if list_smoothingchanges == 'y':
     )
 
     # load starradius
-    Mstar,starradius,Lstar = a5d.load_star_information(
+    Mstar,starradius,Lstar,Tstar = a5d.load_star_information(
         savpath='../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_190.sav',
         printoutput = 'n'
     )
@@ -417,7 +417,7 @@ if list_smoothingchanges == 'y':
     Ncells = opacity.size
 
     # load starradius
-    Mstar,starradius,Lstar = a5d.load_star_information(
+    Mstar,starradius,Lstar,Tstar = a5d.load_star_information(
         savpath='../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_190.sav',
         printoutput = 'n'
     )
@@ -566,6 +566,20 @@ if plot_2dslices == 'y':
     # Load coordinates of all cells
     gridcoords = a3d.load_griddistances(gridcoordspath,amrpath)
     # gridcoords[:,1] 2] and 3] : x,y, and z distances
+
+    # Load densities
+    gasdensity = a3d.load_dustdensity(
+        path = gasdensitypath
+    )[2]
+    # Load temperature
+    gastemperatures = a3d.load_temperature(
+        path=gastemperaturepath,
+    )[2]
+
+    # Load grain sizes in cm
+    grainsizes = a3d.load_grainsizes(
+        grainsize_path=grainsizespath
+    )[0]
     
     # Extract indeces of all close to Z = 0, or actually as close as possible to
     # base cell centre.
@@ -579,18 +593,8 @@ if plot_2dslices == 'y':
     # N cells along outer edge: 72
     #
     # Or rather, the largest cells are in a plane within 0 and 6187713212448.781
-    # And its middle is at  0.5**(1+0)6187713212448.781
-    # Middle of 1st refine: 0.5**(1+1)*6187713212448.781
-    # THe rest are within 0.5 and 0.25 then!
-    #
     # Extract cells with centrum between 0 and -0.5*0.618...
     #
-    # Refinement levels
-    # Radial distances to refinement 1: 0.2475659768178719 - 13.203518763619835 AU
-    # Radial distances to refinement 2: 0.4951319536357438 - 9.902639072714877 AU
-    # Radial distances to refinement 3: 0.7426979304536157 - 6.601759381809917 AU
-    # Radial distances to refinement 4: 0.9902639072714876 - 3.3008796909049587 AU
-
     # Chose observed axis
     los_axis = 1
     # Below or above Z=0?
@@ -629,40 +633,25 @@ if plot_2dslices == 'y':
         NNzeroZ_1,
         NNzeroZ_2,
         NNzeroZ_3,
-        NNzeroZ_4,        
+        NNzeroZ_4,
     ))
-
-    # NOTE: hardcoded
-    # Create 2D array of X-Y-grid
-    Nside = 72*4    # Number of cells along one side -> number of pixels along image side
-    gridcourner = 222757675648155.62    # Coords of grid courner in cm
-    gridcournerAU = gridcourner/AUcm    # Same but in AU
-    gridsize = gridcourner*2            # Length of image and grid size
-
-    # Edges of image (for plot and translation)
-    xrange = np.linspace(-gridcourner,gridcourner,Nside)
-    yrange = np.linspace(-gridcourner,gridcourner,Nside)
 
     # Minimum cell size
     mincellsize = np.min(gridsizes)
 
-    # Load densities
-    gasdensity = a3d.load_dustdensity(
-        path = gasdensitypath
-    )[2]
+
+    # NOTE: hardcoded
+    # Create 2D arrays of X-Y-grid
+    Nside = 72*16    # Number of finest cells along one side -> number of pixels along image side
+    gridcourner = 222757675648155.62-0.5*mincellsize                 # Coords of grid courner in cm
+    gridcournerAU = gridcourner/AUcm                 # Same but in AU
+    gridsize = gridcourner*2                         # Length of image and grid size
+
     densities2D = np.zeros((Nside,Nside))
-
-    # Load temperature
-    gastemperatures = a3d.load_temperature(
-        path=gastemperaturepath,
-    )[2]
     temperatures2D = np.zeros((Nside,Nside))
-
-    # Load grain sizes in cm
-    grainsizes = a3d.load_grainsizes(
-        grainsize_path=grainsizespath
-    )[0]
     grainsizes2D = np.zeros((Nside,Nside))
+
+
 
     # Save Z=0-densities in 2D-arrays
     for nn in NNzeroZ:
@@ -680,22 +669,48 @@ if plot_2dslices == 'y':
         xindex = np.int(np.round((gridcoords[nn,los_xaxis]+gridcourner) / gridsize * Nside))-1
         yindex = np.int(np.round((gridcoords[nn,los_yaxis]+gridcourner) / gridsize * Nside))-1
 
+        # Refinement levels
+        # Radial distances to refinement 1: 0.2475659768178719 - 13.203518763619835 AU
+        # Radial distances to refinement 2: 0.4951319536357438 - 9.902639072714877 AU
+        # Radial distances to refinement 3: 0.7426979304536157 - 6.601759381809917 AU
+        # Radial distances to refinement 4: 0.9902639072714876 - 3.3008796909049587 AU
+        #
         # Number of pixels for each cell is
-        npixels = int(0.5*(gridsizes[nn]/mincellsize)[0])
+        #
+        # 4th refinement
+        if gridcoords[nn,0] >= 0.9902639072714876*AUcm and gridcoords[nn,0] <= 3.3008796909049587*AUcm:
+            npixels = 1
+        
+        # 3rd refinement
+        if gridcoords[nn,0] > 3.3008796909049587*AUcm and gridcoords[nn,0] <= 6.601759381809917*AUcm:
+            npixels = 2
+        if gridcoords[nn,0] >= 0.7426979304536157*AUcm and gridcoords[nn,0] < 0.9902639072714876*AUcm:
+            npixels = 2
+
+        # 2nd refinement
+        if gridcoords[nn,0] > 6.601759381809917*AUcm and gridcoords[nn,0] <= 9.902639072714877*AUcm:
+            npixels = 4
+        if gridcoords[nn,0] >= 0.4951319536357438*AUcm and gridcoords[nn,0] < 0.7426979304536157*AUcm:
+            npixels = 4
+
+        # 1st refinement
+        if gridcoords[nn,0] > 9.902639072714877*AUcm and gridcoords[nn,0] <= 13.203518763619835*AUcm:
+            npixels = 8
+        if gridcoords[nn,0] >= 0.2475659768178719*AUcm and gridcoords[nn,0] < 0.4951319536357438*AUcm:
+            npixels = 8
+
+        # Base cells
+        if gridcoords[nn,0] < 0.2475659768178719*AUcm or gridcoords[nn,0] > 13.203518763619835*AUcm:
+            npixels = 16
 
         # Fill cells
         # Log of densities
         # temperatures
         # grain sies in um
-        if npixels > 0:
-            densities2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = np.log10(gasdensity[nn])
-            temperatures2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = np.log10(gastemperatures[nn])
-            grainsizes2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = grainsizes[nn]*1e4
+        densities2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = np.log10(gasdensity[nn])
+        temperatures2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = np.log10(gastemperatures[nn])
+        grainsizes2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = grainsizes[nn]*1e4
 
-        else:
-            densities2D[xindex,yindex] = np.log10(gasdensity[nn])
-            temperatures2D[xindex,yindex] = np.log10(gastemperatures[nn])
-            grainsizes2D[xindex,yindex] = grainsizes[nn]*1e4
 
     # TEMP
     # Rotate image by 90 deg
@@ -704,7 +719,12 @@ if plot_2dslices == 'y':
     grainsizes2D = ndimage.rotate(grainsizes2D, 90)
 
     # Set new axis ranges based on all the rotations and reversed axis.
-    axisplot  = [-gridcournerAU,gridcournerAU,gridcournerAU,-gridcournerAU]
+    axisplot  = [
+        -gridcournerAU,
+        gridcournerAU,
+        gridcournerAU,
+        -gridcournerAU
+    ]
 
 
     # Initialise fig-ax for normal images
@@ -737,11 +757,17 @@ if plot_2dslices == 'y':
         origin='lower', extent=axisplot, 
         cmap=plt.get_cmap('bone'),
     ))
-    # If needed, rotate axis
+
     for nn in range(3):
+        # Rotate axis to be consistent with greytag2023
         ax[nn].invert_xaxis()
         ax[nn].invert_yaxis()
         ax[nn].invert_xaxis()
+
+        # and change x-lim and ylim to skip emtpy edges
+        ax[nn].set_xlim(-gridcournerAU+basecell/AUcm,gridcournerAU)
+        ax[nn].set_ylim(-gridcournerAU+basecell/AUcm,gridcournerAU)
+
     # Set y-label text, only for first
     ax[0].set_ylabel('Offset (au)',fontsize=18)
     for nn in range(3):
@@ -768,10 +794,9 @@ if plot_2dslices == 'y':
 
     fig.tight_layout()
     fig.show()
-    
+
     #Save figure
     fig.savefig(f'figs/co5bold_2dslices.pdf', dpi=300, facecolor="white")
-
 
 # ----------------------------------------------------------------
 #
@@ -874,7 +899,7 @@ if plot_grainsizeradius == 'y':
     radii = cellcoords[:,0]/AUcm
 
     # Load star's radius here
-    Mstar,Rstar,Lstar = a5d.load_star_information(
+    Mstar,Rstar,Lstar,Tstar = a5d.load_star_information(
         savpath = savpath,
         printoutput='n'
     )
@@ -1016,7 +1041,7 @@ if plot_temperaturecompare == 'y':
 
 
     # Load star's radius here
-    Mstar,Rstar,Lstar = a5d.load_star_information(
+    Mstar,Rstar,Lstar,Tstar = a5d.load_star_information(
         savpath = f'../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_{phase}.sav',
         printoutput = 'n'
     )
@@ -2343,7 +2368,7 @@ if check_smoothedimage_radius == 'y':
     # Mstar: gram
     # Rstar: cm
     # Lstar: W
-    #Mstar,Rstar,Lstar = a5d.load_star_information(
+    #Mstar,Rstar,Lstar,Tstar = a5d.load_star_information(
     #    savpath='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
     #    printoutput='n'
     #)
