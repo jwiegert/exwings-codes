@@ -15,7 +15,7 @@ import create_r3d_functions as c3d
 import analyze_r3d_functions as a3d
 
 # Basic definitions (AU as cython due to slow funcs below)
-AUcm = cython.declare(cython.float ,1.49598e13) # cm
+AUcm = 1.49598e13 # cm
 Msol = 1.989e33 # g
 Rsol = 6.955e10 # cm
 Lsol = 3.828e26 # W
@@ -2177,7 +2177,9 @@ def modify_dusttemperature(
         dusttemperature_path:str='../dust_temperature.dat',
         griddistance_path:str='../grid_distances.csv',
         sav_path:str='../st28gm06n052_190.sav',
+        gridinfo_path:str = '../grid_info.txt',
         amr_path:str='../amr_grid.inp',
+        pfact = -0.9
     ):
     # not-binned dust temperature i r3d-format
     # cell coords
@@ -2205,64 +2207,48 @@ def modify_dusttemperature(
     )
 
     # Load grid proprties
-    
+    nbasecells,gridside,nrefinements,Ncells,cellsizes,gridref_in,gridref_out = a3d.load_grid_information(
+        gridinfo_path = gridinfo_path
+    )
 
 
     # Set up a shell-distance array (along diagonal)
 
     # Radii to each refinement
-    Rmax = 0.5*np.sqrt(3)*29.780836060395945
     # Add all radial distances to refinements in a list
-    R0 = 13.203518763619835
-    R1 =  9.902639072714877
-    R2 =  6.601759381809917
-    R3 =  3.3008796909049587
-    R4 =  3.0   #  Add a last shell that always be 3 au (No dust within 2Rstar)
-                # Perhaps set this to 2 or 1.5 or 1.75*Rstar?
+    # Add an outermost and innermost limit to gridref_out (distances to grid refinements)
+    gridref_out = np.concatenate([[0.5*np.sqrt(3)*gridside],gridref_out, [Rstar/AUcm]])
 
     # Diagonal of each cell size
-    DiagCells0 = np.sqrt(3)*0.4136227230610557
-    DiagCells1 = np.sqrt(3)*0.20681136153052784
-    DiagCells2 = np.sqrt(3)*0.10340568076526392
-    DiagCells3 = np.sqrt(3)*0.05170284038263196
-    DiagCells4 = np.sqrt(3)*0.02585142019131598
+    DiagCells = np.zeros(nrefinements+1)
+    for nn in range(nrefinements+1):
+        DiagCells[nn] = np.sqrt(3)*cellsizes[nn]
 
     # Number of cells along diagonal (for reach refinement)
-    Ncells0 = np.round((Rmax - R0)/DiagCells0)
-    Ncells1 = np.round((R0   - R1)/DiagCells1)
-    Ncells2 = np.round((R1   - R2)/DiagCells2)
-    Ncells3 = np.round((R2   - R3)/DiagCells3)
-    Ncells4 = np.round((R3   - R4)/DiagCells4)
+    DiagNcells = np.zeros(nrefinements+1)
 
-    print(Ncells0)
-    print(Ncells1)
-    print(Ncells2)
-    print(Ncells3)
-    print(Ncells4)
+    for nn in range(nrefinements+1):
+        DiagNcells[nn] = np.round((gridref_out[nn] - gridref_out[nn+1])/DiagCells[nn])
 
-    # linspaces for each refinement-range
-    radii0 = np.linspace(R0+DiagCells0,Rmax,Ncells0)
-    radii1 = np.linspace(R1+DiagCells1,R0,Ncells1)
-    radii2 = np.linspace(R2+DiagCells2,R1,Ncells2)
-    radii3 = np.linspace(R3+DiagCells3,R2,Ncells3)
-    radii4 = np.linspace(R4+DiagCells4,R3,Ncells4)
-    diagonal_distances = np.concatenate([radii4,radii3,radii2,radii1,radii0])
+    # Linspaces for each refinement-range
+    DiagRadii = []
+    for nn in range(nrefinements+1):
+        DiagRadii.append(np.linspace(gridref_out[nn+1]+DiagCells[nn], gridref_out[nn], DiagNcells[nn]))
 
-
-    # Compute TtheoryR and average shell temperatures along diagonal_distances
-
+    # Save, reverse order, in one array, distances to shells in rising order
+    diagonal_distances = np.concatenate(DiagRadii[::-1])
     # Number of radial shell edges
     Nradii = np.size(diagonal_distances)
 
+
+    # Compute TtheoryR and average shell temperatures along diagonal_distances
     # Arrays for average temperatures and final modified temperatures
     diagonal_temperatures = np.zeros(Nradii-1)
     dusttemperature_modified = np.zeros(Ncells)
 
 
-
     for nnradius in range(Nradii - 1):
         
-
         # Extract all cells at R + deltaR
         cell_index = np.where(
             (dusttemperature != 0) & \
@@ -2277,15 +2263,24 @@ def modify_dusttemperature(
             # Loop through cells at R+deltaR and apply "dust temperature correction" via
             #   Tcell-final(xyz) = Tcell-c5d(xyz) * Ttheory(R) / < Tcell-c5d >(R+deltaR)
             for ncell in cell_index:
-                TtheoryR = Tstar * (Rstar / (2*diagonal_distances[nnradius]))**(2/(4+p))
+                TtheoryR = Tstar * (Rstar/AUcm / (2*diagonal_distances[nnradius]))**(2/(4+pfact))
                 dusttemperature_modified[ncell] = dusttemperature[ncell] * TtheoryR / diagonal_temperatures[nnradius]
 
     # Save array with modified dust temperatures in
     # dust_temperature_onedust_modified.dat
+    with open('../dust_temperature_onedust_modified.dat','w') as ftemperature:
+        # Write header
+        # 1
+        # Ncells
+        # Nspecies
+        ftemperature.write(f'1\n{Ncells}\n1\n')
 
+        # Write tmeperatures
+        for nn in range(Ncells):
+            ftemperature.write(f'{dusttemperature_modified[nn]}\n')
 
-    print('Hej')
-
+    # Print confirmation string
+    print('a5d.modify_dusttemperature\n    dust_temperature_onedust_modified.dat\nDONE\n')
 
 
 

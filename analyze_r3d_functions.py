@@ -221,7 +221,13 @@ def load_grid_information(
                      radmc3d-creation-functions.
 
     RETURNS
-        TODO
+      nbasecells: int with number of base cells along one cube side
+      gridside: float with length of one cube side in AU
+      nrefinements: int with number of grid refinements
+      nleafs: int with number of cells in whole grid
+      cellsizes: nrefinements+1 long np.array with all unique cell sizes in AU
+      gridref_in: nrefinements long np.array with inner radial refinements limints in AU
+      gridref_out: nrefinements long np.array with outer radial refinements limints in AU    
     """
 
     # Check if file exists
@@ -230,29 +236,46 @@ def load_grid_information(
         # Extract basic numbers
         with open(gridinfo_path, 'r') as f:
             for nn,line in enumerate(f.readlines()):
+
                 # Extract number of base cells along one side
+                if nn == 3:
+                    nbasecells = int(re.findall('\d+', line)[0])
                 # Extract size of grid side
+                if nn == 4:
+                    gridside = float(re.findall('\d+.\d+', line)[0])
                 # Extract number of refinements
                 if nn == 5:
-                    nrefinements = int(line[48:])
+                    nrefinements = int(re.findall('\d', line)[0])
                 # Extact number of cells (nleafs)
+                if nn == 6:
+                    nleafs = int(re.findall('\d+', line)[0])
 
         # Extract cell sizes and distances to refinements (in and out)
+        cellsizes = np.zeros(nrefinements+1)
+        gridref_in = np.zeros(nrefinements)
+        gridref_out = np.zeros(nrefinements)
+
         with open(gridinfo_path, 'r') as f:
             for nn,line in enumerate(f.readlines()):
                 
-                cellsizes = np.zeros(nrefinements)
-                gridref_in = np.zeros(nrefinements)
-                gridref_out = np.zeros(nrefinements)
-
                 # Extract cell sizes
                 if nn == 2:
-                    cellsizes[0] = float(line[48:-4])
-                if line[:19] == f'Child cell size {nrefinements}: ':
-                    cellsizes[nrefinements] = float(line[19:])
-                
-        print(cellsizes)
+                    # Base cells
+                    cellsizes[0] = float(re.findall('\d+\.\d+', line)[0])
 
+                # Extract refinement limits
+                # Line 8 is nref = 1
+                if line[:34] == f'Radial distances to refinement {nn-7}: ':
+                    numbers = re.findall('\d+\.\d+', line)
+                    gridref_in[nn-8] = float(numbers[0])
+                    gridref_out[nn-8] = float(numbers[1])
+
+                # Child cell sizes
+                # Line 13 is nref 1
+                if line[:19] == f'Child cell size {nn-12}: ':
+                    cellsizes[nn-12] = float(re.findall('\d+\.\d+', line)[0])
+
+        return nbasecells,gridside,nrefinements,nleafs,cellsizes,gridref_in,gridref_out
 
     else:
         return f'ERROR: load_grid_information can not find {gridinfo_path}.'
