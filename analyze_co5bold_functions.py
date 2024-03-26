@@ -2172,7 +2172,6 @@ def create_dustfiles(
 
 # Function that modifies the dust temperature (before binning)
 # to include non-grey effects via Bladh2012-radial profile approximation
-    
 def modify_dusttemperature(
         dusttemperature_path:str='../dust_temperature.dat',
         griddistance_path:str='../grid_distances.csv',
@@ -2181,13 +2180,17 @@ def modify_dusttemperature(
         amr_path:str='../amr_grid.inp',
         pfact = -0.9
     ):
-    # not-binned dust temperature i r3d-format
-    # cell coords
-    # model star props
-    # p-factor in (1/R)**(2/(4+p)), default MgSiO4, -0.9
-    # grid props (to refinements and such, how many refinements)
+    """
 
-    # Load dust temperature, unmodified, unbinned temperature (ie original gas temperature)
+    
+    
+    """
+    print('Running: a5d.modify_dusttemperature()')
+    # TODO
+    # Modify so this works for all dust bins
+    # ie reload dust_temperature_dust
+
+    # Load first bin of dust temperature, unmodified
     Ncells,Nspecies,dusttemperature = a3d.load_temperature(
         path = dusttemperature_path,
         numb_specie = 1
@@ -2213,7 +2216,7 @@ def modify_dusttemperature(
 
 
     # Set up a shell-distance array (along diagonal)
-
+    #
     # Radii to each refinement
     # Add all radial distances to refinements in a list
     # Add an outermost and innermost limit to gridref_out (distances to grid refinements)
@@ -2226,7 +2229,6 @@ def modify_dusttemperature(
 
     # Number of cells along diagonal (for reach refinement)
     DiagNcells = np.zeros(nrefinements+1)
-
     for nn in range(nrefinements+1):
         DiagNcells[nn] = np.round((gridref_out[nn] - gridref_out[nn+1])/DiagCells[nn])
 
@@ -2243,41 +2245,52 @@ def modify_dusttemperature(
 
     # Compute TtheoryR and average shell temperatures along diagonal_distances
     # Arrays for average temperatures and final modified temperatures
+    # For all dust species/dust grain size bins
     diagonal_temperatures = np.zeros(Nradii-1)
-    dusttemperature_modified = np.zeros(Ncells)
+    dusttemperature_modified = np.zeros(Ncells*Nspecies)
 
+    for nspecies in range(Nspecies):
+        print(f'    Doing dust species {nspecies+1}')
 
-    for nnradius in range(Nradii - 1):
-        
-        # Extract all cells at R + deltaR
-        cell_index = np.where(
-            (dusttemperature != 0) & \
-            (radii >= diagonal_distances[nnradius]) & \
-            (radii <  diagonal_distances[nnradius+1])
-        )
-        if np.size(cell_index) > 0:
+        for nnradius in range(Nradii - 1):
             
-            # Save average temperature of each shell
-            diagonal_temperatures[nnradius] = np.sum(dusttemperature[cell_index])/np.size(cell_index)
+            # Extract all cells at R + deltaR
+            cell_index = np.where(
+                (dusttemperature != 0) & \
+                (radii >= diagonal_distances[nnradius]) & \
+                (radii <  diagonal_distances[nnradius+1])
+            )
+            if np.size(cell_index) > 0:
+                
+                # Save average temperature of each shell
+                diagonal_temperatures[nnradius] = np.sum(dusttemperature[cell_index])/np.size(cell_index)
 
-            # Loop through cells at R+deltaR and apply "dust temperature correction" via
-            #   Tcell-final(xyz) = Tcell-c5d(xyz) * Ttheory(R) / < Tcell-c5d >(R+deltaR)
-            for ncell in cell_index:
-                TtheoryR = Tstar * (Rstar/AUcm / (2*diagonal_distances[nnradius]))**(2/(4+pfact))
-                dusttemperature_modified[ncell] = dusttemperature[ncell] * TtheoryR / diagonal_temperatures[nnradius]
+                # Loop through cells at R+deltaR and apply "dust temperature correction" via
+                #   Tcell-final(xyz) = Tcell-c5d(xyz) * Ttheory(R) / < Tcell-c5d >(R+deltaR)
+                for ncell in cell_index:
+                    TtheoryR = Tstar * (Rstar/AUcm / (2*diagonal_distances[nnradius]))**(2/(4+pfact))
+                    dusttemperature_modified[nspecies*Nspecies+ncell] = dusttemperature[ncell] * TtheoryR / diagonal_temperatures[nnradius]
+
+        # Load next bin of dust species
+        if nspecies < Nspecies-1:
+            Ncells,Nspecies,dusttemperature = a3d.load_temperature(
+                path = dusttemperature_path,
+                numb_specie = nspecies+2
+            )
 
     # Save array with modified dust temperatures in
     # dust_temperature_onedust_modified.dat
+    print('    Writing dust-file')
     with open('../dust_temperature_onedust_modified.dat','w') as ftemperature:
         # Write header
         # 1
         # Ncells
         # Nspecies
-        ftemperature.write(f'1\n{Ncells}\n1\n')
+        ftemperature.write(f'1\n{Ncells}\n{Nspecies}\n')
 
         # Write tmeperatures
-        for nn in range(Ncells):
-            ftemperature.write(f'{dusttemperature_modified[nn]}\n')
+        for temperature in dusttemperature_modified:
+            ftemperature.write(f'{temperature}\n')
 
     # Print confirmation string
     print('a5d.modify_dusttemperature\n    dust_temperature_onedust_modified.dat\nDONE\n')
