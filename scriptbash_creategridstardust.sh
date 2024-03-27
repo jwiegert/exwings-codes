@@ -17,7 +17,8 @@
 
 modelname=st28gm06n052
 phase0=032
-
+include_dust=yes
+modify_Tdust=yes
 #phase0=186
 #phase1=190
 #phase2=198
@@ -29,7 +30,6 @@ python3 scriptpy_creategrid.py $modelname $phase0 &
 
 # Extract and create temporary npy-files for the remaining steps
 #   gas & dust densities, temperatures, opacity
-include_dust=yes
 python3 scriptpy_createnpy.py $modelname $phase0 $include_dust &
 #python3 scriptpy_createnpy.py $modelname $phase1 $include_dust &
 #python3 scriptpy_createnpy.py $modelname $phase2 $include_dust &
@@ -42,8 +42,9 @@ wait
 python3 scriptpy_createstar.py $modelname $phase0 &
 #python3 scriptpy_createstar.py $modelname $phase1 &
 #python3 scriptpy_createstar.py $modelname $phase2 &
-# Extract and create dust-files    TODO adapt dust-temperature to theory-model!
-python3 scriptpy_createdust.py $modelname $phase0 &
+# Extract and create dust-files
+# modify_Tdust -> yes if normalise dust temperature to T(R)-Bladh2012
+python3 scriptpy_createdust.py $modelname $phase0 $modify_Tdust &
 #python3 scriptpy_createdust.py $modelname $phase1 &
 #python3 scriptpy_createdust.py $modelname $phase2 &
 

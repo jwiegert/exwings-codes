@@ -1969,6 +1969,7 @@ def create_dustfiles(
       dust_density_dust_{phase}.inp
       dust_temperature_dust_{phase}.dat
     """
+    print('Running: a5d.create_dustfiles()\n')
 
     # Extract phase-designation from savpath
     phase = savpath.split('_')[-1].split('.')[0]
@@ -2181,14 +2182,18 @@ def modify_dusttemperature(
         pfact = -0.9
     ):
     """
+    Normalises the gas-temperature used for dust to T(R) power law (Bladh 2012)
+    to reduce it a bit and thus including non-grey effects.
 
-    
+    ARGUMENTS
+
+
+    RETURNS
     
     """
     print('Running: a5d.modify_dusttemperature()')
-    # TODO
-    # Modify so this works for all dust bins
-    # ie reload dust_temperature_dust
+    # Extract phase number from savpath:
+    phase = sav_path[-7:-4]
 
     # Load first bin of dust temperature, unmodified
     Ncells,Nspecies,dusttemperature = a3d.load_temperature(
@@ -2281,7 +2286,7 @@ def modify_dusttemperature(
     # Save array with modified dust temperatures in
     # dust_temperature_onedust_modified.dat
     print('    Writing dust-file')
-    with open('../dust_temperature_onedust_modified.dat','w') as ftemperature:
+    with open(f'../dust_temperature_dust_modified_{phase}.dat','w') as ftemperature:
         # Write header
         # 1
         # Ncells
@@ -2293,7 +2298,7 @@ def modify_dusttemperature(
             ftemperature.write(f'{temperature}\n')
 
     # Print confirmation string
-    print('a5d.modify_dusttemperature\n    dust_temperature_onedust_modified.dat\nDONE\n')
+    print(f'a5d.modify_dusttemperature\n    dust_temperature_dust_modified_{phase}.dat\nDONE\n')
 
 
 
@@ -2472,6 +2477,8 @@ def bin_grainsizes(
       grain_sizes_binned_{phase}.dat: File with binned grain size per grid cell in list in
                                       same order as standard r3d-input
     """
+    print('Running: a5d.bin_grainsizes()')
+
     # Load grainsizes
     sizes,Nleafs = a3d.load_grainsizes(
         grainsize_path=grainsizepath

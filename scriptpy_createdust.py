@@ -14,6 +14,7 @@ print('')
 import sys
 modelname = sys.argv[1]
 phase = sys.argv[2]
+modify_Tdust = sys.argv[3]
 
 # ------------------------------------------------------------------------
 # Pythoncodes below
@@ -62,15 +63,27 @@ a5d.create_dustfiles(
 #    RETURNS
 #      dust_density_dust_{phase}.inp
 #      dust_temperature_dust_{phase}.dat
-
-
-# TODO normalise radial profile of dust-temperatures with T(R)-Bladh HERE!
-
-
-
-# Move them to correct folder
+# Move density file
 os.system(f'mv ../dust_density_dust_{phase}.inp {path}{phase}/dust_density_dust.inp')
-os.system(f'mv ../dust_temperature_dust_{phase}.dat {path}{phase}/dust_temperature_dust.dat')
+
+
+# Normalise radial profile of dust-temperatures with T(R)-Bladh2012
+if modify_Tdust == 'yes':
+    a5d.modify_dusttemperature(
+        dusttemperature_path=f'../dust_temperature_dust_{phase}.dat',
+        griddistance_path=f'{path}grid_distances.csv',
+        sav_path=f'../../exwings_archivedata/co5bold_data/d{modelname}/{modelname}_{phase}.sav',
+        gridinfo_path=f'{path}grid_info.txt',
+        amr_path=f'{path}amr_grid.inp',
+    )
+    # Move modified temperature file
+    os.system(f'mv ../dust_temperature_dust_modified_{phase}.dat {path}{phase}/dust_temperature_dust.dat')
+    # And unmodified file with new name
+    os.system(f'mv ../dust_temperature_dust_{phase}.dat {path}{phase}/dust_temperature_dust_unmodified.dat')
+
+else:
+    # Move unmodified temperature file
+    os.system(f'mv ../dust_temperature_dust_{phase}.dat {path}{phase}/dust_temperature_dust.dat')
 
 
 # Clean up

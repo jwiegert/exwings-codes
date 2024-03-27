@@ -27,7 +27,7 @@ AUcm = 1.49598e13 # cm
 
 # Extract star's radius
 print(f'\nExtracting {modelname}_{phase} information.')
-Mstar,starradius,Lstar = a5d.load_star_information(
+Mstar,starradius,Lstar,Tstar = a5d.load_star_information(
     savpath = savpath,
     printoutput = 'n'
 )

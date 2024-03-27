@@ -7,9 +7,9 @@
 # Define variables
 
 modelname=st28gm06n052
-phase1=032
+#phase1=032
 #phase0=186
-#phase1=190
+phase1=190
 #phase2=198
 
 #modelname=st28gm06n056

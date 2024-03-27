@@ -31,7 +31,7 @@ for phase in phases:
     os.system(f'mkdir {path}{phase}')
 
 # Extract star's radius for each phase
-Mstar,Rstar,Lstar = a5d.load_star_information(
+Mstar,Rstar,Lstar,Tstar = a5d.load_star_information(
     savpath = f'../../exwings_archivedata/co5bold_data/d{modelname}/{modelname}_{phases[0]}.sav',
     printoutput = 'y'
 )
