@@ -14,12 +14,11 @@ import re
 import create_r3d_functions as c3d
 import analyze_r3d_functions as a3d
 
-# Basic definitions (AU as cython due to slow funcs below)
+# Basic definitions
 AUcm = 1.49598e13 # cm
 Msol = 1.989e33 # g
 Rsol = 6.955e10 # cm
 Lsol = 3.828e26 # W
-cubesize = 222757675648155.62/AUcm
 
 # Note
 # Rstar = 1.651AU (355 Rsun)
@@ -772,6 +771,7 @@ def plot_grainsizeradius(
         grainsizes = '../../exwings_archivedata/r3dresults/st28gm06n052_generaldata/grain_sizes_186.dat',
         savpath = '../../exwings_archivedata/co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
         grid_path = '../r3dresults/st28gm06n052_staranddust_1/grid_distances.csv',
+        gridinfo_path = '../r3dresults/st28gm06n052_staranddust_1/grid_info.txt',
         amr_path = '../r3dresults/st28gm06n052_staranddust_1/amr_grid.inp',
         phases = ['186'],
         axcheck=0
@@ -796,6 +796,12 @@ def plot_grainsizeradius(
         amrpath=amr_path
     )
     radii = cellcoords[:,0]/AUcm
+
+    # Load half size of comp-box
+    nbasecells,cubesize,nrefinements,nleafs,cellsizes,gridref_in,gridref_out = a3d.load_grid_information(
+        gridinfo_path=gridinfo_path
+    )
+    cubesize *= 0.5
 
     # Load star's radius here
     Mstar,Rstar,Lstar,Tstar = load_star_information(

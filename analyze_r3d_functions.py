@@ -1688,6 +1688,60 @@ def plot_images(
         distance:float=1
     ):
     """
+    Plots list of images with Z-scale following automatic gamma function
+
+    ARGUMENTS
+      path: path to folder containing images
+      images: list of image-file names inside your folder
+      distance: distance to source in pc (default 1 pc)
+
+    RETURNS
+      Figure with 2 subplots, linear and logarithmic scales.
+      Total flux of images in Jy at chosen distance
+    """
+
+    fluxtotal = []
+
+    # Loop through all images
+    for image in images:
+
+        image2d,image2dlog,flux,axisplot = load_images(
+            path=path,
+            image=image,
+            distance=distance
+        )
+        # Save all total flux densities
+        fluxtotal.append(flux)
+
+        # Compute and apply gamma function of each image
+        scale = np.max(image2d)-np.min(image2d)
+        gamma = 0.3*np.log(image2d.max())/np.log(image2d.mean())
+        imageplot = ((image2d / scale)**gamma) * scale
+
+        # Plot each image
+        fig, ax = plt.figure(dpi=150), plt.axes()
+
+        im0 = ax.imshow(
+            imageplot, origin='lower', extent=axisplot, cmap=plt.get_cmap('hot')
+        )
+        ax.set(
+            title=f"{path[-4:-1]}: {image.replace('image_', '').replace('.out', '')} (gamma)", 
+            xlabel='Offset (AU)',
+            ylabel='Offset (AU)'
+        )
+
+    fig.tight_layout()
+
+    return fig, ax, fluxtotal
+
+
+
+def plot_imageslinlog(
+        path:str='../',
+        images:list=['image.out'],
+        distance:float=1
+    ):
+    """
     Plots list of images
 
     ARGUMENTS
@@ -2244,7 +2298,7 @@ def compute_chisquare(
 
     # Check so that length of both are correct
     if len(simulation) != len(observation):
-        return 'ERROR: your input data arrays are not of equal length'
+        raise ValueError('ERROR: your input data arrays are not of equal length')
 
     # Put data in np.arrays if needed
     if type(simulation) == list:
