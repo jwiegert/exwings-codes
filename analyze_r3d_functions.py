@@ -1725,7 +1725,7 @@ def plot_images(
             imageplot, origin='lower', extent=axisplot, cmap=plt.get_cmap('hot')
         )
         ax.set(
-            title=f"{path[-4:-1]}: {image.replace('image_', '').replace('.out', '')} (gamma)", 
+            title=f"{image.replace('image_', '').replace('.out', '')} (gamma)", 
             xlabel='Offset (AU)',
             ylabel='Offset (AU)'
         )
@@ -2378,3 +2378,91 @@ def remove_sedspikes(
 
     # Return final SED and wavelengths
     return wavelength,sed_final
+
+# Function to remove spikes from images
+def remove_imagespikes(
+        folders:list=['../'],
+        imagefilename:str='image.out'
+
+    ):
+    """
+    Combines images made from different random seeds to remove flux spikes
+
+    ARGUMENTS
+      folders: list of strings with paths to folder containing image files
+      imagefilename: string with file name of image you want to clean
+
+    RETURNS
+      file with new corrected image
+      image1d: 1D np.array with flux densities of image
+    """
+
+    # Number of images to combine
+    Nimage = len(folders)
+
+    # Delcare Lists
+    images = []
+    npix = []
+    header = []
+
+    # Load images and put in list
+    for nfolder,folder in enumerate(folders):
+        # Create image pixel flux list
+        image1d = []
+
+        # line 1 is: npix-x    npix-y
+        # line >5 are pixel fluxes
+        with open(folder+imagefilename,'r') as imagefile:
+            for nline,line in enumerate(imagefile.readlines()):
+                
+                # Save header lines
+                if nline < 6 and nfolder == 0:
+                    header.append(line)
+
+                # Extract resolution
+                if nline == 1:
+                    npix.append(int(re.findall('\d+', line)[0]))
+
+                # Extract fluxes
+                if nline > 5:
+                    if len(line.strip()) > 0:
+                        image1d.append(float(line.strip()))
+
+        # error check
+        if nfolder > 0:
+            if npix[nfolder] != npix[nfolder-1]:
+                raise ValueError('    ERROR: your images are not the same size')
+
+        # Save each image as lilsts in one list
+        images.append(image1d)
+
+
+    # Loop through all images simulatneously and save the minimum flux density of each
+    # in an array
+    newimagefluxes = np.zeros(npix[0]**2)
+
+    for nn in range(npix[0]**2):
+
+        # Reset list for pixelwise flux density of each image
+        comparefluxes = []
+
+        for nimage in range(Nimage):
+            comparefluxes.append(images[nimage][nn])
+        
+        # Save minimum flux density of each image pixel
+        newimagefluxes[nn] = np.min(comparefluxes)
+
+
+    # Save new image
+    with open(f'../{imagefilename}', 'w') as fnewimage:
+        
+        # First write copy of header
+        for line in header:
+            fnewimage.writelines(line)
+
+        # Then write fluxes
+        for newflux in newimagefluxes:
+            fnewimage.writelines(f'   {newflux}\n')
+
+    # Return image1D, np-array with flux densities in cgs-units at 1pc
+    return newimagefluxes
