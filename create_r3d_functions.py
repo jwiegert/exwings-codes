@@ -610,7 +610,7 @@ def create_grid(
     
     # Print grid_distances.csv and grid_cellsizes.csv
     if savegrid == True:
-        print('Writing grid_distances.csv and grid_cellsizes.csv\n(Not necessary for Radmc3d, but useful for pre/portprocessing of your model. They have the same order as dust_densities.inp)')
+        print('Writing grid_distances.csv and grid_cellsizes.csv\n(Not necessary for Radmc3d, but useful for pre/postprocessing of your model. They have the same order as dust_densities.inp)')
 
         # Declare an array for the distances to the centre of each cell
         # Radial and x,y,z distances
