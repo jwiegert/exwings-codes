@@ -75,68 +75,22 @@ os.system(
 )
 
 
-# Reduce core temperature of the star to compensate for high liminosity when
-# using monte carlo radiative transfer
-a5d.reduce_coretemperature(
-    savpath = savpath,
-    temperaturepath = f'{path}{phase}/dust_temperature_onestar.dat',
-    gridpath = f'{path}grid_distances.csv',
-    amrpath = f'{path}amr_grid.inp',
-    Rin = 0.9,
-    Tin = 1000
+# Remove negative spikes in opacity and density and pos in temperature 
+# to correct final luminosity, and combines density and opacity file to
+# one final density file and creates the star opacity file (abs=1, scat=0)
+a5d.smooth_stellardata(
+    path = path,
+    phases = [phase],
+    starradii = [starradius],
+    griddistances = griddistances,
+    clean_data = 'y'
 )
-# OUTPUT
-#   dust_temperature_{phase}_{Rin}Rstar_{Tin}K.dat
-#
-# Move temperature-file (to phase-folder and remove phase from filename)
-os.system(
-    f'mv ../dust_temperature_{phase}_0.9Rstar_1000K.dat {path}{phase}/dust_temperature_0.9Rstar_1000K.dat'
-)
-
-# Reduce core Rosseland opacity (kappa_ross) to 1 to compensate for high 
-# luminosity when using monte carlo radiative transfer
-a5d.reduce_corekappa(
-    savpath = savpath,
-    opacitypath = f'{path}{phase}/star_opacities.dat',
-    gridpath = f'{path}grid_distances.csv',
-    amrpath = f'{path}amr_grid.inp',
-    Rin = 0.9,
-    kappa_in = 1
-)
-# OUTPUT
-#   star_opacities_{phase}_{Rin}Rstar_{kappa_in}kappa.dat
-#
-# Move opacity file and simplify name
-os.system(
-    f'mv ../star_opacities_{phase}_0.9Rstar_1kappa.dat {path}{phase}/star_opacities_0.9Rstar_1kappa.dat'
-)
-
-
-# Combine gas density and gas opacity into gas-optical-thickness, included as a
-# dust_density-file in the R3D-format.
-a5d.create_staropadensity(
-    pathopacity = f'{path}{phase}/star_opacities_0.9Rstar_1kappa.dat',
-    pathstardensity = f'{path}{phase}/dust_density_onestar.inp',
-    pathwavelength = f'{path}wavelength_micron.inp',
-    phase = phase,
-    corrfac = 1.0
-)
-# OUTPUT
-#
-#  dust_density_opastar_{phase}.inp
-#  dustopac_star_{phase}.inp
-#  dustkappa_opastar_{phase}.inp
-#
-# Move final files to work/model folder
-os.system(
-    f'mv ../dust_density_opastar_{phase}.inp {path}{phase}/dust_density_opastar.inp'
-)
-os.system(
-    f'mv ../dustopac_star_{phase}.inp {path}{phase}/dustopac_opastar.inp'
-)
-os.system(
-    f'mv ../dustkappa_opastar_{phase}.inp {path}{phase}/dustkappa_opastar.inp'
-)
+# Returns
+#        os.system(f'mv ../dust_temperature_smoothed_{phase}.dat {path}{phase}/dust_temperature_onestar_smoothed.dat')
+#        os.system(f'mv ../star_opacities_smoothed_{phase}.dat {path}{phase}/star_opacities_smoothed.dat')
+#        os.system(f'mv ../dust_density_opastar_{phase}.inp {path}{phase}/dust_density_opastar.inp')
+#        os.system(f'mv ../dustkappa_opastar_{phase}.inp {path}{phase}/dustkappa_opastar.inp')
+#        os.system(f'mv ../dustopac_star_{phase}.inp {path}{phase}/dustopac_opastar.inp')
 
 # NOTE
 # Resulting files are, for each ../r3dresults/[modelname]/[phase]/
@@ -144,7 +98,7 @@ os.system(
 #   dust_density_opastar.inp
 #   dustkappa_opastar.inp
 #   dustopac_opastar.inp
-#   ./dust_temperature_{phase}_0.9Rstar_1000K.dat
+#   dust_temperature_onestar_smoothed.dat
 #   star_opacities.dat
 
 

@@ -28,7 +28,7 @@ c3d.merge_dustdensities(
 )
 c3d.merge_dusttemperatures(
     workpath = f'../r3dresults/{modelname}/{phase}/',
-    filenames=['dust_temperature_0.9Rstar_1000K.dat','dust_temperature_dust.dat'],
+    filenames=['dust_temperature_onestar_smoothed.dat','dust_temperature_dust.dat'],
 )
 
 # NOTE

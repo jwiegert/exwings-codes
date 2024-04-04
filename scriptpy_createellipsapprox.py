@@ -112,6 +112,31 @@ os.system(f'mv ../optool_script_approx.sh {workpath}')
 os.system(f'mv ../dustopac_mg2sio4_approx.inp {workpath}')
 
 
+###############################################################################
+# TODO
+# Add and modify this later? For now its better not to modify dust temperature since
+# Arief isnt doing it
+# # Normalise radial profile of dust-temperatures with T(R)-Bladh2012
+# if modify_Tdust == 'yes':
+#     a5d.modify_dusttemperature(
+#         dusttemperature_path=f'../dust_temperature_dust_{phase}.dat',
+#         griddistance_path=f'{path}grid_distances.csv',
+#         sav_path=f'../../exwings_archivedata/co5bold_data/d{modelname}/{modelname}_{phase}.sav',
+#         gridinfo_path=f'{path}grid_info.txt',
+#         amr_path=f'{path}amr_grid.inp',
+#     )
+#     # Move modified temperature file
+#     os.system(f'mv ../dust_temperature_dust_modified_{phase}.dat {path}{phase}/dust_temperature_dust.dat')
+#     # And unmodified file with new name
+#     os.system(f'mv ../dust_temperature_dust_{phase}.dat {path}{phase}/dust_temperature_dust_unmodified.dat')
+# 
+# else:
+#     # Move unmodified temperature file
+#     os.system(f'mv ../dust_temperature_dust_{phase}.dat {path}{phase}/dust_temperature_dust.dat')
+################################################################################
+
+
+
 # MERGE DATA
 #
 # Merge ellips-dust-data with a stellar model from co5bold
