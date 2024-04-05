@@ -206,6 +206,19 @@ AUcm = 1.49598e13 # AU in cm
 #    distance:float = 1
 # )
 #
+# remove_imagespikes(
+#    folders:list=['../'],
+#    imagefilename:str='image.out'
+# )
+#
+# compare_seds(
+#   TODO
+# )
+#
+# compare_images(
+#    TODO
+# )
+#
 # ------------------------------------------------------------ #
 # Functions that load various r3d input data
 
@@ -2383,7 +2396,6 @@ def remove_sedspikes(
 def remove_imagespikes(
         folders:list=['../'],
         imagefilename:str='image.out'
-
     ):
     """
     Combines images made from different random seeds to remove flux spikes
@@ -2466,3 +2478,144 @@ def remove_imagespikes(
 
     # Return image1D, np-array with flux densities in cgs-units at 1pc
     return newimagefluxes
+
+
+def compare_seds(
+    ):
+    #   TODO
+    return 'hej'
+
+
+def compare_images(
+        imagepaths:list=[
+            '../image1.out',
+            '../image2.out'
+        ]
+    ):
+    """
+    Subtracts fluxes of two images and saves residuals, either cut to a minimum
+    of 0 per pixel or with absolute vlue taken.
+
+    ARGUMENTS
+      imagepaths: list with two strings containing paths to the two images you
+                  want to compare
+    
+    RETURNS
+      Two new image files in radmc3d-formats:
+        ../residual_zerolimit_{imagename} : residual of path[0] minus path[1] image
+                                            with fluxes cut at 0.
+        ../residual_abs_{imagename} : residual of  path[0] minus path[1] image with
+                                      absolute value taken of all fluxes
+    """
+
+    # Extract image file names
+    image0 = re.split('/', imagepaths[0])[0]
+    image1 = re.split('/', imagepaths[1])[0]
+
+    # Delcare Lists
+    images = []
+    npix = []
+    header = []
+
+
+
+    # Load images and put in list
+    for nimage,imagepath in enumerate(imagepaths):
+        # Create image pixel flux list
+        image1d = []
+
+        # line 1 is: npix-x    npix-y
+        # line >5 are pixel fluxes
+        with open(imagepath,'r') as fimage:
+            for nline,line in enumerate(fimage.readlines()):
+            
+                # Save header lines of first image
+                if nline < 6 and nimage == 0:
+                    header.append(line)
+
+                # Extract resolution
+                if nline == 1:
+                    npix.append(int(re.findall('\d+', line)[0]))
+
+                # Extract pixel fluxes
+                if nline > 5:
+                    if len(line.strip()) > 0:
+                        image1d.append(float(line.strip()))
+
+        # error check: both images must have same resolution!
+        if nimage > 0:
+            if npix[nimage] != npix[nimage-1]:
+                raise ValueError('    ERROR: your images are not the same size')
+
+        # Save each image as lists in one list
+        images.append(image1d)
+
+
+    # Extract residuals of images, one cut at 0 and one absolute
+    #
+    # declare array for both residuals
+    residualfluxes = np.zeros((2,npix[0]**2))
+
+
+
+
+    # TODO gör klart denna funktionen! Och ge dig på SED-jämförelsen sen
+
+
+    for nn in range(npix[0]**2):
+
+        # Reset list for pixelwise flux density of each image
+        comparefluxes = []
+
+        for nimage in range(2):
+            comparefluxes.append(images[nimage][nn])
+        
+        # Save minimum flux density of each image pixel
+        #
+        #residual = np.abs(comparefluxes[0] - comparefluxes[1])
+        #residualfluxes[0,nn] = residual
+
+        # In our tests:
+        # 0: stardust - dust
+        residual = comparefluxes[0] - comparefluxes[1]
+        if residual < 0:
+            residualfluxes[0,nn] = 0
+        else:
+            residualfluxes[0,nn] = residual
+
+        # 1: and absolute
+        residual = np.abs(comparefluxes[0] - comparefluxes[1])
+        residualfluxes[1,nn] = residual
+
+        
+    
+
+
+# Save new image
+with open(f'../residual_zerolimit_{imagefilename}', 'w') as fnewimage:
+    
+    # First write copy of header
+    for line in header:
+        fnewimage.writelines(line)
+
+    # Then write fluxes
+    for newflux in residualfluxes[0,:]:
+        fnewimage.writelines(f'   {newflux}\n')
+# Save new image
+with open(f'../residual_abs_{imagefilename}', 'w') as fnewimage:
+    
+    # First write copy of header
+    for line in header:
+        fnewimage.writelines(line)
+
+    # Then write fluxes
+    for newflux in residualfluxes[1,:]:
+        fnewimage.writelines(f'   {newflux}\n')
+
+
+    # TODO
+    return 'hej'
+
+
+
+
