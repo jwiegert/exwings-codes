@@ -2281,7 +2281,7 @@ def compute_luminosity(
         return luminosity
 
     else:
-        print('ERROR, wavelengths and spectrum have different lengths')
+        raise ValueError('ERROR, wavelengths and spectrum have different lengths')
 
 
 
@@ -2507,10 +2507,11 @@ def compare_images(
         ../residual_abs_{imagename} : residual of  path[0] minus path[1] image with
                                       absolute value taken of all fluxes
     """
+    print('Running: a3d.compare_images()')
 
     # Extract image file names
-    image0 = re.split('/', imagepaths[0])[0]
-    image1 = re.split('/', imagepaths[1])[0]
+    image0 = re.split('/', imagepaths[0])[-1]
+    image1 = re.split('/', imagepaths[1])[-1]
 
     # Delcare Lists
     images = []
@@ -2556,12 +2557,7 @@ def compare_images(
     # declare array for both residuals
     residualfluxes = np.zeros((2,npix[0]**2))
 
-
-
-
-    # TODO gör klart denna funktionen! Och ge dig på SED-jämförelsen sen
-
-
+    # Loop through image pixels
     for nn in range(npix[0]**2):
 
         # Reset list for pixelwise flux density of each image
@@ -2570,13 +2566,10 @@ def compare_images(
         for nimage in range(2):
             comparefluxes.append(images[nimage][nn])
         
-        # Save minimum flux density of each image pixel
+        # Save image1 minus image2 at each pixel
+        # Set to zero if below zero for one
+        # Set to absolute for the other
         #
-        #residual = np.abs(comparefluxes[0] - comparefluxes[1])
-        #residualfluxes[0,nn] = residual
-
-        # In our tests:
-        # 0: stardust - dust
         residual = comparefluxes[0] - comparefluxes[1]
         if residual < 0:
             residualfluxes[0,nn] = 0
@@ -2587,35 +2580,29 @@ def compare_images(
         residual = np.abs(comparefluxes[0] - comparefluxes[1])
         residualfluxes[1,nn] = residual
 
+            
         
-    
+    # TODO kolla så att detta stämmer
 
+    # Save new image
+    with open(f'../resid_zerolim_{image0[:-4]}_minus_{image1[:-4]}.out', 'w') as fnewimage:
+        
+        # First write copy of header
+        for line in header:
+            fnewimage.writelines(line)
 
-# Save new image
-with open(f'../residual_zerolimit_{imagefilename}', 'w') as fnewimage:
-    
-    # First write copy of header
-    for line in header:
-        fnewimage.writelines(line)
+        # Then write fluxes
+        for newflux in residualfluxes[0,:]:
+            fnewimage.writelines(f'   {newflux}\n')
+    # Save new image
+    with open(f'../resid_abs_{image0[:-4]}_minus_{image1[:-4]}.out', 'w') as fnewimage:
+        
+        # First write copy of header
+        for line in header:
+            fnewimage.writelines(line)
 
-    # Then write fluxes
-    for newflux in residualfluxes[0,:]:
-        fnewimage.writelines(f'   {newflux}\n')
-# Save new image
-with open(f'../residual_abs_{imagefilename}', 'w') as fnewimage:
-    
-    # First write copy of header
-    for line in header:
-        fnewimage.writelines(line)
+        # Then write fluxes
+        for newflux in residualfluxes[1,:]:
+            fnewimage.writelines(f'   {newflux}\n')
 
-    # Then write fluxes
-    for newflux in residualfluxes[1,:]:
-        fnewimage.writelines(f'   {newflux}\n')
-
-
-    # TODO
-    return 'hej'
-
-
-
-
+    print(f'A3D compare images:\n    resid_zerolim_{image0[:-4]}_minus_{image1[:-4]}.out\n    resid_abs_{image0[:-4]}_minus_{image1[:-4]}.out\nDONE\n')
