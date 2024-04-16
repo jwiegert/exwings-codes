@@ -212,7 +212,10 @@ AUcm = 1.49598e13 # AU in cm
 # )
 #
 # compare_seds(
-#   TODO
+#    sedpaths:list=[
+#       '../spectrum0.out',
+#       '../spectrum1.out'
+#    ]
 # )
 #
 # compare_images(
@@ -728,7 +731,7 @@ def load_temperature(
 
 # Load SED
 def load_spectrum(
-        path:str='../r3dsims/spectrum.out',
+        path:str='../spectrum.out',
         distance:float=1
     ):
     """
@@ -2480,16 +2483,73 @@ def remove_imagespikes(
     return newimagefluxes
 
 
+# Loads two SEDs and returns comparisons between them
 def compare_seds(
+        sedpaths:list=[
+            '../spectrum0.out',
+            '../spectrum1.out'
+        ]
     ):
-    #   TODO
-    return 'hej'
+    """
+    general info TODO
+
+    ARGUMENTS
+      - sedpaths:list containing paths to two separate spectrum.out files from radmc3d
+    RETURNS
+      - radmc3d-output style file containing (sed0-sed1)/sed0 for all wavelengths
+      - Prints Pearson's chi2-number defined as (log(sed1) - log(sed0))^2/log(sed0)
+        with log10 on the flux densities to get numbers that are more easily compared
+        with eachother and we for example assume
+            sed0 = expected (original model)
+            sed1 = model to compare with
+    """
+    print('Running: a3d.compare_seds')
+
+    # Check if number of included SEDs are correct
+    if len(sedpaths) != 2:
+        raise ValueError('ERROR: there are not 2 SEDs included; can only compare two.')
+
+    else:
+        # Extract file names
+        spectrum0 = re.split('/', sedpaths[0])[-1]
+        spectrum1 = re.split('/', sedpaths[1])[-1]
+
+        # Load SEDs and change to np.arrays
+        wavelengths, sed0 = load_spectrum(
+            path = sedpaths[0]
+        )
+        sed0 = np.array(sed0)
+        wavelengths, sed1 = load_spectrum(
+            path = sedpaths[1]
+        )
+        sed1 = np.array(sed1)
+
+        Nlambda = len(wavelengths)
+
+        # Compute comparisons
+        comparison = (sed0-sed1)/sed0
+        pearsonchi = np.sum( (np.log10(sed1) - np.log10(sed0))**2/np.log10(sed0) )
+
+        # Save new SED-file
+        with open(f'../spectrum_{spectrum0[:-4]}_wrt_{spectrum1[:-4]}.out','w') as f:
+
+            # Write header
+            f.write(f'           1\n        {Nlambda}\n\n')
+
+            # Write wavelength and flux
+            for nn in range(Nlambda):
+                f.write(f'  {wavelengths[nn]}   {comparison[nn]}\n')
+
+        return pearsonchi
+
+
+
 
 
 def compare_images(
         imagepaths:list=[
-            '../image1.out',
-            '../image2.out'
+            '../image0.out',
+            '../image1.out'
         ]
     ):
     """
@@ -2579,10 +2639,6 @@ def compare_images(
         # 1: and absolute
         residual = np.abs(comparefluxes[0] - comparefluxes[1])
         residualfluxes[1,nn] = residual
-
-            
-        
-    # TODO kolla så att detta stämmer
 
     # Save new image
     with open(f'../resid_zerolim_{image0[:-4]}_minus_{image1[:-4]}.out', 'w') as fnewimage:
