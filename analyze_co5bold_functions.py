@@ -2185,7 +2185,7 @@ def modify_dusttemperature(
         sav_path:str='../st28gm06n052_190.sav',
         gridinfo_path:str = '../grid_info.txt',
         amr_path:str='../amr_grid.inp',
-        pfact = -0.9
+        pfact:float = -0.9
     ):
     """
     Normalises the gas-temperature used for dust to T(R) power law (Bladh 2012)
@@ -2246,7 +2246,7 @@ def modify_dusttemperature(
     # Linspaces for each refinement-range
     DiagRadii = []
     for nn in range(nrefinements+1):
-        DiagRadii.append(np.linspace(gridref_out[nn+1]+DiagCells[nn], gridref_out[nn], DiagNcells[nn]))
+        DiagRadii.append(np.linspace(gridref_out[nn+1]+DiagCells[nn], gridref_out[nn], int(DiagNcells[nn])))
 
     # Save, reverse order, in one array, distances to shells in rising order
     diagonal_distances = np.concatenate(DiagRadii[::-1])

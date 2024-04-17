@@ -2531,7 +2531,7 @@ def compare_seds(
         pearsonchi = np.sum( (np.log10(sed1) - np.log10(sed0))**2/np.log10(sed0) )
 
         # Save new SED-file
-        with open(f'../spectrum_{spectrum0[:-4]}_wrt_{spectrum1[:-4]}.out','w') as f:
+        with open(f'../{spectrum0[:-4]}_wrt_{spectrum1[:-4]}.out','w') as f:
 
             # Write header
             f.write(f'           1\n        {Nlambda}\n\n')
@@ -2540,12 +2540,11 @@ def compare_seds(
             for nn in range(Nlambda):
                 f.write(f'  {wavelengths[nn]}   {comparison[nn]}\n')
 
+        print(f'    {spectrum0[:-4]}_wrt_{spectrum1[:-4]}.out\nDONE\n')
         return pearsonchi
 
 
-
-
-
+# Compares two images
 def compare_images(
         imagepaths:list=[
             '../image0.out',
