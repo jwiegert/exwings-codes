@@ -2202,6 +2202,7 @@ def modify_dusttemperature(
     phase = sav_path[-7:-4]
 
     # Load first bin of dust temperature, unmodified
+    print(f'    Loading dust species 1')
     Ncells,Nspecies,dusttemperature = a3d.load_temperature(
         path = dusttemperature_path,
         numb_specie = 1
@@ -2280,10 +2281,11 @@ def modify_dusttemperature(
                 #   Tcell-final(xyz) = Tcell-c5d(xyz) * Ttheory(R) / < Tcell-c5d >(R+deltaR)
                 for ncell in cell_index:
                     TtheoryR = Tstar * (Rstar/AUcm / (2*diagonal_distances[nnradius]))**(2/(4+pfact))
-                    dusttemperature_modified[nspecies*Nspecies+ncell] = dusttemperature[ncell] * TtheoryR / diagonal_temperatures[nnradius]
+                    dusttemperature_modified[nspecies*Ncells+ncell] = dusttemperature[ncell] * TtheoryR / diagonal_temperatures[nnradius]
 
         # Load next bin of dust species
         if nspecies < Nspecies-1:
+            print(f'    Loading dust species {nspecies+2}')
             Ncells,Nspecies,dusttemperature = a3d.load_temperature(
                 path = dusttemperature_path,
                 numb_specie = nspecies+2
