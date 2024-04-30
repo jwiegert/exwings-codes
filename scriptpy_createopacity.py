@@ -17,6 +17,7 @@ phase = sys.argv[2]
 
 # ------------------------------------------------------------------------
 # Pythoncodes below
+print(f'Running scriptpy_createopacity for {phase}.\n')
 
 import create_r3d_functions as c3d
 import os

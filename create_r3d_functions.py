@@ -193,6 +193,8 @@ def movecoordinates(nxyz,nx,ny,nz):
 
 
 # Write runcommand-files, one for each phase and one main file that runs them in paralell
+# TODO
+# add phi-angle here
 def write_r3d_runscripts(
         path:str = '../r3dresults/st28gm06n056/',
         phase_list:list = [140,141,142],

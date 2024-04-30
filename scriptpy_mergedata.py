@@ -17,6 +17,7 @@ phase = sys.argv[2]
 
 # ------------------------------------------------------------------------
 # Pythoncodes below
+print(f'Running scriptpy_mergedata for {phase}.\n')
 
 import analyze_co5bold_functions as a5d
 import create_r3d_functions as c3d
@@ -32,6 +33,7 @@ c3d.merge_dusttemperatures(
 )
 
 # NOTE
+# These filenames don't have phase-specific file names. Run one at a time.
 # Resulting files are, for each ../r3dresults/[modelname]/[phase]/
 # Ie, these moves the new files automatically to the correct work folder
 #

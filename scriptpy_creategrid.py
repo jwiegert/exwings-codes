@@ -30,36 +30,40 @@ os.system(f'mkdir {path}')
 for phase in phases:
     os.system(f'mkdir {path}{phase}')
 
-# Extract star's radius for each phase
+# Extract star's radius for first phase (all of same model should have same settings
 Mstar,Rstar,Lstar,Tstar = a5d.load_star_information(
     savpath = f'../../exwings_archivedata/co5bold_data/d{modelname}/{modelname}_{phases[0]}.sav',
     printoutput = 'y'
 )
-
-# Extract minimum cellsize
+# Extract minimum cellsize for first phase (grid is the same for whole model)
 c5dgrid,cellcourners,cellsize = a5d.load_grid_properties(
     savpath = f'../../exwings_archivedata/co5bold_data/d{modelname}/{modelname}_{phases[0]}.sav'
 )
 
+
 # Create spatial grid
+#    Check numbers from headers of c5d-data-sets
 #
-# Check numbers from headers of c5d-data-sets
-#
-# use a5d.load_grid_properties() for this.
-# Gives minimum cellsize, cellcourner-coords, c5dgrid-xyz-distances to cells
+#    use a5d.load_grid_properties() for this.
+#    Gives minimum cellsize, cellcourner-coords, c5dgrid-xyz-distances to cells
 #
 # In this example:
+#    Smallest c5d cells are 2*3.65/317 AU = 0.02302839116719243 AU
+#    Radius of star: 1.651AU (355 Rsun)
 #
-# Smallest c5d cells are 2*3.65/317 AU = 0.02302839116719243 AU
-# Radius of star: 1.651AU (355 Rsun)
+#    light c5d-data: cube side ~  7AU ~  4Rstar
+#    heavy c5d-data: cube side ~ 30AU ~ 18Rstar > max radius 9Rstar
 #
-# light c5d-data: cube side ~  7AU ~  4Rstar
-# heavy c5d-data: cube side ~ 30AU ~ 18Rstar > max radius 9Rstar
 # Settings for the grid
-r3dedge = 2 * cellcourners.max() / AUcm # Size of whole grid in AU
-basecell = 1.001 * cellsize * 2**4 / AUcm # Size of base cells as based on smallest cells
-#basecell = 0.501 * cellsize * 2**4 / AUcm # Size of base cells as based on smallest cells
-nxyz = r3dedge/basecell # Number of base cells along one side of the cube
+
+# Size of whole grid in AU
+r3dedge = 2 * cellcourners.max() / AUcm 
+
+# Size of base cells as based on smallest cells
+basecell = 1.001 * cellsize * 2**4 / AUcm
+
+# Number of base cells along one side of the cube
+nxyz = r3dedge/basecell
 
 # Radial distances to refinements based on stellar radius
 refinementlist_au = [
@@ -72,7 +76,7 @@ refinementlist_au = [
 # Inner refinements up to 0.9 Rstar (divided equally radially by number of refinements)
 inrefine_au = 0.6*Rstar / AUcm
 
-# Create spatial grid!
+# Create spatial grid
 c3d.create_grid(
     gridedge=r3dedge, 
     nxyz=nxyz, 

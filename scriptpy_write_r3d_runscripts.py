@@ -14,13 +14,16 @@ import sys
 modelname = sys.argv[1]
 phases = [phase for nn,phase in enumerate(sys.argv) if nn > 1]
 
+# TODO
+# lägg till phi-vinkel här med.
+
 c3d.write_r3d_runscripts(
     path = f'../r3dresults/{modelname}/',
     phase_list = phases,
     sed_inclination_list = [0,90,180,270],
-    image_wavelength_list = [1,10,100],
+    image_wavelength_list = [1,10],
     image_inclination_list = [0],
     image_sizeau = 30,
-    image_npix = 256,
+    image_npix = 512,
 )
 

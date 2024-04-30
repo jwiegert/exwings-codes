@@ -16,6 +16,7 @@ phase = sys.argv[2]
 
 # ------------------------------------------------------------------------
 # Python code below
+print(f'Running scriptpy_createstar for {phase}.\n')
 
 import analyze_co5bold_functions as a5d
 import analyze_r3d_functions as a3d
@@ -86,11 +87,11 @@ a5d.smooth_stellardata(
     clean_data = 'y'
 )
 # Returns
-#        os.system(f'mv ../dust_temperature_smoothed_{phase}.dat {path}{phase}/dust_temperature_onestar_smoothed.dat')
-#        os.system(f'mv ../star_opacities_smoothed_{phase}.dat {path}{phase}/star_opacities_smoothed.dat')
-#        os.system(f'mv ../dust_density_opastar_{phase}.inp {path}{phase}/dust_density_opastar.inp')
-#        os.system(f'mv ../dustkappa_opastar_{phase}.inp {path}{phase}/dustkappa_opastar.inp')
-#        os.system(f'mv ../dustopac_star_{phase}.inp {path}{phase}/dustopac_opastar.inp')
+# 'mv ../dust_temperature_smoothed_{phase}.dat {path}{phase}/dust_temperature_onestar_smoothed.dat'
+# 'mv ../star_opacities_smoothed_{phase}.dat {path}{phase}/star_opacities_smoothed.dat'
+# 'mv ../dust_density_opastar_{phase}.inp {path}{phase}/dust_density_opastar.inp'
+# 'mv ../dustkappa_opastar_{phase}.inp {path}{phase}/dustkappa_opastar.inp'
+# 'mv ../dustopac_star_{phase}.inp {path}{phase}/dustopac_opastar.inp'
 
 # NOTE
 # Resulting files are, for each ../r3dresults/[modelname]/[phase]/

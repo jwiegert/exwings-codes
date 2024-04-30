@@ -18,6 +18,7 @@ modify_Tdust = sys.argv[3]
 
 # ------------------------------------------------------------------------
 # Pythoncodes below
+print(f'Running scriptpy_createdust for {phase}.\n')
 
 import analyze_co5bold_functions as a5d
 import create_r3d_functions as c3d

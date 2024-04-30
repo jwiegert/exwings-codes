@@ -2640,7 +2640,7 @@ def compare_images(
         residualfluxes[1,nn] = residual
 
     # Save new image
-    with open(f'../resid_zerolim_{image0[:-4]}_minus_{image1[:-4]}.out', 'w') as fnewimage:
+    with open(f'../image_resid_zerolim_{image0[:-4]}_minus_{image1[:-4]}.out', 'w') as fnewimage:
         
         # First write copy of header
         for line in header:
@@ -2650,7 +2650,7 @@ def compare_images(
         for newflux in residualfluxes[0,:]:
             fnewimage.writelines(f'   {newflux}\n')
     # Save new image
-    with open(f'../resid_abs_{image0[:-4]}_minus_{image1[:-4]}.out', 'w') as fnewimage:
+    with open(f'../image_resid_abs_{image0[:-4]}_minus_{image1[:-4]}.out', 'w') as fnewimage:
         
         # First write copy of header
         for line in header:
@@ -2660,4 +2660,4 @@ def compare_images(
         for newflux in residualfluxes[1,:]:
             fnewimage.writelines(f'   {newflux}\n')
 
-    print(f'A3D compare images:\n    resid_zerolim_{image0[:-4]}_minus_{image1[:-4]}.out\n    resid_abs_{image0[:-4]}_minus_{image1[:-4]}.out\nDONE\n')
+    print(f'A3D compare images:\n    image_resid_zerolim_{image0[:-4]}_minus_{image1[:-4]}.out\n    image_resid_abs_{image0[:-4]}_minus_{image1[:-4]}.out\nDONE\n')
