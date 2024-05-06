@@ -9,6 +9,7 @@ import scipy as s
 from scipy.integrate import quad
 from datetime import datetime
 import os
+import re
 
 # Might be used later
 #import scipy as s
@@ -193,29 +194,33 @@ def movecoordinates(nxyz,nx,ny,nz):
 
 
 # Write runcommand-files, one for each phase and one main file that runs them in paralell
-# TODO
-# add phi-angle here
 def write_r3d_runscripts(
-        path:str = '../r3dresults/st28gm06n056/',
+        path:str = '../',
         phase_list:list = [140,141,142],
-        sed_inclination_list:list = [0],
-        image_wavelength_list:list = [1],
-        image_inclination_list:list = [0],
-        image_sizeau:float = 7.4,
-        image_npix:int = 128,
+        sed_angles_list:list = [[0,0]],
+        image_wavelength_list:list = [10],
+        image_angles_list:list = [[0,0]],
+        image_sizeau:float = 30,
+        image_npix:int = 512,
+        Nscripts = 1
     ):
     """
     Creates runcommand-files, one for each phase and one main file that runs them in paralell
-    TODO: add lists for second viewing angle
-
+    
     ARGUMENTS
       path = path from code-folder to main data folder (ie below the phase-folders, see example)
       phase_list = list of all phases for this model-star
-      sed_inclination_list = list of inclination angles for the SED-simulations
+      sed_angles_list = Each element is a 2-index list, [inclination,angle] combination for each SED
       image_wavelength_list = list of image wavelengths in micrometres
-      image_inclination_list = list of inclination angles for images
+      image_angles_list = Each element is a 2-index list, [inclination,angle] combination for each image
       image_sizeau = size of image-side in AU
       image_npix = number of pixels per side of images
+      Nscripts = Number of scripts to separate all SED- and image-commands to. Automatically adds
+                 an extra sh-script with remaining commands that didnt fit in your number of scripts
+    
+    RETURNS
+      {Nscripts} number of sh-files per snapshot.
+      One main run-file for easy running of all scripts in parallell.
     """
 
     # Automatically add / to end of path if it's missing
@@ -223,64 +228,99 @@ def write_r3d_runscripts(
         path += '/'
 
 
-    # Automatically adds 0 as inclination angle if none is given
-    if len(image_inclination_list) < 1:
-        image_inclination_list = [0]
-
-    # Reset main runcommand file
-    with open(f'{path}runcommand_main.sh', 'w') as fmain:
-        fmain.write(f'#! /bin/bash\n#\n\n')
-
-    # Loop through phase-list
-    for phase in phase_list:
-
-        # Write run-scripts for each phase
-        with open(f'{path}runcommand{phase}.sh', 'w') as fr3d:
-
-            # Enter bash-thingie
-            fr3d.write(f'#! /bin/bash\n\n')
-
-            # Enter phase-folder
-            fr3d.write(f'cd {phase}\n\n')
-
-            # Write SED-simulation-lines
-            if len(sed_inclination_list) > 0:
-                for inclination in sed_inclination_list:
-                    fr3d.write(f'radmc3d sed incl {inclination}\n')
-                    fr3d.write(f'mv spectrum.out spectrum_i{inclination}.out\n')
-
-            # Add empty line
-            fr3d.write('\n')
-
-            # Write image-simulation lines (if any are given)
-            if len(image_wavelength_list) > 0:
-
-                for wavelength in image_wavelength_list:
-                    for inclination in image_inclination_list:
-                    
-                        fr3d.write(f'radmc3d image nostar incl {inclination} lambda {wavelength} npix {image_npix} sizeau {image_sizeau}\n')
-                        # TODO add more variables in image file name
-                        fr3d.write(f'mv image.out image_i{inclination}_{wavelength}um.out\n')
-
-        # Make phase-script-files executables
-        os.system(
-            f'chmod +x {path}runcommand{phase}.sh'
+    # Create SED-command-strings
+    sedcommands = []
+    for sedangle in sed_angles_list:
+        sedcommands.append(
+            f'radmc3d sed incl {sedangle[0]} phi {sedangle[1]}\nmv spectrum.out spectrum_i{sedangle[0]:03d}_phi{sedangle[1]:03d}.out\n\n'
         )
 
-        # Write main script that runs all phases in paralell
-        with open(f'{path}runcommand_main.sh', 'a') as fmain:
-            fmain.write(f'rm r3doutput_{phase}.txt\ntouch r3doutput_{phase}.txt\n./runcommand{phase}.sh | cat > r3doutput_{phase}.txt &\n\n')
-    
-    # Add a working ending to main-script
-    with open(f'{path}runcommand_main.sh', 'a') as fmain:
-        fmain.write(f'wait\necho All done\n')
+    # Create image-command-strings
+    imagecommands = []
+    for imageangle in image_angles_list:
+        for imagewavel in image_wavelength_list:
+            imagecommands.append(
+                f'radmc3d image nostar incl {imageangle[0]} phi {imageangle[1]} lambda {imagewavel} secondorder npix {image_npix} sizeau {image_sizeau}\nmv image.out image_i{imageangle[0]:03d}_phi{imageangle[1]:03d}_{imagewavel:02d}um.out\n\n'
+            )
 
-    # Make main script executable
-    os.system(
-        f'chmod +x {path}runcommand_main.sh'
-    )
+    Nseds_perfile = int(len(sed_angles_list)/Nscripts)
+    Nimages_perfile = int(len(image_angles_list)*len(image_wavelength_list)/Nscripts)
 
-    print('Finished writing run-r3d-scripts:\n    runcommand[PHASE].sh\n    runcommand_main.sh\n')
+
+
+    # Create runcommand files with a shebang and add sed and image command-lines
+    list_of_files = []
+    for phase in phase_list:
+        for nfile in range(Nscripts):
+
+            # Separate files for phases and number of files per phase
+            with open(f'{path}runcommand_{phase}_{nfile+1}.sh', 'w') as fmain:
+                # Shebang
+                fmain.write(f'#! /bin/bash\n\n')
+                # Go to work folder
+                fmain.write(f'cd {phase}\n\n')
+
+                # Add SED commandlines
+                sedcommand = sedcommands[
+                    Nseds_perfile*nfile:Nseds_perfile*(nfile+1)
+                ]
+                for sedcom in sedcommand:
+                    fmain.write(sedcom)
+                
+                # Add Image commandlines
+                imagecommand = imagecommands[
+                    Nimages_perfile*nfile:Nimages_perfile*(nfile+1)
+                ]
+                for imagecom in imagecommand:
+                    fmain.write(imagecom)
+
+            # Also save file names
+            list_of_files.append(f'runcommand_{phase}_{nfile+1}.sh')
+
+
+    # Add possible remaining commands in an additional file
+    if Nseds_perfile != len(sed_angles_list)/Nscripts or \
+        Nimages_perfile != len(image_angles_list)*len(image_wavelength_list)/Nscripts:
+        with open(f'{path}runcommand_{phase}_{Nscripts+1}.sh', 'w') as fmain:
+            # Shebang
+            fmain.write(f'#! /bin/bash\n\n')
+            # Go to work folder
+            fmain.write(f'cd {phase}\n\n')
+
+            # Add SED commandlines
+            if Nseds_perfile != len(sed_angles_list)/Nscripts:
+                sedcommand = sedcommands[
+                    Nseds_perfile*Nscripts:
+                ]
+                for sedcom in sedcommand:
+                    fmain.write(sedcom)
+
+            # Add image commandlines
+            if Nimages_perfile != len(image_angles_list)*len(image_wavelength_list)/Nscripts:
+                imagecommand = imagecommands[
+                    Nimages_perfile*Nscripts:
+                ]
+                for imagecom in imagecommand:
+                    fmain.write(imagecom)
+
+        # Also save file name
+        list_of_files.append(f'runcommand_{phase}_{Nscripts+1}.sh')
+
+    # Write a main-run-file also that runs all of the sh-files, with a wait in the end
+    # and creates log-files
+    with open(f'{path}runmain.sh', 'w') as fmain:
+        # Write shebang
+        fmain.write(f'#! /bin/bash\n\n')
+
+        # Write runcommand for all files and their log files
+        for runfile in list_of_files:
+            sep_name = re.split('_', runfile)            
+            fmain.write(f'./{runfile} 2> r3derror_{sep_name[1]}_{sep_name[2][:-3]}.txt | cat > r3dout_{sep_name[1]}_{sep_name[2][:-3]}.txt &\n')
+
+        # Add wait
+        fmain.write(f'\nwait\n')
+
+    print(f'Finished writing {len(list_of_files)} run-r3d-scripts (dont forget > chmod +x on them)\n')
 
 
 # ------------------------------------------------------------ #
