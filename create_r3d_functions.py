@@ -227,6 +227,10 @@ def write_r3d_runscripts(
     if path[-1] != '/':
         path += '/'
 
+    # Include warning and break if Nscripts is too large
+    if Nscripts > 40:
+        raise ValueError('ERROR: Nscripts is too large! Youll fill your folders with files!')
+
 
     # Create SED-command-strings
     sedcommands = []
