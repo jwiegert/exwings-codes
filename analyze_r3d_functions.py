@@ -16,6 +16,9 @@ import analyze_co5bold_functions as a5d
 c = 2.998e8 # speed of light in m/s
 pc = 30.857e15 # 1 parsec in m
 AUcm = 1.49598e13 # AU in cm
+kboltz = 1.3806503e-23 # Boltzmann constant in Si
+hplanck = 6.626068e-34 # Planck constant in Si
+
 
 # ------------------------------------------------------------ #
 # List of functions
@@ -218,9 +221,16 @@ AUcm = 1.49598e13 # AU in cm
 #    ]
 # )
 #
+#
 # compare_images(
 #    TODO
 # )
+#
+# compute_blackbody(
+#   peak_flux
+#   peak_freq
+#   wavelengths
+#)
 #
 # ------------------------------------------------------------ #
 # Functions that load various r3d input data
@@ -2661,3 +2671,44 @@ def compare_images(
             fnewimage.writelines(f'   {newflux}\n')
 
     print(f'A3D compare images:\n    image_resid_zerolim_{image0[:-4]}_minus_{image1[:-4]}.out\n    image_resid_abs_{image0[:-4]}_minus_{image1[:-4]}.out\nDONE\n')
+
+
+# Compute a black body function based on SED peak flux and wavelength
+def compute_blackbody_freq(
+        peak_flux:float = 1e6,
+        peak_wavelength:float = 1e6,
+        wavelengths:list = [0.1,1,10,100]
+    ):
+    """
+    Compute a frequency based black body function (of wavelength)
+
+    ARGUMENTS
+      peak_flux: peak flux in any units, this is used to normalise the output BB to these
+                 units.
+      peak_wavelength: in microns! Corresponding wavelength of peak flux.
+      wavelengths: in microns! Array with wavelength grid.
+
+    RETURNS
+      Array with black body function within given wavelength grid normalised to
+      given peak flux.
+    """
+
+    # Check type of wavelength array
+    if type(wavelengths) == list:
+        wavelengths = np.array(wavelengths)
+
+    # Translate wavelengths to frequency
+    peak_freq = c/(peak_wavelength*1e-6)
+    frequencies = c/(wavelengths*1e-6)
+
+    # Compute temperature from Wiens displacement law
+    BBtemperature = peak_freq / 5.879e10
+
+    # Compute black body function
+    BBfreq = 2*hplanck*frequencies**3/c**2 * (np.exp( hplanck*frequencies/(kboltz*BBtemperature)) -1 )**-1
+
+    # Normalise BB to input units
+    BBfit = peak_flux/np.max(BBfreq) * BBfreq
+
+    return BBfit
+
