@@ -2506,7 +2506,7 @@ def compare_seds(
     ARGUMENTS
       - sedpaths:list containing paths to two separate spectrum.out files from radmc3d
     RETURNS
-      - radmc3d-output style file containing (sed0-sed1)/sed0 for all wavelengths
+      - radmc3d-output style file containing (sed1-sed0)/sed0 for all wavelengths
       - Prints Pearson's chi2-number defined as (log(sed1) - log(sed0))^2/log(sed0)
         with log10 on the flux densities to get numbers that are more easily compared
         with eachother and we for example assume
@@ -2537,7 +2537,7 @@ def compare_seds(
         Nlambda = len(wavelengths)
 
         # Compute comparisons
-        comparison = (sed0-sed1)/sed0
+        comparison = (sed1-sed0)/sed0
         pearsonchi = np.sum( (np.log10(sed1) - np.log10(sed0))**2/np.log10(sed0) )
 
         # Save new SED-file

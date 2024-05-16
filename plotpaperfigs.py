@@ -4,6 +4,7 @@ from scipy import ndimage
 import numpy as np
 import scipy.ndimage
 import re
+import os
 
 from matplotlib import rc
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -45,7 +46,7 @@ phasetimes = [
 plot_coboldgrid = 'n'
 plot_opticalthickness = 'n'
 list_smoothingchanges = 'n'     # TODO (clean up and make it work)
-plot_2dslices = 'y'
+plot_2dslices = 'n'
 
 # Grain properties
 plot_grainsizehist = 'n'
@@ -59,6 +60,7 @@ plot_images_examples = 'n'
 
 # Plot symmetric figs
 plot_darwin_imagesed = 'n'
+plot_darwin_comparesed = 'y'
 plot_point_imagesed = 'n'
 
 # Merge contour and images, only t2
@@ -1534,6 +1536,62 @@ if plot_darwin_imagesed == 'y':
     
     #Save figure
     fig.savefig(f'figs/sedimage_darwin.pdf', dpi=300, facecolor="white")
+
+
+
+# To plot comparison-SED-plot between sphere and c5d-star
+if plot_darwin_comparesed == 'y':
+
+    # Initiate figure
+    fig, ax = plt.figure(figsize=(6,5)), plt.axes()
+
+    # Folder with comparison-SED-files    
+    pathoutput = '../r3dresults/st28gm06n052_comparedarwin/190staranddust/'
+
+    # Legends with angles for the plot
+    legendlist = [
+        r'0, 0',
+        r'90, 0',
+        r'90, 90',
+        r'90, 270',
+        r'180, 0',
+        r'270, 0',
+    ]
+    # Load and quick-plot each SED-residual
+    seds_residual = os.listdir(pathoutput)
+    reorder = [3,2,0,4,5,1]
+    # Reorder
+    seds_residual = [seds_residual[nangle] for nangle in reorder]
+
+    for nangle,sed_residual in enumerate(seds_residual):
+        # Load and change to correct units
+        wavelengths, sedcompare = a3d.load_spectrum(
+            path = f'{pathoutput}{sed_residual}'
+        )
+        sedcompare = np.array(sedcompare)*1e-23
+        # Plot
+        ax.plot(wavelengths,sedcompare, label = legendlist[nangle])
+
+        # Print file list to check order of angles are the same as
+        # in legend list
+        print(f'{legendlist[nangle]}: {sed_residual}')
+
+    # Plot zero-line
+    ax.plot([wavelengths[0],wavelengths[-1]],[0,0],'k--')
+
+    # Plot settings
+    ax.set(xscale='log')
+    ax.set_xlim(5e-1,6e1)
+    ax.set_ylim(-0.4,1.1)
+    ax.set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
+    ax.set_ylabel(r'$\frac{F_{\rm DARWIN} - F_{\rm CO5BOLD}}{F_{\rm CO5BOLD}}$', fontsize=18)
+    ax.tick_params(axis='both', which='major', labelsize=15)
+    ax.legend(title=r'$i$, $\phi$', fontsize=13)
+    fig.tight_layout()
+   
+    #Save figure
+    fig.savefig(f'figs/compareseds_c5ddarwin.pdf', dpi=300, facecolor="white")
+
 
 
 # Plot point source SED and image
