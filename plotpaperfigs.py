@@ -60,7 +60,7 @@ plot_images_examples = 'n'
 
 # Plot symmetric figs
 plot_darwin_imagesed = 'n'
-plot_darwin_comparesed = 'y'
+plot_darwin_comparesed = 'n'
 plot_point_imagesed = 'n'
 
 # Merge contour and images, only t2
@@ -72,7 +72,7 @@ compute_tenmicronfluxdensities = 'n'
 compute_spectralindeces = 'n'
 measuredustcloudflux = 'n'
 plot_resolutiondistance = 'n'
-check_smoothedimage_radius = 'n'
+check_smoothedimage_radius = 'y'
 plot_smoothedimage_radius = 'n'
 
 
@@ -2257,136 +2257,6 @@ if measuredustcloudflux == 'y':
 
 
 
-if plot_resolutiondistance == 'y':
-    # Plots image estimate of within which distance may
-    # one resolive surface features?
-    # papers to reference for this?
-
-
-    # TODO
-    # REDO THIS PLOT
-    # remove this plot? Not used any longer
-
-    # Full-width at half-maximum in mas:  1.22*lambda/D 
-    # or for VLTI, lambda/2baseline
-    fwhmVLTI_10um = 1e-5 / (2*baselineVLTI) * radian
-    fwhmJWST_10um =  1.22 * 1e-5 / diameterJWST * radian
-    fwhmVLTI_1um = 1.625*1e-6 / (2*baselineVLTI) * radian
-    fwhmJWST_1um =  1.22 * 1e-6 / diameterJWST * radian
-
-    print('FWHM')
-    print(f'{fwhmVLTI_10um} mas, VLTI at 10um')
-    print(f'{fwhmVLTI_1um} mas, VLTI at 1.625um')
-    print(f'{fwhmJWST_10um} mas, JWST at 10 um')
-    print(f'{fwhmJWST_1um} mas, JWST at 1 um')
-    print('')
-
-
-    # Beam area in mas2
-    areaVLTI_10um = np.pi * (0.5*fwhmVLTI_10um)**2
-    areaVLTI_1um = np.pi * (0.5*fwhmVLTI_1um)**2
-    areaJWST_10um = np.pi * (0.5*fwhmJWST_10um)**2
-    areaJWST_1um = np.pi * (0.5*fwhmJWST_1um)**2
-
-    print('Beam area (fwhm)')
-    print(f'{areaVLTI_10um} mas2, VLTI at 10um')
-    print(f'{areaVLTI_1um} mas2, VLTI at 1.625um')
-    print(f'{areaJWST_10um} mas2, JWST at 10um')
-    print(f'{areaJWST_1um} mas2, JWST at 1um')
-    print('')
-
-    # Stellar disc area as function of distance
-    distance = np.logspace(0,np.log10(2e3),1000)  # distance array in pc
-    detect_limit = np.linspace(4,4,1000)  # detect limit is area-ratio of 4
-    Rstar = 1.65 / distance * 1000  # Star radius in mas (au/pc)
-    Astar = np.pi*Rstar**2  # Star surface area in mas2
-
-    # Ratio between stellar disc and beam surfaces, or R^2
-    area_ratio_VLTI_10um = Astar / areaVLTI_10um
-    area_ratio_VLTI_1um = Astar / areaVLTI_1um
-    area_ratio_JWST_10um = Astar / areaJWST_10um
-    area_ratio_JWST_1um = Astar / areaJWST_1um
-
-    # Indeces of "resolution limits"
-    indeces_detected_VLTI_10um = np.where(area_ratio_VLTI_10um >= 4)[0]
-    indeces_detected_VLTI_1um = np.where(area_ratio_VLTI_1um >= 4)[0]
-    indeces_detected_JWST_10um = np.where(area_ratio_JWST_10um >= 4)[0]
-    indeces_detected_JWST_1um = np.where(area_ratio_JWST_1um >= 4)[0]
-
-    print(f'VLTI at  1.625um: <{distance[indeces_detected_VLTI_1um[-1]]} pc')
-    print(f'VLTI at 10    um: <{distance[indeces_detected_VLTI_10um[-1]]} pc')
-    print(f'JWST at  1    um: <{distance[indeces_detected_JWST_1um[-1]]} pc')
-    print(f'JWST at 10    um: <{distance[indeces_detected_JWST_10um[-1]]} pc')
-
-
-    # Plot figure
-    fig,ax = plt.figure(), plt.axes()
-
-    # First fillbetween gave bugs in pdf, mitigated by plotting from index 300
-    ax.plot(distance,area_ratio_VLTI_1um,'b',linewidth = 2)
-    ax.plot(distance,area_ratio_VLTI_1um,'k',linewidth = 1)
-    ax.fill_between(
-        distance[indeces_detected_VLTI_1um[300:]],
-        detect_limit[indeces_detected_VLTI_1um[300:]],
-        area_ratio_VLTI_1um[indeces_detected_VLTI_1um[300:]],
-        color='b',
-        alpha=1
-    )
-    ax.plot(distance,area_ratio_VLTI_10um,'c',linewidth = 2)
-    ax.plot(distance,area_ratio_VLTI_10um,'k--',linewidth = 1)
-    ax.fill_between(
-        distance[indeces_detected_VLTI_10um[300:]],
-        detect_limit[indeces_detected_VLTI_10um[300:]],
-        area_ratio_VLTI_10um[indeces_detected_VLTI_10um[300:]],
-        color='c',
-        alpha=1
-    )
-
-    ax.plot(distance,area_ratio_JWST_1um,'r',linewidth = 2)
-    ax.plot(distance,area_ratio_JWST_1um,'k-.',linewidth = 1)
-    ax.fill_between(
-        distance[indeces_detected_JWST_1um],
-        detect_limit[indeces_detected_JWST_1um],
-        area_ratio_JWST_1um[indeces_detected_JWST_1um],
-        color='r',
-        alpha=1
-    )
-    ax.plot(distance,area_ratio_JWST_10um,'orange',linewidth = 2)
-    ax.plot(distance,area_ratio_JWST_10um,'k:',linewidth = 1)
-    ax.fill_between(
-        distance[indeces_detected_JWST_10um],
-        detect_limit[indeces_detected_JWST_10um],
-        area_ratio_JWST_10um[indeces_detected_JWST_10um],
-        color='orange',
-        alpha=1
-    )
-
-    ax.text(
-        x=1.5,y=6.5,
-        s=r'JWST: 10 \&\ 1$\mu$m',
-        backgroundcolor='white',
-        fontsize=15
-    )
-    ax.text(
-        x=40,y=7.5,
-        s=r'VLTI: 10 \&\ 1.625$\mu$m',
-        backgroundcolor='white',
-        fontsize=15
-    )
-
-    ax.plot(distance,detect_limit,'k--')
-    ax.set_ylim(1,10)
-    ax.set_xlim(1,2000)
-    ax.set_xscale('log')
-    ax.set_xlabel('Distance (pc)', fontsize=18)
-    ax.set_ylabel(r'$R_\star^2 / R_{\rm Beam}^2$', fontsize=18)
-    ax.tick_params(axis='both', which='major', labelsize=15)
-
-    fig.tight_layout()
-    fig.show()
-
-    fig.savefig(f'figs/plot_resolution.pdf', dpi=300, facecolor="white")
-
 
 # Check "radius" of source at various images
 if check_smoothedimage_radius == 'y':
@@ -2407,7 +2277,7 @@ if check_smoothedimage_radius == 'y':
 
     distance = 200 # parsec
     relativelimit = 0.1
-    phase = 198
+    phase = 190
     wavelength = 10 # um
 
     # Load correct seed also
@@ -2422,16 +2292,8 @@ if check_smoothedimage_radius == 'y':
     sigmaVLTI = fwhmVLTI/2.355
 
 
-    # Load star's radius here (for comparison plot)
-    # Mstar: gram
-    # Rstar: cm
-    # Lstar: W
-    #Mstar,Rstar,Lstar,Tstar = a5d.load_star_information(
-    #    savpath='../co5bold_data/dst28gm06n052/st28gm06n052_186.sav',
-    #    printoutput='n'
-    #)
-    #Rstar /= AUcm
-    Rstar = 1.65*AUcm
+    # Star's radius here (for comparison plot)
+    Rstar = 1.65
 
 
     # Extract path and imagename from image
@@ -2453,7 +2315,7 @@ if check_smoothedimage_radius == 'y':
 
     # Extract props and compute distance-dependant scales
     Npix = np.shape(image2d)[0] # Number of pixels along one side
-    auperpixel = 2*axisplot[0]/Npix  # number of au per pixel
+    auperpixel = np.abs(2*axisplot[0]/Npix)  # number of au per pixel
     masperpixel = auperpixel/distance * 1000  # number of mas per pixel
     size_au = auperpixel * Npix # Size of image in au
 
@@ -2471,7 +2333,8 @@ if check_smoothedimage_radius == 'y':
     # Number of circular annulii are a quarter to make 
     # sure there are enough pixels in each annulus
     # And range is half the size of the image
-    radial_range = np.linspace(auperpixel,size_au*0.5,Npix*0.25)
+
+    radial_range = np.linspace(auperpixel,size_au*0.5,int(Npix*0.25))
     radial_fluxes = np.zeros(int(Npix*0.25))
     radial_npixels = np.zeros(int(Npix*0.25))
 
@@ -2517,12 +2380,11 @@ if check_smoothedimage_radius == 'y':
     plt.plot(radial_range,radial_fluxes)
     plt.plot([Rstar,Rstar],[0,radial_fluxes.max()])
     plt.plot([radius_fluxlimit,radius_fluxlimit],[0,fluxlimit])
-    plt.xlim(0,4)
     plt.show()
 
-    plt.plot(radial_range,radial_npixels,'.')
 
 
+# Manually plot radius vs wavelength plots
 if plot_smoothedimage_radius == 'y':
 
     # To plot source-radius vs wavelength
