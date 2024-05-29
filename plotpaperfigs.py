@@ -45,8 +45,8 @@ phasetimes = [
 # Processinginfo
 plot_coboldgrid = 'n'
 plot_opticalthickness = 'n'
-list_smoothingchanges = 'n'     # TODO (clean up and make it work)
-plot_2dslices = 'n'
+list_smoothingchanges = 'n'     # Skip this
+plot_2dslices = 'y'
 
 # Grain properties
 plot_grainsizehist = 'n'
@@ -59,7 +59,7 @@ plot_coboldsed = 'n'
 plot_images_examples = 'n'
 
 # Plot symmetric figs
-plot_darwin_imagesed = 'n'
+plot_darwin_imagesed = 'n'   # TODO
 plot_darwin_comparesed = 'n'
 plot_point_imagesed = 'n'
 
@@ -72,7 +72,7 @@ compute_tenmicronfluxdensities = 'n'
 compute_spectralindeces = 'n'
 measuredustcloudflux = 'n'
 plot_resolutiondistance = 'n'
-check_smoothedimage_radius = 'y'
+check_smoothedimage_radius = 'n'
 plot_smoothedimage_radius = 'n'
 
 
@@ -597,66 +597,69 @@ if plot_2dslices == 'y':
     # Or rather, the largest cells are in a plane within 0 and 6187713212448.781
     # Extract cells with centrum between 0 and -0.5*0.618...
     #
-    # Chose observed axis
-    los_axis = 1
+    # Chose observed axes
+    # One along X-axis, one along Z-axis (eller?)
+    los_axes = [1,3]
     # Below or above Z=0?
     basecell = 6187713212448.75
     #basecell = 6187713212448.781
 
-
-    # Positions of refinement 0 cells (-1/2)
-    NNzeroZ_0 = np.argwhere(
-        (gridcoords[:,los_axis] <= -0.99*(0.5)*basecell) & \
-        (gridcoords[:,los_axis] >= -1.01*(0.5)*basecell)
-    )
-    # Positions of refinement 1 cells (-1/4)
-    NNzeroZ_1 = np.argwhere(
-        (gridcoords[:,los_axis] <= -0.99*(0.5+0.25)*basecell) & \
-        (gridcoords[:,los_axis] >= -1.01*(0.5+0.25)*basecell)
-    )
-    # Positions of refinement 2 cells (-1/4 -1/8)
-    NNzeroZ_2 = np.argwhere(
-        (gridcoords[:,los_axis] <= -0.99*(0.5+0.25+0.125)*basecell) & \
-        (gridcoords[:,los_axis] >= -1.01*(0.5+0.25+0.125)*basecell)
-    )
-    # Positions of refinement 3 cells (-1/4 -1/8 -1/16)
-    NNzeroZ_3 = np.argwhere(
-        (gridcoords[:,los_axis] <= -0.99*(0.5+0.25+0.125+0.0625)*basecell) & \
-        (gridcoords[:,los_axis] >= -1.01*(0.5+0.25+0.125+0.0625)*basecell)
-    )
-    # Positions of refinement 4 cells (-1/4 -1/8 -1/16 -1/32)
-    NNzeroZ_4 = np.argwhere(
-        (gridcoords[:,los_axis] <= -0.99*(0.5+0.25+0.125+0.0625+0.03125)*basecell) & \
-        (gridcoords[:,los_axis] >= -1.01*(0.5+0.25+0.125+0.0625+0.03125)*basecell)
-    )
-    # Merge arrays
-    NNzeroZ = np.concatenate((
-        NNzeroZ_0,
-        NNzeroZ_1,
-        NNzeroZ_2,
-        NNzeroZ_3,
-        NNzeroZ_4,
-    ))
-
-    # Minimum cell size
-    mincellsize = np.min(gridsizes)
-
-
+    # Set some image settings based on grid settings
     # NOTE: hardcoded
-    # Create 2D arrays of X-Y-grid
+    mincellsize = np.min(gridsizes)                  # Minimum cell size
     Nside = 72*16    # Number of finest cells along one side -> number of pixels along image side
-    gridcourner = 222757675648155.62-0.5*mincellsize                 # Coords of grid courner in cm
+    gridcourner = 222757675648155.62-0.5*mincellsize # Coords of grid courner in cm
     gridcournerAU = gridcourner/AUcm                 # Same but in AU
     gridsize = gridcourner*2                         # Length of image and grid size
 
-    densities2D = np.zeros((Nside,Nside))
-    temperatures2D = np.zeros((Nside,Nside))
-    grainsizes2D = np.zeros((Nside,Nside))
+    # Initiate fig-ax-objects
+    fig, ax = plt.subplots(
+        len(los_axes),3, 
+        figsize = (12,9),
+    )
 
+    # Loop through the different LOSes
+    for naxis,los_axis in enumerate(los_axes):
 
+        # Positions of refinement 0 cells (-1/2)
+        NNzeroZ_0 = np.argwhere(
+            (gridcoords[:,los_axis] <= -0.99*(0.5)*basecell) & \
+            (gridcoords[:,los_axis] >= -1.01*(0.5)*basecell)
+        )
+        # Positions of refinement 1 cells (-1/4)
+        NNzeroZ_1 = np.argwhere(
+            (gridcoords[:,los_axis] <= -0.99*(0.5+0.25)*basecell) & \
+            (gridcoords[:,los_axis] >= -1.01*(0.5+0.25)*basecell)
+        )
+        # Positions of refinement 2 cells (-1/4 -1/8)
+        NNzeroZ_2 = np.argwhere(
+            (gridcoords[:,los_axis] <= -0.99*(0.5+0.25+0.125)*basecell) & \
+            (gridcoords[:,los_axis] >= -1.01*(0.5+0.25+0.125)*basecell)
+        )
+        # Positions of refinement 3 cells (-1/4 -1/8 -1/16)
+        NNzeroZ_3 = np.argwhere(
+            (gridcoords[:,los_axis] <= -0.99*(0.5+0.25+0.125+0.0625)*basecell) & \
+            (gridcoords[:,los_axis] >= -1.01*(0.5+0.25+0.125+0.0625)*basecell)
+        )
+        # Positions of refinement 4 cells (-1/4 -1/8 -1/16 -1/32)
+        NNzeroZ_4 = np.argwhere(
+            (gridcoords[:,los_axis] <= -0.99*(0.5+0.25+0.125+0.0625+0.03125)*basecell) & \
+            (gridcoords[:,los_axis] >= -1.01*(0.5+0.25+0.125+0.0625+0.03125)*basecell)
+        )
+        # Merge arrays
+        NNzeroZ = np.concatenate((
+            NNzeroZ_0,
+            NNzeroZ_1,
+            NNzeroZ_2,
+            NNzeroZ_3,
+            NNzeroZ_4,
+        ))
 
-    # Save Z=0-densities in 2D-arrays
-    for nn in NNzeroZ:
+        # Create 2D arrays of X-Y-grid
+        densities2D = np.zeros((Nside,Nside))
+        temperatures2D = np.zeros((Nside,Nside))
+        grainsizes2D = np.zeros((Nside,Nside))
+
         # Rotate "xy"-coordinates depending on los_axis
         if los_axis == 3:
             los_xaxis = 1
@@ -668,117 +671,109 @@ if plot_2dslices == 'y':
             los_xaxis = 3
             los_yaxis = 2
 
-        xindex = np.int(np.round((gridcoords[nn,los_xaxis]+gridcourner) / gridsize * Nside))-1
-        yindex = np.int(np.round((gridcoords[nn,los_yaxis]+gridcourner) / gridsize * Nside))-1
+        # Save Z=0-densities in 2D-arrays
+        for nn in NNzeroZ:
+            
+            xindex = int(np.round((gridcoords[nn,los_xaxis]+gridcourner) / gridsize * Nside))-1
+            yindex = int(np.round((gridcoords[nn,los_yaxis]+gridcourner) / gridsize * Nside))-1
 
-        # Refinement levels
-        # Radial distances to refinement 1: 0.2475659768178719 - 13.203518763619835 AU
-        # Radial distances to refinement 2: 0.4951319536357438 - 9.902639072714877 AU
-        # Radial distances to refinement 3: 0.7426979304536157 - 6.601759381809917 AU
-        # Radial distances to refinement 4: 0.9902639072714876 - 3.3008796909049587 AU
-        #
-        # Number of pixels for each cell is
-        #
-        # 4th refinement
-        if gridcoords[nn,0] >= 0.9902639072714876*AUcm and gridcoords[nn,0] <= 3.3008796909049587*AUcm:
-            npixels = 1
-        
-        # 3rd refinement
-        if gridcoords[nn,0] > 3.3008796909049587*AUcm and gridcoords[nn,0] <= 6.601759381809917*AUcm:
-            npixels = 2
-        if gridcoords[nn,0] >= 0.7426979304536157*AUcm and gridcoords[nn,0] < 0.9902639072714876*AUcm:
-            npixels = 2
+            # Refinement levels
+            # Radial distances to refinement 1: 0.2475659768178719 - 13.203518763619835 AU
+            # Radial distances to refinement 2: 0.4951319536357438 - 9.902639072714877 AU
+            # Radial distances to refinement 3: 0.7426979304536157 - 6.601759381809917 AU
+            # Radial distances to refinement 4: 0.9902639072714876 - 3.3008796909049587 AU
+            #
+            # Number of pixels for each cell is
+            #
+            # 4th refinement
+            if gridcoords[nn,0] >= 0.9902639072714876*AUcm and gridcoords[nn,0] <= 3.3008796909049587*AUcm:
+                npixels = 1
+            
+            # 3rd refinement
+            if gridcoords[nn,0] > 3.3008796909049587*AUcm and gridcoords[nn,0] <= 6.601759381809917*AUcm:
+                npixels = 2
+            if gridcoords[nn,0] >= 0.7426979304536157*AUcm and gridcoords[nn,0] < 0.9902639072714876*AUcm:
+                npixels = 2
 
-        # 2nd refinement
-        if gridcoords[nn,0] > 6.601759381809917*AUcm and gridcoords[nn,0] <= 9.902639072714877*AUcm:
-            npixels = 4
-        if gridcoords[nn,0] >= 0.4951319536357438*AUcm and gridcoords[nn,0] < 0.7426979304536157*AUcm:
-            npixels = 4
+            # 2nd refinement
+            if gridcoords[nn,0] > 6.601759381809917*AUcm and gridcoords[nn,0] <= 9.902639072714877*AUcm:
+                npixels = 4
+            if gridcoords[nn,0] >= 0.4951319536357438*AUcm and gridcoords[nn,0] < 0.7426979304536157*AUcm:
+                npixels = 4
 
-        # 1st refinement
-        if gridcoords[nn,0] > 9.902639072714877*AUcm and gridcoords[nn,0] <= 13.203518763619835*AUcm:
-            npixels = 8
-        if gridcoords[nn,0] >= 0.2475659768178719*AUcm and gridcoords[nn,0] < 0.4951319536357438*AUcm:
-            npixels = 8
+            # 1st refinement
+            if gridcoords[nn,0] > 9.902639072714877*AUcm and gridcoords[nn,0] <= 13.203518763619835*AUcm:
+                npixels = 8
+            if gridcoords[nn,0] >= 0.2475659768178719*AUcm and gridcoords[nn,0] < 0.4951319536357438*AUcm:
+                npixels = 8
 
-        # Base cells
-        if gridcoords[nn,0] < 0.2475659768178719*AUcm or gridcoords[nn,0] > 13.203518763619835*AUcm:
-            npixels = 16
+            # Base cells
+            if gridcoords[nn,0] < 0.2475659768178719*AUcm or gridcoords[nn,0] > 13.203518763619835*AUcm:
+                npixels = 16
 
-        # Fill cells
-        # Log of densities
-        # temperatures
-        # grain sies in um
-        densities2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = np.log10(gasdensity[nn])
-        temperatures2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = np.log10(gastemperatures[nn])
-        grainsizes2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = grainsizes[nn]*1e4
+            # Fill cells
+            # Log of densities
+            # temperatures
+            # grain sies in um
+            densities2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = np.log10(gasdensity[nn])
+            temperatures2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = np.log10(gastemperatures[nn])
+            grainsizes2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = grainsizes[nn]*1e4
 
+        # Rotate image by 90 deg
+        densities2D = ndimage.rotate(densities2D, 90)
+        temperatures2D = ndimage.rotate(temperatures2D, 90)
+        grainsizes2D = ndimage.rotate(grainsizes2D, 90)
 
-    # TEMP
-    # Rotate image by 90 deg
-    densities2D = ndimage.rotate(densities2D, 90)
-    temperatures2D = ndimage.rotate(temperatures2D, 90)
-    grainsizes2D = ndimage.rotate(grainsizes2D, 90)
+        # Set new axis ranges based on all the rotations and reversed axis.
+        axisplot  = [
+            -gridcournerAU,
+            gridcournerAU,
+            gridcournerAU,
+            -gridcournerAU
+        ]
+        # Initialise labels and colour bars
+        imbar = []
+        colourbarlabels = [
+            r'log$_{10}($ Gas density [g\,cm$^{-3}$] $)$',
+            r'log$_{10}($ Gas temperature [K] $)$',
+            r'Grain size ($\mu$m)'
+        ]
+        # Plot images and save colour bar info
+        imbar.append(ax[naxis,0].imshow(
+            densities2D,
+            origin='lower', extent=axisplot, 
+            cmap=plt.get_cmap('pink'),
+            vmin=-17,
+            vmax=-6
+        ))
+        imbar.append(ax[naxis,1].imshow(
+            temperatures2D,
+            origin='lower', extent=axisplot, 
+            cmap=plt.get_cmap('hot'),
+            vmin=2.5,
+            vmax=4.7
+        ))
+        imbar.append(ax[naxis,2].imshow(
+            grainsizes2D,
+            origin='lower', extent=axisplot, 
+            cmap=plt.get_cmap('bone'),
+        ))
+        for nn in range(3):
+            # Rotate axis to be consistent with greytag2023
+            ax[naxis,nn].invert_xaxis()
+            ax[naxis,nn].invert_yaxis()
+            ax[naxis,nn].invert_xaxis()
 
-    # Set new axis ranges based on all the rotations and reversed axis.
-    axisplot  = [
-        -gridcournerAU,
-        gridcournerAU,
-        gridcournerAU,
-        -gridcournerAU
-    ]
+            # and change x-lim and ylim to skip emtpy edges
+            ax[naxis,nn].set_xlim(-gridcournerAU+basecell/AUcm,gridcournerAU)
+            ax[naxis,nn].set_ylim(-gridcournerAU+basecell/AUcm,gridcournerAU)
 
+            # Set ticksettings    
+            ax[naxis,nn].tick_params(axis='both', which='major', labelsize=15)
 
-    # Initialise fig-ax for normal images
-    imbar = []
-    colourbarlabels = [
-        r'log10$($ Gas density [g\,cm$^{-3}$] $)$',
-        r'log10$($ Gas temperature [K] $)$',
-        r'Grain size ($\mu$m)'
-    ]
-    fig, ax = plt.subplots(
-        1,3, 
-        figsize = (13,5),
-    )
-    imbar.append(ax[0].imshow(
-        densities2D,
-        origin='lower', extent=axisplot, 
-        cmap=plt.get_cmap('pink'),
-        vmin=-17,
-        vmax=-6
-    ))
-    imbar.append(ax[1].imshow(
-        temperatures2D,
-        origin='lower', extent=axisplot, 
-        cmap=plt.get_cmap('hot'),
-        vmin=2.5,
-        vmax=4.7
-    ))
-    imbar.append(ax[2].imshow(
-        grainsizes2D,
-        origin='lower', extent=axisplot, 
-        cmap=plt.get_cmap('bone'),
-    ))
-
+    # Set colour bars, only top row
     for nn in range(3):
-        # Rotate axis to be consistent with greytag2023
-        ax[nn].invert_xaxis()
-        ax[nn].invert_yaxis()
-        ax[nn].invert_xaxis()
-
-        # and change x-lim and ylim to skip emtpy edges
-        ax[nn].set_xlim(-gridcournerAU+basecell/AUcm,gridcournerAU)
-        ax[nn].set_ylim(-gridcournerAU+basecell/AUcm,gridcournerAU)
-
-    # Set y-label text, only for first
-    ax[0].set_ylabel('Offset (au)',fontsize=18)
-    for nn in range(3):
-        # Set xlabel text and tick params for all
-        ax[nn].set_xlabel('Offset (au)',fontsize=18)
-        ax[nn].tick_params(axis='both', which='major', labelsize=15)
-
-        # Set colour bar settings and label
-        divider = make_axes_locatable(ax[nn])
+        divider = make_axes_locatable(ax[0][nn])
         cax = divider.append_axes(
             'top', 
             size='4%', 
@@ -794,9 +789,15 @@ if plot_2dslices == 'y':
         )
         cb0.ax.tick_params(labelsize=15)
 
-    fig.tight_layout()
-    fig.show()
 
+    # Set xy-label texts
+    for nn in range(2):
+        ax[nn,0].set_ylabel('Offset (au)',fontsize=18)
+    # Set xlabel text and tick params for all
+    for nn in range(3):
+        ax[1,nn].set_xlabel('Offset (au)',fontsize=18) #only bottom row
+
+    fig.tight_layout()
     #Save figure
     fig.savefig(f'figs/co5bold_2dslices.pdf', dpi=300, facecolor="white")
 
@@ -1288,13 +1289,13 @@ if plot_images_examples == 'y':
     # Plot 2 images at each walanvength, one phase, lin and log
 
     # Chose wavelengths here
-    wavelengths = [1,10]
+    wavelengths = ['01','10']
 
     # Suggested flux density limits for plots
     # lin and log
     fluxlimitslin = [
         [0,4],
-        [0,1.7]
+        [0,1.4]
     ]
     fluxlimitslog = [
         [-9,7],
@@ -1502,7 +1503,7 @@ if plot_darwin_imagesed == 'y':
         image2d, 
         origin='lower', extent=axisplot, 
         cmap=plt.get_cmap('hot'),
-        vmin=0,vmax=0.7
+        vmin=0,vmax=1.4
     )
 
     # Set axis settings
@@ -1530,9 +1531,7 @@ if plot_darwin_imagesed == 'y':
         label = rf'$F_\nu$(MJy/asec$^2$) at {wavelengthum} $\mu$m \& {distance} pc', fontsize=15
     )
     cb0.ax.tick_params(labelsize=15)
-
     fig.tight_layout()
-    fig.show()
     
     #Save figure
     fig.savefig(f'figs/sedimage_darwin.pdf', dpi=300, facecolor="white")
@@ -1902,9 +1901,6 @@ if plot_images_convolved_vlti == 'y':
             )
         cb0.ax.tick_params(labelsize=15)
 
-
-
-
     # Set ylabels
     axVLTI[0][0].set_ylabel('Offset (mas)',fontsize=18)
     axVLTI[1][0].set_ylabel('Offset (mas)',fontsize=18)
@@ -1916,10 +1912,6 @@ if plot_images_convolved_vlti == 'y':
     axVLTI[1][2].add_patch(
         plt.Rectangle((5,-12.5), 15, 15, color='orange', fill=False, zorder=10)
     )
-
-
-
-
 
     # Final settings for figures, save and show if you want to
     figVLTI.tight_layout()
@@ -2186,33 +2178,34 @@ if measuredustcloudflux == 'y':
     )
 
     # 186:
-    # x: -5.5 till -4
+    # x: 5.5 till 4
     # y: -4.5 till -3
     ax[0].add_patch(
-        plt.Rectangle((-5.5,-4.5), 1.5, 1.5, color='cyan', fill=False)
+        plt.Rectangle((5.5,-4.5), -1.5, 1.5, color='cyan', fill=False)
     )
 
     # 190:
-    # x: 1 till 4
+    # x: -1 till -4
     # y: -2.5 till 0.5
     ax[1].add_patch(
-        plt.Rectangle((1,-2.5), 3, 3, color='cyan', fill=False)
+        plt.Rectangle((-1,-2.5), -3, 3, color='cyan', fill=False)
     )
 
     # 198:
-    # x: 1 - 6
+    # x: -1 till -6
     # y: -6.5 - -5
     ax[2].add_patch(
-        plt.Rectangle((1,-6.5), 5, 1.5, color='cyan', fill=False)
+        plt.Rectangle((-1,-6.5), -5, 1.5, color='cyan', fill=False)
     )
 
     # Extract fluxes of these areas
+    #phases = [186,190,198]
     phases = [186,190,198]
 
     xranges = [
-        [-5.5,-4],
-        [1,4],
-        [1,6]
+        [4,5.5],
+        [-4,-1],
+        [-6,-1]
     ]
     yranges = [
         [-4.5,-3],
@@ -2223,6 +2216,9 @@ if measuredustcloudflux == 'y':
     # Initilize a second figure to check that I actually measure the correct areas
     fig2, ax2 = plt.subplots(1,3)
 
+    # Update distance (in pc)
+    distance = 200
+
     # Loop over phases
     for nphase,phase in enumerate(phases):
 
@@ -2230,7 +2226,7 @@ if measuredustcloudflux == 'y':
         image2d,image2dlog,totalflux,axisplot = a3d.load_images(
             path = f'../r3dresults/st28gm06n052_staranddust_1/{phase}/',
             image = 'image_i000_phi000_10um.out',
-            distance = 200
+            distance = distance
         )
         # Change to Jy/mas2
         image2d = image2d * 1e-6
@@ -2239,16 +2235,22 @@ if measuredustcloudflux == 'y':
         axscale = np.linspace(axisplot[0],axisplot[1],image2d.shape[0])
 
         # rectangle-ranges:
-        xrange = np.where((axscale <= xranges[nphase][1]) & (axscale >= xranges[nphase][0]))[0]
-        yrange = np.where((-axscale >= yranges[nphase][0]) & (-axscale <= yranges[nphase][1]))[0]
+        xrange = np.where((axscale >= xranges[nphase][0]) & (axscale <= xranges[nphase][1]))[0]
+        yrange = np.where((axscale >= yranges[nphase][0]) & (axscale <= yranges[nphase][1]))[0]
 
         # Fluxes within
         fluxes = image2d[yrange[0]:yrange[-1],xrange[0]:xrange[-1]]
 
+        # Extract total flux density of patch
+        # Which is the sum of all fluxes times the area of each pixel in mas2
+        pixelsize_mas = (np.abs(axisplot[0]) + np.abs(axisplot[1]))/image2d.shape[0]/distance * 1000
+        total_patchflux = fluxes.sum() * pixelsize_mas**2
+
         print(f'{phase}, x: {xranges[nphase][0]} to {xranges[nphase][1]}')
         print(f'     y: {yranges[nphase][0]} to {yranges[nphase][1]}')
-        print(f'     max: {fluxes.max()}     mean: {fluxes.mean()} Jy mas-2')
+        print(f'     max: {fluxes.max()}     mean: {fluxes.mean()} Jy mas-2      Total flux: {total_patchflux} Jy')
 
+        # Plot patches
         ax2[nphase].imshow(fluxes, origin='lower', cmap=plt.get_cmap('hot'))
 
 
