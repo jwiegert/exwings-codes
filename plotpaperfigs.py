@@ -46,7 +46,7 @@ phasetimes = [
 plot_coboldgrid = 'n'
 plot_opticalthickness = 'n'
 list_smoothingchanges = 'n'     # Skip this
-plot_2dslices = 'y'
+plot_2dslices = 'n'
 
 # Grain properties
 plot_grainsizehist = 'n'
@@ -59,12 +59,12 @@ plot_coboldsed = 'n'
 plot_images_examples = 'n'
 
 # Plot symmetric figs
-plot_darwin_imagesed = 'n'   # TODO
+plot_darwin_imagesed = 'n'
 plot_darwin_comparesed = 'n'
 plot_point_imagesed = 'n'
 
 # Merge contour and images, only t2
-plot_images_convolved_vlti = 'n'
+plot_images_convolved_vlti = 'y'
 
 # Observables
 compute_luminosities = 'n'
@@ -734,8 +734,8 @@ if plot_2dslices == 'y':
         # Initialise labels and colour bars
         imbar = []
         colourbarlabels = [
-            r'log$_{10}($ Gas density [g\,cm$^{-3}$] $)$',
-            r'log$_{10}($ Gas temperature [K] $)$',
+            r'$\log ($ Gas density [g\,cm$^{-3}$] $)$',
+            r'$\log ($ Gas temperature [K] $)$',
             r'Grain size ($\mu$m)'
         ]
         # Plot images and save colour bar info
@@ -791,11 +791,12 @@ if plot_2dslices == 'y':
 
 
     # Set xy-label texts
-    for nn in range(2):
-        ax[nn,0].set_ylabel('Offset (au)',fontsize=18)
+    ax[0,0].set_ylabel('Y (au)',fontsize=18)
+    ax[1,0].set_ylabel('Z (au)',fontsize=18)
     # Set xlabel text and tick params for all
     for nn in range(3):
-        ax[1,nn].set_xlabel('Offset (au)',fontsize=18) #only bottom row
+        ax[0,nn].set_xlabel('X (au)',fontsize=18) # only bottom row
+        ax[1,nn].set_xlabel('Y (au)',fontsize=18) # only bottom row
 
     fig.tight_layout()
     #Save figure
@@ -1036,10 +1037,15 @@ if plot_temperaturecompare == 'y':
     ), plt.axes()
 
     # Set legends
+    #legendlist = [
+    #    r'$T($CO5BOLD$)$',
+    #    r'$T($point$)$',
+    #    r'$T($theory$)$'
+    #]
     legendlist = [
-        r'$T($CO5BOLD$)$',
-        r'$T($point$)$',
-        r'$T($theory$)$'
+        r'$T_{\rm CO5BOLD}$',
+        r'$T_{\rm point}$',
+        r'$T_{\rm theory}$'
     ]
 
 
@@ -1059,7 +1065,7 @@ if plot_temperaturecompare == 'y':
         numb_specie = 1,
         ax=ax[0]
     )
-    ax[0].set_ylabel(r'$T({\rm CO5BOLD})$, K',fontsize=18)
+    ax[0].set_ylabel(r'$T_{\rm CO5BOLD}$, K',fontsize=18)
     ax[0].set_xlabel(r'')
     ax[0].set(xlim=(3,26), ylim=(0,3000))
     ax[0].tick_params(axis='both', which='major', labelsize=15)
@@ -1137,7 +1143,7 @@ if plot_temperaturecompare == 'y':
         alpha=0.4
     )
 
-    ax[1].set_ylabel(r'$T({\rm point})$, K',fontsize=18)
+    ax[1].set_ylabel(r'$T_{\rm point}$, K',fontsize=18)
     ax[1].set_xlabel(r'Distance (au)',fontsize=18)
     ax[1].set(xlim=(3,26), ylim=(0,3000))
     ax[1].tick_params(axis='both', which='major', labelsize=15)
@@ -1179,7 +1185,7 @@ if plot_temperaturecompare == 'y':
         alpha=0.4
     )
 
-    axratio.set_ylabel(r'$T({\rm simulated})$ / $T({\rm theory})$',fontsize=18)
+    axratio.set_ylabel(r'$T_{\rm simulated}$ / $T_{\rm theory}$',fontsize=18)
     axratio.set_xlabel(r'Distance (au)',fontsize=18)
     axratio.set(
         ylim=(0.5,1.7),
@@ -1243,12 +1249,12 @@ if plot_coboldsed == 'y':
         '/spectrum_i270_phi000.out'
     ]
     legendlist = [
-        r'0, 0; \hspace{5mm} 3759',
-        r'90, 0; \hspace{3mm} 4597',
-        r'90, 90; \hspace{1mm} 5471',
-        r'90, 270; 7821',
-        r'180, 0; \hspace{1mm} 8559',
-        r'270, 0; \hspace{1mm} 6631',
+        r'0-0; \hspace{5mm} 3759',
+        r'90-0; \hspace{3mm} 4597',
+        r'90-90; \hspace{1mm} 5471',
+        r'90-270; 7821',
+        r'180-0; \hspace{1mm} 8559',
+        r'270-0; \hspace{1mm} 6631',
     ]
 
     for nangle,spectrum in enumerate(spectra):
@@ -1275,7 +1281,7 @@ if plot_coboldsed == 'y':
     # Ylabel, titles and legend with angles
     ax.set_ylabel(r'$F_\nu$, Jy at 1 pc', fontsize=18)
     ax.set_title(rf'CO5BOLD', fontsize=16)
-    ax.legend(title=r'$i$, $\phi$;   Int. flux dens. ($L_\odot$)', fontsize=13)
+    ax.legend(title=r'$i$-$\phi$;   Int. flux dens. ($L_\odot$)', fontsize=13)
 
     fig.tight_layout()
     #fig.show()
@@ -1308,7 +1314,7 @@ if plot_images_examples == 'y':
     # Initialise fig
     fig, ax = plt.subplots(
         2,len(wavelengths),
-        figsize = (9,7.3),
+        figsize = (10,8),
     )
 
     # Chose distnace
@@ -1349,7 +1355,7 @@ if plot_images_examples == 'y':
             vmin=fluxlimitslin[nwave][0],
             vmax=fluxlimitslin[nwave][1]
         )
-        ax[0][nwave].set_title(rf'{wavelengthum}\,$\mu$m', fontsize=15)
+        ax[0][nwave].set_title(rf'{int(wavelengthum)}\,$\mu$m', fontsize=15)
         ax[0][nwave].tick_params(axis='both', which='major', labelsize=15)
 
         # Plot log-scale image
@@ -1434,12 +1440,12 @@ if plot_darwin_imagesed == 'y':
         '/spectrum_i270_phi000.out'
     ]
     legendlist = [
-        '0, 0',
-        '90, 0',
-        '90, 90',
-        '90, 270',
-        '180, 0',
-        '270, 0',
+        '0-0',
+        '90-0',
+        '90-90',
+        '90-270',
+        '180-0',
+        '270-0',
     ]
     # Set path and info for 10um image
     image = '../r3dresults/st28gm06n052_darwinsource/190/image_i000_phi000_10um.out'
@@ -1471,7 +1477,7 @@ if plot_darwin_imagesed == 'y':
         
     # Ylabel, titles and legend with angles
     ax[1].set_ylabel(r'$F_\nu$, Jy at 1 pc', fontsize=18)
-    ax[1].legend(title=r'$i$, $\phi$', fontsize=13)
+    ax[1].legend(title=r'$i$-$\phi$', fontsize=13)
 
 
     # Plot image
@@ -1545,16 +1551,16 @@ if plot_darwin_comparesed == 'y':
     fig, ax = plt.figure(figsize=(6,5)), plt.axes()
 
     # Folder with comparison-SED-files    
-    pathoutput = '../r3dresults/st28gm06n052_comparedarwin/190staranddust/'
+    pathoutput = '../r3dresults/st28gm06n052_comparedarwin/190staranddust_seds/'
 
     # Legends with angles for the plot
     legendlist = [
-        r'0, 0',
-        r'90, 0',
-        r'90, 90',
-        r'90, 270',
-        r'180, 0',
-        r'270, 0',
+        r'0-0',
+        r'90-0',
+        r'90-90',
+        r'90-270',
+        r'180-0',
+        r'270-0',
     ]
     # Load and quick-plot each SED-residual
     seds_residual = os.listdir(pathoutput)
@@ -1585,7 +1591,7 @@ if plot_darwin_comparesed == 'y':
     ax.set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
     ax.set_ylabel(r'$\frac{F_{\rm DARWIN} - F_{\rm CO5BOLD}}{F_{\rm CO5BOLD}}$', fontsize=18)
     ax.tick_params(axis='both', which='major', labelsize=15)
-    ax.legend(title=r'$i$, $\phi$', fontsize=13)
+    ax.legend(title=r'$i$-$\phi$', fontsize=13)
     fig.tight_layout()
    
     #Save figure
@@ -1732,28 +1738,16 @@ if plot_images_convolved_vlti == 'y':
     # 198 at 10um has a spike at default seed
     #
     distance = 200 # parsec
-    shortwavelength = 1.625 # um
     wavelengths = [1.6,3.5,10]
 
     imagelist = [
-        f'../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_{shortwavelength}um.out',
-        '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_3.5um.out',
+        f'../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_01.625um.out',
+        '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_03.5um.out',
         '../r3dresults/st28gm06n052_staranddust_1/190/image_i000_phi000_10um.out',
     ]
     # Maximum vertical scales
     vmaxima = [
         4,4,1
-    ]
-    # Contour levels (per wavelength)
-    starlevels = [
-        [0.2,1.2,2.2,3.2,4.2,5.2,6.2],
-        [0.2,1.2,2.2,3.2,4.2,5.2],
-        [0.2,0.4,0.6,0.8,1.0,1.2,1.4]
-    ]
-    backlevels = [
-        [0.0000001,0.00001,0.001,0.1],
-        [0.00001,0.0001,0.001,0.01,0.1],
-        [0.00001,0.0001,0.001,0.01,0.1]
     ]
     # Initialise fig-ax for normal images
     figVLTI, axVLTI = plt.subplots(
@@ -1791,9 +1785,10 @@ if plot_images_convolved_vlti == 'y':
 
         # Extract props and compute distance-dependant scales
         Npix = np.shape(image2d)[0] # Number of pixels along one side
-        auperpixel = np.abs(2*axisplot[0]/Npix)  # number of au per pixel
+        auperpixel = np.abs(2*np.abs(axisplot[0])/Npix)  # number of au per pixel
         masperpixel = auperpixel/distance * 1000  # number of mas per pixel
         size_milliasec = masperpixel * Npix # size of image in mas
+        maxflux = np.max(image2d) # max pixel flux
 
         # Image axis-limits
         axisplotmilliasec = [0.5*size_milliasec,-0.5*size_milliasec,-0.5*size_milliasec,0.5*size_milliasec]
@@ -1838,12 +1833,20 @@ if plot_images_convolved_vlti == 'y':
             )
         )
 
-        # Plot contours in next line, first with background
+        # Plot contours in next line 
+        # First set contour levels based on max flux
+        starlevels = np.linspace(
+            0.1*maxflux,maxflux,6
+        )
+        backlevels = np.logspace(
+            np.log10(1e-6 * 0.01*maxflux),np.log10(0.01*maxflux),5
+        )
+        # Plot with background
         axVLTI[1][nwave].contour(
             image2d,
             origin='lower', extent=axisplotmilliasec,
             colors='k',
-            levels=backlevels[nwave],
+            levels=backlevels,
             linewidths=1
         )
         # Then contours for the star
@@ -1851,7 +1854,7 @@ if plot_images_convolved_vlti == 'y':
             image2d,
             origin='lower', extent=axisplotmilliasec,
             colors='r',
-            levels=starlevels[nwave],
+            levels=starlevels,
             linewidths=1
         )
         # Flip x-axis
