@@ -1550,10 +1550,19 @@ if plot_darwin_comparesed == 'y':
     # Initiate figure
     fig, ax = plt.figure(figsize=(6,5)), plt.axes()
 
-    # Folder with comparison-SED-files    
-    pathoutput = '../r3dresults/st28gm06n052_comparedarwin/190staranddust_seds/'
+    # Folders with SEDs
+    pathc5d = '../r3dresults/st28gm06n052_staranddust_nospikes/190/'
+    pathdarwin = '../r3dresults/st28gm06n052_darwinsource/190/'
 
-    # Legends with angles for the plot
+    # List of angles and legend list
+    angles = [
+        ['000','000'],
+        ['090','000'],
+        ['090','090'],
+        ['090','270'],
+        ['180','000'],
+        ['270','000'],
+    ]
     legendlist = [
         r'0-0',
         r'90-0',
@@ -1562,24 +1571,27 @@ if plot_darwin_comparesed == 'y':
         r'180-0',
         r'270-0',
     ]
-    # Load and quick-plot each SED-residual
-    seds_residual = os.listdir(pathoutput)
-    reorder = [3,2,0,4,5,1]
-    # Reorder
-    seds_residual = [seds_residual[nangle] for nangle in reorder]
+    # Load all and subtract SEDs
+    for nangle,angle in enumerate(angles):
 
-    for nangle,sed_residual in enumerate(seds_residual):
-        # Load and change to correct units
-        wavelengths, sedcompare = a3d.load_spectrum(
-            path = f'{pathoutput}{sed_residual}'
+        wavelengths, sedc5d = a3d.load_spectrum(
+            path = f'{pathc5d}spectrum_i{angle[0]}_phi{angle[1]}.out'
         )
-        sedcompare = np.array(sedcompare)*1e-23
-        # Plot
-        ax.plot(wavelengths,sedcompare, label = legendlist[nangle])
+        wavelengths, seddrw = a3d.load_spectrum(
+            path = f'{pathdarwin}spectrum_i{angle[0]}_phi{angle[1]}.out'
+        )
+        # Check that SEDs are equal length before subtracting
+        if len(sedc5d) == len(seddrw):
+            seddiff = np.zeros(len(wavelengths))
+            
+            for nn in range(len(wavelengths)):
+                seddiff[nn] = seddrw[nn] - sedc5d[nn]
 
-        # Print file list to check order of angles are the same as
-        # in legend list
-        print(f'{legendlist[nangle]}: {sed_residual}')
+        else:
+            raise ValueError('ERROR: SEDs are not of equal length')
+
+        # Plot
+        ax.plot(wavelengths, seddiff, label = legendlist[nangle])
 
     # Plot zero-line
     ax.plot([wavelengths[0],wavelengths[-1]],[0,0],'k--')
@@ -1587,16 +1599,14 @@ if plot_darwin_comparesed == 'y':
     # Plot settings
     ax.set(xscale='log')
     ax.set_xlim(5e-1,6e1)
-    ax.set_ylim(-0.4,1.1)
     ax.set_xlabel(r'Wavelength ($\mu$m)', fontsize=18)
-    ax.set_ylabel(r'$\frac{F_{\rm DARWIN} - F_{\rm CO5BOLD}}{F_{\rm CO5BOLD}}$', fontsize=18)
+    ax.set_ylabel(r'$F_{\rm DARWIN} - F_{\rm CO5BOLD}$ (Jy)', fontsize=18)
     ax.tick_params(axis='both', which='major', labelsize=15)
     ax.legend(title=r'$i$-$\phi$', fontsize=13)
     fig.tight_layout()
    
     #Save figure
     fig.savefig(f'figs/compareseds_c5ddarwin.pdf', dpi=300, facecolor="white")
-
 
 
 # Plot point source SED and image
