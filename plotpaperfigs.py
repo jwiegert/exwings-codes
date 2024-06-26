@@ -45,8 +45,8 @@ phasetimes = [
 # Processinginfo
 plot_coboldgrid = 'n'
 plot_opticalthickness = 'n'
-list_smoothingchanges = 'n'     # Skip this
-plot_2dslices = 'n'
+list_smoothingchanges = 'n'
+plot_2dslices = 'y'
 
 # Grain properties
 plot_grainsizehist = 'n'
@@ -60,7 +60,7 @@ plot_images_examples = 'n'
 
 # Plot symmetric figs
 plot_darwin_imagesed = 'n'
-plot_darwin_comparesed = 'y'
+plot_darwin_comparesed = 'n'
 plot_point_imagesed = 'n'
 
 # Merge contour and images, only t2
@@ -719,10 +719,20 @@ if plot_2dslices == 'y':
             temperatures2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = np.log10(gastemperatures[nn])
             grainsizes2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = grainsizes[nn]*1e4
 
-        # Rotate image by 90 deg
+        # Rotate image by 90 deg and set originparameter
         densities2D = ndimage.rotate(densities2D, 90)
         temperatures2D = ndimage.rotate(temperatures2D, 90)
         grainsizes2D = ndimage.rotate(grainsizes2D, 90)
+        originparam = 'lower'
+
+        # Switch xy-axis on second row
+        if naxis == 1:
+            # Rotate 90 deg again
+            densities2D = ndimage.rotate(densities2D, -90)
+            temperatures2D = ndimage.rotate(temperatures2D, -90)
+            grainsizes2D = ndimage.rotate(grainsizes2D, -90)
+            originparam = 'upper'
+
 
         # Set new axis ranges based on all the rotations and reversed axis.
         axisplot  = [
@@ -741,21 +751,21 @@ if plot_2dslices == 'y':
         # Plot images and save colour bar info
         imbar.append(ax[naxis,0].imshow(
             densities2D,
-            origin='lower', extent=axisplot, 
+            origin=originparam, extent=axisplot, 
             cmap=plt.get_cmap('pink'),
             vmin=-17,
             vmax=-6
         ))
         imbar.append(ax[naxis,1].imshow(
             temperatures2D,
-            origin='lower', extent=axisplot, 
+            origin=originparam, extent=axisplot, 
             cmap=plt.get_cmap('hot'),
             vmin=2.5,
             vmax=4.7
         ))
         imbar.append(ax[naxis,2].imshow(
             grainsizes2D,
-            origin='lower', extent=axisplot, 
+            origin=originparam, extent=axisplot, 
             cmap=plt.get_cmap('bone'),
         ))
         for nn in range(3):
@@ -792,11 +802,11 @@ if plot_2dslices == 'y':
 
     # Set xy-label texts
     ax[0,0].set_ylabel('Y (au)',fontsize=18)
-    ax[1,0].set_ylabel('Z (au)',fontsize=18)
+    ax[1,0].set_ylabel('Y (au)',fontsize=18)
     # Set xlabel text and tick params for all
     for nn in range(3):
         ax[0,nn].set_xlabel('X (au)',fontsize=18) # only bottom row
-        ax[1,nn].set_xlabel('Y (au)',fontsize=18) # only bottom row
+        ax[1,nn].set_xlabel('Z (au)',fontsize=18) # only bottom row
 
     fig.tight_layout()
     #Save figure
