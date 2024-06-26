@@ -60,11 +60,11 @@ plot_images_examples = 'n'
 
 # Plot symmetric figs
 plot_darwin_imagesed = 'n'
-plot_darwin_comparesed = 'n'
+plot_darwin_comparesed = 'y'
 plot_point_imagesed = 'n'
 
 # Merge contour and images, only t2
-plot_images_convolved_vlti = 'y'
+plot_images_convolved_vlti = 'n'
 
 # Observables
 compute_luminosities = 'n'

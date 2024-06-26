@@ -1,9 +1,9 @@
 # Functions for creating input data for R3d simulations for Exwings project
 # ------------------------------------------------------------ #
 # Various useful packages
-from asyncio import LimitOverrunError
+#from asyncio import LimitOverrunError
 import sys
-import wave
+#import wave
 import numpy as np
 import scipy as s
 from scipy.integrate import quad
