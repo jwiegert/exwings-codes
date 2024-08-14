@@ -661,6 +661,9 @@ if plot_2dslices == 'y':
         grainsizes2D = np.zeros((Nside,Nside))
 
         # Rotate "xy"-coordinates depending on los_axis
+        #        r3d-z =  c5d-x
+        #        r3d-y =  c5d-y
+        #        r3d-x = -c5d-z
         if los_axis == 3:
             los_xaxis = 1
             los_yaxis = 2
@@ -769,11 +772,11 @@ if plot_2dslices == 'y':
             cmap=plt.get_cmap('bone'),
         ))
         for nn in range(3):
-            # Rotate axis to be consistent with greytag2023
+            # Rotate axis to be consistent with freytag2023 (on first row)
+            # and so that second row has postive in correct direction
             ax[naxis,nn].invert_xaxis()
             ax[naxis,nn].invert_yaxis()
             ax[naxis,nn].invert_xaxis()
-
             # and change x-lim and ylim to skip emtpy edges
             ax[naxis,nn].set_xlim(-gridcournerAU+basecell/AUcm,gridcournerAU)
             ax[naxis,nn].set_ylim(-gridcournerAU+basecell/AUcm,gridcournerAU)
@@ -800,7 +803,7 @@ if plot_2dslices == 'y':
         cb0.ax.tick_params(labelsize=15)
 
 
-    # Set xy-label texts
+    # Set ylabel texts, both rows
     ax[0,0].set_ylabel('Y (au)',fontsize=18)
     ax[1,0].set_ylabel('Y (au)',fontsize=18)
     # Set xlabel text and tick params for all

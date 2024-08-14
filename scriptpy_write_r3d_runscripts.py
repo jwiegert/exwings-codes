@@ -10,12 +10,18 @@
 
 import create_r3d_functions as c3d
 import sys
+import os
 
+# Set up variables
 modelname = sys.argv[1]
 phases = [phase for nn,phase in enumerate(sys.argv) if nn > 1]
 
+# Create folder to put files in
+os.system(f'mkdir ../r3dsims/{modelname}/')
+
+# Write scripts
 c3d.write_r3d_runscripts(
-    path = f'../r3dresults/{modelname}/',
+    path = f'../r3dsims/{modelname}/',
     phase_list = phases,
     sed_angles_list = [
         [0,0],
@@ -36,7 +42,7 @@ c3d.write_r3d_runscripts(
     ],
     image_sizeau = 30,
     image_npix = 512,
-    Nscripts = 3
+    Nscripts = 1
 )
 
 

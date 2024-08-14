@@ -1,46 +1,30 @@
 # exwings-codes
 
-Source codes for handling post processing radiative transfer simulation source codes for Exwings with Radmc-3D.  I.e. translate co5bold simulations into r3dmc3d-input data and simulate synthetic observations.
+Source codes for (primarily) translating time-dependent data from radiation-hydrodynamical simulations of evolved stars and surrounding dust from the code CO5BOLD to the Monte-Carlo based radiative transfer simulating code RADMC-3D. This can be used to create synthetic observations.
 
-* TODO needs rewriting and updating from here!
 
-# Running R3D
+## Running the translations
 
-## Self checks
+Note: Most links are hard-coded. Assumes access to CO5BOLD-data in IDL-formatted .sav-files.
 
-- Check your grid and density distribution using vtk-files
+- ipynb-files contains various tests, and code snippets to run the various functions contained in the .py-files.
 
-Even though you don't run any radiative transfer here you still need to have a radmc3d.inp file and kappa-files.
+- To run the translation automatically use either
 
-For grid only run
+> scriptbash_creategridstar.sh
 
-> radmc3d vtk_grid
+to create data containing only the gas portion, i.e., the star. Or
 
-To see dust density, where 1 is the dust specie you want to visualise.
+> scriptbash_creategridstardust.sh
 
-> radmc3d vtk_dust_density 1
+to create RADMC-3D data with both gas (star), dust, and dust opacities. Assumes availability of CO5BOLD-data, the code OPTOOL (to create opacity files), and laboratory dust opacity data from the Jena Optical Database.
 
-To see dust temperature run
 
-> radmc3d vtk_dust_temperature 1
+## Links
 
-- Check vtk-data with paraview
+https://www.ita.uni-heidelberg.de/~dullemond/software/radmc-3d/index.php
 
-> paraview FILENAME.vtk
+https://github.com/cdominik/optool
 
-Press apply. For just a grid, chose e.g. Representation Wireframe.
-
-For a density file, press apply, and chose "threshold" (button, top left area). Chose some limit (increase minimum) and look around. Remember that R3D sets som 1e-80 ish g/cm3 i all grid cells since it can't be zero. So you have to increase the lower limit to see past all zero-density cells.
-
-### Links
-
-http://docs.cython.org/en/latest/src/tutorial/pure.html
-
-https://cython.readthedocs.io/en/latest/src/userguide/language_basics.html
-
-https://www.infoworld.com/article/3648539/
-
-faster-python-made-easier-with-cythons-pure-python-mode.html
-
-https://pandas.pydata.org/pandas-docs/stable/user_guide/enhancingperf.html
+https://www.astro.uni-jena.de/Laboratory/Database/databases.html
 

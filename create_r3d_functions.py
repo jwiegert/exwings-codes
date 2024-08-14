@@ -205,18 +205,23 @@ def write_r3d_runscripts(
         Nscripts = 1
     ):
     """
-    Creates runcommand-files, one for each phase and one main file that runs them in paralell
+    Creates runcommand-files, one for each phase and one main file that runs 
+    them in paralell
     
     ARGUMENTS
-      path = path from code-folder to main data folder (ie below the phase-folders, see example)
+      path = path from code-folder to main data folder (ie below the phase-
+             folders, see example)
       phase_list = list of all phases for this model-star
-      sed_angles_list = Each element is a 2-index list, [inclination,angle] combination for each SED
+      sed_angles_list = Each element is a 2-index list, [inclination,angle] 
+                        combination for each SED
       image_wavelength_list = list of image wavelengths in micrometres
-      image_angles_list = Each element is a 2-index list, [inclination,angle] combination for each image
+      image_angles_list = Each element is a 2-index list, [inclination,angle] 
+                          combination for each image
       image_sizeau = size of image-side in AU
       image_npix = number of pixels per side of images
-      Nscripts = Number of scripts to separate all SED- and image-commands to. Automatically adds
-                 an extra sh-script with remaining commands that didnt fit in your number of scripts
+      Nscripts = Number of scripts to separate all SED- and image-commands to.
+                 Automatically adds an extra sh-script with remaining commands 
+                 that didnt fit in your number of scripts
     
     RETURNS
       {Nscripts} number of sh-files per snapshot.
