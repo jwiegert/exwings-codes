@@ -786,8 +786,16 @@ def load_images(
     """
     Loads and outputs array of one image in linear and log-scale, and some numbers.
     
-    TODO
-    info...
+    ARGUMENTS
+      path: string with path to folder containing r3d-image files
+      image: string with image file name
+      distance: set distance to the source in pc, default 1pc
+    
+    RETURNS
+      image2d: 2d-array with image
+      image2dlog: 2d-array with image with logarithmic flux scale
+      totalflux: total flux density of image in Jy
+      axisplot: list with axis sizes, for matplotlib-plotting
     """
 
     # Automatically add / to end of path if it's missing
@@ -1722,7 +1730,7 @@ def plot_images(
       distance: distance to source in pc (default 1 pc)
 
     RETURNS
-      Figure with 2 subplots, linear and logarithmic scales.
+      Figure with 1 plot with automatically gamma corrected
       Total flux of images in Jy at chosen distance
     """
 
@@ -1832,8 +1840,7 @@ def plot_imageslinlog(
 # Plot a list of images in subplots (vertically)
 def plot_imagesubplots(
         imagelist:list=['../image.out'],
-        distance:float=1,
-        scale:str='lin'
+        distance:float=1
     ):
     """
     Plots a list of images from R3d in vertical subplots
@@ -1841,7 +1848,6 @@ def plot_imagesubplots(
     ARGUMENTS
       imagelist: list of paths to .out files
       distance: distance to source in pc
-      scale: choce 'lin' or 'log' for lineare or logarithmic
 
     RETURNS
       gives matplotlib objects: fig and ax, plot with fig.show()
@@ -1854,6 +1860,7 @@ def plot_imagesubplots(
     fig, ax = plt.subplots(
         Nplots,1, 
         dpi = 150, 
+        figsize = (5,5*Nplots),
     )
 
     # Load image data and save in various lists
@@ -1878,36 +1885,24 @@ def plot_imagesubplots(
             image=imagefilename,
             distance=distance
         )
+        # Compute and apply gamma function of each image
+        scale = np.max(image2d)-np.min(image2d)
+        gamma = 0.3*np.log(image2d.max())/np.log(image2d.mean())
+        imageplot = ((image2d / scale)**gamma) * scale
 
-        # Only use lin or log depending on choice
-        if scale == 'lin':
-            # Save linear data in list (list of arrays)
-            imagedata = image2d
-        if scale == 'log':
-            imagedata = image2dlog
-        
+
+
         # Plot image at spot nn, set title and axis labels
         im0 = ax[nn].imshow(
-            imagedata, 
+            imageplot, 
             origin='lower', extent=axisplot, 
             cmap=plt.get_cmap('hot')
         )
         ax[nn].set(
-            title=f'{phase}: i:{incl}, phi:{phi}, {wavelengthum} um', 
-            xlabel='Offset (AU)',
-            ylabel='Offset (AU)',
+            title=f'{phase}: i:{incl}, phi:{phi}, {wavelengthum} um, total flux: {int(np.round(flux/1e6))} MJy', 
+            xlabel='Offset (au)',
+            ylabel='Offset (au)',
         )
-
-        # Set colour bar settings and label
-        divider = make_axes_locatable(ax[nn])
-        cax = divider.append_axes('right', size='5%', pad=0.05)
-        cb0 = plt.colorbar(im0, cax=cax, orientation = 'vertical',shrink=0.6,pad=0.15)
-        cb0.set_label(label = rf'Flux at {distance} pc (Jy/asec$^2$)',fontsize= 10)
-
-    # Change figure size
-    fig.set_figheight(10)
-    fig.set_figwidth(10)
-    fig.tight_layout()
 
     # Return fig and ax
     return fig, ax

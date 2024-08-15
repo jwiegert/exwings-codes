@@ -185,17 +185,6 @@ app.layout = dbc.Container([
     # Empty space between image-radioitems
     html.Br(), 
 
-    # Chose scale, linear or logarithmic
-    dcc.RadioItems(
-        id='image-scale-picker', 
-        options=[
-            {'label':'Linear flux scale', 'value':'lin'},
-            {'label':'Logarithmic flux scale', 'value':'log'},
-        ],
-        labelStyle={'display': 'block'},
-        value='lin'
-    ),
-
     # Image plot
     html.Img(
         id='image-plot-all',
@@ -449,6 +438,9 @@ def plot_sed_all(modelname,phase,incl,choice):
         return plotly_fig_all,lumtot
 
 
+
+
+# TODO fix so this plots with gamma function plotter
 # Given model, phase, one-image-plotter, choice and scale, plot several images
 @app.callback(
     Output('image-plot-all', 'src'),
@@ -456,9 +448,8 @@ def plot_sed_all(modelname,phase,incl,choice):
     Input('phase-dropdown', 'value'),
     Input('image-dropdown', 'value'),
     Input('image-picker', 'value'),
-    Input('image-scale-picker', 'value')
 )
-def plot_image_all(modelname,phase,image,choice,scale):
+def plot_image_all(modelname,phase,image,choice):
     #
     # Modelname is foldername in r3dresults
     # Phase is phase-choice
@@ -472,12 +463,12 @@ def plot_image_all(modelname,phase,image,choice,scale):
 
     # Extract chosen image inclination and wavelength
     # Filename is formatted as image_i{incl}_phi{phi}_{wavelength}um.out
+    # EG image_i000_phi000_100um.out
     imageincl = re.split('_',image)[1][1:]
     imagephi = re.split('_',image)[2][3:]  #
     imagewave = re.split('_',image)[3][:-6]
 
-    # image_i000_phi000_100um.out
-
+    
     # Initate path to model-folder
     path = f'../r3dresults/{modelname}/'
 
@@ -525,9 +516,8 @@ def plot_image_all(modelname,phase,image,choice,scale):
     fig,ax = a3d.plot_imagesubplots(
         imagelist=imagelist,
         distance=1,
-        scale=scale
     )
-    
+    fig.tight_layout()
     # Save figure as temporary png-file
     plt.savefig(
         'tempsubplots.png', dpi=150, bbox_inches='tight'
