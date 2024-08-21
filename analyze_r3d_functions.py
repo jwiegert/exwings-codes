@@ -1734,6 +1734,7 @@ def plot_images(
       Total flux of images in Jy at chosen distance
     """
 
+    # Initiate list for flux densities of images
     fluxtotal = []
 
     # Loop through all images
@@ -1759,14 +1760,13 @@ def plot_images(
             imageplot, origin='lower', extent=axisplot, cmap=plt.get_cmap('hot')
         )
         ax.set(
-            title=f"{image.replace('image_', '').replace('.out', '')} (gamma)", 
+            title=f"{image.replace('image_', '').replace('.out', '')}", 
             xlabel='Offset (AU)',
             ylabel='Offset (AU)'
         )
+        fig.tight_layout()
 
-    fig.tight_layout()
-
-    return fig, ax, fluxtotal
+        return fig, ax, fluxtotal
 
 
 
@@ -1843,7 +1843,7 @@ def plot_imagesubplots(
         distance:float=1
     ):
     """
-    Plots a list of images from R3d in vertical subplots
+    Plots a list of images from R3d in subplots (max 3 in one row)
 
     ARGUMENTS
       imagelist: list of paths to .out files
@@ -1856,11 +1856,19 @@ def plot_imagesubplots(
     # Number of plots
     Nplots = len(imagelist)
 
+    # Set number of rows and columns in subplots (max 3 cols)
+    Nrows = int(np.ceil(Nplots/3))
+    if Nplots <= 3:
+        Ncols = Nplots
+    if Nplots > 3:
+        Ncols = 3
+
+
     # Set fig-and-axis settings for subplots
     fig, ax = plt.subplots(
-        Nplots,1, 
-        dpi = 150, 
-        figsize = (5,5*Nplots),
+        Nrows,Ncols, 
+        dpi = 100, 
+        figsize = (4*Ncols,4*Nrows),
     )
 
     # Load image data and save in various lists
@@ -1890,16 +1898,14 @@ def plot_imagesubplots(
         gamma = 0.3*np.log(image2d.max())/np.log(image2d.mean())
         imageplot = ((image2d / scale)**gamma) * scale
 
-
-
         # Plot image at spot nn, set title and axis labels
-        im0 = ax[nn].imshow(
+        im0 = ax.ravel()[nn].imshow(
             imageplot, 
             origin='lower', extent=axisplot, 
             cmap=plt.get_cmap('hot')
         )
-        ax[nn].set(
-            title=f'{phase}: i:{incl}, phi:{phi}, {wavelengthum} um, total flux: {int(np.round(flux/1e6))} MJy', 
+        ax.ravel()[nn].set(
+            title=f'i:{incl}, phi:{phi}, {wavelengthum} um, {int(np.round(flux/1e6))} MJy', 
             xlabel='Offset (au)',
             ylabel='Offset (au)',
         )
