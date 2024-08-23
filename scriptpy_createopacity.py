@@ -70,8 +70,8 @@ os.system(f'ls -1 *{specie}*')
 # Move results
 os.system(f'mv *mg2sio4* {path}{phase}/')
 
-# Clean up?
-#os.system(f'rm ../grain_sizes_binned_{phase}.dat')
+# Move grain size files to folders as well
+os.system(f'mv ../grain_sizes_binned_{phase}.dat {path}{phase}/')
 
 # Resulting files:
 #    dustkapscatmat_{specie}_{grain size in um}.inp

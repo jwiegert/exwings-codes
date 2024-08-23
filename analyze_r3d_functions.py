@@ -752,8 +752,8 @@ def load_spectrum(
       distance: float, distance to star in pc
 
     RETURNS
-      wavelengths: array with wavelength grid in microns
-      spectrum: array with SED in Jy normalised to indicated distance
+      wavelengths: list with wavelength grid in microns
+      spectrum: list with SED in Jy normalised to indicated distance
     """
 
     # Declare lists
