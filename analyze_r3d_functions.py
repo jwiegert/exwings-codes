@@ -230,7 +230,11 @@ hplanck = 6.626068e-34 # Planck constant in Si
 #   peak_flux
 #   peak_freq
 #   wavelengths
-#)
+# )
+#
+# compute_period(
+#   TODO
+# )
 #
 # ------------------------------------------------------------ #
 # Functions that load various r3d input data
