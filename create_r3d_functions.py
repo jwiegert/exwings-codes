@@ -329,7 +329,10 @@ def write_r3d_runscripts(
         # Add wait
         fmain.write(f'\nwait\n')
 
-    print(f'Finished writing {len(list_of_files)} run-r3d-scripts (dont forget > chmod +x on them)\n')
+    # And make them all executable
+    os.system(f'chmod +x {path}run*.sh')
+
+    print(f'Finished writing {len(list_of_files)} run-r3d-scripts\n')
 
 
 # ------------------------------------------------------------ #
