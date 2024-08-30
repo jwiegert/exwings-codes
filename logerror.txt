@@ -1,0 +1,9 @@
+mkdir: cannot create directory ‘../r3dresults/st28gm06n052/’: File exists
+/home/joachim/.local/lib/python3.8/site-packages/scipy/io/_idl.py:465: UserWarning: Using experimental 64-bit array read
+  warnings.warn("Using experimental 64-bit array read")
+/home/joachim/.local/lib/python3.8/site-packages/scipy/io/_idl.py:465: UserWarning: Using experimental 64-bit array read
+  warnings.warn("Using experimental 64-bit array read")
+/home/joachim/.local/lib/python3.8/site-packages/scipy/io/_idl.py:465: UserWarning: Using experimental 64-bit array read
+  warnings.warn("Using experimental 64-bit array read")
+/home/joachim/.local/lib/python3.8/site-packages/scipy/io/_idl.py:465: UserWarning: Using experimental 64-bit array read
+  warnings.warn("Using experimental 64-bit array read")

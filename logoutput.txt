@@ -1,0 +1,308 @@
+
+Loading from CO5BOLD for phase 245
+Star(gas) densities
+Dust monomer densities
+Star(gas) opacities
+Temperatures
+load_c5dheavydata:
+    c5dgas_density_{phase}.npy
+    c5ddust_density_{phase}.npy
+    c5dgas_opacity_{phase}.npy
+    c5d_temperature_{phase}.npy
+DONE
+
+Stellar info: '3D dusty AGB star model: 1 M_Sun, 355 R_Sun, L=7000 L_Sun', Teff=2800.0 K
+
+    Creating amr_grid with octree refinement.
+Final length of total side of whole grid: 29.780836060395945 AU
+Number of base cells along one side of the grid: 72
+Distances to outer refinement limits from centrum:
+    [13.203518763619835, 9.902639072714877, 6.601759381809917, 3.3008796909049587] AU
+Distances to inner refinement limits from centrum:
+    [0.2475659768178719, 0.4951319536357438, 0.7426979304536157, 0.9902639072714876] AU
+Number refinements: 4
+
+Size of base cell: 0.4136227230610557 AU
+Child cell size 1: 0.20681136153052784 AU
+Child cell size 2: 0.10340568076526392 AU
+Child cell size 3: 0.05170284038263196 AU
+Child cell size 4: 0.02585142019131598 AU
+Writing amr_grid.inp
+Writing grid_distances.csv and grid_cellsizes.csv
+(Not necessary for Radmc3d, but useful for pre/postprocessing of your model. They have the same order as dust_densities.inp)
+Writing grid_info.txt
+Create grid:
+    amr_grid.inp
+    grid_info.txt
+    grid_distances.csv
+    grid_cellsizes.csv
+DONE
+
+Creating wavelength grid
+Logarithmic wavelength grid was chosen
+Writing wavelength_micron.inp
+Wavelength grid:
+    wavelength_micron.inp
+DONE.
+
+
+Running scriptpy_createstar for 245.
+
+
+Extracting st28gm06n052_245 information.
+Loading R3D grid
+Loading C5D grid properties
+Loading C5D star properties (density, temperature, opacity)
+Translating C5D gas data to R3D data
+Finished 25 per cent of the grid.
+Finished 50 per cent of the grid.
+Finished 75 per cent of the grid.
+C5D Dust-star:
+    dust_density_onestar_245.inp
+    dust_temperature_onestar_245.dat
+    star_opacities_245.dat
+DONE
+
+  Moving files
+
+    Smoothing star for phase 245
+Removing temperature spikes
+2-10: Number of smoothed Tcells: 615626
+C5D smooth temperatures:
+    dust_temperature_smoothed_245.dat
+DONE
+
+Removing opacity spikes
+6-7: Number of smoothed OPAcells: 590987
+C5D smooth opacities:
+    star_opacities_smoothed_245.dat
+DONE
+
+Removing density spikes
+36-37: Number of smoothed Density cells: 74577
+C5D smooth densities:
+    dust_density_smoothed_245.inp
+DONE
+
+Loading density, opacity, wavelengths
+Change density to densityr3d = 1.0 * kappac5d * densityc5d
+Writing new radmc3d-files
+Writing opacity files for the star.
+C5D create star opacities densities:
+    dust_density_opastar_245.inp
+    dustopac_star_245.inp
+    dustkappa_opastar_245.inp
+DONE
+
+smooth_stellardata (245):
+    dust_temperature_onestar_smoothed.dat
+    star_opacities_smoothed.dat
+    dust_density_opastar.inp
+    dustkappa_opastar.inp
+    dustopac_opastar.inp
+DONE
+
+
+Running scriptpy_createdust for 245.
+
+Loading R3D grid
+Loading C5D grid properties
+Computing grain sizes and saving them in R3D-grid (245)
+Loading gas and monomer densities from CO5BOLD-files (245)
+Finished 25 per cent of the grid.
+Finished 50 per cent of the grid.
+Finished 75 per cent of the grid.
+C5D grain sizes:
+    grain_sizes_245.dat
+DONE
+
+Running: a5d.bin_grainsizes()
+a5d.bin_grainsizes():
+    grain_sizes_binned_245.dat
+DONE
+
+Running: a5d.create_dustfiles()
+
+Loading R3D grid
+Loading C5D grid properties
+Loaded grain species: ['forsterite']
+Loading grain sizes
+Available grain sizez are (um): [0.0472 0.1416 0.236  0.3303 0.4247 0.5191 0.6135 0.7079 0.8022 0.8966]
+
+Loading CO5BOLD densities and temperatures
+
+Translating C5D dust data to R3D dust data (245)
+Writing dust specie number 1:
+    forsterite, 4.720e-02um
+    Monomer mass: [2.3362e-22] g
+Finished 25 per cent of the grid.
+Finished 50 per cent of the grid.
+Finished 75 per cent of the grid.
+Writing dust specie number 1:
+    forsterite, 1.416e-01um
+    Monomer mass: [2.3362e-22] g
+Finished 25 per cent of the grid.
+Finished 50 per cent of the grid.
+Finished 75 per cent of the grid.
+Writing dust specie number 1:
+    forsterite, 2.360e-01um
+    Monomer mass: [2.3362e-22] g
+Finished 25 per cent of the grid.
+Finished 50 per cent of the grid.
+Finished 75 per cent of the grid.
+Writing dust specie number 1:
+    forsterite, 3.303e-01um
+    Monomer mass: [2.3362e-22] g
+Finished 25 per cent of the grid.
+Finished 50 per cent of the grid.
+Finished 75 per cent of the grid.
+Writing dust specie number 1:
+    forsterite, 4.247e-01um
+    Monomer mass: [2.3362e-22] g
+Finished 25 per cent of the grid.
+Finished 50 per cent of the grid.
+Finished 75 per cent of the grid.
+Writing dust specie number 1:
+    forsterite, 5.191e-01um
+    Monomer mass: [2.3362e-22] g
+Finished 25 per cent of the grid.
+Finished 50 per cent of the grid.
+Finished 75 per cent of the grid.
+Writing dust specie number 1:
+    forsterite, 6.135e-01um
+    Monomer mass: [2.3362e-22] g
+Finished 25 per cent of the grid.
+Finished 50 per cent of the grid.
+Finished 75 per cent of the grid.
+Writing dust specie number 1:
+    forsterite, 7.079e-01um
+    Monomer mass: [2.3362e-22] g
+Finished 25 per cent of the grid.
+Finished 50 per cent of the grid.
+Finished 75 per cent of the grid.
+Writing dust specie number 1:
+    forsterite, 8.022e-01um
+    Monomer mass: [2.3362e-22] g
+Finished 25 per cent of the grid.
+Finished 50 per cent of the grid.
+Finished 75 per cent of the grid.
+Writing dust specie number 1:
+    forsterite, 8.966e-01um
+    Monomer mass: [2.3362e-22] g
+Finished 25 per cent of the grid.
+Finished 50 per cent of the grid.
+Finished 75 per cent of the grid.
+C5D Dust-data:
+    dust_density_dust_245.inp
+    dust_temperature_dust_245.dat
+DONE
+
+Running: a5d.modify_dusttemperature()
+    Loading dust species 1
+    Doing dust species 1
+    Loading dust species 2
+    Doing dust species 2
+    Loading dust species 3
+    Doing dust species 3
+    Loading dust species 4
+    Doing dust species 4
+    Loading dust species 5
+    Doing dust species 5
+    Loading dust species 6
+    Doing dust species 6
+    Loading dust species 7
+    Doing dust species 7
+    Loading dust species 8
+    Doing dust species 8
+    Loading dust species 9
+    Doing dust species 9
+    Loading dust species 10
+    Doing dust species 10
+    Writing dust-file
+a5d.modify_dusttemperature
+    dust_temperature_dust_modified_245.dat
+DONE
+
+
+Running scriptpy_mergedata for 245.
+
+Merging 2 dust_density_*.inp files in ../r3dresults/st28gm06n052/245/
+merge_dustdensities:
+    ../r3dresults/st28gm06n052/245/dust_density_merged.inp
+DONE
+
+Merging 2 dust_temperature_*.dat files in ../r3dresults/st28gm06n052/245/
+merge_dustdensities:
+    ../r3dresults/st28gm06n052/245/dust_temperature.dat
+DONE
+
+ WARNING: 1.0 used for missing mass fraction of material: /home/joachim/program/optool/my_lnk_data/mg2sio4.lnk
+....................
+....................
+Writing dust opacity output to file:  dustkappa_mg2sio4_4.720e-02.inp
+ WARNING: 1.0 used for missing mass fraction of material: /home/joachim/program/optool/my_lnk_data/mg2sio4.lnk
+....................
+....................
+Writing dust opacity output to file:  dustkappa_mg2sio4_1.416e-01.inp
+ WARNING: 1.0 used for missing mass fraction of material: /home/joachim/program/optool/my_lnk_data/mg2sio4.lnk
+....................
+....................
+Writing dust opacity output to file:  dustkappa_mg2sio4_2.360e-01.inp
+ WARNING: 1.0 used for missing mass fraction of material: /home/joachim/program/optool/my_lnk_data/mg2sio4.lnk
+....................
+....................
+Writing dust opacity output to file:  dustkappa_mg2sio4_3.303e-01.inp
+ WARNING: 1.0 used for missing mass fraction of material: /home/joachim/program/optool/my_lnk_data/mg2sio4.lnk
+....................
+....................
+Writing dust opacity output to file:  dustkappa_mg2sio4_4.247e-01.inp
+ WARNING: 1.0 used for missing mass fraction of material: /home/joachim/program/optool/my_lnk_data/mg2sio4.lnk
+....................
+....................
+Writing dust opacity output to file:  dustkappa_mg2sio4_5.191e-01.inp
+ WARNING: 1.0 used for missing mass fraction of material: /home/joachim/program/optool/my_lnk_data/mg2sio4.lnk
+....................
+....................
+Writing dust opacity output to file:  dustkappa_mg2sio4_6.135e-01.inp
+ WARNING: 1.0 used for missing mass fraction of material: /home/joachim/program/optool/my_lnk_data/mg2sio4.lnk
+....................
+....................
+Writing dust opacity output to file:  dustkappa_mg2sio4_7.079e-01.inp
+ WARNING: 1.0 used for missing mass fraction of material: /home/joachim/program/optool/my_lnk_data/mg2sio4.lnk
+....................
+....................
+Writing dust opacity output to file:  dustkappa_mg2sio4_8.022e-01.inp
+ WARNING: 1.0 used for missing mass fraction of material: /home/joachim/program/optool/my_lnk_data/mg2sio4.lnk
+....................
+....................
+Writing dust opacity output to file:  dustkappa_mg2sio4_8.966e-01.inp
+dustkappa_mg2sio4_1.416e-01.inp
+dustkappa_mg2sio4_2.360e-01.inp
+dustkappa_mg2sio4_3.303e-01.inp
+dustkappa_mg2sio4_4.247e-01.inp
+dustkappa_mg2sio4_4.720e-02.inp
+dustkappa_mg2sio4_5.191e-01.inp
+dustkappa_mg2sio4_6.135e-01.inp
+dustkappa_mg2sio4_7.079e-01.inp
+dustkappa_mg2sio4_8.022e-01.inp
+dustkappa_mg2sio4_8.966e-01.inp
+
+Running scriptpy_createopacity for 245.
+
+Running create_optoolscript:
+Extracting grain sizes from ../grain_sizes_binned_245.dat
+    Grain sizes are (um):
+[0.0472 0.1416 0.236  0.3303 0.4247 0.5191 0.6135 0.7079 0.8022 0.8966]
+  ../optool_script_245.sh
+  ../dustopac_mg2sio4_245.inp
+DONE
+
+Merging 2 dustopac_*.inp files in ../r3dresults/st28gm06n052/245/
+merge_dustopac:
+    ../r3dresults/st28gm06n052/245/dustopac_merged.inp
+DONE
+
+
+List of all opacity files:
+
+All done, press enter to finish.

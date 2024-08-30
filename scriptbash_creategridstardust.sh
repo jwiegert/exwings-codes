@@ -8,60 +8,37 @@
 # $ nice -n 19 ./scriptbash_creategridstardust.sh
 #
 # Save in a logfile? Run this (create log.txt first)
-# $ ./scriptbash_creategridstardust.sh | cat > logoutput.txt cat 2> logerror.txt
+# $ ./scriptbash_creategridstardust.sh 2> logerror.txt | cat > logoutput.txt
 #
-# All of it?
-# $ nice -n 19 ./scriptbash_creategridstardust.sh | cat > logoutput.txt cat 2> logerror.txt
 
-# Define variables
+# Define variables: model and phases
 modelname=st28gm06n052
-phase0=192
-phase1=194
-phase2=196
-phase3=198
-phase4=200
-phase5=202
-phase6=204
+#modelname=st28gm06n074
+phase0=245
+
+# Basic settings (for not including dust - used scriptpy_creategridstar.sh
 include_dust=yes
 modify_Tdust=yes
 
-
 # Create R3D-grid
-#python3 scriptpy_creategrid.py $modelname $phase0 $phase1 $phase2 &
-python3 scriptpy_creategrid.py $modelname $phase0 $phase1 $phase2 $phase3 $phase4 $phase5 $phase6 &
+# One line for all phases!
+python3 scriptpy_creategrid.py $modelname $phase0 &
 
 # Extract and create temporary npy-files for the remaining steps
 #   gas & dust densities, temperatures, opacity
+# One line per phase
 python3 scriptpy_createnpy.py $modelname $phase0 $include_dust &
-python3 scriptpy_createnpy.py $modelname $phase1 $include_dust &
-python3 scriptpy_createnpy.py $modelname $phase2 $include_dust &
-python3 scriptpy_createnpy.py $modelname $phase3 $include_dust &
-python3 scriptpy_createnpy.py $modelname $phase4 $include_dust &
-python3 scriptpy_createnpy.py $modelname $phase5 $include_dust &
-python3 scriptpy_createnpy.py $modelname $phase6 $include_dust &
-
 
 wait
 
-
 # Extract and create star-files
+# One line per phase
 python3 scriptpy_createstar.py $modelname $phase0 &
-python3 scriptpy_createstar.py $modelname $phase1 &
-python3 scriptpy_createstar.py $modelname $phase2 &
-python3 scriptpy_createstar.py $modelname $phase3 &
-python3 scriptpy_createstar.py $modelname $phase4 &
-python3 scriptpy_createstar.py $modelname $phase5 &
-python3 scriptpy_createstar.py $modelname $phase6 &
 
 # Extract and create dust-files
 # modify_Tdust -> yes if normalise dust temperature to T(R)-Bladh2012
+# One line per phase
 python3 scriptpy_createdust.py $modelname $phase0 $modify_Tdust &
-python3 scriptpy_createdust.py $modelname $phase1 $modify_Tdust &
-python3 scriptpy_createdust.py $modelname $phase2 $modify_Tdust &
-python3 scriptpy_createdust.py $modelname $phase3 $modify_Tdust &
-python3 scriptpy_createdust.py $modelname $phase4 $modify_Tdust &
-python3 scriptpy_createdust.py $modelname $phase5 $modify_Tdust &
-python3 scriptpy_createdust.py $modelname $phase6 $modify_Tdust &
 
 
 wait
@@ -71,27 +48,14 @@ wait
 rm ../*.npy
 
 # and merge star and dust density and temperature data
+# One line per phase
 python3 scriptpy_mergedata.py $modelname $phase0
-python3 scriptpy_mergedata.py $modelname $phase1
-python3 scriptpy_mergedata.py $modelname $phase2
-python3 scriptpy_mergedata.py $modelname $phase3
-python3 scriptpy_mergedata.py $modelname $phase4
-python3 scriptpy_mergedata.py $modelname $phase5
-python3 scriptpy_mergedata.py $modelname $phase6
 
 
 # Create dust opacity files and merge them with gas opacity
 # One at a time to not mix the opacity files!
+# One line per phase
 python3 scriptpy_createopacity.py $modelname $phase0
-python3 scriptpy_createopacity.py $modelname $phase1
-python3 scriptpy_createopacity.py $modelname $phase2
-python3 scriptpy_createopacity.py $modelname $phase3
-python3 scriptpy_createopacity.py $modelname $phase4
-python3 scriptpy_createopacity.py $modelname $phase5
-python3 scriptpy_createopacity.py $modelname $phase6
-
-# Write r3d-runscripts
-#python3 scriptpy_write_r3d_runscripts.py $modelname $phase0 $phase1 $phase2
 
 wait
 echo 'All done, press enter to finish.'
