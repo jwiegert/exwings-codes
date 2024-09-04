@@ -2728,6 +2728,7 @@ def compute_period(
     Input list or array with some signal and time axis and get a main period
     and a plot of the power spectrum of the signal.
     """
+    from scipy.signal import find_peaks
 
     # Normalise signal amplitude to zero
     signal_zeroed = signal - np.mean(signal)
@@ -2742,6 +2743,7 @@ def compute_period(
     # And corresponding periods
     delta_timestep = (timeaxis[-1] - timeaxis[0])/Ntimesteps
     period_axis = 1/freqs * delta_timestep
+    peakcoords, _ = find_peaks(signal_fft)
     main_period = period_axis[np.argmax(signal_fft)]
 
     # Plot to check
