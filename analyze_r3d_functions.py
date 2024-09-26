@@ -2722,7 +2722,7 @@ def compute_period(
         signal:list=[0,1,0,-1,0,1,0,-1,0,1,0,-1,0],
         timeaxis:list=[0,1,2,3,4,5,6,7,8,9,10,11,12],
         time_unit:str='yrs',
-        plot_spec:str='y'
+        plot_spec:str='n'
     ):
     """
     Input list or array with some signal and time axis and get a main period
@@ -2744,13 +2744,16 @@ def compute_period(
     delta_timestep = (timeaxis[-1] - timeaxis[0])/Ntimesteps
     period_axis = 1/freqs * delta_timestep
     peakcoords, _ = find_peaks(signal_fft)
-    main_period = period_axis[np.argmax(signal_fft)]
+    #main_period = period_axis[np.argmax(signal_fft)]
+    periods = []
+    for peakcoord in peakcoords:
+        periods.append(period_axis[peakcoord])
 
     # Plot to check
     if plot_spec == 'y':
         plt.figure(num='Fourier power spectrum')
         plt.plot(period_axis,signal_fft)
-        print(f'Main periodicity {main_period} {time_unit}')
+        #print(f'Main periodicity {periods[0]} {time_unit}')
 
-    return main_period
+    return periods
 
