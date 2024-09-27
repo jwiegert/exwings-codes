@@ -83,6 +83,10 @@ hplanck = 6.626068e-34 # Planck constant in Si
 #    distance:float=1
 # )
 #
+# extract_dustmasses(
+#   TODO
+# )
+#
 # Functions to set Plot-settings
 # ------------------------------
 #
@@ -875,6 +879,46 @@ def load_images(
 
     return image2d,image2dlog,totalflux,axisplot
 
+
+# Extract total dust mass from r3d-log files
+def extract_dustmasses(
+        log_files = [],
+        Nspecies = 1,
+        first_species = 1
+    ):
+    """
+    Extract and sum dust masses from saved r3d-log file's headers
+
+    ARGUMENTS
+      log_files: list of file names of r3d-log files
+      Nspecies: total number of species in log file
+      first_species: numbering on the first dust species to include in sum
+    
+    RETURNS
+      Prints file name and sum of specified dust species:
+      first_species to Nspecies
+    """
+    for file in log_files:
+        # Reset dust mass
+        totalmass = 0
+
+        # Load beginning of log-file
+        with open(file, 'r') as flog:
+            # Loop through beginning of log file
+            # Line 37 contains first dust species
+            for nline,line in enumerate(flog.readlines()):
+                if nline >= 36+first_species and nline <= 36+Nspecies:
+
+                    # Extract lines with dust masses
+                    if line.split()[:4] == ['Dust', 'mass', 'in', 'species']:
+                        # Dust mass is 6th "word of the line"
+                        masses = float(line.split()[6])
+                        totalmass += masses
+
+                if nline > 36+Nspecies:
+                    break
+        # Output total mass and phase number
+        print(f'{file}    {totalmass}')
 
 # ------------------------------------------------------------ #
 # Functions to set Plot-settings
