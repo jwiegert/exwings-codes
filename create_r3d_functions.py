@@ -352,21 +352,19 @@ def create_grid(
     the central of the grid. A maximum of four (4) levels of 
     refinements is allowed in this version of the function.
     
-    INPUTS
-    ------
-    gridedge: total size of the grid side (in AU)
-    nxyz: number of base cells along one side of the whole grid [even number, int]
-    refinementlist: list of radial distances in AU to each level of refinement [float,float], no more than 4 numbers!
-    inrefine: distance in AU between refinements inside the star
-    savegrid: default set to 'y' [str]. If not 'y', then no grid_distances.csv or grid_cellsizes.csv will be saved. These are useful for analysing inputs and outputs of R3D!
+    ARGUMENTS
+      gridedge: total size of the grid side (in AU)
+      nxyz: number of base cells along one side of the whole grid [even number, int]
+      refinementlist: list of radial distances in AU to each level of refinement [float,float], no more than 4 numbers!
+      inrefine: distance in AU to outmost of inner reduction in grid refinements.
+      savegrid: default set to 'y' [str]. If not 'y', then no grid_distances.csv or grid_cellsizes.csv will be saved. These are useful for analysing inputs and outputs of R3D!
 
-    OUTPUTS
-    -------
-    amr_grid.inp : grid file for R3D-simulations
-    OPTIONAL
-    grid_distances.csv : array of radial, x, y, and z distances to each grid cell in cm
-    grid_cellsizes.csv : array of sizes of each grid cell in cm
-    (two last files have same order as in dust_density.inp and dust_temperature)
+    RETURNS
+      amr_grid.inp : grid file for R3D-simulations
+      OPTIONAL
+      grid_distances.csv : array of radial, x, y, and z distances to each grid cell in cm
+      grid_cellsizes.csv : array of sizes of each grid cell in cm
+      (two last files have same order as in dust_density.inp and dust_temperature)
     """
 
     # Basic definitions
@@ -391,16 +389,16 @@ def create_grid(
         gridedge *= nxyz/oldnxyz
     
     # Calculate inner refinements around centrum of grid
-    # Dive up given inrefine-radius in equal portions and list distances
+    # Divide up given inrefine-radius in equal portions and list distances
     innerrefinements = [(nref+1)*inrefine/nrefines for nref in range(nrefines)]
 
     # Info text
-    print('\n    Creating amr_grid with octree refinement.')
-    print(f'Final length of total side of whole grid: {gridedge} AU')
-    print(f'Number of base cells along one side of the grid: {nxyz}')
-    print(f'Distances to outer refinement limits from centrum:\n    {refinementlist} AU')
-    print(f'Distances to inner refinement limits from centrum:\n    {innerrefinements} AU')
-    print(f'Number refinements: {nrefines}\n')
+    print('\nCreating amr_grid with octree refinement.')
+    print(f'  Final length of total side of whole grid: {gridedge} AU')
+    print(f'  Number of base cells along one side of the grid: {nxyz}')
+    print(f'  Distances to outer refinement limits from centrum:\n    {refinementlist} AU')
+    print(f'  Distances to inner refinement limits from centrum:\n    {innerrefinements} AU')
+    print(f'  Number refinements: {nrefines}\n')
 
     # Change units to cm
     gridedge *= AUcm
@@ -422,16 +420,16 @@ def create_grid(
 
     # Base cube size
     basecubesize   = gridcourners[1] - gridcourners[0]
-    print(f'Size of base cell: {basecubesize/AUcm} AU')
+    print(f'  Size of base cell: {basecubesize/AUcm} AU')
 
     # Children cube sizes
     smallcubesize = []
     smallcubesize.append(0.5 * basecubesize)
-    print(f'Child cell size 1: {smallcubesize[0]/AUcm} AU')
+    print(f'  Child cell size 1: {smallcubesize[0]/AUcm} AU')
 
     for nn in range(nrefines-1):
         smallcubesize.append(0.5 * smallcubesize[nn])
-        print(f'Child cell size {nn+2}: {smallcubesize[nn+1]/AUcm} AU')
+        print(f'  Child cell size {nn+2}: {smallcubesize[nn+1]/AUcm} AU')
 
     # Children grid coordinate corrections (see R3D manual for the matrix 
     # for the order of child cells inside a parent cell).
@@ -634,7 +632,7 @@ def create_grid(
                     counter += 8
 
     # Print amr_grid
-    print('Writing amr_grid.inp')
+    print('  Writing amr_grid.inp')
 
     nbranch = int(np.size(refinearraysave))
     nleafs = int(nbranch - (nbranch - nxyz*nxyz*nxyz) / 8)
@@ -664,7 +662,7 @@ def create_grid(
     
     # Print grid_distances.csv and grid_cellsizes.csv
     if savegrid == True:
-        print('Writing grid_distances.csv and grid_cellsizes.csv\n(Not necessary for Radmc3d, but useful for pre/postprocessing of your model. They have the same order as dust_densities.inp)')
+        print('  Writing grid_distances.csv and grid_cellsizes.csv\n  (Not necessary for Radmc3d, but useful for pre/postprocessing of your model. They have the same order as dust_densities.inp)')
 
         # Declare an array for the distances to the centre of each cell
         # Radial and x,y,z distances
@@ -803,7 +801,7 @@ def create_grid(
                 f.write(f'{gridsize}\n')
     
     # Print grid_info-file, text file with summary o grid info in readable form
-    print('Writing grid_info.txt')
+    print('  Writing grid_info.txt')
     with open('../grid_info.txt', 'w') as f:
         f.writelines([
             f'Information to amr_grid created at {dt_string}\n\n',
@@ -1412,50 +1410,51 @@ def create_duststar(
 
 
 
-
-# TODO
 # Function to create proof-of-concept, sphere with rho ~ r^-2 and agrain ~ r^k (k>0, see Darwin-papers)
-
 def create_spheredensity(
-
         optconstlist:list=['mg2sio4'],
         agrainlist:list=[0.1],
         totaldustmass:float=1.989e33,
         densitypower:float=-2,
         inradius:float=3,
-        outradius:float=100
+        outradius:float=100,
+        outputpath:str='../'
     ):
     """
+    Needs access to following files:
+    - amr_grid.inp
+    - grid_distances.csv
+    - grid_cellsizes.csv
 
-    INPUTS
-    ------
-    total mass of dust cloud in gram: default: 1Msun
-    radial density parameter: rho ~ r^k
-    inner radius (in au)
-    outer radius (in au)
-    grainsizelist, agrainlist, list of all grainsizes in um
-    optconstlist, list of optical constants-names
+    ARGUMENTS
+      total mass of dust cloud in gram: default: 1Msun
+      radial density parameter: rho ~ r^k
+      inner radius (in au)
+      outer radius (in au)
+      grainsizelist, agrainlist, list of all grainsizes in um
+      optconstlist, list of optical constants-names
     """
+    print('\nRunning create_spheredensity():')
 
     # Change units to cgs
     inradius *= AUcm
     outradius *= AUcm
 
-
-    
     # Load grid distances (radial, x,y,z distances)
+    print('  Loading grid distances')
     griddistances = a3d.load_griddistances(
-        gridpath='../r3dsims/grid_distances.csv',
-        amrpath='../r3dsims/amr_grid.inp'
+        gridpath=outputpath+'grid_distances.csv',
+        amrpath=outputpath+'amr_grid.inp'
     )
     # check if outradius is smaller than larges radial griddistances, if not, set outradius to max griddistance
     if outradius > np.max(griddistances[:,0]):
         outradius = np.max(griddistances[:,0])
     
     # Load grid cell sizes
+    print('  Loading grid cell sizes')
     cellsizes = a3d.load_cellsizes(
-        sizepath='../r3dsims/grid_cellsizes.csv',
-        amrpath='../r3dsims/amr_grid.inp'
+        sizepath=outputpath+'grid_cellsizes.csv',
+        amrpath=outputpath+'amr_grid.inp'
     )
     # Note: both returns np.arrays
     nleafs = np.size(cellsizes)
@@ -1474,7 +1473,7 @@ def create_spheredensity(
     # Compute normalization density (ie zero density)
     # TODO this is the same for all dust species, allow for different morphs? Ie different
     # radii and radial dependence later?
-    # TODO this divides the zero density equally between dust species and grain sizes
+    # NOTE this divides the zero density equally between dust species and grain sizes
     # The r^(2+inputvalue) is due to spherical coordinates!
     radiusintegral = s.integrate.quad(lambda x: x**(2+densitypower), inradius, outradius)
     zerodensity = totaldustmass / nrspec * inradius**densitypower / (4.*np.pi * radiusintegral[0])
@@ -1483,7 +1482,7 @@ def create_spheredensity(
     # Create density distribution
     # ns, species, choses grain sizes and chemical compositions
 
-    print('Writing dust_density.inp')
+    print('  Writing dust_density.inp')
 
     totaldustmass = 0
     densitymatrix = np.zeros(nrspec*nleafs)
@@ -1504,16 +1503,13 @@ def create_spheredensity(
                 grainsize = min(agrainlist, key=lambda x:abs(x-(agrainmin*griddistance/inradius)))
                 ngrain = np.where(np.array(agrainlist) == grainsize)[0][0]
 
-                print(agrainmin*griddistance/inradius,grainsize,ngrain)
+                #print(agrainmin*griddistance/inradius,grainsize,ngrain)
 
                 # Allocate densities to bins of grain sizes, and for each grain chemical specie
                 densitymatrix[nn + ngrain*nleafs + ns*nleafs*Nagrain] = zerodensity * (griddistance/inradius)**densitypower
 
-
                 # Compute real total dust mass
                 totaldustmass += densitymatrix[nn + ngrain*nleafs + ns*nleafs*Nagrain]*cellsizes[nn]**3
-
-
 
     # Open density file
     with open('../dust_density.inp','w') as f:
@@ -1522,26 +1518,15 @@ def create_spheredensity(
         f.write(f'1\n{nleafs}\n{nrspec}\n')
 
         # Add densitymatrixloop here
+        for density in densitymatrix:
+            f.write(f'{density}\n')
 
-    print('Finished dust_density.inp')
-    print(f'Total dust mass is {totaldustmass} g ({totaldustmass/Msol} Msol)')
+    os.system(f'mv ../dust_density.inp {outputpath}')
 
-    
-
-
-    # For each radial distance, round grainsize to nearest 1/10 of max grainsize.
-    # No, round to the nearest value in the grainsizelist that should be inputed also
-
-
-    # Output also the REAL total dust mass with the help of cellsizes array since
-    # the sphere might well be cut in the outer parts of the grid
-    # also because the sphere is in a cubic grid
-
-
-
+    print('  Finished dust_density.inp, moved to outputpath')
+    print(f'  Total dust mass is {totaldustmass} g ({totaldustmass/Msol} Msol)')
     print('create_spheredensity: Done')
 
-    # TODO create opacity files directly here?
 
 # ------------------------------------------------------------ #
 # Functions that combines different dust-specie files

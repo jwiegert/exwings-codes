@@ -510,23 +510,23 @@ def load_dustdensity(
         numb_specie:int = 1
     ):
     """
-    Load and extracts densities of one dust specie of dust_density.inp
+    Load and extracts densities of one dust species of dust_density.inp
 
     INPUT
     -----
     path: string with path and filename of density file
-    numb_specie: integer with number of the specie you want to load (default=1)
+    numb_specie: integer with number of the species you want to load (default=1)
     
     OUTPUT
     ------
     Ncells: Number of cells in grid (nleafs)
     Nspec: Number of species in dust_density file
-    dust_densities: np.array containing densities of all cells for specie numb_specie
+    dust_densities: np.array containing densities of all cells for species numb_specie
 
     """
 
     if numb_specie == 0:
-        print(f'ERROR numb of specie cant be 0')
+        print(f'ERROR number of species cant be 0')
     else:
         # Read header
         with open(path,'r') as f:
@@ -540,12 +540,12 @@ def load_dustdensity(
                 if nn == 2:
                     Nspecies = int(line)
 
-        # Check that the chosen number of specie exists
+        # Check that the chosen number of species exists
         if numb_specie > Nspecies:
-            print('\nERROR\nThis dust specie doesnt exist.\n')
+            print('\nERROR\nThis dust species doesnt exist.\n')
 
         else:
-            # Reduce specie number by 1 (index starts at 0)
+            # Reduce species number by 1 (index starts at 0)
             numb_specie -= 1
 
             # Create density np.array
@@ -705,7 +705,7 @@ def load_temperature(
 
     ARGUMENTS
       path: string with path and filename of temperature file
-      nspecie: number of specie you want to load
+      nspecie: number of species you want to load
     
     RETURNS
       Ncells: Number of cells in grid (nleafs)
@@ -725,12 +725,12 @@ def load_temperature(
             if nn == 2:
                 Nspecies = int(line)
     
-    # Check that specie number is correct
+    # Check that species number is correct
     if numb_specie <= Nspecies and numb_specie > 0:
         # Create density np.array
         dust_temperatures = np.zeros(Ncells)
 
-        # Extract dust densities (reduce specie number by 1, since python starts at index=0)
+        # Extract dust densities (reduce species number by 1, since python starts at index=0)
         ncounter = 0
         numb_specie -= 1
 
@@ -985,11 +985,10 @@ def plot_grid(
     """
     Loads and plots the current grid.
 
-    Inputs
-    ------
-    gridpath: path to grid_distances.csv
-    amrpath: path to amr_grid.inp
-    nbins: number of bins for radial histogram plot
+    ARGUMENTS
+      gridpath: path to grid_distances.csv
+      amrpath: path to amr_grid.inp
+      nbins: number of bins for radial histogram plot
     """
 
     # Load data
@@ -1061,14 +1060,14 @@ def plot_onedensity_radius(
     Plots one figure with radial density distribution of one dust species of a 
     dust_density-file of your choice.
 
-    INPUT
-    density_path: path to density.inp-file
-    grid_path: path to grid_distances.csv'
-    amr_path: path to amr_grid.inp
-    numb_specie: number of the dust specie you want to plot
+    ARGUMENTS
+      density_path: path to density.inp-file
+      grid_path: path to grid_distances.csv'
+      amr_path: path to amr_grid.inp
+      numb_specie: number of the dust species you want to plot
 
-    OUTPUT
-    Shows figure
+    RETURNS
+      Shows figure
     """
 
     # Load griddistances
@@ -1201,7 +1200,7 @@ def plot_alldensity_radius(
         ax.ravel()[nn].set(
             ylabel=r'Density (g cm$^{-3}$)',
             xlabel=r'Distance (AU)',
-            title=f'Dust specie {nn+1}'
+            title=f'Dust species {nn+1}'
         )
     fig.tight_layout()
     fig.show()
@@ -1347,7 +1346,7 @@ def plot_alltemperature_radius(
         ax2.ravel()[nn].set(
             ylabel=r'Cell temperature (K)',
             xlabel=r'Radius (AU)',
-            title=f'Dust specie {nn+1}'
+            title=f'Dust species {nn+1}'
         )
     fig2.tight_layout()
     return fig1, fig2
@@ -1586,7 +1585,7 @@ def plot_allkappa(
     if path[-1] != '/':
         path += '/'
 
-    # Extract specie names from dustopac-file
+    # Extract species names from dustopac-file
     counter = 5
     specie_names = []
     with open(f'{path}dustopac.inp', 'r') as f:
@@ -1675,7 +1674,7 @@ def plot_allkappa(
     if max(Nkappa) > 3:
         ax[3].set(yscale='linear')
 
-    # Change specie name strings:
+    # Change species name strings:
     grainsizes_legend = []
     for grainsize in specie_names:
         # I use the exponent in my rounding to make sure that the decimals are correct
@@ -2141,7 +2140,7 @@ def plot_opticalthick(
         # Save maximum opacity of each specie
         kappa = np.max(np.array(kappadata[0] + kappadata[1]))
 
-        # Create an Ncells long array with the opacities of each specie at correct cell index
+        # Create an Ncells long array with the opacities of each species at correct cell index
         # For this I can use the densities (where they are not 0)
         specieindeces.append(np.where(densities[:,nspecie] > 0)[0])
         
