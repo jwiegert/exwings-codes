@@ -236,7 +236,6 @@ def write_r3d_runscripts(
     if Nscripts > 40:
         raise ValueError('ERROR: Nscripts is too large! Youll fill your folders with files!')
 
-
     # Create SED-command-strings
     sedcommands = []
     for sedangle in sed_angles_list:
@@ -254,8 +253,6 @@ def write_r3d_runscripts(
 
     Nseds_perfile = int(len(sed_angles_list)/Nscripts)
     Nimages_perfile = int(len(image_angles_list)*len(image_wavelength_list)/Nscripts)
-
-
 
     # Create runcommand files with a shebang and add sed and image command-lines
     list_of_files = []
@@ -285,7 +282,6 @@ def write_r3d_runscripts(
 
             # Also save file names
             list_of_files.append(f'runcommand_{phase}_{nfile+1}.sh')
-
 
     # Add possible remaining commands in an additional file
     if Nseds_perfile != len(sed_angles_list)/Nscripts or \
@@ -331,7 +327,6 @@ def write_r3d_runscripts(
 
     # And make them all executable
     os.system(f'chmod +x {path}run*.sh')
-
     print(f'Finished writing {len(list_of_files)} run-r3d-scripts\n')
 
 

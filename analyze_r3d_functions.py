@@ -2284,6 +2284,8 @@ def compute_sed_luminosity(
     ):
     """
     Insert a spectrum.out from r3d and get the bolometric luminosity in Watt
+    Cuts wavelength grid below 0.3 um because of some strange UV-bumps. Doesnt
+    change the lum much however.
 
     ARGUMENTS
       path = path to spectrum-file including file name
@@ -2294,7 +2296,13 @@ def compute_sed_luminosity(
     """
 
     # Load spectrum
-    wavelengths,spectrum = load_spectrum(path,1)
+    wavelengths_temp,spectrum_temp = load_spectrum(path,1)
+    wavelengths_temp = np.array(wavelengths_temp)
+    spectrum_temp = np.array(spectrum_temp)
+    # Restric wavelength range from 0.3um due to UV-bump in some
+    # spectra
+    wavelengths = wavelengths_temp[np.where(wavelengths_temp >= 0.3)[0]]
+    spectrum = spectrum_temp[np.where(wavelengths_temp >= 0.3)[0]]
     nwave = len(wavelengths)
 
     # Integrate the SED (using trapezoidal method, and change units to SI units)
