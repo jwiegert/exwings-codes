@@ -203,7 +203,7 @@ def extract_averageseds(
 
                 # Save fluxes
                 fsed.write(f'{wavelength[nwave]}    {flux_average}    {flux_std}    {flux_max}    {flux_min}\n')
-        return f'extract_averageseds: written file {path}average_sed.dat'
+        return f'Extract_averageseds: written file {path}average_sed.dat'
 
     else:
         # Just return arrays with data

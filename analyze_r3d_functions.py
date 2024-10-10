@@ -2791,14 +2791,14 @@ def compute_period(
     Ntimesteps = len(timeaxis)
     freqs = np.fft.fftfreq(Ntimesteps)[:len(signal_fft)]
 
-    # And corresponding periods
+    # And two main periods
     delta_timestep = (timeaxis[-1] - timeaxis[0])/Ntimesteps
     period_axis = 1/freqs * delta_timestep
-    peakcoords, _ = find_peaks(signal_fft)
+    peakcoords = np.argpartition(signal_fft, -2)[-3:]
+    periods = period_axis[peakcoords[::-1]]
+
+    # Save for emergencies
     #main_period = period_axis[np.argmax(signal_fft)]
-    periods = []
-    for peakcoord in peakcoords:
-        periods.append(period_axis[peakcoord])
 
     # Plot to check
     if plot_spec == 'y':
