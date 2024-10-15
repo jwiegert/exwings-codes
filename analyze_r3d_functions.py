@@ -2772,7 +2772,7 @@ def compute_blackbody_freq(
 def compute_period(
         signal:list=[0,1,0,-1,0,1,0,-1,0,1,0,-1,0],
         timeaxis:list=[0,1,2,3,4,5,6,7,8,9,10,11,12],
-        time_unit:str='yrs',
+        #time_unit:str='yrs',
         plot_spec:str='n'
     ):
     """
@@ -2794,7 +2794,7 @@ def compute_period(
     # And two main periods
     delta_timestep = (timeaxis[-1] - timeaxis[0])/Ntimesteps
     period_axis = 1/freqs * delta_timestep
-    peakcoords = np.argpartition(signal_fft, -2)[-3:]
+    peakcoords = np.argpartition(signal_fft, -2)[-4:]
     periods = period_axis[peakcoords[::-1]]
 
     # Save for emergencies
