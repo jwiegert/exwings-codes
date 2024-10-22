@@ -20,6 +20,7 @@ Rsol = 6.955e10 # cm
 #
 # plot_allseds()
 # extract_averageseds()
+# extract_sourcesize()
 #
 # TODO
 # dustmass(time)-plotter
@@ -221,3 +222,108 @@ def extract_averageseds(
             flux_max[nwave] = np.max(allfluxes[nwave,:])
 
         return flux_average,flux_std,flux_min,flux_max
+
+
+# Extract radii of "main source" at included snapshots and at various
+# angles
+def extract_sourcesize(
+        path:str = '',
+        phases:list = [],
+        angles:list = [
+            'i000_phi000',
+            'i090_phi000',
+            'i090_phi090',
+            'i090_phi270',
+            'i180_phi000',
+            'i270_phi000',
+        ],
+        wavelength:str = '01',
+        relativelimit:float = 0.12,
+        save_datafile:str = 'y',
+    ):
+    """
+    Extracts a corresponding source radius (in au) based on the total area of all
+    pixels that contain a flux density above a certain fraction of the maximum
+    flux density of the image.
+
+    ARGUMENTS
+      path: a string to the path to your model data
+      phases: list with strings to the subfolder (snapshotfolders) of your model
+      angles: list of angles to investigate, see default setting for syntax
+              'i000_phi000'
+      wavelength: a string with wavelength (um) of image to look at, syntax: '01' for 1um
+      relativelimit: a float with fraction of image max flux to base area on
+                     Default value (0.12) is based on tests with only star of models
+                     st28gm06n052, st28gm06n074, st28gm06n075
+      save_datafile: string, 'y' or 'n' for yes or no on saving a dat-file with all output
+
+    RETURNS
+      stellar_radius_average: len(phases)-long array with angle-averaged radii in au
+      stellar_radii: len(phases)*len(angles)-shaped array with all radii for all phases
+                     and angles.
+      (optional): dat file with all these data named '{path}source_radius_{wavelength}um.dat'
+    """
+
+    # Extract some number
+    Nphases = len(phases)
+    Nangles = len(angles)
+
+    # Declare Radius(time and angle)-array
+    stellar_radii = np.zeros((Nphases,Nangles))
+    stellar_radius_average = np.zeros(Nphases)
+
+
+    # Loop through angles and snapshots
+    for nphase,phase in enumerate(phases):
+        for nangle,angle in enumerate(angles):
+            #
+            # Load image (image2d is in Jy/asec2)
+            image2d,image2dlog,flux,axisplot = a3d.load_images(
+                path=f'{path}/{phase}/',
+                image=f'image_{angle}_{wavelength}um.out',
+                distance=1
+            )
+            # Extract props and compute distance-dependant scales
+            Npix = np.shape(image2d)[0]              # Number of pixels along one side
+            Npixhalf = int(Npix*0.5)                 # Half size
+            auperpixel = np.abs(2*axisplot[0]/Npix)  # Number of au per pixel
+            fluxlimit = relativelimit*image2d.max()  # Flux density limit of source area
+
+            # Loop through image and count pixels >fluxlimit
+            Npixels = 0
+            for nx in range(Npix):
+                for ny in range(Npix):
+                    if image2d[ny,nx] >= fluxlimit:
+                        Npixels += 1
+
+            # Compute corresponding radius at each angle and snapshot
+            stellar_radii[nphase,nangle] = np.sqrt(
+                auperpixel*auperpixel*Npixels/np.pi
+            )
+        # Extract angle-averaged radius for each snapshot
+        stellar_radius_average[nphase] = np.mean(stellar_radii[nphase,:])
+
+    # Save data if requested
+    if save_datafile == 'y':
+        with open(f'{path}source_radius_{wavelength}um.dat', 'w') as fradius:
+            #
+            # Write header (and all included angles) 
+            fradius.write(f'# Average radius of main source at {wavelength} in au\n')
+            fradius.write('# Snapshot  R_average')
+            for angle in angles:
+                fradius.write(f'   R_{angle}')
+            fradius.write('\n#\n')
+            #
+            # Write radii for each time
+            for nphase,phase in enumerate(phases):
+                fradius.write(f'  {phase}       {stellar_radius_average[nphase]:.5f}')
+                # And included angle
+                for nangle,angle in enumerate(angles):
+                    fradius.write(f'     {stellar_radii[nphase,nangle]:.5f}    ')
+                # Add new line at each snapshotline
+                fradius.write('\n')
+        print(f'extract_sourcesize: Done\n  Output written to {path}source_radius_{wavelength}um.dat')
+    else:
+        # Else just return data
+        return stellar_radius_average, stellar_radii
+
