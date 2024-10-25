@@ -327,3 +327,103 @@ def extract_sourcesize(
         # Else just return data
         return stellar_radius_average, stellar_radii
 
+
+# Extract temperatures of a shell around the radius listed in the files created by
+# extract_sourcesize().
+def extract_surfacetemp(
+        path_model:str='../r3dresults/',
+        path_radii:str='../r3dresults/source_radius_01um.dat',
+    ):
+    """
+    TODO write some info, tar alla snapshots i radius-filen o kör på
+    Tar bara temperaturen från stjärnan! viktigt!
+    
+    ARGUMENTS
+      path_radii: string with path to folder containing radius as func of time
+      path_model: string to folder containing all snapshot data
+    
+    RETURNS
+      surface_temperature.dat: file with average temperatures of shell at Radius
+                               for each included snapshot/phasenumber
+    """
+    print('Running atf.extract_surfacetemp()')
+
+    # Automatically add / to end of path if it's missing
+    if path_model[-1] != '/':
+        path_model += '/'
+
+    # Extract modelname from model path
+    modelname = path_model.split('/')[-2]
+
+    # Load radii and phase numbers
+    source_radii = np.loadtxt(path_radii)
+    source_radius_au = source_radii[:,1]
+    source_radius_cm = source_radii[:,1] * AUcm
+    phases = source_radii[:,0]
+
+    # Load grid cell sizes and positions
+    nbasecells,gridside,nrefinements,nleafs,cellsizes,gridref_in,gridref_out = a3d.load_grid_information(
+        gridinfo_path=f'{path_model}/grid_info.txt'
+    )
+    # put all refinements limits and courner of box in one array
+    gridref = np.concatenate((gridref_in,gridref_out[::-1],[np.sqrt(3)*0.5*gridside]))
+
+    # Load radial grid distances to all cells
+    griddistances = a3d.load_griddistances(
+        gridpath=f'{path_model}/grid_distances.csv',
+        amrpath=f'{path_model}/amr_grid.inp'
+    )
+    griddistances = griddistances[:,0]
+
+    # Form an array to save temperatures in
+    surface_temperatures = np.zeros(len(phases))
+
+    # TODO
+    # check through below!
+    for nphase,phase in enumerate(phases):
+        # Remove float-status on phase-number to work with folder names
+        phase = int(phase)
+
+        # Load cellsize of cells at this phase's radius
+        refindex = np.argwhere(gridref >= source_radius_au[nphase])[0][0]-1
+
+        if refindex == -1 or refindex == 7:
+            # Base cells are in grid centrum and outside the refinements
+            cellsize = cellsizes[0]
+        elif refindex < 4:
+            # Inner refinements (within to surface of star)
+            cellsize = cellsizes[refindex+1]
+        elif refindex > 3 and refindex < 7:
+            # Outer refinements (outside the star)
+            refindex = 2-refindex
+            cellsize = cellsizes[refindex]
+
+        # Load indeces of grid cells around Rstar plus/minus cellsize, in cm
+        cellsize *= AUcm
+        radius_range_cm = [
+            source_radius_cm[nphase]-cellsize,
+            source_radius_cm[nphase]+cellsize,
+        ]
+        shellindeces = np.argwhere(
+            (griddistances >= radius_range_cm[0]) & (griddistances <= radius_range_cm[1])
+        )
+        if len(shellindeces) == 0:
+            raise ValueError('  ERROR: no shellindeces found!')
+
+        # Extract all temperatures at this radius (with these indeces) and save average
+        # temperature for each snapshot
+        Ncells,Nspecies,temperatures = a3d.load_temperature(
+            path=f'{path_model}/{phase}/dust_temperature_onestar_smoothed.dat'
+        )
+        surface_temperatures[nphase] = np.mean(temperatures[shellindeces])
+
+    # Write dat-file with temperatures
+    with open(f'{path_model}/surface_temperature.dat', 'w') as ft:
+        # Write header
+        ft.write(f'# Approximate stellar surface temperature as based on model {modelname}\n')
+        #
+        # Write data
+        for phase,Tsurface in zip(phases,surface_temperatures):
+            ft.write(f'    {phase}    {Tsurface:.3f}\n')
+
+    print('Extract approximate surface temperature: Done')
