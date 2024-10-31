@@ -378,8 +378,7 @@ def extract_surfacetemp(
     # Form an array to save temperatures in
     surface_temperatures = np.zeros(len(phases))
 
-    # TODO
-    # check through below!
+    # Loop through all snapshots
     for nphase,phase in enumerate(phases):
         # Remove float-status on phase-number to work with folder names
         phase = int(phase)
@@ -424,6 +423,6 @@ def extract_surfacetemp(
         #
         # Write data
         for phase,Tsurface in zip(phases,surface_temperatures):
-            ft.write(f'    {phase}    {Tsurface:.3f}\n')
+            ft.write(f'    {int(phase)}    {Tsurface:.3f}\n')
 
     print('Extract approximate surface temperature: Done')
