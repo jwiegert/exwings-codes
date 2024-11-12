@@ -73,32 +73,13 @@ def plot_allseds(
     ax.set_xlabel(r'Wavelength ($\mu$m)',fontsize=18)
     ax.tick_params(axis='both', which='major', labelsize=15)
 
-    # Extract length of wavelengthgrid
-    wavelength, fluxes = a3d.load_spectrum(
-        path=f'{path}{phases[0]}/spectrum_{angles[0]}.out'
-    )
-    Nwave = len(wavelength)
-
-    # And total number of SEDs
-    Nseds = len(phases) * len(angles)
-
-    # Array with all SEDs
-    allfluxes = np.zeros((Nwave,Nseds))
-
-    # Pre-set SED number counter
-    sedcounter = -1
-
-
     for phase in phases:
         for angle in angles:
-            sedcounter += 1
 
             # Loop over all SEDs
             wavelength, fluxes = a3d.load_spectrum(
                 path=f'{path}{phase}/spectrum_{angle}.out'
             )
-            # Extract and save all flux densities at each wavelength
-            allfluxes[:,sedcounter] = fluxes
             
             # Plot all SEDs as grey
             ax.plot(wavelength,fluxes,'lightgrey')
