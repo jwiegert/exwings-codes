@@ -290,6 +290,7 @@ def extract_sourcesize(
             #
             # Write header (and all included angles) 
             fradius.write(f'# Average radius of main source at {wavelength} in au\n')
+            fradius.write(f'# Using a relative flux limit of {relativelimit}*image_maxflux.')
             fradius.write('# Snapshot  R_average')
             for angle in angles:
                 fradius.write(f'   R_{angle}')
