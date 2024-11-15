@@ -219,7 +219,6 @@ def extract_sourcesize(
             'i270_phi000',
         ],
         wavelength:str = '01',
-        relativelimit:float = 0.12,
         save_datafile:str = 'y',
     ):
     """
@@ -253,6 +252,15 @@ def extract_sourcesize(
     stellar_radii = np.zeros((Nphases,Nangles))
     stellar_radius_average = np.zeros(Nphases)
 
+    # Define relative limits depending on wavelength-choise
+    if int(wavelength) == 1:
+        relativelimit = 0.12
+    elif int(wavelength) == 2:
+        relativelimit = 0.31
+    elif int(wavelength) == 10:
+        relativelimit = 0.59
+    else:
+        raise ValueError('  ERROR: wrong wavelength, only 1, 2, and 10 are available.')
 
     # Loop through angles and snapshots
     for nphase,phase in enumerate(phases):
@@ -290,7 +298,7 @@ def extract_sourcesize(
             #
             # Write header (and all included angles) 
             fradius.write(f'# Average radius of main source at {wavelength} in au\n')
-            fradius.write(f'# Using a relative flux limit of {relativelimit}*image_maxflux.')
+            fradius.write(f'# Using a relative flux limit of {relativelimit}*image_maxflux.\n')
             fradius.write('# Snapshot  R_average')
             for angle in angles:
                 fradius.write(f'   R_{angle}')
