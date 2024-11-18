@@ -243,6 +243,9 @@ def extract_sourcesize(
                      and angles.
       (optional): dat file with all these data named '{path}source_radius_{wavelength}um.dat'
     """
+    # Automatically add / to end of path if it's missing
+    if path[-1] != '/':
+        path += '/'
 
     # Extract some number
     Nphases = len(phases)
@@ -251,6 +254,31 @@ def extract_sourcesize(
     # Declare Radius(time and angle)-array
     stellar_radii = np.zeros((Nphases,Nangles))
     stellar_radius_average = np.zeros(Nphases)
+
+    # TODO
+    # load average_sed-file
+    # extract average flux densities of this wavelength
+    # re-calibrate! to a fluxlimit-number baased on that average-average
+
+
+    # NOTE
+    # nu får jag tänka lite, är detta korrekt? fluxgränsen måste väl bestämmas av
+    # nodust-grejen o sen användas på den med stoftet
+
+
+    # Load average SED
+    average_SED = np.loadtxt(path+'average_sed.dat')[:,1]
+    wavelengths_SED = np.loadtxt(path+'average_sed.dat')[:,0]
+
+    # Find index of chosen wavelength
+    wl_index = np.where(wavelengths_SED >= int(wavelength))[0][0]
+
+    # Extract flux density at that wavelength and source size flux limit
+    average_fluxdensity = average_SED[wl_index]
+
+    fluxlimit = relativelimit*average_fluxdensity  # Flux density limit of source area
+
+
 
     # Define relative limits depending on wavelength-choise
     if int(wavelength) == 1:
@@ -268,7 +296,7 @@ def extract_sourcesize(
             #
             # Load image (image2d is in Jy/asec2)
             image2d,image2dlog,flux,axisplot = a3d.load_images(
-                path=f'{path}/{phase}/',
+                path=f'{path}{phase}/',
                 image=f'image_{angle}_{wavelength}um.out',
                 distance=1
             )
@@ -276,7 +304,7 @@ def extract_sourcesize(
             Npix = np.shape(image2d)[0]              # Number of pixels along one side
             Npixhalf = int(Npix*0.5)                 # Half size
             auperpixel = np.abs(2*axisplot[0]/Npix)  # Number of au per pixel
-            fluxlimit = relativelimit*image2d.max()  # Flux density limit of source area
+
 
             # Loop through image and count pixels >fluxlimit
             Npixels = 0
