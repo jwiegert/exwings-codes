@@ -255,38 +255,18 @@ def extract_sourcesize(
     stellar_radii = np.zeros((Nphases,Nangles))
     stellar_radius_average = np.zeros(Nphases)
 
-    # TODO
-    # load average_sed-file
-    # extract average flux densities of this wavelength
-    # re-calibrate! to a fluxlimit-number baased on that average-average
-
-
-    # NOTE
-    # nu får jag tänka lite, är detta korrekt? fluxgränsen måste väl bestämmas av
-    # nodust-grejen o sen användas på den med stoftet
-
-
-    # Load average SED
-    average_SED = np.loadtxt(path+'average_sed.dat')[:,1]
-    wavelengths_SED = np.loadtxt(path+'average_sed.dat')[:,0]
-
-    # Find index of chosen wavelength
-    wl_index = np.where(wavelengths_SED >= int(wavelength))[0][0]
-
-    # Extract flux density at that wavelength and source size flux limit
-    average_fluxdensity = average_SED[wl_index]
-
-    fluxlimit = relativelimit*average_fluxdensity  # Flux density limit of source area
-
-
-
-    # Define relative limits depending on wavelength-choise
+    # Average flux densities of nodust model is:
+    #  1.00791589806  um: 42360527.80354169 Jy
+    #  2.010669926771 um: 97255190.80939393 Jy
+    # 10.07270043879  um: 20547864.293270145 Jy
+    #
+    # Define flux limits depending on wavelength-choise
     if int(wavelength) == 1:
-        relativelimit = 0.12
+        fluxlimit = 0.035*42360527.80354169
     elif int(wavelength) == 2:
-        relativelimit = 0.31
+        fluxlimit = 0.045*97255190.
     elif int(wavelength) == 10:
-        relativelimit = 0.59
+        fluxlimit = 0.047*20547864.293270145
     else:
         raise ValueError('  ERROR: wrong wavelength, only 1, 2, and 10 are available.')
 
@@ -302,9 +282,7 @@ def extract_sourcesize(
             )
             # Extract props and compute distance-dependant scales
             Npix = np.shape(image2d)[0]              # Number of pixels along one side
-            Npixhalf = int(Npix*0.5)                 # Half size
             auperpixel = np.abs(2*axisplot[0]/Npix)  # Number of au per pixel
-
 
             # Loop through image and count pixels >fluxlimit
             Npixels = 0
@@ -326,7 +304,7 @@ def extract_sourcesize(
             #
             # Write header (and all included angles) 
             fradius.write(f'# Average radius of main source at {wavelength} in au\n')
-            fradius.write(f'# Using a relative flux limit of {relativelimit}*image_maxflux.\n')
+            fradius.write(f'# Using a flux limit of {fluxlimit} Jy.\n')
             fradius.write('# Snapshot  R_average')
             for angle in angles:
                 fradius.write(f'   R_{angle}')
