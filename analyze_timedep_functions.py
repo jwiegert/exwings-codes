@@ -422,3 +422,119 @@ def extract_surfacetemp(
             ft.write(f'    {int(phase)}    {Tsurface:.3f}\n')
 
     print('Extract approximate surface temperature: Done')
+
+
+
+# Uses FFT to compute period of signal
+def compute_period(
+        signal:list=[0,1,0,-1,0,1,0,-1,0,1,0,-1,0],
+        timeaxis:list=[0,1,2,3,4,5,6,7,8,9,10,11,12],
+        #time_unit:str='yrs',
+        plot_spec:str='n'
+    ):
+    """
+    Input list or array with some signal and time axis and get a main period
+    and a plot of the power spectrum of the signal.
+    """
+    from scipy.signal import find_peaks
+
+    # Normalise signal amplitude to zero
+    signal_zeroed = signal - np.mean(signal)
+
+    # Take fourier transform and abs to get power spectrum of signal
+    signal_fft = np.abs(np.fft.rfft(signal_zeroed, norm="ortho"))
+
+    # Get corresponding frequencies for the power spectrum
+    Ntimesteps = len(timeaxis)
+    freqs = np.fft.fftfreq(Ntimesteps)[:len(signal_fft)]
+
+    # And two main periods
+    delta_timestep = (timeaxis[-1] - timeaxis[0])/Ntimesteps
+    period_axis = 1/freqs * delta_timestep
+    peakcoords = np.argpartition(signal_fft, -2)[-4:]
+    periods = period_axis[peakcoords[::-1]]
+
+    # Save for emergencies
+    #main_period = period_axis[np.argmax(signal_fft)]
+
+    # Plot to check
+    if plot_spec == 'y':
+        plt.figure(num='Fourier power spectrum')
+        plt.plot(period_axis,signal_fft)
+        #print(f'Main periodicity {periods[0]} {time_unit}')
+
+    return periods
+
+
+# Extract events statistics   TODO
+def extract_events(
+        eventdata:list=[],
+        timerange:list=[],
+        relative_limit:float=0.1,
+        show_data:str='y'
+    ):
+    """
+    Extracts spike-statistics from input data array/list. Spikes, or events, are defined
+    as when the data reaches above the input relative limit (times max-data) above the
+    median data.
+
+    ARGUMENTS
+      eventdata: list or array with spikey data
+      timerange: list of array with corresponding time (x) axis
+      relative_limit: events are when data > median(data) + relative_limit * max(data)
+      show_data: str, 'y' or 'n', 'y' will plot the data and the limits to check if they
+                 are as expected.
+    
+    RETURNS
+      Prints statistics in stdout. Plots figure if wanted.
+    """
+    # Reset timearray to start at zero
+    timerange = timerange - timerange[0]
+
+    # Extract useful statistics
+    data_median = np.median(eventdata)
+    data_max = np.max(eventdata)
+
+    # That gives event limits
+    event_limit = data_median + relative_limit*data_max
+
+    # Extract event statistics, number of and length of events
+    event_sum = 0    # Length of all events
+    event_count = 0  # Number of events
+
+    prev_data = 0    
+    for data in eventdata:
+        if data > event_limit:
+            event_sum += 1
+            if prev_data <= event_limit:
+                event_count += 1
+        prev_data = data
+    
+    # Translate event_sum to length in time units
+    event_sum *= timerange[1]
+
+    # Print output
+    print(f'  Number of events: {event_count}')
+    print(f'  Number of events per 10 time units: {event_count * 10/timerange[-1]}')
+    print(f'  Total length of events: {event_sum} time units')
+    print(f'  Portion of events: {event_sum/timerange[-1]}')
+
+    if show_data == 'y':
+        # Plot the data and events in case its wanted
+        fig,ax = plt.figure(), plt.axes()
+        ax.plot(
+            timerange,eventdata
+        )
+        ax.plot(
+            [timerange[0],timerange[-1]],
+            [data_median,data_median],
+            'k--'
+        )
+        ax.plot(
+            [timerange[0],timerange[-1]],
+            [event_limit,event_limit],
+            'k:'
+        )
+        fig.show()
+
+    print('')

@@ -236,10 +236,6 @@ hplanck = 6.626068e-34 # Planck constant in Si
 #   wavelengths
 # )
 #
-# compute_period(
-#   TODO
-# )
-#
 # ------------------------------------------------------------ #
 # Functions that load various r3d input data
 
@@ -2767,44 +2763,4 @@ def compute_blackbody_freq(
     BBfit = peak_flux/np.max(BBfreq) * BBfreq
 
     return BBfit
-
-# Uses FFT to compute period of signal
-def compute_period(
-        signal:list=[0,1,0,-1,0,1,0,-1,0,1,0,-1,0],
-        timeaxis:list=[0,1,2,3,4,5,6,7,8,9,10,11,12],
-        #time_unit:str='yrs',
-        plot_spec:str='n'
-    ):
-    """
-    Input list or array with some signal and time axis and get a main period
-    and a plot of the power spectrum of the signal.
-    """
-    from scipy.signal import find_peaks
-
-    # Normalise signal amplitude to zero
-    signal_zeroed = signal - np.mean(signal)
-
-    # Take fourier transform and abs to get power spectrum of signal
-    signal_fft = np.abs(np.fft.rfft(signal_zeroed, norm="ortho"))
-
-    # Get corresponding frequencies for the power spectrum
-    Ntimesteps = len(timeaxis)
-    freqs = np.fft.fftfreq(Ntimesteps)[:len(signal_fft)]
-
-    # And two main periods
-    delta_timestep = (timeaxis[-1] - timeaxis[0])/Ntimesteps
-    period_axis = 1/freqs * delta_timestep
-    peakcoords = np.argpartition(signal_fft, -2)[-4:]
-    periods = period_axis[peakcoords[::-1]]
-
-    # Save for emergencies
-    #main_period = period_axis[np.argmax(signal_fft)]
-
-    # Plot to check
-    if plot_spec == 'y':
-        plt.figure(num='Fourier power spectrum')
-        plt.plot(period_axis,signal_fft)
-        #print(f'Main periodicity {periods[0]} {time_unit}')
-
-    return periods
 

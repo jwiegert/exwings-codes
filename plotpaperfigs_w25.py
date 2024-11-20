@@ -102,18 +102,12 @@ if plot_dustmass == 'y':
     ax[0].legend(fontsize=14)
     ax[1].legend(fontsize=14)
 
-
-    # TODO
-    # add labels in a box
-    # save figure and put in paper
-
-
-
     # Save figure
     fig.tight_layout()
-    ax[0].yaxis.set_label_coords(-0.09,0.09)
-    fig.savefig(f'figs/052_074_075_dustmasscompare.pdf', dpi=300, facecolor="white")
-
+    ax[0].yaxis.set_label_coords(-0.09,0.09) # Moves ylabel to centre of vertical
+    fig.savefig(
+        f'figs/052_074_075_dustmasscompare.pdf', dpi=300, facecolor="white"
+    )
     fig.show()
 #
 #####################################################################################
