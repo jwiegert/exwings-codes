@@ -51,7 +51,8 @@ angles = [
 plot_dustmass = 'n'
 plot_075grainsize = 'n'
 
-plot_allseds = 'y'
+plot_allseds = 'n'
+plot_luminosities = 'y'
 
 
 # Plots below ----------------------------------------------------------------#
@@ -219,4 +220,15 @@ if plot_allseds == 'y':
         dpi=300
     )
     fig.show()
+#
+#####################################################################################
+# Plot all luminosities in three subplots 
+if plot_luminosities == 'y':
 
+    # TODO
+    # 3 subplots, en för varje figur
+    # alla dust-data i bakgrunden, fylld linje för medelvärde och streckad för
+    # nodust-medelvärdet
+
+
+    print('hej')

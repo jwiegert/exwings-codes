@@ -496,7 +496,7 @@ def extract_events(
     data_max = np.max(eventdata)
 
     # That gives event limits
-    event_limit = data_median + relative_limit*data_max
+    event_limit = data_median + relative_limit*(data_max-data_median)
 
     # Extract event statistics, number of and length of events
     event_sum = 0    # Length of all events
@@ -516,6 +516,7 @@ def extract_events(
     # Print output
     print(f'  Number of events: {event_count}')
     print(f'  Number of events per 10 time units: {event_count * 10/timerange[-1]}')
+    print(f'  Number of events per  1 time units: {event_count / timerange[-1]}')
     print(f'  Total length of events: {event_sum} time units')
     print(f'  Portion of events: {event_sum/timerange[-1]}')
 
