@@ -190,8 +190,6 @@ if plot_allseds == 'y':
                 )
         
         # Plot average, stdrange of all
-
-
         ax[nmodel].plot(
             wavelength,flux_average,
             color=linecolour, linewidth=2
@@ -226,9 +224,80 @@ if plot_allseds == 'y':
 if plot_luminosities == 'y':
 
     # TODO
-    # 3 subplots, en för varje figur
-    # alla dust-data i bakgrunden, fylld linje för medelvärde och streckad för
-    # nodust-medelvärdet
+    #  flatten at bit
+    # large tick-fonts
 
 
-    print('hej')
+
+    # Set figure objects
+    fig,ax = plt.subplots(
+        1,3,
+        figsize=(12,4)
+    )
+    # Set paths and loop through them
+    paths = [
+        '../r3dresults/st28gm06n052_timedep_nospikes/',
+        '../r3dresults/st28gm06n074_nospikes/',
+        '../r3dresults/st28gm06n075_nospikes/'
+    ]
+    paths_nodust = [
+        '../r3dresults/st28gm06n052_timedep_nodust/',
+        '../r3dresults/st28gm06n074_nodust/',
+        '../r3dresults/st28gm06n075_nodust/'
+    ]
+    models = [
+        'st28gm06n052',
+        'st28gm06n074',
+        'st28gm06n075'
+    ]
+    Nangles = 6
+
+    for nmodel,path in enumerate(paths):
+
+        # Load time axis and lum-data
+        phasetimes = np.loadtxt(path+'snapshot_yr.dat')
+        luminosities = np.loadtxt(path+'luminosity.dat')
+        luminosity_nodust = np.loadtxt(paths_nodust[nmodel]+'luminosity.dat')[:,-1]
+
+        # Set colours and tick font size
+        if nmodel == 0:
+            linecolour = 'darkblue'
+            allcolour = 'skyblue'
+        if nmodel == 1:
+            linecolour = 'darkred'
+            allcolour = 'mistyrose'
+        if nmodel == 2:
+            linecolour = 'darkgreen'
+            allcolour = 'palegreen'
+        ax[nmodel].set_title(models[nmodel])
+        ax[nmodel].tick_params(axis='both', which='major', labelsize=15)
+
+        # Plot all angles with dust
+        for nangle in range(Nangles):
+            ax[nmodel].plot(
+                phasetimes[:,1],luminosities[:,1+nangle],
+                color=allcolour
+            )
+        # Plot average with dust
+        ax[nmodel].plot(
+            phasetimes[:,1],luminosities[:,-1],
+            color=linecolour,
+            linewidth=2
+        )
+        # Plot average without dust
+        ax[nmodel].plot(
+            phasetimes[:,1],luminosity_nodust,
+            linestyle='--',
+            color='black',
+        )
+
+    # Set final axis-settings
+    ax[0].set_ylabel(r'$L$ ($L_\odot$)', fontsize=18)
+    ax[1].set_xlabel(r'Simulation time (yrs)',fontsize=18)
+
+    fig.tight_layout()
+    fig.savefig(
+        'figs/luminosities.pdf', 
+        facecolor='white',
+        dpi=300
+    )
