@@ -255,12 +255,12 @@ def extract_sourcesize(
     stellar_radii = np.zeros((Nphases,Nangles))
     stellar_radius_average = np.zeros(Nphases)
 
-    # Average flux densities of nodust model is:
-    #  1.00791589806  um: 42360527.80354169 Jy
-    #  2.010669926771 um: 97255190.80939393 Jy
+    # Average flux densities of nodust models are:
+    #  1.00791589806  um: 42360527.80354169  Jy
+    #  2.010669926771 um: 97255190.80939393  Jy
     # 10.07270043879  um: 20547864.293270145 Jy
     #
-    # Define flux limits depending on wavelength-choise
+    # Define flux limits depending on wavelength-choice
     if int(wavelength) == 1:
         fluxlimit = 0.035*42360527.80354169
     elif int(wavelength) == 2:
@@ -429,7 +429,6 @@ def extract_surfacetemp(
 def compute_period(
         signal:list=[0,1,0,-1,0,1,0,-1,0,1,0,-1,0],
         timeaxis:list=[0,1,2,3,4,5,6,7,8,9,10,11,12],
-        #time_unit:str='yrs',
         plot_spec:str='n'
     ):
     """
@@ -461,7 +460,6 @@ def compute_period(
     if plot_spec == 'y':
         plt.figure(num='Fourier power spectrum')
         plt.plot(period_axis,signal_fft)
-        #print(f'Main periodicity {periods[0]} {time_unit}')
 
     return periods
 
