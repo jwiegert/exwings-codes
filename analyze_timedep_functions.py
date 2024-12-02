@@ -490,7 +490,7 @@ def extract_events(
     timerange = timerange - timerange[0]
 
     # Extract useful statistics
-    data_median = np.median(eventdata)
+    data_median = np.mean(eventdata)
     data_max = np.max(eventdata)
 
     # That gives event limits
