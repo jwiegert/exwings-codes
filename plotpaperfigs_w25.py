@@ -43,6 +43,20 @@ angles = [
     'i180_phi000',
     'i270_phi000',
 ]
+angles_label = [
+    '0-0',
+    '90-0',
+    '90-90',
+    '90-270',
+    '180-0',
+    '270-0'
+]
+# Set a list of model labels
+models_label = [
+    'st28gm06n052',
+    'st28gm06n074',
+    'st28gm06n075',
+]
 
 
 
@@ -52,7 +66,10 @@ plot_dustmass = 'n'
 plot_075grainsize = 'n'
 
 plot_allseds = 'n'
-plot_luminosities = 'y'
+plot_luminosities = 'n'
+
+plot_rsourceevents = 'y'
+
 
 
 # Plots below ----------------------------------------------------------------#
@@ -83,9 +100,7 @@ if plot_dustmass == 'y':
         figsize=(6,6),
         gridspec_kw={'height_ratios': [2, 1]}
     )
-    legendlist = [
-        'st28gm06n052','st28gm06n074','st28gm06n075'
-    ]
+    legendlist = models_label
     # Plot all dust masses on top of eachother
     ax[0].plot(time052,dustmass052,'b', label=legendlist[0])
     ax[0].plot(time074,dustmass074,'r', label=legendlist[1])
@@ -221,14 +236,8 @@ if plot_allseds == 'y':
 #
 #####################################################################################
 # Plot all luminosities in three subplots 
+
 if plot_luminosities == 'y':
-
-    # TODO
-    #  flatten at bit
-    # large tick-fonts
-
-
-
     # Set figure objects
     fig,ax = plt.subplots(
         1,3,
@@ -245,11 +254,7 @@ if plot_luminosities == 'y':
         '../r3dresults/st28gm06n074_nodust/',
         '../r3dresults/st28gm06n075_nodust/'
     ]
-    models = [
-        'st28gm06n052',
-        'st28gm06n074',
-        'st28gm06n075'
-    ]
+    models = models_label
     Nangles = 6
 
     for nmodel,path in enumerate(paths):
@@ -301,3 +306,144 @@ if plot_luminosities == 'y':
         facecolor='white',
         dpi=300
     )
+#
+#####################################################################################
+# Plot average period of Rsource events per model and angle
+if plot_rsourceevents == 'y':
+
+    Nmodels = len(models_label)
+    Nangles = len(angles)
+
+
+    # Set figure objects    
+    fig,ax = plt.figure(
+        figsize=(6,4)
+    ), plt.axes()
+
+    ax.tick_params(axis='both', which='major', labelsize=15)
+    ax.set_ylim([0,23])    
+    ax.set_xlim([-0.5,5.5])
+    # Combine each style to one set for each model, plot in one figure
+    model052 = [
+        [
+            6.971389087364163,
+            5.809490906136802,
+            4.979563633831545,
+            5.809490906136802,
+            5.809490906136802,
+            5.809490906136802
+        ],[
+            0.95050,
+            1.7690,
+            3.3041,
+            1.7426,
+            2.5875,
+            1.3729,
+        ]
+    ]
+    model074 = [
+        [
+            -1,
+            4.9795575666192935,
+            -1,
+            5.809483827722509,
+            5.809483827722509,
+            11.618967655445019,
+        ],[
+            -1,
+            0.47541,
+            -1,
+            1.5319,
+            2.1658,
+            2.3242,
+        ]
+    ]
+    model075 = [
+        [
+            8.71422145903946,
+            11.618961945385948,
+            34.85688583615784,
+            17.42844291807892,
+            6.9713771672315685 ,
+            2.4897775597255603,
+        ],[
+            0.43570,
+            0.15844,
+            0.158437231328179,
+            0.15844,
+            0.22181,
+            0.23766,
+        ]
+    ]
+    # Plot 052
+    # x-numbering must be -1 to get correct labels....
+    for nangle in range(Nangles):
+        ax.plot(nangle-0.05,model052[0][nangle],'bo',markersize=6)
+        ax.plot(
+            [nangle-0.05,nangle-0.05],
+            [
+                model052[0][nangle]-0.5*model052[1][nangle],
+                model052[0][nangle]+0.5*model052[1][nangle]
+            ]
+            ,'b'
+        )
+        # Plot 074
+        ax.plot(nangle,model074[0][nangle],'rs',markersize=6)
+        ax.plot(
+            [nangle,nangle],
+            [
+                model074[0][nangle]*model074[1][nangle],
+                model074[0][nangle]*model074[1][nangle]
+            ]
+            ,'r'
+        )
+
+
+        # Plot 075
+        ax.plot(nangle+0.05,model075[0][nangle],'gd',markersize=6)
+        ax.plot(
+            [nangle+0.05,nangle+0.05],
+            [
+                model075[0][nangle]+0.5*model075[1][nangle],
+                model075[0][nangle]+0.5*model075[1][nangle]
+            ]
+            ,'g'
+        )
+    # List the labels so that theres 1 per model.
+    ax.plot(-1,-1,'bo',markersize=6,label=models_label[0])
+    ax.plot(-1,-1,'rs',markersize=6,label=models_label[1])
+    ax.plot(-1,-1,'gd',markersize=6,label=models_label[2])
+    ax.legend(
+        loc='upper left',
+        fontsize=14
+    )
+    ax.set_title(
+        r'$R_{\rm source}$',
+        fontsize=18
+    )
+    # Modify xticklabels
+    ax.set_xticks([0,1,2,3,4,5]) 
+    ax.set_xticklabels(
+        angles_label
+    ) 
+    # Set axislabels
+    ax.set_ylabel(r'Av. period \& event length (yrs)', fontsize=18)
+    ax.set_xlabel(r'LOS-angle',fontsize=18)
+
+
+    # TODO
+    # ha med F2 och F10-statistiken i subplots under här??
+
+
+
+
+    # ylabel: average period & event length (yr)
+    # xlabel: LOS-angle
+
+    fig.tight_layout()
+    fig.savefig(
+        'figs/periods_rsource.pdf', 
+        facecolor='white',
+        dpi=300
+    )
+
