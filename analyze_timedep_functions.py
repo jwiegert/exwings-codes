@@ -517,8 +517,8 @@ def extract_events(
     print(f'  Total included time: {timerange[-1]} time units')
     print(f'  Number of events: {event_count}')
     print(f'  Average pediod between events: {timerange[-1]/event_count} time units')
-    print(f'  Number of events per 1 time units: {event_count / timerange[-1]}')
     print(f'  Total length of events: {event_sum} time units')
+    print(f'  Average length of events: {event_sum/event_count} time units')
     print(f'  Portion of events: {event_sum/timerange[-1]}')
 
     if show_data == 'y':
