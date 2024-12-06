@@ -316,15 +316,23 @@ if plot_rsourceevents == 'y':
 
 
     # Set figure objects    
-    fig,ax = plt.figure(
-        figsize=(6,4)
-    ), plt.axes()
-
-    ax.tick_params(axis='both', which='major', labelsize=15)
-    ax.set_ylim([0,23])    
-    ax.set_xlim([-0.5,5.5])
+    #fig,ax = plt.figure(
+    #    figsize=(6,4)
+    #), plt.axes()
+    fig,ax = plt.subplots(
+        3,1,
+        figsize=(6,12)
+    )
+    for nmodel in range(Nmodels):
+        ax[nmodel].tick_params(axis='both', which='major', labelsize=15)
+        ax[nmodel].set_ylim([0,23])    
+        ax[nmodel].set_xlim([-0.5,5.5])
     # Combine each style to one set for each model, plot in one figure
-    model052 = [
+    #
+    # model[0][:] - perioder per LOS
+    # model[1][:] - medeleventlength per LOS
+    #
+    rsource052 = [
         [
             6.971389087364163,
             5.809490906136802,
@@ -333,117 +341,244 @@ if plot_rsourceevents == 'y':
             5.809490906136802,
             5.809490906136802
         ],[
-            0.95050,
-            1.7690,
-            3.3041,
-            1.7426,
-            2.5875,
-            1.3729,
+            0.950497746248196,
+            1.7689819166285872,
+            3.304111213148491,
+            1.742579201455026,
+            2.5874660870089783,
+            1.3729411890251721,
         ]
     ]
-    model074 = [
+    rsource074 = [
         [
-            -1,
+            -10,
             4.9795575666192935,
-            -1,
+            -10,
             5.809483827722509,
             5.809483827722509,
-            11.618967655445019,
+            11.618967655445019
         ],[
-            -1,
-            0.47541,
-            -1,
-            1.5319,
-            2.1658,
-            2.3242,
+            -10,
+            0.47541265629394047,
+            -10,
+            1.5318852258360305,
+            3.301476779819031,
+            2.3242396529925977,
         ]
     ]
-    model075 = [
+    rsource075 = [
         [
             8.71422145903946,
             11.618961945385948,
-            34.85688583615784,
+            -20,
             17.42844291807892,
-            6.9713771672315685 ,
+            6.9713771672315685,
             2.4897775597255603,
         ],[
-            0.43570,
-            0.15844,
+            0.43570238615249224,
             0.158437231328179,
-            0.15844,
-            0.22181,
-            0.23766,
+            0.158437231328179,
+            0.158437231328179,
+            0.2218121238594506,
+            0.2376558469922685,
         ]
     ]
-    # Plot 052
-    # x-numbering must be -1 to get correct labels....
+    # 2um-flux density metric
+    f2um052 = [
+        [
+            4.357118179602602,
+            6.971389087364163,
+            4.357118179602602,
+            6.971389087364163,
+            5.809490906136802,
+            5.809490906136802,
+        ],
+        [
+            0.63367,
+            1.7109,
+            2.7129,
+            1.5525,
+            2.2178,
+            0.97690,
+        ]
+    ]
+    f2um074 = [
+        [
+            -20,
+            5.809483827722509,
+            -10,
+            3.4856902966335057,
+            4.357112870791882,
+            6.971380593267011,
+        ],[
+            0.1584708854313135,
+            0.6867071702023585,
+            -10,
+            1.140990375105457,
+            2.674196191653415,
+            1.679791385571923,
+        ]
+    ]
+    f2um075 = [
+        [
+            2.4897775597255603,
+            4.9795551194511205,
+            8.71422145903946,
+            8.71422145903946,
+            5.809480972692974,
+            17.42844291807892,
+        ],[
+            0.5318964194588867,
+            0.49794558417427687,
+            0.475311693984537,
+            0.2376558469922685,
+            0.42249928354181066,
+            0.158437231328179,
+        ]
+    ]
+    # 10um flux density matric
+    f10um052 = [
+        [0,0,0,0,0,0],
+        [0,0,0,0,0,0]
+    ]
+    f10um074 = [
+        [0,0,0,0,0,0],
+        [0,0,0,0,0,0]
+    ]
+    f10um075 = [
+        [0,0,0,0,0,0],
+        [0,0,0,0,0,0]
+    ]
+    # Plot Rsource metric
     for nangle in range(Nangles):
-        ax.plot(nangle-0.05,model052[0][nangle],'bo',markersize=6)
-        ax.plot(
+
+        # Plot 052
+        # rsource
+        ax[0].plot(nangle-0.05,rsource052[0][nangle],'go',markersize=6)
+        ax[0].plot(
             [nangle-0.05,nangle-0.05],
             [
-                model052[0][nangle]-0.5*model052[1][nangle],
-                model052[0][nangle]+0.5*model052[1][nangle]
+                rsource052[0][nangle]-0.5*rsource052[1][nangle],
+                rsource052[0][nangle]+0.5*rsource052[1][nangle]
+            ]
+            ,'g'
+        )
+        # F2
+        ax[0].plot(nangle,f2um052[0][nangle],'bs',markersize=6)
+        ax[0].plot(
+            [nangle,nangle],
+            [
+                f2um052[0][nangle]-0.5*f2um052[1][nangle],
+                f2um052[0][nangle]+0.5*f2um052[1][nangle]
             ]
             ,'b'
         )
+        # F10
+        ax[0].plot(nangle+0.05,f10um052[0][nangle],'rd',markersize=6)
+        ax[0].plot(
+            [nangle+0.05,nangle+0.05],
+            [
+                f10um052[0][nangle]-0.5*f10um052[1][nangle],
+                f10um052[0][nangle]+0.5*f10um052[1][nangle]
+            ]
+            ,'r'
+        )
         # Plot 074
-        ax.plot(nangle,model074[0][nangle],'rs',markersize=6)
-        ax.plot(
+        # rsource
+        ax[1].plot(nangle-0.05,rsource074[0][nangle],'go',markersize=6)
+        ax[1].plot(
+            [nangle-0.05,nangle-0.05],
+            [
+                rsource074[0][nangle]-0.5*rsource074[1][nangle],
+                rsource074[0][nangle]+0.5*rsource074[1][nangle]
+            ]
+            ,'g'
+        )
+        # F2
+        ax[1].plot(nangle,f2um074[0][nangle],'bs',markersize=6)
+        ax[1].plot(
             [nangle,nangle],
             [
-                model074[0][nangle]*model074[1][nangle],
-                model074[0][nangle]*model074[1][nangle]
+                f2um074[0][nangle]-0.5*f2um074[1][nangle],
+                f2um074[0][nangle]+0.5*f2um074[1][nangle]
+            ]
+            ,'b'
+        )
+        # A line from zero to show the event length
+        # when only 1 event happens
+        ax[1].plot([0,0,],[0,f2um074[1][0]],'b')
+
+
+        # F10
+        ax[1].plot(nangle+0.05,f10um074[0][nangle],'rd',markersize=6)
+        ax[1].plot(
+            [nangle+0.05,nangle+0.05],
+            [
+                f10um074[0][nangle]-0.5*f10um074[1][nangle],
+                f10um074[0][nangle]+0.5*f10um074[1][nangle]
+            ]
+            ,'r'
+        )
+        #
+        # Plot 075
+        # rsource
+        ax[2].plot(nangle-0.05,rsource075[0][nangle],'go',markersize=6)
+        ax[2].plot(
+            [nangle-0.05,nangle-0.05],
+            [
+                rsource075[0][nangle]-0.5*rsource075[1][nangle],
+                rsource075[0][nangle]+0.5*rsource075[1][nangle]
+            ]
+            ,'g'
+        )
+        # A line from zero to show the event length
+        # when only 1 event happens
+        ax[2].plot([2,2],[0,rsource075[1][2]],'g')
+
+        # F2
+        ax[2].plot(nangle,f2um075[0][nangle],'bs',markersize=6)
+        ax[2].plot(
+            [nangle,nangle],
+            [
+                f2um075[0][nangle]-0.5*f2um075[1][nangle],
+                f2um075[0][nangle]+0.5*f2um075[1][nangle]
+            ]
+            ,'b'
+        )
+        # F10
+        ax[2].plot(nangle+0.05,f10um075[0][nangle],'rd',markersize=6)
+        ax[2].plot(
+            [nangle+0.05,nangle+0.05],
+            [
+                f10um075[0][nangle]-0.5*f10um075[1][nangle],
+                f10um075[0][nangle]+0.5*f10um075[1][nangle]
             ]
             ,'r'
         )
 
 
-        # Plot 075
-        ax.plot(nangle+0.05,model075[0][nangle],'gd',markersize=6)
-        ax.plot(
-            [nangle+0.05,nangle+0.05],
-            [
-                model075[0][nangle]+0.5*model075[1][nangle],
-                model075[0][nangle]+0.5*model075[1][nangle]
-            ]
-            ,'g'
-        )
     # List the labels so that theres 1 per model.
-    ax.plot(-1,-1,'bo',markersize=6,label=models_label[0])
-    ax.plot(-1,-1,'rs',markersize=6,label=models_label[1])
-    ax.plot(-1,-1,'gd',markersize=6,label=models_label[2])
-    ax.legend(
+    ax[0].plot(-1,-1,'go',markersize=6,label=r'$R_{\rm source}$')
+    ax[0].plot(-1,-1,'bs',markersize=6,label=r'$F(2\,\mu$m$)$')
+    ax[0].plot(-1,-1,'rd',markersize=6,label=r'$F(10\,\mu$m$)$')
+    ax[0].legend(
         loc='upper left',
         fontsize=14
     )
-    ax.set_title(
-        r'$R_{\rm source}$',
-        fontsize=18
-    )
-    # Modify xticklabels
-    ax.set_xticks([0,1,2,3,4,5]) 
-    ax.set_xticklabels(
-        angles_label
-    ) 
+    # Modify xticklabels and title
+    for nmodel in range(Nmodels):
+        ax[nmodel].set_title(models_label[nmodel],fontsize=14)
+        ax[nmodel].set_xticks([0,1,2,3,4,5]) 
+        ax[nmodel].set_xticklabels(angles_label) 
     # Set axislabels
-    ax.set_ylabel(r'Av. period \& event length (yrs)', fontsize=18)
-    ax.set_xlabel(r'LOS-angle',fontsize=18)
+    ax[1].set_ylabel(r'Average period \& event length (yrs)', fontsize=18)
+    ax[2].set_xlabel(r'LOS-angle',fontsize=18)
 
-
-    # TODO
-    # ha med F2 och F10-statistiken i subplots under här??
-
-
-
-
-    # ylabel: average period & event length (yr)
-    # xlabel: LOS-angle
-
+    # Save figure
     fig.tight_layout()
     fig.savefig(
         'figs/periods_rsource.pdf', 
         facecolor='white',
         dpi=300
     )
-
+    fig.show()
