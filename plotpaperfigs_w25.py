@@ -325,7 +325,7 @@ if plot_rsourceevents == 'y':
     )
     for nmodel in range(Nmodels):
         ax[nmodel].tick_params(axis='both', which='major', labelsize=15)
-        ax[nmodel].set_ylim([0,23])    
+        ax[nmodel].set_ylim([0,28])    
         ax[nmodel].set_xlim([-0.5,5.5])
     # Combine each style to one set for each model, plot in one figure
     #
@@ -438,17 +438,64 @@ if plot_rsourceevents == 'y':
     ]
     # 10um flux density matric
     f10um052 = [
-        [0,0,0,0,0,0],
-        [0,0,0,0,0,0]
+        [
+            3.872993937424535,
+            6.971389087364163,
+            17.428472718410408,
+            4.979563633831545,
+            6.971389087364163,
+            4.979563633831545,
+        ],[
+            0.8096832653225374,
+            1.077230779081289,
+            1.267330328330928,
+            0.5431415692846835,
+            0.3801990984992784,
+            0.8599741513674155,
+        ]
     ]
     f10um074 = [
-        [0,0,0,0,0,0],
-        [0,0,0,0,0,0]
+        [
+            6.971380593267011,
+            5.809483827722509,
+            4.9795575666192935,
+            17.428451483167528,
+            -10,
+            6.971380593267011,
+        ],[
+            1.2043787292779826,
+            1.0300607553035377,
+            0.656522239644013,
+            0.47541265629394047,
+            -10,
+            0.728966072984042,
+        ]
     ]
     f10um075 = [
-        [0,0,0,0,0,0],
-        [0,0,0,0,0,0]
+        [
+            -10,
+            17.42844291807892,
+            -20,
+            -10,
+            -20,
+            17.42844291807892,
+        ],[
+            -10,
+            0.2376558469922685,
+            0.475311693984537,
+            -10,
+            0.316874462656358,
+            0.316874462656358,
+        ]
     ]
+    # Declare variables for average periods
+    plot_average052 = 0
+    plot_average074 = 0
+    plot_average075 = 0
+    N052_zeros = 0
+    N074_zeros = 0
+    N075_zeros = 0
+    #
     # Plot Rsource metric
     for nangle in range(Nangles):
 
@@ -504,11 +551,7 @@ if plot_rsourceevents == 'y':
             ]
             ,'b'
         )
-        # A line from zero to show the event length
-        # when only 1 event happens
-        ax[1].plot([0,0,],[0,f2um074[1][0]],'b')
-
-
+        #
         # F10
         ax[1].plot(nangle+0.05,f10um074[0][nangle],'rd',markersize=6)
         ax[1].plot(
@@ -531,10 +574,7 @@ if plot_rsourceevents == 'y':
             ]
             ,'g'
         )
-        # A line from zero to show the event length
-        # when only 1 event happens
-        ax[2].plot([2,2],[0,rsource075[1][2]],'g')
-
+        #
         # F2
         ax[2].plot(nangle,f2um075[0][nangle],'bs',markersize=6)
         ax[2].plot(
@@ -555,14 +595,102 @@ if plot_rsourceevents == 'y':
             ]
             ,'r'
         )
+        # Sum together all periods of all metrics for this model that are
+        # not upper limits
+        # Ie remove all negative numbers, ie alot of if statements
+        # And count number of zeros for each model
+        # NOTE this MUST be in the end of this loop
+        if rsource052[0][nangle] < 0:
+            rsource052[0][nangle] = 0
+            N052_zeros += 1
+        if f2um052[0][nangle] < 0:
+            f2um052[0][nangle] = 0
+            N052_zeros += 1
+        if f10um052[0][nangle] < 0:
+            f10um052[0][nangle] = 0
+            N052_zeros += 1
+        #
+        if rsource074[0][nangle] < 0:
+            rsource074[0][nangle] = 0
+            N074_zeros += 1
+        if f2um074[0][nangle] < 0:
+            f2um074[0][nangle] = 0
+            N074_zeros += 1
+        if f10um074[0][nangle] < 0:
+            f10um074[0][nangle] = 0
+            N074_zeros += 1
+        #
+        if rsource075[0][nangle] < 0:
+            rsource075[0][nangle] = 0
+            N075_zeros += 1
+        if f2um075[0][nangle] < 0:
+            f2um075[0][nangle] = 0
+            N075_zeros += 1
+        if f10um075[0][nangle] < 0:
+            f10um075[0][nangle] = 0
+            N075_zeros += 1
+        #
+        # And add them all together
+        plot_average052 += rsource052[0][nangle] + f2um052[0][nangle] + f10um052[0][nangle]
+        plot_average074 += rsource074[0][nangle] + f2um074[0][nangle] + f10um074[0][nangle]
+        plot_average075 += rsource075[0][nangle] + f2um075[0][nangle] + f10um075[0][nangle]
+    #
+    # And take average of them
+    # 3*6 numbers per model (6 angles, 3 metrics) = 18 minus all zeros!
+    plot_average052 /= 18 - N052_zeros
+    plot_average074 /= 18 - N074_zeros
+    plot_average075 /= 18 - N075_zeros
+    #
+    # And plot these averages
+    ax[0].plot(
+        [-1,6],[plot_average052,plot_average052],'k--'
+    )
+    ax[1].plot(
+        [-1,6],[plot_average074,plot_average074],'k--'
+    )
+    ax[2].plot(
+        [-1,6],[plot_average075,plot_average075],'k--'
+    )
+    print('Plot averages')
+    print(f'  052: {plot_average052} yrs')
+    print(f'  074: {plot_average074} yrs')
+    print(f'  075: {plot_average075} yrs')
 
-
+    # Plot those with not period with a line from zero to show the event length
+    #
+    ax[1].plot([0,0,],[0,f2um074[1][0]],'b',linewidth = 3)
+    #
+    ax[2].plot([2,2],[0,rsource075[1][2]],'g',linewidth = 3)
+    ax[2].plot([2,2],[0,f10um075[1][2]],'r',linewidth = 3)
+    ax[2].plot([4,4],[0,f10um075[1][4]],'r',linewidth = 3)
+    #
+    # Plot averaged period of all period for each model to compare with table
+    # 052:
+    # (5.8648 + 10.844 + 34.856945436820816 + 5.7127 + 12.297 + 7.5339)/6
+    # 074:
+    # (16.322 + 30.016 + 34.856945436820816 + 15.056 + 18.743 + 12.836)/6
+    # 75:
+    # (30.500 + 34.856945436820816 + 18.037 + 8.0226 + 34.85688583615784 + 29.047)/6
+    average_period052 = 12.85155757280347
+    average_period074 = 21.304990906136798
+    average_period075 = 25.886738545496442
+    # Plots    
+    ax[0].plot(
+        [-1,6],[average_period052,average_period052],'k:'
+    )
+    ax[1].plot(
+        [-1,6],[average_period074,average_period074],'k:'
+    )
+    ax[2].plot(
+        [-1,6],[average_period075,average_period075],'k:'
+    )
     # List the labels so that theres 1 per model.
-    ax[0].plot(-1,-1,'go',markersize=6,label=r'$R_{\rm source}$')
-    ax[0].plot(-1,-1,'bs',markersize=6,label=r'$F(2\,\mu$m$)$')
-    ax[0].plot(-1,-1,'rd',markersize=6,label=r'$F(10\,\mu$m$)$')
-    ax[0].legend(
-        loc='upper left',
+    labelpanel = 0
+    ax[labelpanel].plot(-1,-1,'go',markersize=6,label=r'$R_{\rm source}$')
+    ax[labelpanel].plot(-1,-1,'bs',markersize=6,label=r'$F(2\,\mu$m$)$')
+    ax[labelpanel].plot(-1,-1,'rd',markersize=6,label=r'$F(10\,\mu$m$)$')
+    ax[labelpanel].legend(
+        #loc='upper left',
         fontsize=14
     )
     # Modify xticklabels and title
@@ -577,7 +705,7 @@ if plot_rsourceevents == 'y':
     # Save figure
     fig.tight_layout()
     fig.savefig(
-        'figs/periods_rsource.pdf', 
+        'figs/periods_allmetrics.pdf', 
         facecolor='white',
         dpi=300
     )
