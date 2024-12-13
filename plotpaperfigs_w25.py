@@ -313,32 +313,12 @@ if plot_luminosities == 'y':
 #
 if plot_052fluxdensity == 'y':
 
-    # TODO ?
-
-
-
-
-
-    # Set figure settings
-    #fig, ax = plt.figure(num=f'F(t) of {wavelength} um', figsize=(6, 4)), plt.axes()
-    fig,ax = plt.subplots(
-        1,2,
-        figsize=(12, 4)
-    )
-    ax[0].set_ylabel(rf'$F({wavelength}\,\mu$m$)$, MJy at 1\,pc',fontsize=18)
-    for nn in range(2):
-        ax[nn].set_xlabel(r'Sim. time (yrs)',fontsize=18)
-        ax[nn].tick_params(axis='both', which='major', labelsize=15)
-        ax[nn].set_yscale('log')
-
-
+    # Wavelength to plot
+    wavelength = 2
 
     # Path to model of choice
     path = '../r3dresults/st28gm06n052_timedep_nospikes/'
     model = '052'
-
-    # Wavelength to plot
-    wavelength = 2
 
     # Load all phases
     phases = [int(filename) for filename in os.listdir(path) if os.path.isdir(path+filename)]
@@ -355,64 +335,75 @@ if plot_052fluxdensity == 'y':
     fluxall = np.zeros((len(angles),Nphases))
 
     # Load average Flux densities
-    # extract flux at wavelength
+    # extract flux at wavelength in MJy
     # and declare array for relative fluxes vs time
     average_seds = np.loadtxt(f'{path}average_sed.dat')
-    average_flux = average_seds[wavelengthindex,1]
+    average_flux = average_seds[wavelengthindex,1] * 1e-6
     relative_flux = np.zeros((len(angles),Nphases))
 
-
+    # Set figure settings
+    #fig, ax = plt.figure(num=f'F(t) of {wavelength} um', figsize=(6, 4)), plt.axes()
+    fig,ax = plt.subplots(
+        1,2,
+        figsize=(12, 4)
+    )
+    ax[0].set_ylabel(rf'$F(2\,\mu$m$)$, MJy at 1\,pc',fontsize=18)
+    ax[1].set_ylabel(r'$F_{\rm average} / F$ at 2\,$\mu$m',fontsize=18)
+    ax[0].set_yscale('log')
+    ax[1].set_ylim(0,2)
+    for nn in range(2):
+        ax[nn].set_xlabel(r'Sim. time (yrs)',fontsize=18)
+        ax[nn].tick_params(axis='both', which='major', labelsize=15)
+        ax[nn].set_xlim(phasetimes[0],phasetimes[-1])
+    linecolour = 'darkblue'
+    allcolour = 'deepskyblue'
 
     # Loop through all phases and extract all flux densities at wavelength
     # And the relative flux density (to average flux density)
-    for nangles,angle in enumerate(angles):
+    for nangle,angle in enumerate(angles):
         for nphase,phase in enumerate(phases):
 
             wavelengths,spectrum = a3d.load_spectrum(
                 path = f'{path}{phase}/spectrum_{angle}.out'
             )
-            fluxall[nangles,nphase] = spectrum[wavelengthindex]*1e-6
+            fluxall[nangle,nphase] = spectrum[wavelengthindex]*1e-6
 
-            relative_flux[nangles,nphase] = fluxall[nangles,nphase]/average_flux
-
-
-        # TODO
-        # byt till samma färg som för 052 i SED-plotten
-
+            relative_flux[nangle,nphase] = fluxall[nangle,nphase]/average_flux
 
         # Plot each angles time dependent F in MJy
-        ax[0].plot(phasetimes,fluxall[nangles,:],'lightgrey')
+        ax[0].plot(phasetimes,fluxall[nangle,:],allcolour)
 
-        # TODO
         # Plot relative flux densities of each angle and dashed lines for the limits
-        # 1.0: 'k-'
-        # 0.8: 'k--'
-        # 0.6: 'k:'
-
-
+        ax[1].plot(phasetimes,relative_flux[nangle,:],allcolour)
+        ax[1].plot(
+            [phasetimes[0],phasetimes[-1]],
+            [1,1],
+            'k-'
+        )
+        ax[1].plot(
+            [phasetimes[0],phasetimes[-1]],
+            [0.8,0.8],
+            'k--'
+        )
+        ax[1].plot(
+            [phasetimes[0],phasetimes[-1]],
+            [0.6,0.6],
+            'k:'
+        )
 
     # Save average of each angles flux density at each time
     fluxaverage = []
     for nphase in range(Nphases):
-        fluxaverage.append(np.mean(fluxall[:,nphase]))
-
+        fluxaverage.append(
+            np.mean(fluxall[:,nphase])
+        )
     # and plot average flux density
-    ax.plot(phasetimes,fluxaverage,'k')
+    ax[0].plot(phasetimes,fluxaverage,linecolour)
 
-    # and save figure
+    # and save figure (and show)
     fig.tight_layout()
-    #plt.savefig(f'../r3dplots/{model}_fluxtime_{wavelength}um.pdf', dpi=300)
+    plt.savefig(f'figs/{model}_fluxtime_{wavelength}um.pdf', dpi=300)
     fig.show()
-
-
-
-
-
-
-
-
-
-
 #
 #####################################################################################
 # Plot average period of Rsource events per model and angle
