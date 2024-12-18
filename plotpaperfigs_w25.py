@@ -67,7 +67,8 @@ plot_075grainsize = 'n'
 
 plot_allseds = 'n'
 plot_luminosities = 'n'
-plot_052fluxdensity = 'y'
+plot_052fluxdensity = 'n'
+plot_052exampleimages = 'y'
 
 plot_rsourceevents = 'n'
 
@@ -240,10 +241,11 @@ if plot_allseds == 'y':
 
 if plot_luminosities == 'y':
     # Set figure objects
-    fig,ax = plt.subplots(
-        1,3,
-        figsize=(12,4)
+    fig,ax2d = plt.subplots(
+        2,2,
+        figsize=(10,7)
     )
+    ax = ax2d.ravel()
     # Set paths and loop through them
     paths = [
         '../r3dresults/st28gm06n052_timedep_nospikes/',
@@ -256,7 +258,47 @@ if plot_luminosities == 'y':
         '../r3dresults/st28gm06n075_nodust/'
     ]
     models = models_label
-    Nangles = 6
+    Nangles = len(angles)
+
+    # List all luminosities of these data
+    #    052_nodust - average lum: 7623.889592760182 Lsol
+    #    074_nodust - average lum: 7632.387339366515 Lsol
+    #    075_nodust - average lum: 7603.132628959276 Lsol
+    #
+    #
+    #    052_nospikes - max-max lum: 11216.202 Lsol
+    #    074_nospikes - max-max lum: 11017.651 Lsol
+    #    075_nospikes - max-max lum: 10948.281 Lsol
+    #
+    #    052_nospikes - average max lum: 7948.66 Lsol
+    #    074_nospikes - average max lum: 8237.554 Lsol
+    #    075_nospikes - average max lum: 9101.957 Lsol
+    #
+    #    052_nospikes - average lum: 5325.214027149322 Lsol
+    #    074_nospikes - average lum: 6146.020846153845 Lsol
+    #    075_nospikes - average lum: 7314.732800904978 Lsol
+    #
+    #    052_nospikes - average min lum: 3217.095 Lsol
+    #    074_nospikes - average min lum: 4403.186 Lsol
+    #    075_nospikes - average min lum: 5911.108 Lsol
+    #
+    #    052_nospikes - min-min lum: 583.556 Lsol
+    #    074_nospikes - min-min lum: 766.543 Lsol
+    #    075_nospikes - min-min lum: 3815.841 Lsol
+    #
+    # Each sublist is for each model, then I add in them in the same order
+    # as above.
+    minmaxlums = [
+        [7623.890, 11216.202, 7948.660, 5325.214, 3217.095,  583.556],
+        [7632.387, 11017.651, 8237.554, 6146.021, 4403.186,  766.543],
+        [7603.133, 10948.281, 9101.957, 7314.733, 5911.108, 3815.841]
+    ]
+
+
+
+
+
+
 
     for nmodel,path in enumerate(paths):
 
@@ -296,17 +338,55 @@ if plot_luminosities == 'y':
             linestyle='--',
             color='black',
         )
+        ax[nmodel].set_ylim(0,11500)
+    # Plot min-max-average luminosoties of each model
+    ax[3].set_title(r'$L$ ranges')
+    # max-max
+    ax[3].fill_between(
+        [0,1,2], 
+        [minmaxlums[0][1], minmaxlums[1][1], minmaxlums[2][1]],
+        [minmaxlums[0][5], minmaxlums[1][5], minmaxlums[2][5]],
+        color='khaki'
+    )
+    # average-max
+    ax[3].fill_between(
+        [0,1,2], 
+        [minmaxlums[0][2], minmaxlums[1][2], minmaxlums[2][2]],
+        [minmaxlums[0][4], minmaxlums[1][4], minmaxlums[2][4]],
+        color='gold',linestyle='-'
+    )
+    # average
+    ax[3].plot(
+        [0,1,2], 
+        [minmaxlums[0][3], minmaxlums[1][3], minmaxlums[2][3]]
+        ,color='darkgoldenrod',linestyle='-'
+    )
+    # Last: stars luminosity
+    ax[3].plot(
+        [0,1,2], 
+        [minmaxlums[0][0], minmaxlums[1][0], minmaxlums[2][0]]
+        ,'k--'
+    )
+    # Set xticklabels for last plot
+    ax[3].set_xticks([0,1,2]) 
+    ax[3].set_xticklabels(models) 
+    ax[3].set_ylim(0,11500)
+    ax[3].set_xlim(0,2)
+    ax[3].tick_params(axis='both', which='major', labelsize=15)
 
-    # Set final axis-settings
-    ax[0].set_ylabel(r'$L$ ($L_\odot$)', fontsize=18)
-    ax[1].set_xlabel(r'Simulation time (yrs)',fontsize=18)
+    # Set final general axis-settings
+    ax[0].set_ylabel(r'Luminosities ($L_\odot$)', fontsize=18)
+    ax[2].set_ylabel(r'Luminosities ($L_\odot$)', fontsize=18)
+    ax[2].set_xlabel(r'Simulation time (yrs)',fontsize=18)
 
+    # Plot and save
     fig.tight_layout()
     fig.savefig(
         'figs/luminosities.pdf', 
         facecolor='white',
         dpi=300
     )
+    fig.show()
 #
 ####################################################################################
 # Plot flux density at 2um over time for 052
@@ -404,6 +484,97 @@ if plot_052fluxdensity == 'y':
     fig.tight_layout()
     plt.savefig(f'figs/{model}_fluxtime_{wavelength}um.pdf', dpi=300)
     fig.show()
+#
+#####################################################################################
+# Plot 6 snapshots at 2 and 10um to showcase what we're looking at
+if plot_052exampleimages == 'y':
+
+    # Set paths
+    path = '../r3dresults/st28gm06n052_timedep_nospikes/'
+    modelabbreviation = '052'
+
+    # Define wavelenvths
+    wavelengths = [
+        '02','10'
+    ]
+    # Chose snapshots
+    snapshots = [
+        290, 292, 294, 296, 298, 300
+    ]
+    snapshots_times = []
+
+    # Extract corresponding snapshot-times
+    snapshot_file = np.loadtxt(
+        path+'snapshot_yr.dat'
+    )
+    for snaptime in snapshot_file:
+        for snapshot in snapshots:
+            if snapshot == snaptime[0]:
+                snapshots_times.append(snaptime[1])
+
+    # Create image objects and fill subplots
+    fig,ax = plt.subplots(
+        len(wavelengths),len(snapshots),
+        figsize=(12, 4.2)
+    )
+    # Loop through wavelengths
+    for nrow,wavelength in enumerate(wavelengths):
+        imagefilename = f'image_i000_phi000_{wavelength}um.out'
+
+        # Loop through snapshots
+        for ntime,snapshot in enumerate(snapshots):
+
+            # Load image
+            image2d,image2dlog,flux,axisplot = a3d.load_images(
+                path=f'{path}{snapshot}/',
+                image=imagefilename,
+                distance=1
+            )
+            # Compute and apply gamma function of each image
+            scale = np.max(image2d)-np.min(image2d)
+            gamma = 0.3*np.log(image2d.max())/np.log(image2d.mean())
+            imageplot = ((image2d / scale)**gamma) * scale
+            # Plot image
+            ax[nrow,ntime].imshow(
+                imageplot, origin='lower', extent=axisplot, cmap=plt.get_cmap('hot')
+            )
+            # write time and flux on top of each column
+            if nrow == 0:
+                ax[0,ntime].set_title(
+                    f'{snapshots_times[ntime]:.2f} yrs, {flux*1e-6:.3f} MJy',
+                    fontsize = 10
+                )
+            # and only flux on second row
+            if nrow == 1:
+                ax[1,ntime].set_title(
+                    f'{flux*1e-6:.3f} MJy',
+                    fontsize = 10
+                )
+
+
+    # Offest AU på yttre plots
+    ax[0,0].set_ylabel('Offest (au)', fontsize = 14)
+    ax[1,0].set_ylabel('Offest (au)', fontsize = 14)
+    for ntime in range(len(snapshots)):
+        ax[1,ntime].set_xlabel('Offest (au)', fontsize = 14)
+
+
+    fig.tight_layout()
+    fig.savefig(
+        'figs/052exampleimages.pdf', 
+        facecolor='white',
+        dpi=300
+    )
+
+    #fig.show()
+
+
+
+
+
+
+
+
 #
 #####################################################################################
 # Plot average period of Rsource events per model and angle
