@@ -515,6 +515,7 @@ def extract_events(
     # TODO write periodicitet
     # = totala tiden delat på antal events -> tid mellan events i medel
     print(f'  Total included time: {timerange[-1]} time units')
+    print(f'  Relative limit: {relative_limit}')
     print(f'  Number of events: {event_count}')
     print(f'  Average pediod between events: {timerange[-1]/event_count} time units')
     print(f'  Total length of events: {event_sum} time units')

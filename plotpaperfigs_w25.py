@@ -294,12 +294,6 @@ if plot_luminosities == 'y':
         [7603.133, 10948.281, 9101.957, 7314.733, 5911.108, 3815.841]
     ]
 
-
-
-
-
-
-
     for nmodel,path in enumerate(paths):
 
         # Load time axis and lum-data
@@ -551,13 +545,11 @@ if plot_052exampleimages == 'y':
                     fontsize = 10
                 )
 
-
     # Offest AU på yttre plots
     ax[0,0].set_ylabel('Offest (au)', fontsize = 14)
     ax[1,0].set_ylabel('Offest (au)', fontsize = 14)
     for ntime in range(len(snapshots)):
         ax[1,ntime].set_xlabel('Offest (au)', fontsize = 14)
-
 
     fig.tight_layout()
     fig.savefig(
@@ -565,7 +557,6 @@ if plot_052exampleimages == 'y':
         facecolor='white',
         dpi=300
     )
-
     #fig.show()
 
 
