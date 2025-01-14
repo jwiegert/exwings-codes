@@ -68,10 +68,10 @@ plot_075grainsize = 'n'
 plot_allseds = 'n'
 plot_luminosities = 'n'
 plot_052fluxdensity = 'n'
-plot_052exampleimages = 'y'
+plot_052exampleimages = 'n'
 
 plot_rsourceevents = 'n'
-
+plot_fluxvariations = 'y'
 
 
 # Plots below ----------------------------------------------------------------#
@@ -559,26 +559,14 @@ if plot_052exampleimages == 'y':
     )
     #fig.show()
 
-
-
-
-
-
-
-
 #
 #####################################################################################
-# Plot average period of Rsource events per model and angle
+# Plot average period of Rsource, F2um, F10um events per model and angle
 if plot_rsourceevents == 'y':
 
     Nmodels = len(models_label)
     Nangles = len(angles)
 
-
-    # Set figure objects    
-    #fig,ax = plt.figure(
-    #    figsize=(6,4)
-    #), plt.axes()
     fig,ax = plt.subplots(
         3,1,
         figsize=(6,12)
@@ -966,6 +954,246 @@ if plot_rsourceevents == 'y':
     fig.tight_layout()
     fig.savefig(
         'figs/periods_allmetrics.pdf', 
+        facecolor='white',
+        dpi=300
+    )
+    fig.show()
+#
+#####################################################################################
+# Plot statistics on F2um och F10um for each model.
+#
+# %                          052           074            075
+# %       2um:
+# %           Fmean      :   68.73         80.89          95.14
+# %           Fst        :   30.18         25.98          12.77
+# %           Fmin       :    2.17          3.69          54.38
+# %           Fmin/Fmean :    0.0316        0.0456         0.5716
+# %           Fmin-proc  :    3.16%         4.56%         57.16%
+# %
+# %       10um
+# %           Fmean      :   27.65         25.48          21.63
+# %           Fst        :    5.01          4.23           1.94
+# %           Fmax       :   39.28         35.79          27.23
+# %           Fmax/Fmean :    1.4206        1.4049         1.2588
+# %           Fmax-proc  :   42.06%        40.49%         25.88%
+#
+if plot_fluxvariations == 'y':
+    
+    
+    # TODO
+    # also add mean-std of star!
+    # for each model
+    
+    
+    #
+    # Set path settings
+    paths = [
+        '../r3dresults/st28gm06n052_timedep_nospikes/',
+        '../r3dresults/st28gm06n074_nospikes/',
+        '../r3dresults/st28gm06n075_nospikes/'
+    ]
+    pathsstellar = [
+        '../r3dresults/st28gm06n052_timedep_nodust/',
+        '../r3dresults/st28gm06n074_nodust/',
+        '../r3dresults/st28gm06n075_nodust/'
+    ]
+    modelabbreviations = [
+        '052',
+        '074',
+        '075'
+    ]
+    Nangles = len(angles)
+    # Set wavelengths
+    obswavelengths = [
+        2,10
+    ]
+    # Initiate subplot objects
+    fig,ax = plt.subplots(
+        len(obswavelengths),1,
+        figsize=(6,6)
+    )
+    # Loop over models
+    sed_average_2um = []
+    sed_std_2um = []
+    sed_min_2um = []
+
+    sed_average_10um = []
+    sed_std_10um = []
+    sed_max_10um = []
+
+    star_average_2um = []
+    star_std_2um = []
+
+    star_average_10um = []
+    star_std_10um = []
+
+    for path,pathstar in zip(paths,pathsstellar):
+
+        # Extract list of folders from the path folder, and make them to numbers, and sort them!
+        phases = [int(filename) for filename in os.listdir(path) if os.path.isdir(path+filename)]
+        phases.sort()
+        Nphases = len(phases)
+        # And load corresponding time
+        snapshot_times = np.loadtxt(path+'snapshot_yr.dat')[:,1]
+        # Load average SED-data
+        # 0           1         2    3     4
+        # Wavelength  AverageF  STD  MaxF  MinF
+        average_seds = np.loadtxt(f'{path}average_sed.dat')
+        average_stars = np.loadtxt(f'{pathstar}average_sed.dat')
+        wavelengths = average_seds[:,0]
+
+
+        # Loop over obswavelengths
+        for wavelength in obswavelengths:
+
+            # Extract index of chosen wavelength and average flux density at wavelength
+            waveindex = np.argwhere(wavelengths >= wavelength)[0][0] - 1
+
+            if wavelength == 2:
+                # Save data for each
+                sed_average_2um.append(average_seds[waveindex,1]*1e-6)
+                sed_std_2um.append(average_seds[waveindex,2]*1e-6)
+                sed_min_2um.append(average_seds[waveindex,4]*1e-6)
+
+                # Save stellar fluxes
+                star_average_2um.append(average_stars[waveindex,1]*1e-6)
+                star_std_2um.append(average_stars[waveindex,2]*1e-6)
+
+            if wavelength == 10:
+                # Save data for each
+                sed_average_10um.append(average_seds[waveindex,1]*1e-6)
+                sed_std_10um.append(average_seds[waveindex,2]*1e-6)
+                sed_max_10um.append(average_seds[waveindex,3]*1e-6)
+
+                # Save stellar fluxes
+                star_average_10um.append(average_stars[waveindex,1]*1e-6)
+                star_std_10um.append(average_stars[waveindex,2]*1e-6)
+
+
+    # Add fields with stellar fluxes
+    # 2um
+    ax[0].fill_between(
+        [0,1,2], 
+        [
+            star_average_2um[0]-star_std_2um[0],
+            star_average_2um[1]-star_std_2um[1],
+            star_average_2um[2]-star_std_2um[2]
+        ],
+        [
+            star_average_2um[0]+star_std_2um[0],
+            star_average_2um[1]+star_std_2um[1],
+            star_average_2um[2]+star_std_2um[2]
+        ],
+        color='khaki',linestyle='-'
+    )
+    ax[0].plot(
+        [0,1,2],
+        star_average_2um,'darkgoldenrod'
+    )
+    # 10um
+    ax[1].fill_between(
+        [0,1,2], 
+        [
+            star_average_10um[0]-star_std_10um[0],
+            star_average_10um[1]-star_std_10um[1],
+            star_average_10um[2]-star_std_10um[2]
+        ],
+        [
+            star_average_10um[0]+star_std_10um[0],
+            star_average_10um[1]+star_std_10um[1],
+            star_average_10um[2]+star_std_10um[2]
+        ],
+        color='khaki',linestyle='-'
+    )
+    ax[1].plot(
+        [0,1,2],
+        star_average_10um,'darkgoldenrod'
+    )
+
+
+
+    # And then plot dusty flux densities
+    for nmodel in range(len(paths)):
+        # Set some plot colours
+        if nmodel == 0:
+            linecolour = 'darkblue'
+            allcolour = 'deepskyblue'
+        if nmodel == 1:
+            linecolour = 'darkred'
+            allcolour = 'salmon' #lr tomato
+        if nmodel == 2:
+            linecolour = 'darkgreen'
+            allcolour = 'lawngreen'
+
+        # Plot 2um
+        # First mininum
+        ax[0].plot(
+            [nmodel-0.05,nmodel+0.05],
+            [sed_min_2um[nmodel],sed_min_2um[nmodel]],
+            color=allcolour
+        )
+        ax[0].plot(
+            [nmodel,nmodel],
+            [sed_min_2um[nmodel],sed_average_2um[nmodel]],':',
+            color=allcolour
+        )
+        # And then average-std
+        ax[0].plot(
+            nmodel,sed_average_2um[nmodel],'.',markersize=10,color=linecolour
+        )
+        ax[0].plot(
+            [nmodel,nmodel],
+            [sed_average_2um[nmodel]-sed_std_2um[nmodel],sed_average_2um[nmodel]+sed_std_2um[nmodel]],
+            color=linecolour
+        )
+
+        # Plot 10um
+        # First maximum
+        ax[1].plot(
+            [nmodel-0.05,nmodel+0.05],
+            [sed_max_10um[nmodel],sed_max_10um[nmodel]],
+            color=allcolour
+        )
+        ax[1].plot(
+            [nmodel,nmodel],
+            [sed_max_10um[nmodel],sed_average_10um[nmodel]],':',
+            color=allcolour
+        )
+        # And then average-std
+        ax[1].plot(
+            nmodel,sed_average_10um[nmodel],'.',markersize=10,color=linecolour
+        )
+        ax[1].plot(
+            [nmodel,nmodel],
+            [sed_average_10um[nmodel]-sed_std_10um[nmodel],sed_average_10um[nmodel]+sed_std_10um[nmodel]],
+            color=linecolour
+        )
+
+    # TODO add textbox with wavelength
+
+    # Final settings for the plots
+    
+
+
+    # Set xticklabels
+    ax[0].set_xticks([0,1,2])
+    ax[0].set_xticklabels(['','','']) 
+    ax[1].set_xticks([0,1,2]) 
+    ax[1].set_xticklabels(models_label) 
+    ax[0].set_xlim(-0.3,2.3)
+    ax[1].set_xlim(-0.3,2.3)
+
+    # Set final general axis-settings
+    ax[0].set_ylabel(r'$F(2\,\mu$m$)$, MJy', fontsize=18)
+    ax[1].set_ylabel(r'$F(10\,\mu$m$)$, MJy', fontsize=18)
+    ax[0].tick_params(axis='both', which='major', labelsize=15)
+    ax[1].tick_params(axis='both', which='major', labelsize=15)
+    ax[0].set_ylim(0,120)
+    ax[1].set_ylim(15,45)
+
+    fig.tight_layout()
+    fig.savefig(
+        'figs/dustfluxes.pdf',
         facecolor='white',
         dpi=300
     )
