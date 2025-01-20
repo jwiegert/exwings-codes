@@ -320,20 +320,17 @@ def load_grid_properties(
     """
     Loads basic proparties from amr_grid.inp
 
-    INPUT
-    -----
-    amrpath: str, path to amr_grid.inp
+    ARGUMENTS
+      amrpath: str, path to amr_grid.inp
 
-    OUTPUT
-    ------
-    (In this order)
-    nxyz,nrefines,nleafs,nbranch,gridedge
-
-    - Number of base cells
-    - Number of grid refinements
-    - Number of grid cells (nleafs)
-    - Number of branches
-    - Size of the whole grid cube
+    RETURNS
+      (In this order)
+      nxyz,nrefines,nleafs,nbranch,gridedge
+      - Number of base cells
+      - Number of grid refinements
+      - Number of grid cells (nleafs)
+      - Number of branches
+      - Size of the whole grid cube
     """
 
     # Check if file exists

@@ -67,11 +67,11 @@ plot_075grainsize = 'n'
 
 plot_allseds = 'n'
 plot_luminosities = 'n'
-plot_052fluxdensity = 'n'
+plot_052fluxdensity = 'y'
 plot_052exampleimages = 'n'
 
 plot_rsourceevents = 'n'
-plot_fluxvariations = 'y'
+plot_fluxvariations = 'n'
 
 
 # Plots below ----------------------------------------------------------------#
@@ -422,7 +422,7 @@ if plot_052fluxdensity == 'y':
         figsize=(12, 4)
     )
     ax[0].set_ylabel(rf'$F(2\,\mu$m$)$, MJy at 1\,pc',fontsize=18)
-    ax[1].set_ylabel(r'$F_{\rm average} / F$ at 2\,$\mu$m',fontsize=18)
+    ax[1].set_ylabel(r'$F($ at 2\,$\mu$m$) / F_{\rm average}$',fontsize=18)
     ax[0].set_yscale('log')
     ax[1].set_ylim(0,2)
     for nn in range(2):
