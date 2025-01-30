@@ -79,4 +79,25 @@ def write_c5dgrid_files(
     # Print confirmation
     print(f'  write_c5dgrid_files: DONE: {outpath}gridc5d_distances.csv\n')
 
+###########################################################################
+# Func to merge final approx-dust-data with original star
+
+def merge_final_data(
+        workpath:str='../../r3dsims/st28gm06n052_arief/052_derivedclumps_150/',
+    ):
+    import create_r3d_functions as c3d
+    import os
+
+    c3d.merge_dustdensities(
+        workpath = workpath,
+        filenames=['dust_density_opastar.inp','dust_density_dust_binned.inp'],
+    )
+    c3d.merge_dusttemperatures(
+        workpath = workpath,
+        filenames=['dust_temperature_onestar_smoothed.dat','dust_temperature_dust_binned.dat'],
+    )
+    c3d.merge_dustopac(
+        workpath = workpath,
+        filenames = ['dustopac_opastar.inp','dustopac_dust.inp']
+    )
 

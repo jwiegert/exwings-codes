@@ -1870,8 +1870,6 @@ def plot_imageslinlog(
         #cb0.set_label(label = rf'Flux at {distance} pc (Jy/asec$^2$)',fontsize= 10)
 
         # Change figure size
-    #fig.set_figheight(3)
-    #fig.set_figwidth(7)
     fig.tight_layout()
 
     return fig, ax, fluxtotal
