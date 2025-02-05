@@ -20,18 +20,21 @@ snapshots = [
     '150','200','250','300'
 ]
 
-# Loop over all
+# Loop over all approximations
 for approxdesignation in approxdesignations:
     
     # Create model folder
     os.system(f'mkdir ../arief_data/{modelname}_{approxdesignation}')
     
+    # Loop over all included snapshot numbers
     for snapshot in snapshots:
 
         print(f'  Doing {modelname}_{approxdesignation}: {snapshot}')
 
-        # Create output folder   
-        os.system(f'mkdir ../arief_data/{modelname}_{approxdesignation}/{snapshot}')
+        # Define and create output path
+        outputpath = f'../arief_data/{modelname}_{approxdesignation}/{snapshot}'
+        os.system(f'mkdir {outputpath}')
+
 
         # Load relevant pickle file
         # i.e. either as obtained from CO5BOLD (clumps); or derived ellipsoids
@@ -58,10 +61,32 @@ for approxdesignation in approxdesignations:
             dustclumps['coord_list'], 
             dustclumps['grainsizes_list']
         )
-        # Change to 3D numpy-array
-        c5ddust_densities = np.array(grid_filled_rho_dust)
-        c5dstar_temperatures = np.array(grid_filled_temperature)
-        c5ddust_grainsizes = np.array(grid_filled_grainsizes)
+        # Change to 3D numpy-array and rotate back to same angle-combo
+        # that the original data give when translated directly from
+        # co5bold approx-files
+
+        c5ddust_densities = np.flip(np.rot90(np.rot90(np.rot90(
+            np.array(grid_filled_rho_dust),
+            k=-1, axes=(0,1)),
+            k=-1, axes=(1,2)),
+            k=-1, axes=(0,1)),
+            axis=1
+        )
+        c5dstar_temperatures = np.flip(np.rot90(np.rot90(np.rot90(
+            np.array(grid_filled_temperature),
+            k=-1, axes=(0,1)),
+            k=-1, axes=(1,2)),
+            k=-1, axes=(0,1)),
+            axis=1
+        )
+        c5ddust_grainsizes = np.flip(np.rot90(np.rot90(np.rot90(
+            np.array(grid_filled_grainsizes),
+            k=-1, axes=(0,1)),
+            k=-1, axes=(1,2)),
+            k=-1, axes=(0,1)),
+            axis=1
+        )
+
 
         # Load C5D-grid
         print('  Loading CO5BOLD grid')
@@ -184,49 +209,39 @@ for approxdesignation in approxdesignations:
                     print('    Finished 75 per cent of the grid.')
 
         print('    Finished writing inp/dat-files, moving to correct folders')
-        os.system(f'mv ../dust_density_dust.inp ../arief_data/{modelname}_{approxdesignation}/{snapshot}/')
-        os.system(f'mv ../dust_temperature_onestar.dat ../arief_data/{modelname}_{approxdesignation}/{snapshot}/')
-        os.system(f'mv ../grain_sizes.dat ../arief_data/{modelname}_{approxdesignation}/{snapshot}/')
+        os.system(f'mv ../dust_density_dust.inp {outputpath}/')
+        os.system(f'mv ../dust_temperature_onestar.dat {outputpath}/')
+        os.system(f'mv ../grain_sizes.dat {outputpath}/')
+
 
         print('  Running: binning of grain sizes to 10 bins and ')
-
-        # Define more links
-        # TODO put these earlier and use eg above
-        grainsizepath = f'../arief_data/{modelname}_{approxdesignation}/{snapshot}/grain_sizes_binned.dat'
-        dustdensitypath = f'../arief_data/{modelname}_{approxdesignation}/{snapshot}/dust_density_dust.inp'
-        dusttemperaturepath = f'../arief_data/{modelname}_{approxdesignation}/{snapshot}/dust_temperature_onestar.dat'
-
-        # TODO
-        # nånstans här funkar det inte ifrån, varför, det funkade innan!!!
-
-
         # Bin sizes
         a5d.bin_grainsizes(
-            grainsizepath=f'../arief_data/{modelname}_{approxdesignation}/{snapshot}/grain_sizes.dat',
+            grainsizepath=f'{outputpath}/grain_sizes.dat',
             phase=snapshot,
             nbins=10,
             lin='y'
         )
         # Output is ../grain_sizes_binned_{phase}.dat
         # Move to correct folder
-        os.system(f'mv ../grain_sizes_binned_{snapshot}.dat {grainsizepath}')
+        os.system(f'mv ../grain_sizes_binned_{snapshot}.dat {outputpath}/grain_sizes_binned.dat')
 
 
         # Load r3d-dust density file, not-binned
         Ncells,Nspec,dust_density = a3d.load_dustdensity(
-            path=dustdensitypath
+            path=f'{outputpath}/dust_density_dust.inp'
         )
         # Load r3d-temperature-file, not binned
         # NOTE! I don't care about re-normalising the temperature yet to bladh-approx!
         Ncells,Nspec,dust_temperature = a3d.load_temperature(
-            path=dusttemperaturepath
+            path=f'{outputpath}/dust_temperature_onestar.dat'
         )
 
         # Load binned grain sizes (first check if they exist)
         print('    Loading grain sizes')
-        if os.path.exists(grainsizepath) == True:
+        if os.path.exists(f'{outputpath}/grain_sizes_binned.dat') == True:
             grainsizes,Nleafs = a3d.load_grainsizes(
-                grainsize_path=grainsizepath
+                grainsize_path=f'{outputpath}/grain_sizes_binned.dat'
             )
             # Change unit to um
             grainsizes *= 1e4
@@ -245,8 +260,8 @@ for approxdesignation in approxdesignations:
 
 
         # Open new r3d-files to bin data in
-        with open(f'../arief_data/{modelname}_{approxdesignation}/{snapshot}/dust_density_dust_binned.inp', 'w') as fdensity, \
-            open(f'../arief_data/{modelname}_{approxdesignation}/{snapshot}/dust_temperature_dust_binned.dat', 'w') as ftemperature:
+        with open(f'{outputpath}/dust_density_dust_binned.inp', 'w') as fdensity, \
+            open(f'{outputpath}/dust_temperature_dust_binned.dat', 'w') as ftemperature:
 
             # Write headers:
             #
@@ -300,19 +315,20 @@ for approxdesignation in approxdesignations:
         c3d.create_optoolscript(
             wavelength_path=f'../arief_data/wavelength_micron.inp',
             phase=snapshot,
-            grainum_sizes=f'../arief_data/{modelname}_{approxdesignation}/{snapshot}/grain_sizes_binned.dat',
+            grainum_sizes=f'{outputpath}/grain_sizes_binned.dat',
             grainsize_type='normal',
             grainsize_na=21,
             specie=specie,
             grain_type='dhs'
         )   
         # Move files
-        os.system(f'mv ../optool_script_{snapshot}.sh ../arief_data/{modelname}_{approxdesignation}/{snapshot}/optool_script.sh')
-        os.system(f'mv ../dustopac_{specie}_{snapshot}.inp ../arief_data/{modelname}_{approxdesignation}/{snapshot}/dustopac_dust.inp')
+        os.system(f'mv ../optool_script_{snapshot}.sh {outputpath}/optool_script.sh')
+        os.system(f'mv ../dustopac_{specie}_{snapshot}.inp {outputpath}/dustopac_dust.inp')
         # Run script
-        os.system(f'../arief_data/{modelname}_{approxdesignation}/{snapshot}/optool_script.sh')
+        os.system(f'{outputpath}/optool_script.sh')
         # Move results
-        os.system(f'mv *mg2sio4* ../arief_data/{modelname}_{approxdesignation}/{snapshot}/')
+        os.system(f'mv *mg2sio4* {outputpath}/')
 
         print(f'  Done: {modelname}_{approxdesignation}: {snapshot}\n')
+
 
