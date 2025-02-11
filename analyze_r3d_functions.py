@@ -208,6 +208,11 @@ hplanck = 6.626068e-34 # Planck constant in Si
 #    distance:float=1
 # )
 #
+# compute_totalspecflux(
+#    wavelengths:list
+#    spectrum:list
+#)
+#
 # remove_sedspikes()
 #    path:str = '../r3dsims/spectrum.out',
 #    distance:float = 1
@@ -2342,6 +2347,26 @@ def compute_luminosity(
 
     else:
         raise ValueError('ERROR, wavelengths and spectrum have different lengths')
+
+
+def compute_totalspecflux(
+        wavelengths:list,
+        spectrum:list,
+    ):
+    """
+    Integrate the whole inputed spectrum and give in Jy
+    For example when applying bandpass filters to get observational
+    comparable flux densities
+
+    ARGUMENTS
+      wavelengths:list, wavelengths in micrometres
+      spectrum:list, spectrum in Jy
+    
+    RETURNS
+      Total flux density in Jy
+    """
+
+    print('hej')
 
 
 
