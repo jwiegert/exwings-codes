@@ -208,9 +208,9 @@ hplanck = 6.626068e-34 # Planck constant in Si
 #    distance:float=1
 # )
 #
-# compute_totalspecflux(
-#    wavelengths:list
-#    spectrum:list
+# translate_filter(
+#    filterfile
+#    wavelengthr3d
 #)
 #
 # remove_sedspikes()
@@ -2349,28 +2349,6 @@ def compute_luminosity(
         raise ValueError('ERROR, wavelengths and spectrum have different lengths')
 
 
-def compute_totalspecflux(
-        wavelengths:list,
-        spectrum:list,
-    ):
-    """
-    Integrate the whole inputed spectrum and give in Jy
-    For example when applying bandpass filters to get observational
-    comparable flux densities
-
-    ARGUMENTS
-      wavelengths:list, wavelengths in micrometres
-      spectrum:list, spectrum in Jy
-    
-    RETURNS
-      Total flux density in Jy
-    """
-
-    print('hej')
-
-
-
-
 # Function to plot and compute Pearson-Chi2-comparison between two sets of data
 def compute_chisquare(
         simulation:list,
@@ -2411,6 +2389,56 @@ def compute_chisquare(
     chiaq_reduced = 1/chisq_array.size * chisq_array.sum()
 
     return chisq_array,chiaq_reduced
+
+
+# Function to load and translate filter to r3d-grid
+# and normalise it to integral=1
+def translate_filter(
+        filterpath:str,
+        wavelengthr3d:str
+    ):
+    """
+    Translate filterprofiles as downloaded from SVO-page
+    http://svo2.cab.inta-csic.es/svo/theory/fps3/index.php
+    for usage on Radmc3d-computed SEDs.
+    Also see sect 8.5 of RADMC3D manual, pages 90-91 for v2.0.
+
+    ARGUMENTS
+      filterpath: string with path to filter file from current folder
+      wavelengthr3d: string to r3d-wavelengthfile, wavelength_micron.inp
+
+    RETURNS
+      file with filter within r3d-grid and filter-integral normalised to 1
+    """
+    # Extract filterfolder and filename
+    filterfile = filterpath.split('/')[-1]
+    filterfolder = ''
+    for fold in filterpath.split('/')[:-1]:
+        filterfolder += f'{fold}/'
+
+    # Load r3d-wavelengths
+    r3dwaves = np.loadtxt(wavelengthr3d)[1:]
+
+    # Load filter profile and wavelengths translated to um from Å
+    filterwave = np.loadtxt(filterpath)[:,0]*1e-4
+    filterorig = np.loadtxt(filterpath)[:,1]
+
+    # Interpolate to r3d-grid
+    r3dfilter = np.interp(
+        x=r3dwaves,
+        xp=filterwave,
+        fp=filterorig
+    )
+
+    # Normalise filter to 1
+    r3dfilter = r3dfilter/np.trapz(r3dfilter,r3dwaves)
+
+    # Save in new files, r3d-um-wavelength and filter side by side
+    with open(f'{filterfolder}r3d_{filterfile}', 'w') as fr3d:
+        # Write header
+        fr3d.writelines(f'# {filterfile} band profile translated to radmc3d-grid\n# and integral normalised to 1\n')
+        for r3dwave,r3dfilt in zip(r3dwaves,r3dfilter):
+            fr3d.writelines(f'{r3dwave}    {r3dfilt}\n')
 
 
 # Function to remove those strange spikes we're getting by combining two or more

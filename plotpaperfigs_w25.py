@@ -1204,22 +1204,27 @@ if plot_fluxvariations == 'y':
 # suh2021, smiths2001, aavso.rg
 # 
 if plot_datacompare == 'y':
-    print('hej')
-    # TODO fixa nedanför
-
-    # Test plot panel with colours
+    # First panel plot with colour statistics
+    # K[2.2](2mass) - W3[12] of O-rich AGB stars from Suh2021
+    # both WISE and IRAS catalogue, a total of 4038(IRAS)+5253(WISE) AGB stars
     #
+    # My model colours are computed with appropiate filters
+    # as downloaded from SVO-filter databse.
+    # http://svo2.cab.inta-csic.es/svo/theory/fps3/index.php
+    #
+    # All data:
     #                Suh+2021 
-    #                fig9            fig10
-    #               K[2.2]-W3[12]   K[2.2]-IR[12]    n052       n074        n075
-    #   maxK-minW3:  -               -               0.90       0.59        0.87
-    #          Max: 1               1                1.86       1.71        1.43
-    #        Medel: 4.39            4                2.09       1.84        1.53
-    #          STD: 2.18            1.5              0.31       0.18        0.04
-    #          Min: 10-11          12-13             4.93       4.21        1.77
-    #   minK-maxW3:  -               -               4.93       5.33        2.33
-
-    # xaxeln: modellerna
+    #                fig9 IRAS      fig9 WISE
+    #               K[2.2]-W3[12]   K[2.2]-W3[12]    n052       n074        n075
+    #   maxK-minW3:  -               -               0.747      0.553       0.757
+    #          Max: 0.9             1                1.727      1.580       1.317
+    #          STD: 2.18            0.91             0.313      0.187       0.041
+    #        Medel: 4.39            2.15             1.942      1.704       1.416
+    #          STD: 2.18            0.91             0.313      0.187       0.041
+    #          Min: 10-11           6                4.742      4.145       1.655
+    #   minK-maxW3:  -               -               5.722      5.171       2.214
+    #
+    # X-axis to have models
     modelnames = [
         'st28gm06n052',
         'st28gm06n074',
@@ -1230,102 +1235,108 @@ if plot_datacompare == 'y':
     ]
     # Y-axel, div färger
     # modellerna med "error-bar-aktiga" linjer
+
+    # Y-axis with model data in errorbar like
+    # max-min, max, avr+std, avr, avr-std, min, min-max
+    # 052,074,075
     modeldata = [
-        [0.9,1.86,2.09-0.31,2.09,2.09+0.31,4.93,4.93],
-        [0.59,1.71,1.84-0.18,1.84,1.84+0.18,4.21,5.33],
-        [0.87,1.43,1.53-0.04,1.53,1.53+0.04,1.77,2.33]
+        [
+            0.747 ,  1.727 , 1.942+0.313 , 1.942 , 1.492-0.313 , 4.742 , 5.722
+        ],
+        [
+            0.553 , 1.580 , 1.704+0.187 , 1.704 , 1.704-0.187 , 4.145 , 5.171 
+        ],
+        [
+            0.757 , 1.317 , 1.416+0.041 , 1.416 , 1.416+0.041 , 1.655 , 2.214
+        ]
     ]
-    linestyles = [':','--','-']
-    # datastatistiken med fält över hela plotten
-
-
-
+    linestyles = [
+        ':','--','-'
+    ]
     # Set up figure object
     fig,ax = plt.subplots(
         2,1,
-        figsize=(5,10)
+        figsize=(6,9)
     )
     # Plot fields for observed statistics from Suh21
+    #
+    # From Fig9, 2 right panels two catalogues, 
+    #   first IRAScat-minmax
+    #   then  WISEcat-minmax
+    #   In middle, first: IRAS-mean, second: WISE-mean
     suhdata = [
-        1,4.39-2.18,4.39,4.39+2.18,10.5,12.5
+        0.9,
+        1,
+        4.39,
+        2.15,
+        6,
+        10.5,
     ]
     suhcolours = [
-        'khaki','gold','darkgoldenrod'
+        'khaki','gold','darkgoldenrod','red'
     ]
     modelaxis = [0,4]
-    for nfield in range(2):
-        ax[0].fill_between(
-            modelaxis,
-            [suhdata[nfield],suhdata[nfield]],
-            [suhdata[-nfield-2],suhdata[-nfield-2]],
-            color=suhcolours[nfield]
-        )
-    # Average colour
-    ax[0].plot(
-        modelaxis,
-        [suhdata[2],suhdata[2]],
-        color=suhcolours[2],linewidth=4
-    )    
-    # extra maximum colour
-    ax[0].plot(
-        modelaxis,
-        [suhdata[-1],suhdata[-1]],
-        color=suhcolours[0],linestyle='--',linewidth=4
-    )    
-
-
-
+    modelpositions = [0.8,2,3.2]
+    for nfield in range(4):
+        if nfield < 2:
+            ax[0].fill_between(
+                modelaxis,
+                [suhdata[nfield],suhdata[nfield]],
+                [suhdata[-nfield-1],suhdata[-nfield-1]],
+                color=suhcolours[nfield]
+            )
+        if nfield > 1:
+            ax[0].plot(
+                modelaxis,
+                [suhdata[nfield],suhdata[nfield]],
+                color=suhcolours[nfield],linewidth=4
+            )    
     # Plot model colour ranges
     for nmodel,modeldat in enumerate(modeldata):
         # error bars
         for nn in range(3):
             ax[0].plot(
-                [nmodel+1,nmodel+1],
+                [modelpositions[nmodel],modelpositions[nmodel]],
                 [modeldat[nn],modeldat[-nn-1]],
                 'k',linestyle=linestyles[nn]
             )
             ax[0].plot(
-                [nmodel+0.8,nmodel+1.2],
+                [modelpositions[nmodel]-0.2,modelpositions[nmodel]+0.2],
                 [modeldat[nn],modeldat[nn]],
                 'k'
             )
             ax[0].plot(
-                [nmodel+0.8,nmodel+1.2],
+                [modelpositions[nmodel]-0.2,modelpositions[nmodel]+0.2],
                 [modeldat[-nn-1],modeldat[-nn-1]],
                 'k'
             )
         ax[0].plot(
-            [nmodel+1,nmodel+1],
+            [modelpositions[nmodel],modelpositions[nmodel]],
             [modeldat[3],modeldat[3]],
             modelsymbol[nmodel],color='k',markersize=12
         )
-
-
-
+    # Set xlabels and tick settings
     ax[0].set_xlim(0,4)
-
-
-    # Testplot figure with colours and flux-ratios compared to data
+    ax[0].set_xticks(modelpositions) 
+    ax[0].set_xticklabels(modelnames) 
+    ax[0].set_ylabel('K[2.2]$-$W3[12]', fontsize=18)
+    ax[0].tick_params(axis='both', which='major', labelsize=15)
     #
-    # fluxratioploten
-    # yaxel: flux ratio i log
-    # xaxeln: obstid
-    # olika symboler för olika källor, linjer mellan källorna, ensamma punkter för modeller
-
-
-
+    # Next panel, compare with data one specific sources
+    #
+    # Y-axis: minimum/average flux ratio
+    # X-axis: total time of included data
+    #
+    # Model data:
     modeltime =  34.857
+    # each row: model
+    # each column: Vband, Cobe2.2, Cobe3.5
     modelfluxratios = np.array([
-        [0.00089898,0.047243,0.19464],
-        [0.0033807 ,0.060067,0.23373],
-        [0.058986  ,0.59944 ,0.69684],
+        [0.00089898,0.04972 , 0.20425],
+        [0.0033807 ,0.06202 , 0.23182],
+        [0.058986  ,0.60118 , 0.69670],
     ])
-    modelnames = [
-        'st28gm06n052',
-        'st28gm06n074',
-        'st28gm06n075',
-    ]
-
+    # Observed data:
     # Save all band data separately
     visualdata = np.array([
         [  8.06 ,0.083179  ],
@@ -1337,99 +1348,104 @@ if plot_datacompare == 'y':
     ])
     Kbanddata = np.array([
         [0.68 , 0.700],
-        [0.71 , 0.667],
         [0.71 , 0.720],
-        [0.74 , 0.558],
+        [0.71 , 0.667],
         [0.74 , 0.647],
+        [0.74 , 0.558],
     ])
     W1banddata = np.array([
         [ 0.68, 0.857  ],
         [ 0.71, 0.674  ],
         [ 0.71, 0.765  ],
-        [ 0.74, 0.664  ],
         [ 0.74, 0.75   ],
-        [10.4 , 0.30199],
+        [ 0.74, 0.664  ],
         [10.4 , 0.39810],
+        [10.4 , 0.30199],
     ])
     allobsdata = [
         visualdata,
         Kbanddata,
         W1banddata
     ]
+    
+    
+    # TODO
+    # create some average line based on these numbers?
     # Save all band data in one master array for a "master line"
     # take average of those at "same" time to change weighting
-    alldata = np.array([
-        [0.68 , 0.700],
-        [0.68 , 0.857],
-        [0.71 , 0.667],
-        [0.71 , 0.674],
-        [0.71 , 0.720],
-        [0.71 , 0.765],
-        [0.74 , 0.558],
-        [0.74 , 0.647],
-        [0.74 , 0.664],
-        [0.74 , 0.75 ],
-        [  8.06 ,0.083179  ],
-        [10.4 , 0.30199 ],
-        [10.4 , 0.39810 ],
-        [ 14.47 ,0.15850   ],
-        [131.18 ,0.012023  ],
-        [143.96 ,0.044055  ],
-        [144.73 ,0.039811  ],
-        [171.37 ,0.0091201 ],
-    ])
+    averageline_xaxis = [
+        np.mean([
+            0.68,0.68,0.71,0.71,0.71,0.71,0.74,0.74,0.74,0.74
+        ]),
+        np.mean([
+            131.18,143.94,144.73,171.37
+        ])
+    ]
+    averageline_yaxis = [
+        np.mean([
+            0.700, 0.857, 0.667, 0.674, 0.720, 0.765, 0.558, 0.647, 0.664, 0.75
+        ]),
+        np.mean([
+            0.012023  ,0.044055  ,0.039811  ,0.0091201 
+        ])
+    ]
+
+    # Start plotting
 
 
+    # Settings for subplotinset:
+    # x0,y0,width,height
     axin = ax[1].inset_axes(
-        bounds=[0.1,0.4,0.25,0.4]
+        bounds=[
+            0.09,0.4,0.3,0.39
+        ]
     )
 
+    # Plot average line
+    ax[1].plot(averageline_xaxis,averageline_yaxis,'k:')
+    axin.plot(averageline_xaxis,averageline_yaxis,'k:')
 
-    wavecolour = ['b','orange','r']
-    modelsymbol = ['d','s','o']
-
-    #ax[1].plot(alldata[:,0],alldata[:,1],'k:')
-    #axin.plot(alldata[:,0],alldata[:,1],'k:')
-
+    # Colours for each band
+    wavecolour = [
+        'b','orange','r'
+    ]
     for nwave,obsdata in enumerate(allobsdata):
 
         obstime = obsdata[:,0]
         fluxratios = obsdata[:,1]
-
 
         ax[1].plot(obstime,fluxratios,'.',color=wavecolour[nwave])
         ax[1].plot(obstime,fluxratios,'--',color=wavecolour[nwave])
         axin.plot(obstime,fluxratios,'.',color=wavecolour[nwave])
         axin.plot(obstime,fluxratios,'--',color=wavecolour[nwave])
 
-
         # Plot model results
         for nmodel in range(3):
             ax[1].plot(modeltime,modelfluxratios[nmodel,nwave],modelsymbol[nmodel],color=wavecolour[nwave])
-            axin.plot(modeltime,modelfluxratios[nmodel,nwave],modelsymbol[nmodel],color=wavecolour[nwave])
-
+            #axin.plot(modeltime,modelfluxratios[nmodel,nwave],modelsymbol[nmodel],color=wavecolour[nwave])
 
     # Add model labels
     for nmodel,modelname in enumerate(modelnames):
         ax[1].plot(-1,-1,modelsymbol[nmodel],color='k',markersize=6,label=modelname)
 
-
-
-
+    # Set axis settings
     ax[1].set_xscale('log')
     ax[1].set_yscale('log')
     axin.set_xlim(0.65,0.8)
     axin.set_ylim(0.5,0.9)
-    ax[1].indicate_inset_zoom(axin);
-    ax[1].set_xlabel('Observed time range')
-    ax[1].set_ylabel(r'$F_\nu ($average$)/F_\nu ($minimum$)$')
+    #ax[1].indicate_inset_zoom(axin)
+    ax[1].set_xlabel('Observed time range (years)', fontsize=18)
+    ax[1].tick_params(axis='both', which='major', labelsize=15)
+    ax[1].set_ylabel(r'$F_\nu ($min$)/F_\nu ($average$)$', fontsize=18)
     ax[1].legend(
         #loc='upper right',
-        fontsize=10
+        fontsize=14
     )
+    # Final figure fixes, and save fig.
+    
     fig.tight_layout()
     fig.savefig(
-        'figs/data_compare',
+        'figs/data_compare.pdf',
         facecolor='white',
         dpi=300
     )
