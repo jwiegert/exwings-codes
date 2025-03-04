@@ -62,17 +62,17 @@ models_label = [
 
 # Plot-list
 
-plot_dustmass = 'n'
-plot_075grainsize = 'n'
+plot_dustmass = 'y'
+plot_075grainsize = 'y'
 
 plot_allseds = 'n'
-plot_luminosities = 'n'
-plot_052fluxdensity = 'n'
+plot_luminosities = 'y'
+plot_052fluxdensity = 'y'
 plot_052exampleimages = 'n'
 
-plot_rsourceevents = 'n'
-plot_fluxvariations = 'n'
-plot_datacompare = 'y' # TODO
+plot_LOSevents = 'n'
+plot_fluxvariations = 'y'
+plot_datacompare = 'n'
 
 
 # Plots below ----------------------------------------------------------------#
@@ -113,7 +113,7 @@ if plot_dustmass == 'y':
     ax[1].plot(time075,dustmass075,'g', label=legendlist[2])
 
     ax[0].set_ylabel(r'Dust mass ($M_\odot $)',fontsize=18)
-    ax[1].set_xlabel('Time (yrs)',fontsize=18)
+    ax[1].set_xlabel('Synchronised time (yrs)',fontsize=18)
     ax[0].tick_params(axis='both', which='major', labelsize=15)
     ax[1].tick_params(axis='both', which='major', labelsize=15)
     ax[0].set_xlim([time052[0],time052[-1]])
@@ -143,7 +143,7 @@ if plot_075grainsize == 'y':
     # Plot and save figure
     fig,ax = plt.figure(figsize=(6,3)), plt.axes()
     ax.plot(phasetimes075,grainsize075)
-    ax.set_xlabel('Time (yrs)',fontsize=18)
+    ax.set_xlabel('Simulation time (yrs)',fontsize=18)
     ax.set_ylabel(r'Max grain size ($\mu$m)',fontsize=18)
     ax.tick_params(axis='both', which='major', labelsize=15)
     fig.tight_layout()
@@ -370,8 +370,8 @@ if plot_luminosities == 'y':
     ax[3].tick_params(axis='both', which='major', labelsize=15)
 
     # Set final general axis-settings
-    ax[0].set_ylabel(r'Luminosities ($L_\odot$)', fontsize=18)
-    ax[2].set_ylabel(r'Luminosities ($L_\odot$)', fontsize=18)
+    ax[0].set_ylabel(r'Luminosity ($L_\odot$)', fontsize=18)
+    ax[2].set_ylabel(r'Luminosity ($L_\odot$)', fontsize=18)
     ax[2].set_xlabel(r'Simulation time (yrs)',fontsize=18)
 
     # Plot and save
@@ -423,11 +423,11 @@ if plot_052fluxdensity == 'y':
         figsize=(12, 4)
     )
     ax[0].set_ylabel(rf'$F(2\,\mu$m$)$, MJy at 1\,pc',fontsize=18)
-    ax[1].set_ylabel(r'$F($ at 2\,$\mu$m$) / F_{\rm average}$',fontsize=18)
+    ax[1].set_ylabel(r'$F(2\,\mu$m$) / F_{\rm average}$',fontsize=18)
     ax[0].set_yscale('log')
     ax[1].set_ylim(0,2)
     for nn in range(2):
-        ax[nn].set_xlabel(r'Sim. time (yrs)',fontsize=18)
+        ax[nn].set_xlabel(r'Simulation time (yrs)',fontsize=18)
         ax[nn].tick_params(axis='both', which='major', labelsize=15)
         ax[nn].set_xlim(phasetimes[0],phasetimes[-1])
     linecolour = 'darkblue'
@@ -563,7 +563,7 @@ if plot_052exampleimages == 'y':
 #
 #####################################################################################
 # Plot average period of Rsource, F2um, F10um events per model and angle
-if plot_rsourceevents == 'y':
+if plot_LOSevents == 'y':
 
     Nmodels = len(models_label)
     Nangles = len(angles)
@@ -979,13 +979,6 @@ if plot_rsourceevents == 'y':
 # %           Fmax-proc  :   42.06%        40.49%         25.88%
 #
 if plot_fluxvariations == 'y':
-    
-    
-    # TODO
-    # also add mean-std of star!
-    # for each model
-    
-    
     #
     # Set path settings
     paths = [
@@ -1111,8 +1104,6 @@ if plot_fluxvariations == 'y':
         star_average_10um,'darkgoldenrod'
     )
 
-
-
     # And then plot dusty flux densities
     for nmodel in range(len(paths)):
         # Set some plot colours
@@ -1169,12 +1160,7 @@ if plot_fluxvariations == 'y':
             [sed_average_10um[nmodel]-sed_std_10um[nmodel],sed_average_10um[nmodel]+sed_std_10um[nmodel]],
             color=linecolour
         )
-
-    # TODO add textbox with wavelength
-
     # Final settings for the plots
-    
-
 
     # Set xticklabels
     ax[0].set_xticks([0,1,2])
@@ -1185,8 +1171,8 @@ if plot_fluxvariations == 'y':
     ax[1].set_xlim(-0.3,2.3)
 
     # Set final general axis-settings
-    ax[0].set_ylabel(r'$F(2\,\mu$m$)$, MJy', fontsize=18)
-    ax[1].set_ylabel(r'$F(10\,\mu$m$)$, MJy', fontsize=18)
+    ax[0].set_ylabel(r'$F(2\,\mu$m$)$, MJy at 1\,pc', fontsize=18)
+    ax[1].set_ylabel(r'$F(10\,\mu$m$)$, MJy at 1\,pc', fontsize=18)
     ax[0].tick_params(axis='both', which='major', labelsize=15)
     ax[1].tick_params(axis='both', which='major', labelsize=15)
     ax[0].set_ylim(0,120)
@@ -1264,13 +1250,19 @@ if plot_datacompare == 'y':
     #   first IRAScat-minmax
     #   then  WISEcat-minmax
     #   In middle, first: IRAS-mean, second: WISE-mean
+
+
     suhdata = [
-        0.9,
-        1,
-        4.39,
-        2.15,
-        6,
-        10.5,
+        0.34,   # iras min
+        0.58,   # wise min
+        4.39,   # iras mean
+        2.15,   # wise mean
+        8.02,   # wise max
+        13.6,   # iras max
+    ]
+    suhstd = [
+        2.18,   # iras std
+        0.91,   # wise std
     ]
     suhcolours = [
         'khaki','gold','darkgoldenrod','red'
@@ -1286,11 +1278,28 @@ if plot_datacompare == 'y':
                 color=suhcolours[nfield]
             )
         if nfield > 1:
+            # Plot average
             ax[0].plot(
                 modelaxis,
                 [suhdata[nfield],suhdata[nfield]],
-                color=suhcolours[nfield],linewidth=4
-            )    
+                color=suhcolours[nfield],linewidth=3
+            )
+            # and std
+            ax[0].plot(
+                modelaxis,
+                [suhdata[nfield] + suhstd[nfield-2],suhdata[nfield] + suhstd[nfield-2]],
+                ':',color=suhcolours[nfield],linewidth=2
+            )
+            ax[0].plot(
+                modelaxis,
+                [suhdata[nfield] - suhstd[nfield-2],suhdata[nfield] - suhstd[nfield-2]],
+                ':',color=suhcolours[nfield],zorder=10,linewidth=2
+            )
+
+
+
+
+
     # Plot model colour ranges
     for nmodel,modeldat in enumerate(modeldata):
         # error bars
@@ -1400,10 +1409,9 @@ if plot_datacompare == 'y':
             0.09,0.4,0.3,0.39
         ]
     )
-
-    # Plot average line
-    ax[1].plot(averageline_xaxis,averageline_yaxis,'k:')
-    axin.plot(averageline_xaxis,averageline_yaxis,'k:')
+    ## Plot average line # NOTE do not use for paper, misleading
+    #ax[1].plot(averageline_xaxis,averageline_yaxis,'k:')
+    #axin.plot(averageline_xaxis,averageline_yaxis,'k:')
 
     # Colours for each band
     wavecolour = [
@@ -1434,7 +1442,7 @@ if plot_datacompare == 'y':
     axin.set_xlim(0.65,0.8)
     axin.set_ylim(0.5,0.9)
     #ax[1].indicate_inset_zoom(axin)
-    ax[1].set_xlabel('Observed time range (years)', fontsize=18)
+    ax[1].set_xlabel('Time series length (years)', fontsize=18)
     ax[1].tick_params(axis='both', which='major', labelsize=15)
     ax[1].set_ylabel(r'$F_\nu ($min$)/F_\nu ($average$)$', fontsize=18)
     ax[1].legend(
