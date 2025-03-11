@@ -62,17 +62,17 @@ models_label = [
 
 # Plot-list
 
-plot_dustmass = 'y'
-plot_075grainsize = 'y'
+plot_dustmass = 'n'
+plot_075grainsize = 'n'
 
 plot_allseds = 'n'
-plot_luminosities = 'y'
-plot_052fluxdensity = 'y'
+plot_luminosities = 'n'
+plot_052fluxdensity = 'n'
 plot_052exampleimages = 'n'
 
 plot_LOSevents = 'n'
-plot_fluxvariations = 'y'
-plot_datacompare = 'n'
+plot_fluxvariations = 'n'
+plot_datacompare = 'y'
 
 
 # Plots below ----------------------------------------------------------------#
@@ -419,15 +419,15 @@ if plot_052fluxdensity == 'y':
     # Set figure settings
     #fig, ax = plt.figure(num=f'F(t) of {wavelength} um', figsize=(6, 4)), plt.axes()
     fig,ax = plt.subplots(
-        1,2,
-        figsize=(12, 4)
+        2,1,
+        figsize=(6, 6)
     )
     ax[0].set_ylabel(rf'$F(2\,\mu$m$)$, MJy at 1\,pc',fontsize=18)
     ax[1].set_ylabel(r'$F(2\,\mu$m$) / F_{\rm average}$',fontsize=18)
     ax[0].set_yscale('log')
     ax[1].set_ylim(0,2)
+    ax[1].set_xlabel(r'Simulation time (yrs)',fontsize=18)
     for nn in range(2):
-        ax[nn].set_xlabel(r'Simulation time (yrs)',fontsize=18)
         ax[nn].tick_params(axis='both', which='major', labelsize=15)
         ax[nn].set_xlim(phasetimes[0],phasetimes[-1])
     linecolour = 'darkblue'
@@ -569,8 +569,8 @@ if plot_LOSevents == 'y':
     Nangles = len(angles)
 
     fig,ax = plt.subplots(
-        3,1,
-        figsize=(6,12)
+        1,3,
+        figsize=(13,4.5)
     )
     for nmodel in range(Nmodels):
         ax[nmodel].tick_params(axis='both', which='major', labelsize=15)
@@ -948,8 +948,8 @@ if plot_LOSevents == 'y':
         ax[nmodel].set_xticks([0,1,2,3,4,5]) 
         ax[nmodel].set_xticklabels(angles_label) 
     # Set axislabels
-    ax[1].set_ylabel(r'Average period \& event length (yrs)', fontsize=18)
-    ax[2].set_xlabel(r'LOS-angle',fontsize=18)
+    ax[0].set_ylabel(r'Average period \& event length (yrs)', fontsize=18)
+    ax[1].set_xlabel(r'LOS-angle',fontsize=18)
 
     # Save figure
     fig.tight_layout()
@@ -1227,13 +1227,16 @@ if plot_datacompare == 'y':
     # 052,074,075
     modeldata = [
         [
-            0.747 ,  1.727 , 1.942+0.313 , 1.942 , 1.492-0.313 , 4.742 , 5.722
+#            0.747 ,  1.727 , 1.942+0.313 , 1.942 , 1.492-0.313 , 4.742 , 5.722
+            0.747 ,  1.942+0.313 , 1.942 , 1.492-0.313 , 5.722
         ],
         [
-            0.553 , 1.580 , 1.704+0.187 , 1.704 , 1.704-0.187 , 4.145 , 5.171 
+#            0.553 , 1.580 , 1.704+0.187 , 1.704 , 1.704-0.187 , 4.145 , 5.171 
+            0.553 , 1.704+0.187 , 1.704 , 1.704-0.187 , 5.171 
         ],
         [
-            0.757 , 1.317 , 1.416+0.041 , 1.416 , 1.416+0.041 , 1.655 , 2.214
+#            0.757 , 1.317 , 1.416+0.041 , 1.416 , 1.416+0.041 , 1.655 , 2.214
+            0.757 , 1.416+0.041 , 1.416 , 1.416+0.041 , 2.214
         ]
     ]
     linestyles = [
@@ -1296,14 +1299,10 @@ if plot_datacompare == 'y':
                 ':',color=suhcolours[nfield],zorder=10,linewidth=2
             )
 
-
-
-
-
     # Plot model colour ranges
     for nmodel,modeldat in enumerate(modeldata):
         # error bars
-        for nn in range(3):
+        for nn in range(2):
             ax[0].plot(
                 [modelpositions[nmodel],modelpositions[nmodel]],
                 [modeldat[nn],modeldat[-nn-1]],
@@ -1331,7 +1330,9 @@ if plot_datacompare == 'y':
     ax[0].set_ylabel('K[2.2]$-$W3[12]', fontsize=18)
     ax[0].tick_params(axis='both', which='major', labelsize=15)
     #
-    # Next panel, compare with data one specific sources
+    #
+    # NEXT PANEL
+    # compare with data one specific sources
     #
     # Y-axis: minimum/average flux ratio
     # X-axis: total time of included data
@@ -1376,32 +1377,8 @@ if plot_datacompare == 'y':
         Kbanddata,
         W1banddata
     ]
-    
-    
-    # TODO
-    # create some average line based on these numbers?
-    # Save all band data in one master array for a "master line"
-    # take average of those at "same" time to change weighting
-    averageline_xaxis = [
-        np.mean([
-            0.68,0.68,0.71,0.71,0.71,0.71,0.74,0.74,0.74,0.74
-        ]),
-        np.mean([
-            131.18,143.94,144.73,171.37
-        ])
-    ]
-    averageline_yaxis = [
-        np.mean([
-            0.700, 0.857, 0.667, 0.674, 0.720, 0.765, 0.558, 0.647, 0.664, 0.75
-        ]),
-        np.mean([
-            0.012023  ,0.044055  ,0.039811  ,0.0091201 
-        ])
-    ]
-
     # Start plotting
-
-
+    #
     # Settings for subplotinset:
     # x0,y0,width,height
     axin = ax[1].inset_axes(
@@ -1409,9 +1386,6 @@ if plot_datacompare == 'y':
             0.09,0.4,0.3,0.39
         ]
     )
-    ## Plot average line # NOTE do not use for paper, misleading
-    #ax[1].plot(averageline_xaxis,averageline_yaxis,'k:')
-    #axin.plot(averageline_xaxis,averageline_yaxis,'k:')
 
     # Colours for each band
     wavecolour = [
