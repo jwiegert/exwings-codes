@@ -5,36 +5,36 @@ import data_unpacker
 import analyze_r3d_functions as a3d
 import create_r3d_functions as c3d
 import analyze_co5bold_functions as a5d
-
-
+#
 # Script to load and translate A's picklefiles to R3D-format
 print('Running: scriptpy to translate pickle-file data to r3d-format')
 
 # Define model parameters and file names
 modelname = 'st28gm06n052'
 approxdesignations = [
-    'derivedclumps',
     'derivedellipsoids'
 ]
 snapshots = [
-    '150','200','250','300'
+    '200_filled-outerellipsoid','300_filled-outerellipsoid'
+]
+snapshot_numbers = [
+    200,300
 ]
 
 # Loop over all approximations
 for approxdesignation in approxdesignations:
-    
+
     # Create model folder
     os.system(f'mkdir ../arief_data/{modelname}_{approxdesignation}')
-    
+
     # Loop over all included snapshot numbers
-    for snapshot in snapshots:
+    for snapshot,snapshot_number in zip(snapshots,snapshot_numbers):
 
         print(f'  Doing {modelname}_{approxdesignation}: {snapshot}')
 
         # Define and create output path
         outputpath = f'../arief_data/{modelname}_{approxdesignation}/{snapshot}'
         os.system(f'mkdir {outputpath}')
-
 
         # Load relevant pickle file
         # i.e. either as obtained from CO5BOLD (clumps); or derived ellipsoids
@@ -47,18 +47,18 @@ for approxdesignation in approxdesignations:
         # Use Ariefs data unpacker to create new lists of data
         # Skip rho_gas, use original star for comparisons
         grid_filled_rho_dust=data_unpacker.data_unpacker(
-            679, 
-            dustclumps['coord_list'], 
+            679,
+            dustclumps['coord_list'],
             dustclumps['rho_dust_list']
         )
         grid_filled_temperature=data_unpacker.data_unpacker(
-            679, 
-            dustclumps['coord_list'], 
+            679,
+            dustclumps['coord_list'],
             dustclumps['temperature_list']
         )
         grid_filled_grainsizes=data_unpacker.data_unpacker(
-            679, 
-            dustclumps['coord_list'], 
+            679,
+            dustclumps['coord_list'],
             dustclumps['grainsizes_list']
         )
         # Change to 3D numpy-array and rotate back to same angle-combo
@@ -87,7 +87,6 @@ for approxdesignation in approxdesignations:
             axis=1
         )
 
-
         # Load C5D-grid
         print('  Loading CO5BOLD grid')
         c5dgrid = np.loadtxt('../arief_data/gridc5d_distances.csv')
@@ -96,7 +95,7 @@ for approxdesignation in approxdesignations:
         # Load R3D-grid
         print('  Loading RADMC3D grid')
         nxyz,nrefines,nleafs,nbranch,gridedge = a3d.load_grid_properties(
-            amrpath='../arief_data/amr_grid.inp'    
+            amrpath='../arief_data/amr_grid.inp'
         )
         r3ddistances = a3d.load_griddistances(
             gridpath='../arief_data/grid_distances.csv',
@@ -118,7 +117,7 @@ for approxdesignation in approxdesignations:
         with open(f'../dust_density_dust.inp', 'w') as fdustdensity, \
             open(f'../dust_temperature_onestar.dat','w') as ftemperature, \
             open(f'../grain_sizes.dat','w') as fgrainsize:
-            
+
             # Write headers:
             # 1
             # nleafs
@@ -144,7 +143,7 @@ for approxdesignation in approxdesignations:
                 r3dzrange = [
                     r3ddistances[nr3d,3]-0.5*r3dcellsizes[nr3d],
                     r3ddistances[nr3d,3]+0.5*r3dcellsizes[nr3d]
-                ]   
+                ]
                 # Extract indeces of all c5dcells within current r3dcell
                 c5dxrange = np.argwhere(
                     r3dxrange[0] <= c5dgrid[np.argwhere(c5dgrid <= r3dxrange[1])]
@@ -293,7 +292,6 @@ for approxdesignation in approxdesignations:
                     # då kan jag skriva ned density och temperatur i rätt fil
                     # annars skriver den noll
                     # så delar jag upp  den i grain size bins
-                    
                     # TODO
                     # In case it's needed, adapt dust temperature here to
                     # Bladh-approximation
@@ -320,7 +318,7 @@ for approxdesignation in approxdesignations:
             grainsize_na=21,
             specie=specie,
             grain_type='dhs'
-        )   
+        )
         # Move files
         os.system(f'mv ../optool_script_{snapshot}.sh {outputpath}/optool_script.sh')
         os.system(f'mv ../dustopac_{specie}_{snapshot}.inp {outputpath}/dustopac_dust.inp')
@@ -329,6 +327,15 @@ for approxdesignation in approxdesignations:
         # Move results
         os.system(f'mv *mg2sio4* {outputpath}/')
 
+        # Copy over star-only-files and merge with dust data
+        print('  Copying star-only-files.')
+        os.system(f'cp -v ../arief_data/st28gm06n052_nodust/{snapshot_number}/* {outputpath}')
+        # Merge stellar and dust data
+        data_unpacker.merge_final_data(
+            workpath=outputpath
+        )
+        # Clean up
+        os.system(f'rm {outputpath}/*opastar*')
+        os.system(f'rm {outputpath}/*onestar*')
+
         print(f'  Done: {modelname}_{approxdesignation}: {snapshot}\n')
-
-

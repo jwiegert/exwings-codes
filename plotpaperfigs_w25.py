@@ -546,11 +546,11 @@ if plot_052exampleimages == 'y':
                     fontsize = 10
                 )
 
-    # Offest AU på yttre plots
-    ax[0,0].set_ylabel('Offest (au)', fontsize = 14)
-    ax[1,0].set_ylabel('Offest (au)', fontsize = 14)
+    # Offset AU på yttre plots
+    ax[0,0].set_ylabel('Offset (au)', fontsize = 14)
+    ax[1,0].set_ylabel('Offset (au)', fontsize = 14)
     for ntime in range(len(snapshots)):
-        ax[1,ntime].set_xlabel('Offest (au)', fontsize = 14)
+        ax[1,ntime].set_xlabel('Offset (au)', fontsize = 14)
 
     fig.tight_layout()
     fig.savefig(
@@ -1223,20 +1223,18 @@ if plot_datacompare == 'y':
     # modellerna med "error-bar-aktiga" linjer
 
     # Y-axis with model data in errorbar like
-    # max-min, max, avr+std, avr, avr-std, min, min-max
+    # max-min, avr+std, avr, avr-std, , min-max
     # 052,074,075
+    # Numbers from jupyternotebook with explore_timedep.ipynb
     modeldata = [
         [
-#            0.747 ,  1.727 , 1.942+0.313 , 1.942 , 1.492-0.313 , 4.742 , 5.722
-            0.747 ,  1.942+0.313 , 1.942 , 1.492-0.313 , 5.722
+            0.747 ,  1.381 , 1.942 , 2.685 , 5.722
         ],
         [
-#            0.553 , 1.580 , 1.704+0.187 , 1.704 , 1.704-0.187 , 4.145 , 5.171 
-            0.553 , 1.704+0.187 , 1.704 , 1.704-0.187 , 5.171 
+            0.553 , 1.251 , 1.704 , 2.240 , 5.171 
         ],
         [
-#            0.757 , 1.317 , 1.416+0.041 , 1.416 , 1.416+0.041 , 1.655 , 2.214
-            0.757 , 1.416+0.041 , 1.416 , 1.416+0.041 , 2.214
+            0.757 , 1.188 , 1.416 , 1.652 , 2.214
         ]
     ]
     linestyles = [
@@ -1320,7 +1318,7 @@ if plot_datacompare == 'y':
             )
         ax[0].plot(
             [modelpositions[nmodel],modelpositions[nmodel]],
-            [modeldat[3],modeldat[3]],
+            [modeldat[2],modeldat[2]],
             modelsymbol[nmodel],color='k',markersize=12
         )
     # Set xlabels and tick settings
