@@ -72,7 +72,11 @@ plot_052exampleimages = 'n'
 
 plot_LOSevents = 'n'
 plot_fluxvariations = 'n'
-plot_datacompare = 'y'
+plot_datacompare = 'n'
+
+# For vr-prop
+plotvr_exampleimages = 'n'
+plotvr_radiusplot = 'y'
 
 
 # Plots below ----------------------------------------------------------------#
@@ -1245,6 +1249,13 @@ if plot_datacompare == 'y':
         2,1,
         figsize=(6,9)
     )
+    # For VR-prop:
+    #fig,ax = plt.subplots(
+    #    1,2,
+    #    figsize=(10.5,4.5)
+    #)
+
+
     # Plot fields for observed statistics from Suh21
     #
     # From Fig9, 2 right panels two catalogues, 
@@ -1430,4 +1441,163 @@ if plot_datacompare == 'y':
         dpi=300
     )
     fig.show()
+
+#######################################################################
+# Plot for VR-prop
+
+if plotvr_exampleimages == 'y':
+
+    # Set paths
+    path = '../r3dresults/st28gm06n052_timedep_nospikes/'
+    modelabbreviation = '052'
+
+    # Define wavelenvths
+    wavelengths = [
+        '02','10'
+    ]
+    # Chose snapshots
+    snapshots = [
+        289, 292, 295, 298
+    ]
+    snapshots_times = []
+
+    # Extract corresponding snapshot-times
+    snapshot_file = np.loadtxt(
+        path+'snapshot_yr.dat'
+    )
+    for snaptime in snapshot_file:
+        for snapshot in snapshots:
+            if snapshot == snaptime[0]:
+                snapshots_times.append(snaptime[1])
+
+    # Create image objects and fill subplots
+    fig,ax = plt.subplots(
+        len(wavelengths),len(snapshots),
+        figsize=(10, 5)
+    )
+    # Loop through wavelengths
+    for nrow,wavelength in enumerate(wavelengths):
+        imagefilename = f'image_i000_phi000_{wavelength}um.out'
+
+        # Loop through snapshots
+        for ntime,snapshot in enumerate(snapshots):
+
+            # Load image
+            image2d,image2dlog,flux,axisplot = a3d.load_images(
+                path=f'{path}{snapshot}/',
+                image=imagefilename,
+                distance=1
+            )
+            # Compute and apply gamma function of each image
+            scale = np.max(image2d)-np.min(image2d)
+            gamma = 0.3*np.log(image2d.max())/np.log(image2d.mean())
+            imageplot = ((image2d / scale)**gamma) * scale
+            # Plot image
+            ax[nrow,ntime].imshow(
+                imageplot, origin='lower', extent=axisplot, cmap=plt.get_cmap('hot')
+            )
+            # write time and flux on top of each column
+            if nrow == 0:
+                ax[0,ntime].set_title(
+                    f'{snapshots_times[ntime]:.2f} yrs, {flux*1e-6:.3f} MJy',
+                    fontsize = 10
+                )
+            # and only flux on second row
+            if nrow == 1:
+                ax[1,ntime].set_title(
+                    f'{flux*1e-6:.3f} MJy',
+                    fontsize = 10
+                )
+
+    # Offset AU på yttre plots
+    ax[0,0].set_ylabel('Offset (au)', fontsize = 14)
+    ax[1,0].set_ylabel('Offset (au)', fontsize = 14)
+    for ntime in range(len(snapshots)):
+        ax[1,ntime].set_xlabel('Offset (au)', fontsize = 14)
+
+    fig.tight_layout()
+    fig.savefig(
+        'figs/vrexampleimages.pdf', 
+        facecolor='white',
+        dpi=300
+    )
+    #fig.show()
+
+if plotvr_radiusplot == 'y':
+    # Plot radial variations of models compared to
+    # This original stellar radius
+    Rstar = 1.65
+
+    # Chose model
+    models = [
+        #'st28gm06n052_timedep_nodust',
+        #'st28gm06n052_timedep_nospikes',
+        'st28gm06n074_nodust',
+        'st28gm06n074_nospikes',
+        #'st28gm06n075_nodust',
+        #'st28gm06n075_nospikes',
+    ]
+    # Chose wavelength (in um)
+    wavelengths = [
+        #'01',
+        '02',
+        #'10'
+    ]
+    # Set LOS-angles
+    angles = [
+        'i000_phi000',
+        'i090_phi000',
+        'i090_phi090',
+        'i090_phi270',
+        'i180_phi000',
+        'i270_phi000',
+    ]
+    # Set up figure
+    fig, ax = plt.subplots(
+        1,len(models),
+        figsize=(11,4)
+    )
+    # Plot all
+    for nmodel,modelname in enumerate(models):
+        for wavelength in wavelengths:
+            
+            path = f'../r3dresults/{modelname}/'
+
+            # Load and plot radii vs time
+            source_radii = np.loadtxt(f'{path}/source_radius_{wavelength}um.dat')
+
+            # Load corresponding time
+            snapshot_times = np.loadtxt(path+'snapshot_yr.dat')[:,1]
+
+            # Set figure object
+            ax[nmodel].set_xlabel(r'Sim. time (yrs)',fontsize=18)
+            ax[nmodel].tick_params(axis='both', which='major', labelsize=15)
+            ax[nmodel].set_xlim([
+                snapshot_times[0],snapshot_times[-1]
+            ])
+            ax[nmodel].set_ylim([
+                0,1.25
+            ])
+
+            # First plot angles
+            for nangle in range(len(angles)):
+                ax[nmodel].plot(snapshot_times,source_radii[:,nangle+2]/Rstar,'lightgrey')
+            # Then angle-averaged
+            ax[nmodel].plot(snapshot_times,source_radii[:,1]/Rstar,'k')
+
+            # Plot "table radius" and average radius
+            source_radii_average = np.mean(source_radii[:,1])
+            ax[nmodel].plot(
+                [snapshot_times[0],snapshot_times[-1]],
+                [1,1],'r:'
+            )
+            ax[nmodel].plot(
+                [snapshot_times[0],snapshot_times[-1]],
+                [source_radii_average/Rstar,source_radii_average/Rstar],'--',color='mediumblue'
+            )
+    # Final settings
+    ax[0].set_ylabel(r'Radius ($R_\star$)', fontsize=18)
+    # Save figure
+    fig.tight_layout()
+    fig.savefig(f"figs/{models[0].split('_')[0]}_sourceradius_{wavelength}um.pdf", dpi=300, facecolor="white")
 
