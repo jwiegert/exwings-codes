@@ -262,7 +262,7 @@ def write_r3d_runscripts(
             # Separate files for phases and number of files per phase
             with open(f'{path}runcommand_{phase}_{nfile+1}.sh', 'w') as fmain:
                 # Shebang
-                fmain.write(f'#! /bin/bash\n\n')
+                fmain.write(f'#!/bin/bash\n\n')
                 # Go to work folder
                 fmain.write(f'cd {phase}\n\n')
 
@@ -288,7 +288,7 @@ def write_r3d_runscripts(
         Nimages_perfile != len(image_angles_list)*len(image_wavelength_list)/Nscripts:
         with open(f'{path}runcommand_{phase}_{Nscripts+1}.sh', 'w') as fmain:
             # Shebang
-            fmain.write(f'#! /bin/bash\n\n')
+            fmain.write(f'#!/bin/bash\n\n')
             # Go to work folder
             fmain.write(f'cd {phase}\n\n')
 
@@ -315,7 +315,7 @@ def write_r3d_runscripts(
     # and creates log-files
     with open(f'{path}runmain.sh', 'w') as fmain:
         # Write shebang
-        fmain.write(f'#! /bin/bash\n\n')
+        fmain.write(f'#!/bin/bash\n\n')
 
         # Write runcommand for all files and their log files
         for runfile in list_of_files:
