@@ -76,7 +76,8 @@ plot_datacompare = 'n'
 
 # For vr-prop
 plotvr_exampleimages = 'n'
-plotvr_radiusplot = 'y'
+plotvr_radiusplot = 'n'
+plotvr_datacompare = 'y'
 
 
 # Plots below ----------------------------------------------------------------#
@@ -1600,4 +1601,155 @@ if plotvr_radiusplot == 'y':
     # Save figure
     fig.tight_layout()
     fig.savefig(f"figs/{models[0].split('_')[0]}_sourceradius_{wavelength}um.pdf", dpi=300, facecolor="white")
+
+# Plot special data compare for VR prop
+
+# Plot comparisons with data as found at 
+# suh2021, smiths2001, aavso.rg
+# 
+if plotvr_datacompare == 'y':
+    # First panel plot with colour statistics
+    # K[2.2](2mass) - W3[12] of O-rich AGB stars from Suh2021
+    # both WISE and IRAS catalogue, a total of 4038(IRAS)+5253(WISE) AGB stars
+    #
+    # My model colours are computed with appropiate filters
+    # as downloaded from SVO-filter databse.
+    # http://svo2.cab.inta-csic.es/svo/theory/fps3/index.php
+    #
+    # All data:
+    #                Suh+2021 
+    #                fig9 IRAS      fig9 WISE
+    #               K[2.2]-W3[12]   K[2.2]-W3[12]    n052       n074        n075
+    #   maxK-minW3:  -               -               0.747      0.553       0.757
+    #          Max: 0.9             1                1.727      1.580       1.317
+    #          STD: 2.18            0.91             0.313      0.187       0.041
+    #        Medel: 4.39            2.15             1.942      1.704       1.416
+    #          STD: 2.18            0.91             0.313      0.187       0.041
+    #          Min: 10-11           6                4.742      4.145       1.655
+    #   minK-maxW3:  -               -               5.722      5.171       2.214
+    #
+    # X-axis to have models
+    modelnames = [
+        'st28gm06n052',
+        'st28gm06n074',
+        'st28gm06n075',
+    ]
+    modelsymbol = [
+        'd','s','o'
+    ]
+    # Y-axel, div färger
+    # modellerna med "error-bar-aktiga" linjer
+
+    # Y-axis with model data in errorbar like
+    # max-min, avr+std, avr, avr-std, , min-max
+    # 052,074,075
+    # Numbers from jupyternotebook with explore_timedep.ipynb
+    modeldata = [
+        [
+            0.747 ,  1.381 , 1.942 , 2.685 , 5.722
+        ],
+        [
+            0.553 , 1.251 , 1.704 , 2.240 , 5.171 
+        ],
+        [
+            0.757 , 1.188 , 1.416 , 1.652 , 2.214
+        ]
+    ]
+    linestyles = [
+        ':','--','-'
+    ]
+    # Set up figure object
+    fig,ax = plt.figure(figsize=(7,5)), plt.axes()
+    #
+    # Plot fields for observed statistics from Suh21
+    #
+    # From Fig9, 2 right panels two catalogues, 
+    #   first IRAScat-minmax
+    #   then  WISEcat-minmax
+    #   In middle, first: IRAS-mean, second: WISE-mean
+    #
+    suhdata = [
+        0.34,   # iras min
+        0.58,   # wise min
+        4.39,   # iras mean
+        2.15,   # wise mean
+        8.02,   # wise max
+        13.6,   # iras max
+    ]
+    suhstd = [
+        2.18,   # iras std
+        0.91,   # wise std
+    ]
+    suhcolours = [
+        'khaki','gold','darkgoldenrod','red'
+    ]
+    modelaxis = [0,4]
+    modelpositions = [0.8,2,3.2]
+    for nfield in range(4):
+        if nfield < 2:
+            ax.fill_between(
+                modelaxis,
+                [suhdata[nfield],suhdata[nfield]],
+                [suhdata[-nfield-1],suhdata[-nfield-1]],
+                color=suhcolours[nfield]
+            )
+        if nfield > 1:
+            # Plot average
+            ax.plot(
+                modelaxis,
+                [suhdata[nfield],suhdata[nfield]],
+                color=suhcolours[nfield],linewidth=3
+            )
+            # and std
+            ax.plot(
+                modelaxis,
+                [suhdata[nfield] + suhstd[nfield-2],suhdata[nfield] + suhstd[nfield-2]],
+                ':',color=suhcolours[nfield],linewidth=2
+            )
+            ax.plot(
+                modelaxis,
+                [suhdata[nfield] - suhstd[nfield-2],suhdata[nfield] - suhstd[nfield-2]],
+                ':',color=suhcolours[nfield],zorder=10,linewidth=2
+            )
+    #
+    # Plot model colour ranges
+    for nmodel,modeldat in enumerate(modeldata):
+        # error bars
+        for nn in range(2):
+            ax.plot(
+                [modelpositions[nmodel],modelpositions[nmodel]],
+                [modeldat[nn],modeldat[-nn-1]],
+                'k',linestyle=linestyles[nn]
+            )
+            ax.plot(
+                [modelpositions[nmodel]-0.2,modelpositions[nmodel]+0.2],
+                [modeldat[nn],modeldat[nn]],
+                'k'
+            )
+            ax.plot(
+                [modelpositions[nmodel]-0.2,modelpositions[nmodel]+0.2],
+                [modeldat[-nn-1],modeldat[-nn-1]],
+                'k'
+            )
+        ax.plot(
+            [modelpositions[nmodel],modelpositions[nmodel]],
+            [modeldat[2],modeldat[2]],
+            modelsymbol[nmodel],color='k',markersize=12
+        )
+    # Set xlabels and tick settings
+    ax.set_xlim(0,4)
+    ax.set_xticks(modelpositions) 
+    ax.set_xticklabels(modelnames) 
+    ax.set_ylabel('K[2.2]$-$W3[12]', fontsize=18)
+    ax.tick_params(axis='both', which='major', labelsize=15)
+    #
+    # Final figure fixes, and save fig.
+    fig.tight_layout()
+    fig.savefig(
+        'figs/vrdata_compare.pdf',
+        facecolor='white',
+        dpi=300
+    )
+    fig.show()
+
 

@@ -15,7 +15,7 @@ approxdesignations = [
     'derivedellipsoids'
 ]
 snapshots = [
-    '200_filled-outerellipsoid','300_filled-outerellipsoid'
+    '200_filled-outerellipsoid_a','300_filled-outerellipsoid_a'
 ]
 snapshot_numbers = [
     200,300
@@ -292,6 +292,7 @@ for approxdesignation in approxdesignations:
                     # då kan jag skriva ned density och temperatur i rätt fil
                     # annars skriver den noll
                     # så delar jag upp  den i grain size bins
+                    #
                     # TODO
                     # In case it's needed, adapt dust temperature here to
                     # Bladh-approximation
@@ -335,7 +336,7 @@ for approxdesignation in approxdesignations:
             workpath=outputpath
         )
         # Clean up
-        os.system(f'rm {outputpath}/*opastar*')
+        os.system(f'rm {outputpath}/dustopac_opastar.inp')
         os.system(f'rm {outputpath}/*onestar*')
 
         print(f'  Done: {modelname}_{approxdesignation}: {snapshot}\n')
