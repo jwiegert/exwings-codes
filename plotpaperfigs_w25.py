@@ -72,12 +72,12 @@ plot_052exampleimages = 'n'
 
 plot_LOSevents = 'n'
 plot_fluxvariations = 'n'
-plot_datacompare = 'n'
+plot_datacompare = 'y'
 
 # For vr-prop
 plotvr_exampleimages = 'n'
 plotvr_radiusplot = 'n'
-plotvr_datacompare = 'y'
+plotvr_datacompare = 'n'
 
 
 # Plots below ----------------------------------------------------------------#
@@ -1278,7 +1278,7 @@ if plot_datacompare == 'y':
         0.91,   # wise std
     ]
     suhcolours = [
-        'khaki','gold','darkgoldenrod','red'
+        'khaki','paleturquoise','red','blue'
     ]
     modelaxis = [0,4]
     modelpositions = [0.8,2,3.2]
@@ -1301,12 +1301,12 @@ if plot_datacompare == 'y':
             ax[0].plot(
                 modelaxis,
                 [suhdata[nfield] + suhstd[nfield-2],suhdata[nfield] + suhstd[nfield-2]],
-                ':',color=suhcolours[nfield],linewidth=2
+                '--',color=suhcolours[nfield],linewidth=2
             )
             ax[0].plot(
                 modelaxis,
                 [suhdata[nfield] - suhstd[nfield-2],suhdata[nfield] - suhstd[nfield-2]],
-                ':',color=suhcolours[nfield],zorder=10,linewidth=2
+                '--',color=suhcolours[nfield],zorder=3,linewidth=2
             )
 
     # Plot model colour ranges
@@ -1316,22 +1316,22 @@ if plot_datacompare == 'y':
             ax[0].plot(
                 [modelpositions[nmodel],modelpositions[nmodel]],
                 [modeldat[nn],modeldat[-nn-1]],
-                'k',linestyle=linestyles[nn]
+                'k',linestyle=linestyles[nn],zorder=4
             )
             ax[0].plot(
                 [modelpositions[nmodel]-0.2,modelpositions[nmodel]+0.2],
                 [modeldat[nn],modeldat[nn]],
-                'k'
+                'k',zorder=4
             )
             ax[0].plot(
                 [modelpositions[nmodel]-0.2,modelpositions[nmodel]+0.2],
                 [modeldat[-nn-1],modeldat[-nn-1]],
-                'k'
+                'k',zorder=4
             )
         ax[0].plot(
             [modelpositions[nmodel],modelpositions[nmodel]],
             [modeldat[2],modeldat[2]],
-            modelsymbol[nmodel],color='k',markersize=12
+            modelsymbol[nmodel],color='k',markersize=12,zorder=4
         )
     # Set xlabels and tick settings
     ax[0].set_xlim(0,4)
@@ -1681,7 +1681,7 @@ if plotvr_datacompare == 'y':
         0.91,   # wise std
     ]
     suhcolours = [
-        'khaki','gold','darkgoldenrod','red'
+        'khaki','paleturquoise','red','blue'
     ]
     modelaxis = [0,4]
     modelpositions = [0.8,2,3.2]
@@ -1704,12 +1704,12 @@ if plotvr_datacompare == 'y':
             ax.plot(
                 modelaxis,
                 [suhdata[nfield] + suhstd[nfield-2],suhdata[nfield] + suhstd[nfield-2]],
-                ':',color=suhcolours[nfield],linewidth=2
+                '--',color=suhcolours[nfield],linewidth=2
             )
             ax.plot(
                 modelaxis,
                 [suhdata[nfield] - suhstd[nfield-2],suhdata[nfield] - suhstd[nfield-2]],
-                ':',color=suhcolours[nfield],zorder=10,linewidth=2
+                '--',color=suhcolours[nfield],zorder=3,linewidth=2
             )
     #
     # Plot model colour ranges
@@ -1719,22 +1719,22 @@ if plotvr_datacompare == 'y':
             ax.plot(
                 [modelpositions[nmodel],modelpositions[nmodel]],
                 [modeldat[nn],modeldat[-nn-1]],
-                'k',linestyle=linestyles[nn]
+                'k',linestyle=linestyles[nn],zorder=4,
             )
             ax.plot(
                 [modelpositions[nmodel]-0.2,modelpositions[nmodel]+0.2],
                 [modeldat[nn],modeldat[nn]],
-                'k'
+                'k',zorder=4
             )
             ax.plot(
                 [modelpositions[nmodel]-0.2,modelpositions[nmodel]+0.2],
                 [modeldat[-nn-1],modeldat[-nn-1]],
-                'k'
+                'k',zorder=4
             )
         ax.plot(
             [modelpositions[nmodel],modelpositions[nmodel]],
             [modeldat[2],modeldat[2]],
-            modelsymbol[nmodel],color='k',markersize=12
+            modelsymbol[nmodel],color='k',markersize=12,zorder=4
         )
     # Set xlabels and tick settings
     ax.set_xlim(0,4)
