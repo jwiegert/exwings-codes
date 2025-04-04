@@ -530,7 +530,7 @@ def plot_image_all(modelname,phase,image,choice):
     return imallpath
 
 
-# Final part initiates the server if dunder name is dunder main
+# Final part initiates the server only if this is the main running-script
 if __name__ == "__main__":
     # Chose debug mode or not
 

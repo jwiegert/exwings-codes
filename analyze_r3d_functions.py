@@ -84,9 +84,19 @@ hplanck = 6.626068e-34 # Planck constant in Si
 # )
 #
 # extract_dustmasses(
-#   TODO
+#    log_files = [],
+#    Nspecies = 1,
+#    first_species = 1
 # )
 #
+
+
+# TODO
+# load_photocentre_file(
+# )
+#
+
+
 # Functions to set Plot-settings
 # ------------------------------
 #
@@ -240,6 +250,11 @@ hplanck = 6.626068e-34 # Planck constant in Si
 #   peak_freq
 #   wavelengths
 # )
+#
+# compute_photocentre(
+#   TODO
+#)
+#
 #
 # ------------------------------------------------------------ #
 # Functions that load various r3d input data
@@ -917,6 +932,82 @@ def extract_dustmasses(
                     break
         # Output total mass and phase number
         print(f'{file}    {totalmass}')
+
+
+
+# TODO
+def load_photocentre_file(
+        file_path:str='../r3dresults/photocentre.dat'
+    ):
+    """
+    TODO
+    Vill ta ut så att jag bara tar vissa vinklar... Eller alla med.
+    
+    
+    
+    """
+
+    coordinatelist = []
+    line_counter = 0
+
+    with open(file_path, 'r') as fphotoc:
+
+        # Loop through file
+        for line in fphotoc.readlines():
+
+            # Skip all comments
+            if line[0] != '#':
+                
+                # Extract number of snapshots
+                if line.split('=')[0] == 'Nsnapshots':
+                    Nsnapshots = int(line.split('=')[1])
+                    snapshots = np.zeros(Nsnapshots)
+                
+                # Extract angles
+                if line[:4] == '    ':
+                    # save angles in list
+                    angles = line.split('    ')[1:]
+                    # remove \n on last angle
+                    angles[-1] = angles[-1].rstrip()
+                    # Save number of angles
+                    Nangles = len(angles)
+
+                    # Create a list containing arrays for each coordinate
+                    # for each angle
+                    for angle in angles:
+                        coordinatelist.append(np.zeros((Nsnapshots,3)))
+                
+                # Extract snapshot numbers and photocentre positions
+                # for each angle
+                if type(line[0]) == int:
+
+
+
+                    print(line)
+                    line_counter += 1
+                    linedata = line.split('    ')
+
+                    # Save snapshot numbers
+                    snapshots[line_counter] = linedata[0]
+
+                    for nangle in range(Nangles+1):
+                        if nangle > 0:
+                            print(linedata[nangle])
+                        # Extract coordinates from list
+                        #pcX = linedata[nangle+1].split('  ')
+                        #pcY = linedata[nangle*3+2]
+                        #pcR = linedata[nangle*3+3]
+
+                        # Write to coordinate list
+                        #coordinatelist[nangle][line_counter,:] = 
+                        #coordinatelist[nangle][1,line_counter] = pcY
+                        #coordinatelist[nangle][2,line_counter] = pcR
+
+
+    return angles,snapshots,coordinatelist
+
+
+
 
 # ------------------------------------------------------------ #
 # Functions to set Plot-settings
@@ -2812,3 +2903,132 @@ def compute_blackbody_freq(
 
     return BBfit
 
+
+# Load image and compute position of photocentre
+def compute_photocentre(
+        image_link:str='../r3dresults/image.out',
+        beam_size:float=2.5
+    ):
+    """
+    Loads one r3d-image and computes "photo-centre"-coordinates
+    with a radius of beam_size. Everything is in units AU.
+
+    ARGUMENTS
+      image_link:str - Link to image.out-file
+      beam_size:float - radius of circle (in AU) within which
+                        photocentre is found. Set to 0 to ignore!
+    RETURNS
+      posX
+      posY
+      posR
+    """
+
+    # Load image
+    image_folder = '/'.join(image_link.split('/')[:-1])+'/'
+    image_file = image_link.split('/')[-1]
+    image2d,image2dlog,totalflux,axisplot = load_images(
+        path=image_folder,
+        image=image_file,
+        distance=1
+    )
+    # Compute photocentreposition
+    # Uses Eqs 6 and 7 from Beguin+2024
+    (Nx,Ny) = np.shape(image2d)
+    xrange = np.linspace(axisplot[0],axisplot[1],Nx)
+    yrange = np.linspace(axisplot[2],axisplot[3],Ny)
+
+    nominatorX = 0
+    nominatorY = 0
+    demoninator = 0
+
+    for nx in range(Nx):
+        for ny in range(Ny):
+            if beam_size != 0:
+                if np.sqrt(xrange[nx]**2 + yrange[ny]**2) < beam_size:
+                    # Xcoord-sums
+                    nominatorX += image2d[ny,nx] * xrange[nx]
+                    # Ycoord-sums
+                    nominatorY += image2d[ny,nx] * yrange[ny]
+                    # Common demoninator
+                    demoninator += image2d[ny,nx]
+            else:
+                # Xcoord-sums
+                nominatorX += image2d[ny,nx] * xrange[nx]
+                # Ycoord-sums
+                nominatorY += image2d[ny,nx] * yrange[ny]
+                # Common demoninator
+                demoninator += image2d[ny,nx]
+            if beam_size > np.max(xrange):
+                print('  WARNING: beam size is larger than image.')
+
+    posX = nominatorX/demoninator
+    posY = nominatorY/demoninator
+    posR = np.sqrt(posX*posX + posY*posY)
+
+    return posX,posY,posR
+
+
+# Compute and write time & angle dependent photocentre positions
+def write_photocentre_files(
+        model_path:str='../r3dresults/',
+        wavelength:str='02',
+        angles:list=['i000_phi000'],
+        beam_size:float=2.5
+    ):
+    """
+    Computes and saves in a file, photocentre positions for many snapshots and angles
+    of images.    
+
+    ARGUMENTS
+      model_path:str - Path to folder with all snapshot-subfolders
+      wavelength:str - Wavelength of images written as eg '01' or '10' for 1 or 10um
+      angles:list of str - List of strings with angles, eg 
+                           ['i000_phi000','i180_phi000']
+      beam_size:float - Radius of circle within which photocentre is computed
+                        set to 0 to ignore (take whole image)
+
+    RETURNS
+      File: photocentre_{wavelength}um.dat in model_path-folder
+    """
+    print('Running: write_photocentre_files')
+    # Automatically add / to end of path if it's missing
+    if model_path[-1] != '/':
+        model_path += '/'
+
+    # Load all snapshots
+    snapshots = [int(filename) for filename in os.listdir(model_path) if os.path.isdir(model_path+filename)]
+    snapshots.sort()
+    Nsnapshots = len(snapshots)
+
+
+    # Open file to write all coords
+    with open(f'{model_path}photocentre_{wavelength}um.dat','w') as fphotoc:
+        print('  Writing photocentre file')
+
+        # Write header
+        fphotoc.writelines(f'# Photocentre coordinates at lambda = {wavelength} um\n')
+        fphotoc.writelines(f'# Within circle with radius {beam_size} au (=0 -> whole image included).\n')
+        fphotoc.writelines(f'Nsnapshots={Nsnapshots}\n')
+        fphotoc.writelines(f'# Angles : \n')
+        for angle in angles:
+            fphotoc.writelines(f'    {angle}')
+        fphotoc.writelines('\n# Snapshot      X-Y-R for each angle in AU')
+
+        # Loop over time
+        for snapshot in snapshots:
+
+            # Print snapshot number
+            fphotoc.writelines(f'\n{snapshot}    ')
+
+            # Loop over angles
+            for angle in angles:
+
+                # Extract each image's photocentre
+                pcX,pcY,pcR = compute_photocentre(
+                    image_link=f'{model_path}{snapshot}/image_{angle}_{wavelength}um.out',
+                    beam_size=beam_size
+                )
+                # Write X-Y-R- coords for each angle, in AU
+                fphotoc.writelines(f'{pcX:.5f}  {pcY:.5f}  {pcR:.5f}    ')
+
+    print('Done!')
