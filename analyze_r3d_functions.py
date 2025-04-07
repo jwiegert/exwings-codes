@@ -953,7 +953,7 @@ def load_photocentre_file(
     with open(file_path, 'r') as fphotoc:
 
         # Loop through file
-        for line in fphotoc.readlines():
+        for nline,line in enumerate(fphotoc.readlines()):
 
             # Skip all comments
             if line[0] != '#':
@@ -979,20 +979,30 @@ def load_photocentre_file(
                 
                 # Extract snapshot numbers and photocentre positions
                 # for each angle
-                if type(line[0]) == int:
-
-
+                if nline > 5:
+                    
+                    
+                    # TODO HÄR ÄR JAG
+                    # nu funkar radräknaren
+                    # nu ska jag först splitta line så att jag får ut
+                    # snapshotnummer och angle-dependent XYR-data
+                    # sen ska jag splitta varje angle-dep-avdelning
+                    # för varje '  '
+                    # och spara som X, Y, R separat
 
                     print(line)
-                    line_counter += 1
+
+                    # Separate out snapshotnumber and angle-dependent XYR-coords
                     linedata = line.split('    ')
+                    #print(linedata)
 
                     # Save snapshot numbers
-                    snapshots[line_counter] = linedata[0]
+                    #snapshots[line_counter] = int(linedata[0])
+                    
 
-                    for nangle in range(Nangles+1):
-                        if nangle > 0:
-                            print(linedata[nangle])
+                    #for nangle in range(Nangles+1):
+                    #    if nangle > 0:
+                    #        print(linedata[nangle])
                         # Extract coordinates from list
                         #pcX = linedata[nangle+1].split('  ')
                         #pcY = linedata[nangle*3+2]
@@ -1003,6 +1013,13 @@ def load_photocentre_file(
                         #coordinatelist[nangle][1,line_counter] = pcY
                         #coordinatelist[nangle][2,line_counter] = pcR
 
+
+                    # Data line counter (should be at the end, should start
+                    # at zero)
+                    line_counter += 1
+
+
+    #print(snapshots)
 
     return angles,snapshots,coordinatelist
 
