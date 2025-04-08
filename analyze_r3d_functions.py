@@ -940,14 +940,22 @@ def load_photocentre_file(
         file_path:str='../r3dresults/photocentre.dat'
     ):
     """
-    TODO
-    Vill ta ut så att jag bara tar vissa vinklar... Eller alla med.
+    Extract X-Y-R coordinates of photocentre out of photocentre.dat-files as created with 
+    function a3d.write_photocentre_files from RADMC3D-images.
+
+    ARGUMENTS
+      file_path: string with path to (including) photocentre.dat-file
     
-    
-    
+    RETURNS
+      angles: list of included angles
+      snapshots: list of included snapshot numbers
+      coordinatelist: multidimensional list with arrays containing all coordinates for all angles
+                      and snapshots:     coordinatelist[angle][snapshot , X/Y/R]
+                      e.g. coordinatelist[0][snapshot , X/Y/R]  is Nsnapshots x 3 in size
     """
 
     coordinatelist = []
+    snapshots = []
     line_counter = 0
 
     with open(file_path, 'r') as fphotoc:
@@ -961,7 +969,6 @@ def load_photocentre_file(
                 # Extract number of snapshots
                 if line.split('=')[0] == 'Nsnapshots':
                     Nsnapshots = int(line.split('=')[1])
-                    snapshots = np.zeros(Nsnapshots)
                 
                 # Extract angles
                 if line[:4] == '    ':
@@ -972,54 +979,46 @@ def load_photocentre_file(
                     # Save number of angles
                     Nangles = len(angles)
 
+
+
+
                     # Create a list containing arrays for each coordinate
                     # for each angle
-                    for angle in angles:
+                    for _ in angles:
                         coordinatelist.append(np.zeros((Nsnapshots,3)))
-                
+
+
+
+
                 # Extract snapshot numbers and photocentre positions
                 # for each angle
                 if nline > 5:
-                    
-                    
-                    # TODO HÄR ÄR JAG
-                    # nu funkar radräknaren
-                    # nu ska jag först splitta line så att jag får ut
-                    # snapshotnummer och angle-dependent XYR-data
-                    # sen ska jag splitta varje angle-dep-avdelning
-                    # för varje '  '
-                    # och spara som X, Y, R separat
-
-                    print(line)
 
                     # Separate out snapshotnumber and angle-dependent XYR-coords
                     linedata = line.split('    ')
-                    #print(linedata)
 
                     # Save snapshot numbers
-                    #snapshots[line_counter] = int(linedata[0])
-                    
+                    snapshots.append(int(linedata[0]))
 
-                    #for nangle in range(Nangles+1):
-                    #    if nangle > 0:
-                    #        print(linedata[nangle])
-                        # Extract coordinates from list
-                        #pcX = linedata[nangle+1].split('  ')
-                        #pcY = linedata[nangle*3+2]
-                        #pcR = linedata[nangle*3+3]
+                    # Save XYR-coords for each angle
+                    for nangle in range(Nangles+1):
+                        if nangle > 0:
+                        
+                            # Extract coordinates from list
+                            pcX = linedata[nangle].split('  ')[0]
+                            pcY = linedata[nangle].split('  ')[1]
+                            pcR = linedata[nangle].split('  ')[2]
 
-                        # Write to coordinate list
-                        #coordinatelist[nangle][line_counter,:] = 
-                        #coordinatelist[nangle][1,line_counter] = pcY
-                        #coordinatelist[nangle][2,line_counter] = pcR
-
+                            # Write to coordinate list
+                            coordinatelist[nangle-1][line_counter,0] = pcX
+                            coordinatelist[nangle-1][line_counter,1] = pcY
+                            coordinatelist[nangle-1][line_counter,2] = pcR
 
                     # Data line counter (should be at the end, should start
                     # at zero)
                     line_counter += 1
 
 
-    #print(snapshots)
 
     return angles,snapshots,coordinatelist
 
