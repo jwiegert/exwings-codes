@@ -248,7 +248,7 @@ def write_r3d_runscripts(
     for imageangle in image_angles_list:
         for imagewavel in image_wavelength_list:
             imagecommands.append(
-                f'radmc3d image nostar incl {imageangle[0]} phi {imageangle[1]} lambda {imagewavel} secondorder npix {image_npix} sizeau {image_sizeau}\nmv image.out image_i{imageangle[0]:03d}_phi{imageangle[1]:03d}_{imagewavel:02d}um.out\n\n'
+                f'radmc3d image nostar incl {imageangle[0]} phi {imageangle[1]} lambda {imagewavel} secondorder npix {image_npix} sizeau {image_sizeau}\nmv image.out image_i{imageangle[0]:03d}_phi{imageangle[1]:03d}_{imagewavel:02}um.out\n\n'
             )
 
     Nseds_perfile = int(len(sed_angles_list)/Nscripts)
