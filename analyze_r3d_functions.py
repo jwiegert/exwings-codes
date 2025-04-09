@@ -89,14 +89,10 @@ hplanck = 6.626068e-34 # Planck constant in Si
 #    first_species = 1
 # )
 #
-
-
-# TODO
 # load_photocentre_file(
+#   file_path:str='../r3dresults/photocentre.dat'
 # )
 #
-
-
 # Functions to set Plot-settings
 # ------------------------------
 #
@@ -934,8 +930,7 @@ def extract_dustmasses(
         print(f'{file}    {totalmass}')
 
 
-
-# TODO
+# Load data from photocentre-files
 def load_photocentre_file(
         file_path:str='../r3dresults/photocentre.dat'
     ):
@@ -979,16 +974,10 @@ def load_photocentre_file(
                     # Save number of angles
                     Nangles = len(angles)
 
-
-
-
                     # Create a list containing arrays for each coordinate
                     # for each angle
                     for _ in angles:
                         coordinatelist.append(np.zeros((Nsnapshots,3)))
-
-
-
 
                 # Extract snapshot numbers and photocentre positions
                 # for each angle
@@ -1018,12 +1007,7 @@ def load_photocentre_file(
                     # at zero)
                     line_counter += 1
 
-
-
     return angles,snapshots,coordinatelist
-
-
-
 
 # ------------------------------------------------------------ #
 # Functions to set Plot-settings
