@@ -2918,9 +2918,9 @@ def compute_photocentre(
       beam_size:float - radius of circle (in AU) within which
                         photocentre is found. Set to 0 to ignore!
     RETURNS
-      posX
-      posY
-      posR
+      posX  x-coordinates in AU
+      posY  y-coordinates in AU
+      posR  Radial distances in AU
     """
 
     # Load image
