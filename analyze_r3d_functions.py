@@ -428,7 +428,7 @@ def load_griddistances(
         return griddistances
     
     else:
-        print(f'ERROR: load_griddistances can not find {gridpath}.')
+        raise TypeError(f'ERROR: load_griddistances can not find {gridpath}.')
 
 
 # Load list of grid cell sizes
@@ -884,7 +884,6 @@ def load_images(
         if nx == npixels_x:
             nx = 0
             ny = ny + 1
-
 
     return image2d,image2dlog,totalflux,axisplot
 
