@@ -2410,8 +2410,13 @@ def compute_luminosity(
         distance:float = 1
     ):
     """
+    Compute luminosity of any SED-data, for any wavelength grid.
+    NOTE: Difference to a3d.compute_sed_luminosity() is that that
+          one computes directly from radmc3d-data. This one is more
+          general.
+
     ARGUMENTS
-      wavelengthum: List of wavelengths in um
+      wavelengths: List of wavelengths in um
       spectrum: List of flux densities in Jy
       distance: distance to source in pc
 
