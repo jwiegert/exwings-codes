@@ -21,6 +21,10 @@ Rsol = 6.955e10 # cm
 # plot_allseds()
 # extract_averageseds()
 # extract_sourcesize()
+# extract_surfacetemp()
+# compute_period()
+# extract_events()
+# 
 #
 # TODO
 # dustmass(time)-plotter
