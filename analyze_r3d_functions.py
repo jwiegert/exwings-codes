@@ -1858,7 +1858,9 @@ def plot_images(
     ):
     """
     Plots list of images with Z-scale following automatic gamma function
-
+    NOTE should remove the loop and "images"-list demand, it only takes
+    one image per time
+    
     ARGUMENTS
       path: path to folder containing images
       images: list of image-file names inside your folder
