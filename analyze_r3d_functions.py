@@ -777,19 +777,26 @@ def load_spectrum(
     wavelengths = []
     spectrum = []
 
-    # Load data
-    with open(path, 'r') as f:
+    # Check if file exists
+    if os.path.exists(path) == True:
+        # Load data
+        with open(path, 'r') as f:
 
-        # Data starts at row 4, so first data at nn == 3, where each row has two numbers
-        for nn,line in enumerate(f.readlines()):
-            if nn > 2:
+            # Data starts at row 4, so first data at nn == 3, where each row has two numbers
+            for nn,line in enumerate(f.readlines()):
+                if nn > 2:
 
-                # Extract wavelengths (in um)
-                wavelengths.append(float(line.split('   ')[0]))
+                    # Extract wavelengths (in um)
+                    wavelengths.append(float(line.split('   ')[0]))
 
-                # Extract and recompute flux density to Jy (at 1pc for now)
-                spectrum.append(float(line.split('   ')[1]) * 1e23 / distance**2)
-    
+                    # Extract and recompute flux density to Jy (at 1pc for now)
+                    spectrum.append(float(line.split('   ')[1]) * 1e23 / distance**2)
+    else:
+        # If not return zero and warn
+        wavelengths = 0
+        spectrum = 0
+        TypeError(f'WARNING file {path} doesnt exist!')
+
     # Return data
     return wavelengths,spectrum
 
