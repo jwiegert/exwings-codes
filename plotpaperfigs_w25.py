@@ -68,11 +68,11 @@ plot_075grainsize = 'n'
 plot_allseds = 'n'
 plot_luminosities = 'n'
 plot_052fluxdensity = 'n'
-plot_052exampleimages = 'n'
+plot_052exampleimages = 'y'
 
 plot_LOSevents = 'n'
 plot_fluxvariations = 'n'
-plot_datacompare = 'y'
+plot_datacompare = 'n'
 
 # For vr-prop
 plotvr_exampleimages = 'n'
@@ -514,11 +514,11 @@ if plot_052exampleimages == 'y':
 
     # Create image objects and fill subplots
     fig,ax = plt.subplots(
-        len(wavelengths),len(snapshots),
-        figsize=(12, 4.2)
+        len(snapshots),len(wavelengths),
+        figsize=(4, 12)
     )
     # Loop through wavelengths
-    for nrow,wavelength in enumerate(wavelengths):
+    for ncolumn,wavelength in enumerate(wavelengths):
         imagefilename = f'image_i000_phi000_{wavelength}um.out'
 
         # Loop through snapshots
@@ -530,32 +530,48 @@ if plot_052exampleimages == 'y':
                 image=imagefilename,
                 distance=1
             )
-            # Compute and apply gamma function of each image
+            # Compute and apply gamma function of each image  
+            # TODO Ta bort och ändra till linjärt! och gör en z-skala till alla
+
+
+
             scale = np.max(image2d)-np.min(image2d)
             gamma = 0.3*np.log(image2d.max())/np.log(image2d.mean())
             imageplot = ((image2d / scale)**gamma) * scale
             # Plot image
-            ax[nrow,ntime].imshow(
+            ax[ntime,ncolumn].imshow(
                 imageplot, origin='lower', extent=axisplot, cmap=plt.get_cmap('hot')
             )
-            # write time and flux on top of each column
-            if nrow == 0:
-                ax[0,ntime].set_title(
+            # write time and flux on top of each left column
+            if ncolumn == 0:
+                ax[ntime,0].set_title(
                     f'{snapshots_times[ntime]:.2f} yrs, {flux*1e-6:.3f} MJy',
                     fontsize = 10
                 )
-            # and only flux on second row
-            if nrow == 1:
-                ax[1,ntime].set_title(
+            if ncolumn == 1:
+                # and only flux on second column
+                ax[ntime,1].set_title(
                     f'{flux*1e-6:.3f} MJy',
                     fontsize = 10
                 )
+                # Remove ylabelticks for second column except bottom
+                ax[ntime,1].axes.yaxis.set_ticklabels([])
+            # And xticklabels for all rows except bottom
+            if ntime < len(snapshots)-1:
+                ax[ntime,ncolumn].axes.xaxis.set_ticklabels([])
+
+
+
+
+    # TODO
+    # ta bort axellabels på en massa subplots
+
 
     # Offset AU på yttre plots
-    ax[0,0].set_ylabel('Offset (au)', fontsize = 14)
-    ax[1,0].set_ylabel('Offset (au)', fontsize = 14)
-    for ntime in range(len(snapshots)):
-        ax[1,ntime].set_xlabel('Offset (au)', fontsize = 14)
+    #ax[0,0].set_ylabel('Offset (au)', fontsize = 14)
+    #ax[1,0].set_ylabel('Offset (au)', fontsize = 14)
+    #for ntime in range(len(snapshots)):
+    #    ax[1,ntime].set_xlabel('Offset (au)', fontsize = 14)
 
     fig.tight_layout()
     fig.savefig(
