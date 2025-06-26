@@ -499,7 +499,7 @@ if plot_052exampleimages == 'y':
     ]
     # Chose snapshots
     snapshots = [
-        290, 292, 294, 296, 298, 300
+        290, 292, 294, 296, 298
     ]
     snapshots_times = []
 
@@ -515,7 +515,7 @@ if plot_052exampleimages == 'y':
     # Create image objects and fill subplots
     fig,ax = plt.subplots(
         len(snapshots),len(wavelengths),
-        figsize=(4, 12)
+        figsize=(5, 17)
     )
     # Loop through wavelengths
     for ncolumn,wavelength in enumerate(wavelengths):
@@ -530,17 +530,21 @@ if plot_052exampleimages == 'y':
                 image=imagefilename,
                 distance=1
             )
-            # Compute and apply gamma function of each image  
-            # TODO Ta bort och ändra till linjärt! och gör en z-skala till alla
-
-
-
-            scale = np.max(image2d)-np.min(image2d)
-            gamma = 0.3*np.log(image2d.max())/np.log(image2d.mean())
-            imageplot = ((image2d / scale)**gamma) * scale
-            # Plot image
-            ax[ntime,ncolumn].imshow(
-                imageplot, origin='lower', extent=axisplot, cmap=plt.get_cmap('hot')
+            # Change to MJy
+            image2d = image2d/1e6
+            # Set scales for the two wavelengths
+            if ncolumn == 0:
+                scale = [1e-2,7]
+            if ncolumn == 1:
+                scale = [1e-2,1]
+            # Plot image and save colourbar info
+            imbar = ax[ntime,ncolumn].imshow(
+                image2d, 
+                origin='lower', 
+                extent=axisplot, 
+                vmin=scale[0],
+                vmax=scale[1],
+                cmap=plt.get_cmap('hot')
             )
             # write time and flux on top of each left column
             if ncolumn == 0:
@@ -560,22 +564,35 @@ if plot_052exampleimages == 'y':
             if ntime < len(snapshots)-1:
                 ax[ntime,ncolumn].axes.xaxis.set_ticklabels([])
 
+            # Offset AU on outer plots
+            if ncolumn == 0:
+                ax[ntime,ncolumn].set_ylabel('Offset (au)', fontsize = 14)
+            # And colour bar on bottom bar
+            if ntime == len(snapshots)-1:
+                divider = make_axes_locatable(ax[ntime,ncolumn])
+                cax = divider.append_axes(
+                    'bottom', 
+                    size='6%', 
+                    pad=0.7,
+                )
+                cb0 = plt.colorbar(
+                    imbar, 
+                    cax=cax, 
+                    orientation = 'horizontal', 
+                )
+                cb0.ax.tick_params(labelsize=12)
+                # Only label on one, TODO move this to middle of plot
+                if ncolumn == 0:
+                    cb0.set_label(
+                        label = 'Flux density (MJy at 1pc)', fontsize=12
+                    )
 
-
-
-    # TODO
-    # ta bort axellabels på en massa subplots
-
-
-    # Offset AU på yttre plots
-    #ax[0,0].set_ylabel('Offset (au)', fontsize = 14)
-    #ax[1,0].set_ylabel('Offset (au)', fontsize = 14)
-    #for ntime in range(len(snapshots)):
-    #    ax[1,ntime].set_xlabel('Offset (au)', fontsize = 14)
+    # NOTE
+    # final layout of image is fixed manually in GIMP
 
     fig.tight_layout()
     fig.savefig(
-        'figs/052exampleimages.pdf', 
+        'figs/052exampleimages.png', 
         facecolor='white',
         dpi=300
     )
