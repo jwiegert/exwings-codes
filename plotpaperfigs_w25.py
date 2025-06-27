@@ -53,22 +53,19 @@ angles_label = [
 ]
 # Set a list of model labels
 models_label = [
-    'st28gm06n052',
-    'st28gm06n074',
-    'st28gm06n075',
+    r'Model-A: $\alpha_{\rm stick} = 1$',
+    r'Model-B: $\alpha_{\rm stick} = 0.1$',
+    r'Model-C: $\alpha_{\rm stick} = 0.01$',
 ]
 
-
-
 # Plot-list
-
 plot_dustmass = 'n'
 plot_075grainsize = 'n'
 
 plot_allseds = 'n'
 plot_luminosities = 'n'
-plot_052fluxdensity = 'n'
-plot_052exampleimages = 'y'
+plot_052fluxdensity = 'y'
+plot_052exampleimages = 'n'
 
 plot_LOSevents = 'n'
 plot_fluxvariations = 'n'
@@ -121,8 +118,10 @@ if plot_dustmass == 'y':
     ax[1].set_xlabel('Synchronised time (yrs)',fontsize=18)
     ax[0].tick_params(axis='both', which='major', labelsize=15)
     ax[1].tick_params(axis='both', which='major', labelsize=15)
-    ax[0].set_xlim([time052[0],time052[-1]])
-    ax[1].set_xlim([time052[0],time052[-1]])
+    ax[0].set_xlim([0,np.max([time052[-1],time074[-1],time075[-1]])])
+    ax[0].set_ylim([0,3.5e-7])
+    ax[1].set_xlim([0,time075[-1]])
+    ax[1].set_ylim([0,1.6e-8])
     ax[0].legend(fontsize=14)
     ax[1].legend(fontsize=14)
 
@@ -408,7 +407,7 @@ if plot_052fluxdensity == 'y':
 
     # Load wavelengthgrid and extract index for wavelength
     wavelengths,spectrum = a3d.load_spectrum(
-        path = f'{path}{phases[0]}/spectrum_{angles[0]}.out'
+        path = f'{path}{phases[0]:03d}/spectrum_{angles[0]}.out'
     )
     wavelengths = np.array(wavelengths)
     wavelengthindex = int(np.where(wavelengths >= wavelength)[0][0]-1)
@@ -444,7 +443,7 @@ if plot_052fluxdensity == 'y':
         for nphase,phase in enumerate(phases):
 
             wavelengths,spectrum = a3d.load_spectrum(
-                path = f'{path}{phase}/spectrum_{angle}.out'
+                path = f'{path}{phase:03d}/spectrum_{angle}.out'
             )
             fluxall[nangle,nphase] = spectrum[wavelengthindex]*1e-6
 
