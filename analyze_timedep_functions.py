@@ -82,7 +82,7 @@ def plot_allseds(
 
             # Loop over all SEDs
             wavelength, fluxes = a3d.load_spectrum(
-                path=f'{path}{phase}/spectrum_{angle}.out'
+                path=f'{path}{phase:03d}/spectrum_{angle}.out'
             )
             
             # Plot all SEDs as grey
@@ -143,7 +143,7 @@ def extract_averageseds(
 
     # Extract length of wavelengthgrid
     wavelength, fluxes = a3d.load_spectrum(
-        path=f'{path}{phases[0]}/spectrum_{angles[0]}.out'
+        path=f'{path}{phases[0]:03d}/spectrum_{angles[0]}.out'
     )
     Nwave = len(wavelength)
 
@@ -162,7 +162,7 @@ def extract_averageseds(
 
             # Loop over all SEDs
             wavelength, fluxes = a3d.load_spectrum(
-                path=f'{path}{phase}/spectrum_{angle}.out'
+                path=f'{path}{phase:03d}/spectrum_{angle}.out'
             )
             # Extract and save all flux densities at each wavelength
             allfluxes[:,sedcounter] = fluxes
@@ -280,7 +280,7 @@ def extract_sourcesize(
             #
             # Load image (image2d is in Jy/asec2)
             image2d,image2dlog,flux,axisplot = a3d.load_images(
-                path=f'{path}{phase}/',
+                path=f'{path}{phase:03d}/',
                 image=f'image_{angle}_{wavelength}um.out',
                 distance=1
             )
@@ -316,7 +316,7 @@ def extract_sourcesize(
             #
             # Write radii for each time
             for nphase,phase in enumerate(phases):
-                fradius.write(f'  {phase}       {stellar_radius_average[nphase]:.5f}')
+                fradius.write(f'  {phase:03d}       {stellar_radius_average[nphase]:.5f}')
                 # And included angle
                 for nangle,angle in enumerate(angles):
                     fradius.write(f'     {stellar_radii[nphase,nangle]:.5f}    ')
@@ -412,7 +412,7 @@ def extract_surfacetemp(
         # Extract all temperatures at this radius (with these indeces) and save average
         # temperature for each snapshot
         Ncells,Nspecies,temperatures = a3d.load_temperature(
-            path=f'{path_model}/{phase}/dust_temperature_onestar_smoothed.dat'
+            path=f'{path_model}/{phase:03d}/dust_temperature_onestar_smoothed.dat'
         )
         surface_temperatures[nphase] = np.mean(temperatures[shellindeces])
 
@@ -423,7 +423,7 @@ def extract_surfacetemp(
         #
         # Write data
         for phase,Tsurface in zip(phases,surface_temperatures):
-            ft.write(f'    {int(phase)}    {Tsurface:.3f}\n')
+            ft.write(f'    {int(phase):03d}    {Tsurface:.3f}\n')
 
     print('Extract approximate surface temperature: Done')
 

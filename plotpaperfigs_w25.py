@@ -59,12 +59,12 @@ models_label = [
 ]
 
 # Plot-list
-plot_dustmass = 'n'
+plot_dustmass = 'y'
 plot_075grainsize = 'n'
 
 plot_allseds = 'n'
 plot_luminosities = 'n'
-plot_052fluxdensity = 'y'
+plot_052fluxdensity = 'n'
 plot_052exampleimages = 'n'
 
 plot_LOSevents = 'n'
