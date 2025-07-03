@@ -260,17 +260,20 @@ def extract_sourcesize(
     stellar_radius_average = np.zeros(Nphases)
 
     # Average flux densities of nodust models are:
-    #  1.00791589806  um: 42360527.80354169  Jy
-    #  2.010669926771 um: 97255190.80939393  Jy
-    # 10.07270043879  um: 20547864.293270145 Jy
+    #
+    #    average_nodust
+    #    1.00791589806 um: 42398912.69025754 Jy
+    #    2.010669926771 um: 97403587.81062156 Jy
+    #    10.07270043879 um: 20601793.91693989 Jy
+    #
     #
     # Define flux limits depending on wavelength-choice
     if int(wavelength) == 1:
-        fluxlimit = 0.035*42360527.80354169
+        fluxlimit = 0.035*42398912.69025754
     elif int(wavelength) == 2:
-        fluxlimit = 0.045*97255190.
+        fluxlimit = 0.045*97403587.81062156
     elif int(wavelength) == 10:
-        fluxlimit = 0.047*20547864.293270145
+        fluxlimit = 0.047*20601793.91693989
     else:
         raise ValueError('  ERROR: wrong wavelength, only 1, 2, and 10 are available.')
 
