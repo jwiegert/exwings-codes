@@ -795,7 +795,7 @@ def load_spectrum(
         # If not return zero and warn
         wavelengths = 0
         spectrum = 0
-        TypeError(f'WARNING file {path} doesnt exist!')
+        raise TypeError(f'WARNING file {path} doesnt exist!')
 
     # Return data
     return wavelengths,spectrum

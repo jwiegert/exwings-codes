@@ -431,6 +431,25 @@ def extract_surfacetemp(
     print('Extract approximate surface temperature: Done')
 
 
+# TODO
+# Function to find number of and sizes of blobs in images around the star
+def extract_imageblobs(
+        imagepath:str='../image_i090_phi090_10um.out',
+        Rin:float=1,
+        Rout:float=1,
+        Rstar:float=1,
+    ):
+    
+    # TODO
+
+
+
+    return 'hej'
+
+
+
+
+
 
 # Uses FFT to compute period of signal
 def compute_period(

@@ -14,13 +14,13 @@ import analyze_r3d_functions as a3d
 import create_r3d_functions as c3d
 import analyze_timedep_functions as atf
 
-# Figure settings
-rc('font',**{'family':'serif','serif':['serif']})
-rc('text', usetex=True)
-rc('xtick.major',size=8)
-rc('xtick.minor',size=4)
-rc('ytick.major',size=8)
-rc('ytick.minor',size=4)
+# Figure settings # TODO fixa så fonten funkar igen
+#rc('font',**{'family':'serif','serif':['serif']})
+#rc('text', usetex=True)
+#rc('xtick.major',size=8)
+#rc('xtick.minor',size=4)
+#rc('ytick.major',size=8)
+#rc('ytick.minor',size=4)
 
 # Constants
 c = 2.998e8 # m/s
