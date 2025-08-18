@@ -2,9 +2,10 @@
 # import as a3t
 # ------------------------------------------------------------ #
 # Various useful packages
-import analyze_r3d_functions as a3d
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy
+
 
 # My own functions
 import analyze_r3d_functions as a3d
@@ -437,14 +438,104 @@ def extract_imageblobs(
         imagepath:str='../image_i090_phi090_10um.out',
         Rin:float=1,
         Rout:float=1,
-        Rstar:float=1,
+        Rstar:float=1.65,
+        max_flux_contrast:float=0.01,
+        fract_stararea:float=0.5,
     ):
+    """
+    Identify and return statistics on dust blobs in images with a star in the
+    middle of the image. Blobs are outside Rin and inside Rout from middle of
+    image (in AU). Blobs pixels must be higher than a low cut-off, for example
+    pixel flux density must be stronger than the contrast to the star that is
+    allowed by the telescope. In the case of VLTI/MATISSE, more 1 per cent 
+    (private conversation, Claudia Paladini, ESO, Chile).
+
+    ARGUMENTS
+    TODO
+
+    RETURNS
     
-    # TODO
+    
+    """
 
+    # Extract path to folder and to image
+    path = '/'.join(imagepath.split('/')[:-1])+'/'
+    imagename = imagepath.split('/')[-1]
 
+    # Extract stellar flux density of image with no dust
+    # For Flimit-number
+    nodustpath = path.replace('nospikes', 'nodust')
+    image2d,image2dlog,stellarflux,axisplot = a3d.load_images(
+        path=nodustpath,
+        image=imagename
+    )
 
-    return 'hej'
+    # Load image and extract some image stats
+    image2d,image2dlog,totalflux,axisplot = a3d.load_images(
+        path=path,
+        image=imagename
+    )
+    # Pixel-resolution of image
+    Npix = np.shape(image2d)[0] 
+    halfNpix = Npix/2
+    # Size of each pixel in AU
+    pixsize_au = axisplot[-1]/halfNpix
+    # And create new image array 
+    image2dmod = np.zeros(np.shape(image2d))
+    # Set pixel flux limit
+    Flimit = max_flux_contrast * stellarflux
+
+    # Loop through image remove pixels outside radial ranges or below flux limit
+    for xpix in range(Npix):
+        for ypix in range(Npix):
+
+            # Current pixel-distance to centre in AU
+            Rpix = np.sqrt(
+                (xpix - halfNpix)**2 + (ypix - halfNpix)**2
+            )*pixsize_au
+
+            if Rpix > Rout or Rpix < Rin:
+                # set these to zero and save
+                image2dmod[ypix,xpix] = 0
+            elif image2d[ypix,xpix] < Flimit:
+                # and zero to thos below Flimit
+                image2dmod[ypix,xpix] = 0
+            else:
+                # And the rest to 1
+                image2dmod[ypix,xpix] = 1
+
+    # Label blobs in binary image
+
+    # Array defining neighbouring pixels for each blob identification
+    structure = np.ones((3, 3), dtype=int)
+    # Extract connected components
+    image2dlabeled, ncomponents = scipy.ndimage.label(image2dmod, structure)
+
+    if ncomponents > 0:
+        # Extract size of each component
+        # Array to fill with blob-areas in AU^2
+        blobareas = np.zeros(ncomponents)
+        # And counter of large blobs
+        Nlargeblobs = 0
+
+        # Define fractional stellar area-limit in AU^2
+        FracStarArea = fract_stararea * np.pi * Rstar**2
+        
+        for nblob in range(1,ncomponents+1):
+
+            # Number of pixels per blob time pixel au^2 size
+            blobareas[nblob-1] = np.where(image2dlabeled.ravel()==nblob)[0].size * pixsize_au**2
+
+            # Number of blobs larger than Fractional stellar area
+            if blobareas[nblob-1] >= FracStarArea:
+                Nlargeblobs += 1
+
+        # Return Number of large blobs and area of largest blob
+        return Nlargeblobs, np.max(blobareas)
+
+    else:
+        # If there are no components, return just 2 zeros
+        return 0,0
 
 
 
