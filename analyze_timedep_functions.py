@@ -432,12 +432,9 @@ def extract_surfacetemp(
     print('Extract approximate surface temperature: Done')
 
 
-# TODO
 # Function to find number of and sizes of blobs in images around the star
 def extract_imageblobs(
         imagepath:str='../image_i090_phi090_10um.out',
-        Rin:float=1,
-        Rout:float=1,
         Rstar:float=1.65,
         max_flux_contrast:float=0.01,
         fract_stararea:float=0.5,
@@ -451,30 +448,48 @@ def extract_imageblobs(
     (private conversation, Claudia Paladini, ESO, Chile).
 
     ARGUMENTS
-    TODO
+      imagepath:str = path to imagefile
+      Rstar:float = radius of star in AU
+      max_flux_contrast:float = A number <1 that defines the allowed contrast
+                                to the central star's flux density for dust
+                                clouds to be observable
+      fract_stararea:float = A number <1 that defines smallest allowed size
+                             in multiples of the stellar disc's surface rea
+                             in the image plane.
 
     RETURNS
-    
-    
+      Nlargeblobs : the number of blobs with image surface area larger than
+                    fract_stararea x star_area and with pixels brighter than
+                    max_flux_contrast x stellar flux density
+      np.max(blobareas) : area in AU^2 of the largest dust blob in the image
     """
+    # Set annulus limits
+    Rin = 2*Rstar
+    Rout = 6*Rstar
 
     # Extract path to folder and to image
     path = '/'.join(imagepath.split('/')[:-1])+'/'
     imagename = imagepath.split('/')[-1]
 
-    # Extract stellar flux density of image with no dust
-    # For Flimit-number
-    nodustpath = path.replace('nospikes', 'nodust')
-    image2d,image2dlog,stellarflux,axisplot = a3d.load_images(
-        path=nodustpath,
-        image=imagename
-    )
-
-    # Load image and extract some image stats
+    # Load image
     image2d,image2dlog,totalflux,axisplot = a3d.load_images(
         path=path,
         image=imagename
     )
+    # Extract stellar flux density of image with no dust for Flimit-number
+    # Or just give it as average max flux of image
+    if 'nospikes' is path:
+        nodustpath = path.replace('nospikes', 'nodust')
+        image2dstar,image2dlog,stellarflux,axisplotstar = a3d.load_images(
+            path=nodustpath,
+            image=imagename
+        )
+        print('  Nodust data exist, uses stellar flux')
+    else:
+        stellarflux = 0.5*(totalflux + np.max(image2d))
+        print('  Nodust data N/A, uses average max flux')
+
+    # Extract image props
     # Pixel-resolution of image
     Npix = np.shape(image2d)[0] 
     halfNpix = Npix/2
@@ -537,7 +552,56 @@ def extract_imageblobs(
         # If there are no components, return just 2 zeros
         return 0,0
 
+# TODO
+# function that loads data from ascii files with information on 
+def load_imageblob_files(
+        filepath:str='../r3dresults/st28gm06n052_timedep_nospikes/',
+        max_flux_contrast:float=0.01,
+        fract_stararea:float=0.1,
+    ):
+    """
+    
+    # TODO
+    skriv INFO!
 
+    """
+    # Automatically add / to end of path if it's missing
+    if filepath[-1] != '/':
+        filepath += '/'
+
+    # Declare various lists
+    nsnaps = []
+    nblobs = []
+    blob_areas = []
+
+    # Load all number of blobs
+    with open(f'{filepath}imageblobs_numb_Flim{max_flux_contrast}_Farea{fract_stararea}.dat', 'r') as fnblobs:
+        for nblobs_line in fnblobs.readlines():
+            # Extract angles
+            if '#  Phase  i' in nblobs_line:
+                angles = nblobs_line.split()[2:]
+            # Extract all number of blobs
+            if nblobs_line[0] != '#':
+                nblobs.append(nblobs_line.split()[1:])
+                nsnaps.append(int(nblobs_line.split()[0]))
+
+    # Load all largest blog areas
+    with open(f'{filepath}imageblobs_maxarea_Flim{max_flux_contrast}.dat', 'r') as farea:
+        for area_line in farea.readlines():
+            if area_line[0] != '#':
+                blob_areas.append(area_line.split()[1:])
+
+
+    Nsnaps = len(nsnaps)
+    Nangles = len(angles)
+
+    # Change from strings in lists to arrays with numbers
+    nblobs = np.array(nblobs).astype('int')
+    blob_areas = np.array(blob_areas).astype('float')
+    nsnaps = np.array(nsnaps).astype('int')
+
+    # return all angles, snapshotnumbers, numb of blobs and largest blob areas
+    return angles,nsnaps,nblobs,blob_areas
 
 
 
