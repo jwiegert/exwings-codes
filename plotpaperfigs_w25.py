@@ -62,14 +62,28 @@ models_label = [
 plot_dustmass = 'y'
 plot_075grainsize = 'n'
 
-plot_allseds = 'n'
-plot_luminosities = 'n'
-plot_052fluxdensity = 'n'
 plot_052exampleimages = 'n'
 
-plot_LOSevents = 'n'
-plot_fluxvariations = 'n'
-plot_datacompare = 'n'
+
+
+plot_allseds = 'n'              # SKIP
+plot_luminosities = 'n'         # SKIP
+plot_052fluxdensity = 'n'       # SKIP
+plot_fluxvariations = 'n'       # SKIP
+
+
+
+# TODO
+plot_numbclouds = 'n'           # Plotta antal moln per vinkel per modell
+                                # Får kör en bild per modell, försöka hålla
+                                # till en kolumn.
+plot_cloudareas = 'n'           # Plotta största molnet overall för varje modell
+                                # Så 3st subplots, en per modell
+
+
+
+plot_LOSevents = 'n'            # TODO Modify to plot periods of dust clouds
+plot_datacompare = 'n'          # TODO Modify to only plot colour comparison
 
 # For vr-prop
 plotvr_exampleimages = 'n'

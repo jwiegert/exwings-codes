@@ -462,6 +462,7 @@ def extract_imageblobs(
                     fract_stararea x star_area and with pixels brighter than
                     max_flux_contrast x stellar flux density
       np.max(blobareas) : area in AU^2 of the largest dust blob in the image
+      stellarflux_info : String with info on how stellar flux is estimated
     """
     # Set annulus limits
     Rin = 2*Rstar
@@ -478,16 +479,16 @@ def extract_imageblobs(
     )
     # Extract stellar flux density of image with no dust for Flimit-number
     # Or just give it as average max flux of image
-    if 'nospikes' is path:
+    if 'nospikes' in path:
         nodustpath = path.replace('nospikes', 'nodust')
         image2dstar,image2dlog,stellarflux,axisplotstar = a3d.load_images(
             path=nodustpath,
             image=imagename
         )
-        print('  Nodust data exist, uses stellar flux')
+        stellarflux_info = 'Nodust data exist, uses stellar flux'
     else:
         stellarflux = 0.5*(totalflux + np.max(image2d))
-        print('  Nodust data N/A, uses average max flux')
+        stellarflux_info = ' !Nodust data exist, uses stellar flux!'
 
     # Extract image props
     # Pixel-resolution of image
@@ -546,11 +547,11 @@ def extract_imageblobs(
                 Nlargeblobs += 1
 
         # Return Number of large blobs and area of largest blob
-        return Nlargeblobs, np.max(blobareas)
+        return Nlargeblobs, np.max(blobareas),stellarflux_info
 
     else:
         # If there are no components, return just 2 zeros
-        return 0,0
+        return 0,0,'No components found'
 
 # TODO
 # function that loads data from ascii files with information on 
