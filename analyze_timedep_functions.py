@@ -561,10 +561,23 @@ def load_imageblob_files(
         fract_stararea:float=0.1,
     ):
     """
-    
-    # TODO
-    skriv INFO!
+    Loads and returns arrays with pre-computed numbers on dusty blobs
+    in Radmc3d-simulated images.
 
+    ARGUMENTS
+      filepath:str = path to folder that contains files. Filenames are
+                     with this syntax:
+                     imageblobs_maxarea_Flim{max_flux_contrast}.dat
+                     imageblobs_numb_Flim{max_flux_contrast}_Farea{fract_stararea}.dat
+      max_flux_contrast:float = Flux contrast-limit, contrast between blob-pixels
+                                and stellar flux density.
+      fract_stararea:float = Smallest allowed size of cloud in image-plane. Set
+                             as fractions of stellar disc area.
+    RETURNS
+      angles: 1D array of angles (strings) in data
+      nsnaps: 1D array of snap shot numbers included in data (ints)
+      nblobs: 2D array with number of dust clouds per snapshot and angle
+      blob_areas: 2D array with area (AU^2) of largest dust cloud per snapshot and angle
     """
     # Automatically add / to end of path if it's missing
     if filepath[-1] != '/':
@@ -591,10 +604,6 @@ def load_imageblob_files(
         for area_line in farea.readlines():
             if area_line[0] != '#':
                 blob_areas.append(area_line.split()[1:])
-
-
-    Nsnaps = len(nsnaps)
-    Nangles = len(angles)
 
     # Change from strings in lists to arrays with numbers
     nblobs = np.array(nblobs).astype('int')
@@ -722,4 +731,3 @@ def extract_events(
         )
         fig.show()
 
-    print('')
