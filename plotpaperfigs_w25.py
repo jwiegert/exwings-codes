@@ -14,13 +14,15 @@ import analyze_r3d_functions as a3d
 import create_r3d_functions as c3d
 import analyze_timedep_functions as atf
 
-# Figure settings # TODO fixa så fonten funkar igen
-#rc('font',**{'family':'serif','serif':['serif']})
-#rc('text', usetex=True)
-#rc('xtick.major',size=8)
-#rc('xtick.minor',size=4)
-#rc('ytick.major',size=8)
-#rc('ytick.minor',size=4)
+# Figure settings
+plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif",
+})
+rc('xtick.major',size=8)
+rc('xtick.minor',size=4)
+rc('ytick.major',size=8)
+rc('ytick.minor',size=4)
 
 # Constants
 c = 2.998e8 # m/s
@@ -59,11 +61,10 @@ models_label = [
 ]
 
 # Plot-list
-plot_dustmass = 'y'
+plot_dustmass = 'n'
 plot_075grainsize = 'n'
-
 plot_052exampleimages = 'n'
-
+plot_LOSevents = 'y'
 
 
 plot_allseds = 'n'              # SKIP
@@ -75,15 +76,15 @@ plot_fluxvariations = 'n'       # SKIP
 
 # TODO
 plot_numbclouds = 'n'           # Plotta antal moln per vinkel per modell
-                                # Får kör en bild per modell, försöka hålla
-                                # till en kolumn.
+                                # 6 rader (en för varje vinkel)
+                                # 3 kolumner (en för varje modell)
+
 plot_cloudareas = 'n'           # Plotta största molnet overall för varje modell
                                 # Så 3st subplots, en per modell
 
+plot_datacompare = 'n'          # Modify to only plot colour comparison
 
 
-plot_LOSevents = 'n'            # TODO Modify to plot periods of dust clouds
-plot_datacompare = 'n'          # TODO Modify to only plot colour comparison
 
 # For vr-prop
 plotvr_exampleimages = 'n'
@@ -615,6 +616,56 @@ if plot_052exampleimages == 'y':
 #####################################################################################
 # Plot average period of Rsource, F2um, F10um events per model and angle
 if plot_LOSevents == 'y':
+    """
+    All data for this plot
+
+    MODEL  Area limit    N clouds   N clouds/LOS   Aver length   Aver period (yrs)   FFT-period (yrs)
+    052     0.1          179        29.83          1.20          2.12                4.21
+            0.3          154        25.67          0.71          2.46                4.21
+            0.5           93        15.50          0.66          4.08                4.21
+
+    074     0.1          154        25.67          1.21          2.77                6.46
+            0.3          115        19.17          0.60          3.71                8.89
+            0.5           54         9.00          0.52          7.90                8.89
+
+    075     0.1           97        16.17          0.84          4.32                9.98
+            0.3           22         3.67          0.61         19.05               23.28
+            0.5           10         1.67          0.32         41.91                N/A
+
+
+
+    FRACT_AREA: 0.1 periods
+    Model          0-0      90-0     90-90     90-270     180-0     270-0
+    Model-A:052    1.98     2.11     2.34      2.04       1.98      2.18
+    Model-B:074    2.74     2.54     3.09      2.74       2.96      2.37
+    Model-C:075    5.37     4.37     3.68      3.04       4.99      5.82
+                    Length
+    Model-A:052    1.26     1.37     1.32      1.04       1.09      1.06
+    Model-B:074    1.30     1.14     1.33      1.26       1.18      0.99
+    Model-C:075    1.07     0.73     0.79      0.68       0.88      1.08
+
+
+    FRACT_AREA: 0.3 periods
+    Model          0-0      90-0     90-90     90-270     180-0     270-0
+    Model-A:052    2.26     2.34     2.34      2.43       2.87      2.63
+    Model-B:074    3.56     4.45     3.56      3.23       3.95      3.74
+    Model-C:075   13.97    23.29    17.47     23.29      23.29     17.47
+                    Length
+    Model-A:052    0.87     0.77     0.80      0.57       0.64      0.58
+    Model-B:074    0.59     0.78     0.63      0.54       0.48      0.60
+    Model-C:075    0.67     0.95     0.32      0.32       0.84      0.63
+
+
+    FRACT_AREA: 0.5 periods
+    Model          0-0      90-0     90-90     90-270     180-0     270-0
+    Model-A:052    4.21     3.01     3.72      5.27       4.86      4.21
+    Model-B:074    7.90     7.90     7.11      6.47       8.89     10.16
+    Model-C:075   23.29    23.29     N/A       N/A       17.47      N/A
+                    Length
+    Model-A:052    0.93     0.64     0.74      0.54       0.57      0.53
+    Model-B:074    0.53     0.70     0.63      0.45       0.30      0.48
+    Model-C:075    0.48     0.26     N/A       N/A        0.24      N/A
+    """;
 
     Nmodels = len(models_label)
     Nangles = len(angles)
@@ -625,391 +676,424 @@ if plot_LOSevents == 'y':
     )
     for nmodel in range(Nmodels):
         ax[nmodel].tick_params(axis='both', which='major', labelsize=15)
-        ax[nmodel].set_ylim([0,28])    
         ax[nmodel].set_xlim([-0.5,5.5])
+    ax[0].set_ylim([0,7])
+    ax[1].set_ylim([0,10])
+    ax[2].set_ylim([0,45])
     # Combine each style to one set for each model, plot in one figure
     #
     # model[0][:] - perioder per LOS
     # model[1][:] - medeleventlength per LOS
+    # model_average[0] - medelvärde från stortabell på medelperiod
+    # model_average[1] - medelvärde från stortabell på längd
     #
-    rsource052 = [
+    # Fract_area = 0.1
+    #    
+    farea01_052 = [
         [
-            6.971389087364163,
-            5.809490906136802,
-            4.979563633831545,
-            5.809490906136802,
-            5.809490906136802,
-            5.809490906136802
+            1.98,
+            2.11,
+            2.34,
+            2.04,
+            1.98,
+            2.18    
         ],[
-            0.950497746248196,
-            1.7689819166285872,
-            3.304111213148491,
-            1.742579201455026,
-            2.5874660870089783,
-            1.3729411890251721,
+            1.26,
+            1.37,
+            1.32,
+            1.04,
+            1.09,
+            1.06
         ]
     ]
-    rsource074 = [
+    farea01_052_average = [
+        2.12,1.20
+    ]
+    farea01_074 = [
         [
-            -10,
-            4.9795575666192935,
-            -10,
-            5.809483827722509,
-            5.809483827722509,
-            11.618967655445019
+            2.74,
+            2.54,
+            3.09,
+            2.74,
+            2.96,
+            2.37
         ],[
-            -10,
-            0.47541265629394047,
-            -10,
-            1.5318852258360305,
-            3.301476779819031,
-            2.3242396529925977,
+            1.30,
+            1.14,
+            1.33,
+            1.26,
+            1.18,
+            0.99
         ]
     ]
-    rsource075 = [
+    farea01_074_average = [
+        2.77,1.21
+    ]
+    farea01_075 = [
         [
-            8.71422145903946,
-            11.618961945385948,
-            -20,
-            17.42844291807892,
-            6.9713771672315685,
-            2.4897775597255603,
+            5.37,
+            4.37,
+            3.68,
+            3.04,
+            4.99,
+            5.82
         ],[
-            0.43570238615249224,
-            0.158437231328179,
-            0.158437231328179,
-            0.158437231328179,
-            0.2218121238594506,
-            0.2376558469922685,
+            1.07,
+            0.73,
+            0.79,
+            0.68,
+            0.88,
+            1.08
         ]
     ]
-    # 2um-flux density metric
-    f2um052 = [
+    farea01_075_average = [
+        4.32,0.84
+    ]
+    #
+    # Fract_area = 0.3
+    #
+    farea03_052 = [
         [
-            4.357118179602602,
-            6.971389087364163,
-            4.357118179602602,
-            6.971389087364163,
-            5.809490906136802,
-            5.809490906136802,
+            2.26,
+            2.34,
+            2.34,
+            2.43,
+            2.87,
+            2.63
         ],
         [
-            0.63367,
-            1.7109,
-            2.7129,
-            1.5525,
-            2.2178,
-            0.97690,
+            0.87,
+            0.77,
+            0.80,
+            0.57,
+            0.64,
+            0.58
         ]
     ]
-    f2um074 = [
+    farea03_052_average = [
+        2.46,0.71
+    ]
+    farea03_074 = [
         [
-            -20,
-            5.809483827722509,
-            -10,
-            3.4856902966335057,
-            4.357112870791882,
-            6.971380593267011,
-        ],[
-            0.1584708854313135,
-            0.6867071702023585,
-            -10,
-            1.140990375105457,
-            2.674196191653415,
-            1.679791385571923,
-        ]
-    ]
-    f2um075 = [
+            3.56,
+            4.45,
+            3.56,
+            3.23,
+            3.95,
+            3.74
+        ],
         [
-            2.4897775597255603,
-            4.9795551194511205,
-            8.71422145903946,
-            8.71422145903946,
-            5.809480972692974,
-            17.42844291807892,
-        ],[
-            0.5318964194588867,
-            0.49794558417427687,
-            0.475311693984537,
-            0.2376558469922685,
-            0.42249928354181066,
-            0.158437231328179,
+            0.59,
+            0.78,
+            0.63,
+            0.54,
+            0.48,
+            0.60
         ]
     ]
-    # 10um flux density matric
-    f10um052 = [
+    farea03_074_average = [
+        3.71,0.60
+    ]
+    farea03_075 = [
         [
-            3.872993937424535,
-            6.971389087364163,
-            17.428472718410408,
-            4.979563633831545,
-            6.971389087364163,
-            4.979563633831545,
-        ],[
-            0.8096832653225374,
-            1.077230779081289,
-            1.267330328330928,
-            0.5431415692846835,
-            0.3801990984992784,
-            0.8599741513674155,
-        ]
-    ]
-    f10um074 = [
+            13.97,
+            23.29,
+            17.47,
+            23.29,
+            23.29,
+            17.47
+        ],
         [
-            6.971380593267011,
-            5.809483827722509,
-            4.9795575666192935,
-            17.428451483167528,
-            -10,
-            6.971380593267011,
-        ],[
-            1.2043787292779826,
-            1.0300607553035377,
-            0.656522239644013,
-            0.47541265629394047,
-            -10,
-            0.728966072984042,
+            0.67,
+            0.95,
+            0.32,
+            0.32,
+            0.84,
+            0.63
         ]
     ]
-    f10um075 = [
-        [
-            -10,
-            17.42844291807892,
-            -20,
-            -10,
-            -20,
-            17.42844291807892,
-        ],[
-            -10,
-            0.2376558469922685,
-            0.475311693984537,
-            -10,
-            0.316874462656358,
-            0.316874462656358,
-        ]
+    farea03_075_average = [
+        19.05,0.61
     ]
-    # Declare variables for average periods
-    plot_average052 = 0
-    plot_average074 = 0
-    plot_average075 = 0
-    N052_zeros = 0
-    N074_zeros = 0
-    N075_zeros = 0
     #
-    # Plot Rsource metric
+    # Fract_area = 0.5
+    #
+    farea05_052 = [
+        [
+            4.21,
+            3.01,
+            3.72,
+            5.27,
+            4.86,
+            4.21
+        ],
+        [
+            0.93,
+            0.64,
+            0.74,
+            0.54,
+            0.57,
+            0.53
+        ]
+    ]
+    farea05_052_average = [
+        4.08,0.66
+    ]
+    farea05_074 = [
+        [
+            7.90,
+            7.90,
+            7.11,
+            6.47,
+            8.89,
+            10.16
+        ],
+        [
+            0.53,
+            0.70,
+            0.63,
+            0.45,
+            0.30,
+            0.48
+        ]
+    ]
+    farea05_074_average = [
+        7.90,0.52
+    ]
+    farea05_075 = [
+        [
+            23.29,
+            23.29,
+            -10,
+            -10,
+            17.47,
+            -10
+        ],
+        [
+            0.48,
+            0.26,
+            -10,
+            -10,
+            0.24,
+            -10
+        ]
+    ]
+    farea05_075_average = [
+        41.91,0.32
+    ]
+    #
+    # Plot farea
+    #
     for nangle in range(Nangles):
 
         # Plot 052
-        # rsource
-        ax[0].plot(nangle-0.05,rsource052[0][nangle],'go',markersize=6)
+        # Plot farea0.1
+        ax[0].plot(
+            nangle-0.05,
+            farea01_052[0][nangle],
+            'go',markersize=6
+        )
         ax[0].plot(
             [nangle-0.05,nangle-0.05],
             [
-                rsource052[0][nangle]-0.5*rsource052[1][nangle],
-                rsource052[0][nangle]+0.5*rsource052[1][nangle]
+                farea01_052[0][nangle]-0.5*farea01_052[1][nangle],
+                farea01_052[0][nangle]+0.5*farea01_052[1][nangle]
             ]
             ,'g'
         )
-        # F2
-        ax[0].plot(nangle,f2um052[0][nangle],'bs',markersize=6)
+        # farea0.3  at  052
         ax[0].plot(
-            [nangle,nangle],
+            nangle-0.05,
+            farea03_052[0][nangle],
+            'bo',markersize=6
+        )
+        ax[0].plot(
+            [nangle-0.05,nangle-0.05],
             [
-                f2um052[0][nangle]-0.5*f2um052[1][nangle],
-                f2um052[0][nangle]+0.5*f2um052[1][nangle]
+                farea03_052[0][nangle]-0.5*farea03_052[1][nangle],
+                farea03_052[0][nangle]+0.5*farea03_052[1][nangle]
             ]
             ,'b'
         )
-        # F10
-        ax[0].plot(nangle+0.05,f10um052[0][nangle],'rd',markersize=6)
+        # farea0.5  at  052
         ax[0].plot(
-            [nangle+0.05,nangle+0.05],
+            nangle-0.05,
+            farea05_052[0][nangle],
+            'ro',markersize=6
+        )
+        ax[0].plot(
+            [nangle-0.05,nangle-0.05],
             [
-                f10um052[0][nangle]-0.5*f10um052[1][nangle],
-                f10um052[0][nangle]+0.5*f10um052[1][nangle]
+                farea05_052[0][nangle]-0.5*farea05_052[1][nangle],
+                farea05_052[0][nangle]+0.5*farea05_052[1][nangle]
             ]
             ,'r'
         )
         # Plot 074
-        # rsource
-        ax[1].plot(nangle-0.05,rsource074[0][nangle],'go',markersize=6)
+        # Plot farea0.1
+        ax[1].plot(
+            nangle-0.05,
+            farea01_074[0][nangle],
+            'go',markersize=6
+        )
         ax[1].plot(
             [nangle-0.05,nangle-0.05],
             [
-                rsource074[0][nangle]-0.5*rsource074[1][nangle],
-                rsource074[0][nangle]+0.5*rsource074[1][nangle]
+                farea01_074[0][nangle]-0.5*farea01_074[1][nangle],
+                farea01_074[0][nangle]+0.5*farea01_074[1][nangle]
             ]
             ,'g'
         )
-        # F2
-        ax[1].plot(nangle,f2um074[0][nangle],'bs',markersize=6)
+        # farea0.3  at  052
         ax[1].plot(
-            [nangle,nangle],
+            nangle-0.05,
+            farea03_074[0][nangle],
+            'bo',markersize=6
+        )
+        ax[1].plot(
+            [nangle-0.05,nangle-0.05],
             [
-                f2um074[0][nangle]-0.5*f2um074[1][nangle],
-                f2um074[0][nangle]+0.5*f2um074[1][nangle]
+                farea03_074[0][nangle]-0.5*farea03_074[1][nangle],
+                farea03_074[0][nangle]+0.5*farea03_074[1][nangle]
             ]
             ,'b'
         )
-        #
-        # F10
-        ax[1].plot(nangle+0.05,f10um074[0][nangle],'rd',markersize=6)
+        # farea0.5  at  052
         ax[1].plot(
-            [nangle+0.05,nangle+0.05],
+            nangle-0.05,
+            farea05_074[0][nangle],
+            'ro',markersize=6
+        )
+        ax[1].plot(
+            [nangle-0.05,nangle-0.05],
             [
-                f10um074[0][nangle]-0.5*f10um074[1][nangle],
-                f10um074[0][nangle]+0.5*f10um074[1][nangle]
+                farea05_074[0][nangle]-0.5*farea05_074[1][nangle],
+                farea05_074[0][nangle]+0.5*farea05_074[1][nangle]
             ]
             ,'r'
         )
-        #
         # Plot 075
-        # rsource
-        ax[2].plot(nangle-0.05,rsource075[0][nangle],'go',markersize=6)
+        # Plot farea0.1
+        ax[2].plot(
+            nangle-0.05,
+            farea01_075[0][nangle],
+            'go',markersize=6
+        )
         ax[2].plot(
             [nangle-0.05,nangle-0.05],
             [
-                rsource075[0][nangle]-0.5*rsource075[1][nangle],
-                rsource075[0][nangle]+0.5*rsource075[1][nangle]
+                farea01_075[0][nangle]-0.5*farea01_075[1][nangle],
+                farea01_075[0][nangle]+0.5*farea01_075[1][nangle]
             ]
             ,'g'
         )
-        #
-        # F2
-        ax[2].plot(nangle,f2um075[0][nangle],'bs',markersize=6)
+        # farea0.3  at  052
         ax[2].plot(
-            [nangle,nangle],
+            nangle-0.05,
+            farea03_075[0][nangle],
+            'bo',markersize=6
+        )
+        ax[2].plot(
+            [nangle-0.05,nangle-0.05],
             [
-                f2um075[0][nangle]-0.5*f2um075[1][nangle],
-                f2um075[0][nangle]+0.5*f2um075[1][nangle]
+                farea03_075[0][nangle]-0.5*farea03_075[1][nangle],
+                farea03_075[0][nangle]+0.5*farea03_075[1][nangle]
             ]
             ,'b'
         )
-        # F10
-        ax[2].plot(nangle+0.05,f10um075[0][nangle],'rd',markersize=6)
+        # farea0.5  at  052
         ax[2].plot(
-            [nangle+0.05,nangle+0.05],
+            nangle-0.05,
+            farea05_075[0][nangle],
+            'ro',markersize=6
+        )
+        ax[2].plot(
+            [nangle-0.05,nangle-0.05],
             [
-                f10um075[0][nangle]-0.5*f10um075[1][nangle],
-                f10um075[0][nangle]+0.5*f10um075[1][nangle]
+                farea05_075[0][nangle]-0.5*farea05_075[1][nangle],
+                farea05_075[0][nangle]+0.5*farea05_075[1][nangle]
             ]
             ,'r'
         )
-        # Sum together all periods of all metrics for this model that are
-        # not upper limits
-        # Ie remove all negative numbers, ie alot of if statements
-        # And count number of zeros for each model
-        # NOTE this MUST be in the end of this loop
-        if rsource052[0][nangle] < 0:
-            rsource052[0][nangle] = 0
-            N052_zeros += 1
-        if f2um052[0][nangle] < 0:
-            f2um052[0][nangle] = 0
-            N052_zeros += 1
-        if f10um052[0][nangle] < 0:
-            f10um052[0][nangle] = 0
-            N052_zeros += 1
-        #
-        if rsource074[0][nangle] < 0:
-            rsource074[0][nangle] = 0
-            N074_zeros += 1
-        if f2um074[0][nangle] < 0:
-            f2um074[0][nangle] = 0
-            N074_zeros += 1
-        if f10um074[0][nangle] < 0:
-            f10um074[0][nangle] = 0
-            N074_zeros += 1
-        #
-        if rsource075[0][nangle] < 0:
-            rsource075[0][nangle] = 0
-            N075_zeros += 1
-        if f2um075[0][nangle] < 0:
-            f2um075[0][nangle] = 0
-            N075_zeros += 1
-        if f10um075[0][nangle] < 0:
-            f10um075[0][nangle] = 0
-            N075_zeros += 1
-        #
-        # And add them all together
-        plot_average052 += rsource052[0][nangle] + f2um052[0][nangle] + f10um052[0][nangle]
-        plot_average074 += rsource074[0][nangle] + f2um074[0][nangle] + f10um074[0][nangle]
-        plot_average075 += rsource075[0][nangle] + f2um075[0][nangle] + f10um075[0][nangle]
     #
-    # And take average of them
-    # 3*6 numbers per model (6 angles, 3 metrics) = 18 minus all zeros!
-    plot_average052 /= 18 - N052_zeros
-    plot_average074 /= 18 - N074_zeros
-    plot_average075 /= 18 - N075_zeros
+    # And plot averages
+    # For 052
     #
-    # And plot these averages
+    # TODO add length to these too as dotted lines
+    #
     ax[0].plot(
-        [-1,6],[plot_average052,plot_average052],'k--'
+        [-1,6],[farea01_052_average[0],farea01_052_average[0]],'g--'
+    )
+    ax[0].plot(
+        [-1,6],[farea03_052_average[0],farea03_052_average[0]],'b--'
+    )
+    ax[0].plot(
+        [-1,6],[farea05_052_average[0],farea05_052_average[0]],'r--'
+    )
+    #
+    # For 074
+    #
+    ax[1].plot(
+        [-1,6],[farea01_074_average[0],farea01_074_average[0]],'g--'
     )
     ax[1].plot(
-        [-1,6],[plot_average074,plot_average074],'k--'
-    )
-    ax[2].plot(
-        [-1,6],[plot_average075,plot_average075],'k--'
-    )
-    print('Plot averages')
-    print(f'  052: {plot_average052} yrs')
-    print(f'  074: {plot_average074} yrs')
-    print(f'  075: {plot_average075} yrs')
-
-    # Plot those with not period with a line from zero to show the event length
-    #
-    ax[1].plot([0,0,],[0,f2um074[1][0]],'b',linewidth = 3)
-    #
-    ax[2].plot([2,2],[0,rsource075[1][2]],'g',linewidth = 3)
-    ax[2].plot([2,2],[0,f10um075[1][2]],'r',linewidth = 3)
-    ax[2].plot([4,4],[0,f10um075[1][4]],'r',linewidth = 3)
-    #
-    # Plot averaged period of all period for each model to compare with table
-    # 052:
-    # (5.8648 + 10.844 + 34.856945436820816 + 5.7127 + 12.297 + 7.5339)/6
-    # 074:
-    # (16.322 + 30.016 + 34.856945436820816 + 15.056 + 18.743 + 12.836)/6
-    # 75:
-    # (30.500 + 34.856945436820816 + 18.037 + 8.0226 + 34.85688583615784 + 29.047)/6
-    average_period052 = 12.85155757280347
-    average_period074 = 21.304990906136798
-    average_period075 = 25.886738545496442
-    # Plots    
-    ax[0].plot(
-        [-1,6],[average_period052,average_period052],'k:'
+        [-1,6],[farea03_074_average[0],farea03_074_average[0]],'b--'
     )
     ax[1].plot(
-        [-1,6],[average_period074,average_period074],'k:'
+        [-1,6],[farea05_074_average[0],farea05_074_average[0]],'r--'
+    )
+    #
+    # For 075
+    #
+    ax[2].plot(
+        [-1,6],[farea01_075_average[0],farea01_075_average[0]],'g--'
     )
     ax[2].plot(
-        [-1,6],[average_period075,average_period075],'k:'
+        [-1,6],[farea03_075_average[0],farea03_075_average[0]],'b--'
     )
+    ax[2].plot(
+        [-1,6],[farea05_075_average[0],farea05_075_average[0]],'r--'
+    )
+    # Also add upper limits for 075, angles 2,3,5
+    ax[2].plot(
+        [2,3,5],
+        [43,43,43],
+        'r^'
+    )
+    #
     # List the labels so that theres 1 per model.
-    labelpanel = 0
-    ax[labelpanel].plot(-1,-1,'go',markersize=6,label=r'$R_{\rm source}$')
-    ax[labelpanel].plot(-1,-1,'bs',markersize=6,label=r'$F(2\,\mu$m$)$')
-    ax[labelpanel].plot(-1,-1,'rd',markersize=6,label=r'$F(10\,\mu$m$)$')
+    #
+    labelpanel = 2
+    ax[labelpanel].plot(-1,-1,'go',markersize=6,label='0.1')
+    ax[labelpanel].plot(-1,-1,'bs',markersize=6,label='0.3')
+    ax[labelpanel].plot(-1,-1,'rd',markersize=6,label='0.5')
     ax[labelpanel].legend(
         #loc='upper left',
+        title='Cloud area limit',
         fontsize=14
     )
+    #
     # Modify xticklabels and title
+    #
     for nmodel in range(Nmodels):
         ax[nmodel].set_title(models_label[nmodel],fontsize=14)
         ax[nmodel].set_xticks([0,1,2,3,4,5]) 
         ax[nmodel].set_xticklabels(angles_label) 
+    #
     # Set axislabels
+    #
     ax[0].set_ylabel(r'Average period \& event length (yrs)', fontsize=18)
     ax[1].set_xlabel(r'LOS-angle',fontsize=18)
-
+    #
     # Save figure
+    #
     fig.tight_layout()
     fig.savefig(
         'figs/periods_allmetrics.pdf', 
         facecolor='white',
         dpi=300
     )
-    fig.show()
+    #fig.show()
 #
 #####################################################################################
 # Plot statistics on F2um och F10um for each model.
