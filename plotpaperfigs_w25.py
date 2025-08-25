@@ -53,18 +53,22 @@ angles_label = [
     '180-0',
     '270-0'
 ]
+Nangles = len(angles)
 # Set a list of model labels
 models_label = [
     r'Model-A: $\alpha_{\rm stick} = 1$',
     r'Model-B: $\alpha_{\rm stick} = 0.1$',
     r'Model-C: $\alpha_{\rm stick} = 0.01$',
 ]
+Nmodels = len(models_label)
+
+
 
 # Plot-list
 plot_dustmass = 'n'
 plot_075grainsize = 'n'
 plot_052exampleimages = 'n'
-plot_LOSevents = 'y'
+plot_LOSevents = 'n'
 
 
 plot_allseds = 'n'              # SKIP
@@ -74,11 +78,12 @@ plot_fluxvariations = 'n'       # SKIP
 
 
 
-# TODO
-plot_numbclouds = 'n'           # Plotta antal moln per vinkel per modell
+# ONGOING
+plot_numbclouds = 'y'           # Plotta antal moln per vinkel per modell
                                 # 6 rader (en för varje vinkel)
                                 # 3 kolumner (en för varje modell)
 
+# TODO
 plot_cloudareas = 'n'           # Plotta största molnet overall för varje modell
                                 # Så 3st subplots, en per modell
 
@@ -667,9 +672,6 @@ if plot_LOSevents == 'y':
     Model-C:075    0.48     0.26     N/A       N/A        0.24      N/A
     """;
 
-    Nmodels = len(models_label)
-    Nangles = len(angles)
-
     fig,ax = plt.subplots(
         1,3,
         figsize=(13,4.5)
@@ -1095,6 +1097,107 @@ if plot_LOSevents == 'y':
     )
     #fig.show()
 #
+# 
+# Plot number of clouds per model and LOS angle
+#
+if plot_numbclouds == 'y':
+
+    # Set various settings
+    fig,ax = plt.subplots(
+        Nangles,Nmodels,
+        figsize=(9,14)
+    )
+    models = [
+        'st28gm06n052_timedep',
+        'st28gm06n074',
+        'st28gm06n075',
+    ]
+    Rstar = 1.65
+    Rin = 2*Rstar
+    Rout = 6*Rstar
+    max_flux_contrast = 0.01
+    fract_starareas = [0.1,0.3,0.5]
+    fract_stararea_colours = [
+        'r','g','b'
+    ]
+    # Loop over models
+    for nmodel,model in enumerate(models):
+
+        # Load snapshot times for each model
+        phasetimes = np.loadtxt(f'../r3dresults/{model}_nospikes/snapshot_yr.dat')[:,1]
+
+        # Loop over fraction star area and load nblobs for all angles
+        for nstararea,stararea in enumerate(fract_starareas):
+
+            angles,nsnaps,nblobs,blob_areas = atf.load_imageblob_files(
+                filepath=f'../r3dresults/{model}_nospikes/',
+                fract_stararea = stararea
+            )
+            Nsnaps = len(nsnaps)
+            Nangles = len(angles)
+
+            # Plot for each model and each angle
+            for nangle,angle in enumerate(angles_label):
+                ax[nangle,nmodel].step(
+                    phasetimes,
+                    nblobs[:,nangle],
+                    where='mid',
+                    label=f'{stararea}',
+                    color=fract_stararea_colours[nstararea]
+                )
+                # And set plot settings
+                ax[nangle,nmodel].set_xlim(phasetimes[0],phasetimes[-1])
+                ax[nangle,nmodel].set_ylim(0,5)
+                ax[nangle,nmodel].tick_params(axis='both', which='major', labelsize=15)
+                ax[nangle,nmodel].tick_params(axis='both', which='major', labelsize=15)
+                ax[nangle,0].set_ylabel(
+                    f'N blobs at {angle}',
+                    fontsize=18
+                )
+
+        #
+        ax[0,nmodel].set_title(
+            f'{models_label[nmodel]}',
+            fontsize=14
+        )
+    ax[-1,1].set_xlabel(
+        'Simulation time (yrs)',
+        fontsize=18
+    )
+    ax[-1,2].legend(
+        #loc='upper left',
+        title='Cloud area limit',
+        fontsize=14
+    )
+    # 4 blobs is max
+
+    #ax_nblobs[0].legend(
+    #    title='Cloud area limit'
+    #)
+    #ax_nblobs[3].set_ylabel(r'Number clouds')
+    #ax_nblobs[-1].set_xlabel('Simulation time (yrs)')
+
+
+
+    # HÄR ÄR JAG
+
+
+
+
+
+
+
+
+
+    fig.tight_layout()
+    fig.savefig('figs/nblobs_allangles.pdf')
+    #plt.show()
+
+
+
+
+
+
 #####################################################################################
 # Plot statistics on F2um och F10um for each model.
 #
