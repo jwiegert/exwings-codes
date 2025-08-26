@@ -23,11 +23,13 @@ Rsol = 6.955e10 # cm
 # extract_averageseds()
 # extract_sourcesize()
 # extract_surfacetemp()
+# extract_imageblobs()
+# load_imageblob_files()
 # compute_period()
 # extract_events()
 # 
 #
-# TODO
+# TODO?
 # dustmass(time)-plotter
 # F_lambda(time)-plotter
 # F_lambda-variations-to-average-extracter
@@ -468,27 +470,38 @@ def extract_imageblobs(
     Rin = 2*Rstar
     Rout = 6*Rstar
 
+    # Define fractional stellar area-limit in AU^2
+    StarArea = np.pi * Rstar**2
+    FracStarArea = fract_stararea * StarArea
+
+
     # Extract path to folder and to image
     path = '/'.join(imagepath.split('/')[:-1])+'/'
     imagename = imagepath.split('/')[-1]
 
-    # Load image
+    # Load image, pixel units are in Jy/asec2
     image2d,image2dlog,totalflux,axisplot = a3d.load_images(
         path=path,
         image=imagename
     )
     # Extract stellar flux density of image with no dust for Flimit-number
-    # Or just give it as average max flux of image
+    # and change its unit to Jy/AU2 by division with constant stellar disc
+    # area.
     if 'nospikes' in path:
         nodustpath = path.replace('nospikes', 'nodust')
         image2dstar,image2dlog,stellarflux,axisplotstar = a3d.load_images(
             path=nodustpath,
             image=imagename
         )
-        stellarflux_info = 'Nodust data exist, uses stellar flux'
+        stellarflux /= StarArea
+        stellarflux_info = 'Nodust data exist; uses stellar flux'
     else:
-        stellarflux = 0.5*(totalflux + np.max(image2d))
-        stellarflux_info = ' !Nodust data exist, uses stellar flux!'
+        # Or if no star data exist, use the max flux of the image but in
+        # units of AU2 , ie approximate stellar flux density with max-pixel
+        # averaged over star's disc surface area. It's normally approximately
+        # the same as the star's flux density divided by stellar area.
+        stellarflux = np.max(image2d)/StarArea
+        stellarflux_info = ' !NO nodust-data exist; uses max flux density averaged over stellar surface!'
 
     # Extract image props
     # Pixel-resolution of image
@@ -534,9 +547,6 @@ def extract_imageblobs(
         # And counter of large blobs
         Nlargeblobs = 0
 
-        # Define fractional stellar area-limit in AU^2
-        FracStarArea = fract_stararea * np.pi * Rstar**2
-        
         for nblob in range(1,ncomponents+1):
 
             # Number of pixels per blob time pixel au^2 size
@@ -546,14 +556,15 @@ def extract_imageblobs(
             if blobareas[nblob-1] >= FracStarArea:
                 Nlargeblobs += 1
 
-        # Return Number of large blobs and area of largest blob
-        return Nlargeblobs, np.max(blobareas),stellarflux_info
+        # Return Number of large blobs and array with area of all blobs
+        return Nlargeblobs, blobareas, stellarflux_info
 
     else:
-        # If there are no components, return just 2 zeros
-        return 0,0,'No components found'
+        # If there are no components, return just zeros and warning
+        return 0,[0],'WARNING: No components found'
 
-# TODO
+
+
 # function that loads data from ascii files with information on 
 def load_imageblob_files(
         filepath:str='../r3dresults/st28gm06n052_timedep_nospikes/',
@@ -599,11 +610,16 @@ def load_imageblob_files(
                 nblobs.append(nblobs_line.split()[1:])
                 nsnaps.append(int(nblobs_line.split()[0]))
 
+
+    # TODO
+    # change this to fit with the new file-syntax
     # Load all largest blog areas
     with open(f'{filepath}imageblobs_maxarea_Flim{max_flux_contrast}.dat', 'r') as farea:
         for area_line in farea.readlines():
             if area_line[0] != '#':
                 blob_areas.append(area_line.split()[1:])
+
+
 
     # Change from strings in lists to arrays with numbers
     nblobs = np.array(nblobs).astype('int')
@@ -655,7 +671,7 @@ def compute_period(
     return periods
 
 
-# Extract events statistics   TODO
+# Extract events statistics
 def extract_events(
         eventdata:list=[],
         timerange:list=[],

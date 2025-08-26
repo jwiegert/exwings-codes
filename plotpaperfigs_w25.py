@@ -69,7 +69,7 @@ plot_dustmass = 'n'
 plot_075grainsize = 'n'
 plot_052exampleimages = 'n'
 plot_LOSevents = 'n'
-
+plot_numbclouds = 'n'           # Plotta antal moln per vinkel per modell
 
 plot_allseds = 'n'              # SKIP
 plot_luminosities = 'n'         # SKIP
@@ -79,12 +79,11 @@ plot_fluxvariations = 'n'       # SKIP
 
 
 # ONGOING
-plot_numbclouds = 'y'           # Plotta antal moln per vinkel per modell
-                                # 6 rader (en för varje vinkel)
-                                # 3 kolumner (en för varje modell)
+
+
 
 # TODO
-plot_cloudareas = 'n'           # Plotta största molnet overall för varje modell
+plot_cloudareas = 'y'           # Plotta största molnet overall för varje modell
                                 # Så 3st subplots, en per modell
 
 plot_datacompare = 'n'          # Modify to only plot colour comparison
@@ -1105,7 +1104,7 @@ if plot_numbclouds == 'y':
     # Set various settings
     fig,ax = plt.subplots(
         Nangles,Nmodels,
-        figsize=(9,14)
+        figsize=(13,14)
     )
     models = [
         'st28gm06n052_timedep',
@@ -1154,7 +1153,6 @@ if plot_numbclouds == 'y':
                     f'N blobs at {angle}',
                     fontsize=18
                 )
-
         #
         ax[0,nmodel].set_title(
             f'{models_label[nmodel]}',
@@ -1170,24 +1168,6 @@ if plot_numbclouds == 'y':
         fontsize=14
     )
     # 4 blobs is max
-
-    #ax_nblobs[0].legend(
-    #    title='Cloud area limit'
-    #)
-    #ax_nblobs[3].set_ylabel(r'Number clouds')
-    #ax_nblobs[-1].set_xlabel('Simulation time (yrs)')
-
-
-
-    # HÄR ÄR JAG
-
-
-
-
-
-
-
-
 
     fig.tight_layout()
     fig.savefig('figs/nblobs_allangles.pdf')
