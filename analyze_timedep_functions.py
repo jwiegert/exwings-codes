@@ -439,6 +439,7 @@ def extract_imageblobs(
         imagepath:str='../image_i090_phi090_10um.out',
         Rstar:float=1.65,
         max_flux_contrast:float=0.01,
+        Flimit_exposure:float=240e3,
         fract_stararea:float=0.5,
     ):
     """
@@ -455,6 +456,9 @@ def extract_imageblobs(
       max_flux_contrast:float = A number <1 that defines the allowed contrast
                                 to the central star's flux density for dust
                                 clouds to be observable
+      Flimit_exposure:float = Flimit based on exposure time. 240kJy at 1pc is
+                              based on 32min with VLTI/MATISSE at 10um reaches 
+                              SNR~3.3 for 6Jy, 1AU-source at 200pc.
       fract_stararea:float = A number <1 that defines smallest allowed size
                              in multiples of the stellar disc's surface rea
                              in the image plane.
@@ -494,14 +498,14 @@ def extract_imageblobs(
             image=imagename
         )
         stellarflux /= StarArea
-        stellarflux_info = 'Nodust data exist; uses stellar flux'
+        stellarflux_info = f'Nodust data exist; uses stellar flux and/or exposure limit {Flimit_exposure} Jy/AU2'
     else:
         # Or if no star data exist, use the max flux of the image but in
         # units of AU2 , ie approximate stellar flux density with max-pixel
         # averaged over star's disc surface area. It's normally approximately
         # the same as the star's flux density divided by stellar area.
         stellarflux = np.max(image2d)/StarArea
-        stellarflux_info = ' !NO nodust-data exist; uses max flux density averaged over stellar surface!'
+        stellarflux_info = ' !NO! nodust-data does not exist; uses max pixel flux density averaged over stellar surface and/or exposure limit {Flimit_exposure} Jy/AU2'
 
     # Extract image props
     # Pixel-resolution of image
@@ -523,14 +527,20 @@ def extract_imageblobs(
                 (xpix - halfNpix)**2 + (ypix - halfNpix)**2
             )*pixsize_au
 
+            # Set pixels outside R-limits to zero
             if Rpix > Rout or Rpix < Rin:
-                # set these to zero and save
                 image2dmod[ypix,xpix] = 0
+
+            # Set pixels below exposure limit to zero
+            elif image2d[ypix,xpix] < Flimit_exposure:
+                image2dmod[ypix,xpix] = 0
+
+            # Set pixels below contrast-to-star-limit to zero
             elif image2d[ypix,xpix] < Flimit:
-                # and zero to thos below Flimit
                 image2dmod[ypix,xpix] = 0
+
+            # And the rest to 1
             else:
-                # And the rest to 1
                 image2dmod[ypix,xpix] = 1
 
     # Label blobs in binary image
@@ -561,7 +571,7 @@ def extract_imageblobs(
 
     else:
         # If there are no components, return just zeros and warning
-        return 0,[0],'WARNING: No components found'
+        return 0,np.zeros(1),'WARNING: No components found'
 
 
 
@@ -570,6 +580,7 @@ def load_imageblob_files(
         filepath:str='../r3dresults/st28gm06n052_timedep_nospikes/',
         max_flux_contrast:float=0.01,
         fract_stararea:float=0.1,
+        load_blobareas:str='y'
     ):
     """
     Loads and returns arrays with pre-computed numbers on dusty blobs
@@ -609,22 +620,26 @@ def load_imageblob_files(
             if nblobs_line[0] != '#':
                 nblobs.append(nblobs_line.split()[1:])
                 nsnaps.append(int(nblobs_line.split()[0]))
-
-
-    # TODO
-    # change this to fit with the new file-syntax
-    # Load all largest blog areas
-    with open(f'{filepath}imageblobs_maxarea_Flim{max_flux_contrast}.dat', 'r') as farea:
-        for area_line in farea.readlines():
-            if area_line[0] != '#':
-                blob_areas.append(area_line.split()[1:])
-
-
-
     # Change from strings in lists to arrays with numbers
     nblobs = np.array(nblobs).astype('int')
-    blob_areas = np.array(blob_areas).astype('float')
     nsnaps = np.array(nsnaps).astype('int')
+
+
+    # Load all blog areas (if set to yes)
+    if load_blobareas == 'y' or load_blobareas == 'Y' or load_blobareas == 'yes':
+        # Changes so that each line in list is an array with floats
+        # Each float is the area of each cloud at that specific nsnap and nangle.
+        # Number of snapshots and angles are given above.
+        with open(f'{filepath}imageblobs_blobareas_Flim{max_flux_contrast}.dat', 'r') as farea:
+            for area_line in farea.readlines():
+                if area_line[0] != '#':
+                    area_line = area_line.split('[')[1][:-2]
+                    area_line = area_line.split(', ')
+                    blob_areas.append(np.array(area_line).astype('float'))
+    else:
+        # If not loading all areas, return list with zeros
+        blob_areas = [0]
+
 
     # return all angles, snapshotnumbers, numb of blobs and largest blob areas
     return angles,nsnaps,nblobs,blob_areas

@@ -83,10 +83,10 @@ plot_fluxvariations = 'n'       # SKIP
 
 
 # TODO
-plot_cloudareas = 'y'           # Plotta största molnet overall för varje modell
+plot_cloudareas = 'n'           # Plotta största molnet overall för varje modell
                                 # Så 3st subplots, en per modell
 
-plot_datacompare = 'n'          # Modify to only plot colour comparison
+plot_datacompare = 'y'          # Modify to only plot colour comparison
 
 
 
@@ -672,22 +672,23 @@ if plot_LOSevents == 'y':
     """;
 
     fig,ax = plt.subplots(
-        1,3,
-        figsize=(13,4.5)
+        2,3,
+        figsize=(13,7)
     )
-    for nmodel in range(Nmodels):
-        ax[nmodel].tick_params(axis='both', which='major', labelsize=15)
-        ax[nmodel].set_xlim([-0.5,5.5])
-    ax[0].set_ylim([0,7])
-    ax[1].set_ylim([0,10])
-    ax[2].set_ylim([0,45])
+    for nrow in range(2):
+        for nmodel in range(Nmodels):
+            ax[nrow][nmodel].tick_params(axis='both', which='major', labelsize=15)
+            ax[nrow][nmodel].set_xlim([-0.5,5.5])
+    ax[0][0].set_ylim([0,7])
+    ax[0][1].set_ylim([0,10])
+    ax[0][2].set_ylim([0,45])
     # Combine each style to one set for each model, plot in one figure
     #
     # model[0][:] - perioder per LOS
-    # model[1][:] - medeleventlength per LOS
+    # model[1][:] - Andel av tiden med moln per LOS, sannolikhet för detektion
     # model_average[0] - medelvärde från stortabell på medelperiod
-    # model_average[1] - medelvärde från stortabell på längd
     #
+    # Period per LOS in same order above
     # Fract_area = 0.1
     #    
     farea01_052 = [
@@ -699,17 +700,11 @@ if plot_LOSevents == 'y':
             1.98,
             2.18    
         ],[
-            1.26,
-            1.37,
-            1.32,
-            1.04,
-            1.09,
-            1.06
+            0
         ]
     ]
-    farea01_052_average = [
-        2.12,1.20
-    ]
+    farea01_052_average = 2.12
+    #
     farea01_074 = [
         [
             2.74,
@@ -719,17 +714,11 @@ if plot_LOSevents == 'y':
             2.96,
             2.37
         ],[
-            1.30,
-            1.14,
-            1.33,
-            1.26,
-            1.18,
-            0.99
+            0
         ]
     ]
-    farea01_074_average = [
-        2.77,1.21
-    ]
+    farea01_074_average = 2.77
+    #
     farea01_075 = [
         [
             5.37,
@@ -739,17 +728,10 @@ if plot_LOSevents == 'y':
             4.99,
             5.82
         ],[
-            1.07,
-            0.73,
-            0.79,
-            0.68,
-            0.88,
-            1.08
+            0
         ]
     ]
-    farea01_075_average = [
-        4.32,0.84
-    ]
+    farea01_075_average = 4.32
     #
     # Fract_area = 0.3
     #
@@ -761,19 +743,12 @@ if plot_LOSevents == 'y':
             2.43,
             2.87,
             2.63
-        ],
-        [
-            0.87,
-            0.77,
-            0.80,
-            0.57,
-            0.64,
-            0.58
+        ],[
+            0
         ]
     ]
-    farea03_052_average = [
-        2.46,0.71
-    ]
+    farea03_052_average = 2.46
+    #
     farea03_074 = [
         [
             3.56,
@@ -782,19 +757,12 @@ if plot_LOSevents == 'y':
             3.23,
             3.95,
             3.74
-        ],
-        [
-            0.59,
-            0.78,
-            0.63,
-            0.54,
-            0.48,
-            0.60
+        ],[
+            0
         ]
     ]
-    farea03_074_average = [
-        3.71,0.60
-    ]
+    farea03_074_average = 3.71
+    #
     farea03_075 = [
         [
             13.97,
@@ -803,19 +771,11 @@ if plot_LOSevents == 'y':
             23.29,
             23.29,
             17.47
-        ],
-        [
-            0.67,
-            0.95,
-            0.32,
-            0.32,
-            0.84,
-            0.63
+        ],[
+            0
         ]
     ]
-    farea03_075_average = [
-        19.05,0.61
-    ]
+    farea03_075_average = 19.05
     #
     # Fract_area = 0.5
     #
@@ -827,19 +787,12 @@ if plot_LOSevents == 'y':
             5.27,
             4.86,
             4.21
-        ],
-        [
-            0.93,
-            0.64,
-            0.74,
-            0.54,
-            0.57,
-            0.53
+        ],[
+            0
         ]
     ]
-    farea05_052_average = [
-        4.08,0.66
-    ]
+    farea05_052_average = 4.08
+    #
     farea05_074 = [
         [
             7.90,
@@ -848,19 +801,12 @@ if plot_LOSevents == 'y':
             6.47,
             8.89,
             10.16
-        ],
-        [
-            0.53,
-            0.70,
-            0.63,
-            0.45,
-            0.30,
-            0.48
+        ],[
+            0
         ]
     ]
-    farea05_074_average = [
-        7.90,0.52
-    ]
+    farea05_074_average = 7.90
+    #
     farea05_075 = [
         [
             23.29,
@@ -869,19 +815,11 @@ if plot_LOSevents == 'y':
             -10,
             17.47,
             -10
-        ],
-        [
-            0.48,
-            0.26,
-            -10,
-            -10,
-            0.24,
-            -10
+        ],[
+            0
         ]
     ]
-    farea05_075_average = [
-        41.91,0.32
-    ]
+    farea05_075_average = 41.91
     #
     # Plot farea
     #
@@ -889,174 +827,100 @@ if plot_LOSevents == 'y':
 
         # Plot 052
         # Plot farea0.1
-        ax[0].plot(
-            nangle-0.05,
+        ax[0][0].plot(
+            nangle,
             farea01_052[0][nangle],
             'go',markersize=6
         )
-        ax[0].plot(
-            [nangle-0.05,nangle-0.05],
-            [
-                farea01_052[0][nangle]-0.5*farea01_052[1][nangle],
-                farea01_052[0][nangle]+0.5*farea01_052[1][nangle]
-            ]
-            ,'g'
-        )
-        # farea0.3  at  052
-        ax[0].plot(
-            nangle-0.05,
+        # farea0.3
+        ax[0][0].plot(
+            nangle,
             farea03_052[0][nangle],
-            'bo',markersize=6
+            'bs',markersize=6
         )
-        ax[0].plot(
-            [nangle-0.05,nangle-0.05],
-            [
-                farea03_052[0][nangle]-0.5*farea03_052[1][nangle],
-                farea03_052[0][nangle]+0.5*farea03_052[1][nangle]
-            ]
-            ,'b'
-        )
-        # farea0.5  at  052
-        ax[0].plot(
-            nangle-0.05,
+        # farea0.5
+        ax[0][0].plot(
+            nangle,
             farea05_052[0][nangle],
-            'ro',markersize=6
-        )
-        ax[0].plot(
-            [nangle-0.05,nangle-0.05],
-            [
-                farea05_052[0][nangle]-0.5*farea05_052[1][nangle],
-                farea05_052[0][nangle]+0.5*farea05_052[1][nangle]
-            ]
-            ,'r'
+            'rd',markersize=6
         )
         # Plot 074
         # Plot farea0.1
-        ax[1].plot(
-            nangle-0.05,
+        ax[0][1].plot(
+            nangle,
             farea01_074[0][nangle],
             'go',markersize=6
         )
-        ax[1].plot(
-            [nangle-0.05,nangle-0.05],
-            [
-                farea01_074[0][nangle]-0.5*farea01_074[1][nangle],
-                farea01_074[0][nangle]+0.5*farea01_074[1][nangle]
-            ]
-            ,'g'
-        )
-        # farea0.3  at  052
-        ax[1].plot(
-            nangle-0.05,
+        # farea0.3
+        ax[0][1].plot(
+            nangle,
             farea03_074[0][nangle],
-            'bo',markersize=6
+            'bs',markersize=6
         )
-        ax[1].plot(
-            [nangle-0.05,nangle-0.05],
-            [
-                farea03_074[0][nangle]-0.5*farea03_074[1][nangle],
-                farea03_074[0][nangle]+0.5*farea03_074[1][nangle]
-            ]
-            ,'b'
-        )
-        # farea0.5  at  052
-        ax[1].plot(
-            nangle-0.05,
+        # farea0.5
+        ax[0][1].plot(
+            nangle,
             farea05_074[0][nangle],
-            'ro',markersize=6
-        )
-        ax[1].plot(
-            [nangle-0.05,nangle-0.05],
-            [
-                farea05_074[0][nangle]-0.5*farea05_074[1][nangle],
-                farea05_074[0][nangle]+0.5*farea05_074[1][nangle]
-            ]
-            ,'r'
+            'rd',markersize=6
         )
         # Plot 075
         # Plot farea0.1
-        ax[2].plot(
-            nangle-0.05,
+        ax[0][2].plot(
+            nangle,
             farea01_075[0][nangle],
             'go',markersize=6
         )
-        ax[2].plot(
-            [nangle-0.05,nangle-0.05],
-            [
-                farea01_075[0][nangle]-0.5*farea01_075[1][nangle],
-                farea01_075[0][nangle]+0.5*farea01_075[1][nangle]
-            ]
-            ,'g'
-        )
-        # farea0.3  at  052
-        ax[2].plot(
-            nangle-0.05,
+        # farea0.3
+        ax[0][2].plot(
+            nangle,
             farea03_075[0][nangle],
-            'bo',markersize=6
+            'bs',markersize=6
         )
-        ax[2].plot(
-            [nangle-0.05,nangle-0.05],
-            [
-                farea03_075[0][nangle]-0.5*farea03_075[1][nangle],
-                farea03_075[0][nangle]+0.5*farea03_075[1][nangle]
-            ]
-            ,'b'
-        )
-        # farea0.5  at  052
-        ax[2].plot(
-            nangle-0.05,
+        # farea0.5
+        ax[0][2].plot(
+            nangle,
             farea05_075[0][nangle],
-            'ro',markersize=6
-        )
-        ax[2].plot(
-            [nangle-0.05,nangle-0.05],
-            [
-                farea05_075[0][nangle]-0.5*farea05_075[1][nangle],
-                farea05_075[0][nangle]+0.5*farea05_075[1][nangle]
-            ]
-            ,'r'
+            'rd',markersize=6
         )
     #
     # And plot averages
     # For 052
     #
-    # TODO add length to these too as dotted lines
-    #
-    ax[0].plot(
-        [-1,6],[farea01_052_average[0],farea01_052_average[0]],'g--'
+    ax[0][0].plot(
+        [-1,6],[farea01_052_average,farea01_052_average],'g--'
     )
-    ax[0].plot(
-        [-1,6],[farea03_052_average[0],farea03_052_average[0]],'b--'
+    ax[0][0].plot(
+        [-1,6],[farea03_052_average,farea03_052_average],'b--'
     )
-    ax[0].plot(
-        [-1,6],[farea05_052_average[0],farea05_052_average[0]],'r--'
+    ax[0][0].plot(
+        [-1,6],[farea05_052_average,farea05_052_average],'r--'
     )
     #
     # For 074
     #
-    ax[1].plot(
-        [-1,6],[farea01_074_average[0],farea01_074_average[0]],'g--'
+    ax[0][1].plot(
+        [-1,6],[farea01_074_average,farea01_074_average],'g--'
     )
-    ax[1].plot(
-        [-1,6],[farea03_074_average[0],farea03_074_average[0]],'b--'
+    ax[0][1].plot(
+        [-1,6],[farea03_074_average,farea03_074_average],'b--'
     )
-    ax[1].plot(
-        [-1,6],[farea05_074_average[0],farea05_074_average[0]],'r--'
+    ax[0][1].plot(
+        [-1,6],[farea05_074_average,farea05_074_average],'r--'
     )
     #
     # For 075
     #
-    ax[2].plot(
-        [-1,6],[farea01_075_average[0],farea01_075_average[0]],'g--'
+    ax[0][2].plot(
+        [-1,6],[farea01_075_average,farea01_075_average],'g--'
     )
-    ax[2].plot(
-        [-1,6],[farea03_075_average[0],farea03_075_average[0]],'b--'
+    ax[0][2].plot(
+        [-1,6],[farea03_075_average,farea03_075_average],'b--'
     )
-    ax[2].plot(
-        [-1,6],[farea05_075_average[0],farea05_075_average[0]],'r--'
+    ax[0][2].plot(
+        [-1,6],[farea05_075_average,farea05_075_average],'r--'
     )
     # Also add upper limits for 075, angles 2,3,5
-    ax[2].plot(
+    ax[0][2].plot(
         [2,3,5],
         [43,43,43],
         'r^'
@@ -1065,10 +929,10 @@ if plot_LOSevents == 'y':
     # List the labels so that theres 1 per model.
     #
     labelpanel = 2
-    ax[labelpanel].plot(-1,-1,'go',markersize=6,label='0.1')
-    ax[labelpanel].plot(-1,-1,'bs',markersize=6,label='0.3')
-    ax[labelpanel].plot(-1,-1,'rd',markersize=6,label='0.5')
-    ax[labelpanel].legend(
+    ax[0][labelpanel].plot(-1,-1,'go',markersize=6,label='0.1')
+    ax[0][labelpanel].plot(-1,-1,'bs',markersize=6,label='0.3')
+    ax[0][labelpanel].plot(-1,-1,'rd',markersize=6,label='0.5')
+    ax[0][labelpanel].legend(
         #loc='upper left',
         title='Cloud area limit',
         fontsize=14
@@ -1077,14 +941,18 @@ if plot_LOSevents == 'y':
     # Modify xticklabels and title
     #
     for nmodel in range(Nmodels):
-        ax[nmodel].set_title(models_label[nmodel],fontsize=14)
-        ax[nmodel].set_xticks([0,1,2,3,4,5]) 
-        ax[nmodel].set_xticklabels(angles_label) 
+        for nrow in range(2):
+            ax[nrow][nmodel].set_xticks([0,1,2,3,4,5]) 
+            ax[nrow][nmodel].set_xticklabels(angles_label) 
+        ax[0][nmodel].set_title(models_label[nmodel],fontsize=14)
+        #ax[0][nmodel].set_xticklabels(['','','','','','']) 
+        
     #
     # Set axislabels
     #
-    ax[0].set_ylabel(r'Average period \& event length (yrs)', fontsize=18)
-    ax[1].set_xlabel(r'LOS-angle',fontsize=18)
+    ax[0][0].set_ylabel(r'Average period (yrs)', fontsize=18)
+    ax[1][0].set_ylabel(r'Detection probability', fontsize=18)
+    ax[1][1].set_xlabel(r'LOS-angle',fontsize=18)
     #
     # Save figure
     #
@@ -1408,7 +1276,7 @@ if plot_fluxvariations == 'y':
 # suh2021, smiths2001, aavso.rg
 # 
 if plot_datacompare == 'y':
-    # First panel plot with colour statistics
+    # Plot with colour statistics
     # K[2.2](2mass) - W3[12] of O-rich AGB stars from Suh2021
     # both WISE and IRAS catalogue, a total of 4038(IRAS)+5253(WISE) AGB stars
     #
@@ -1429,18 +1297,12 @@ if plot_datacompare == 'y':
     #   minK-maxW3:  -               -               5.722      5.171       2.214
     #
     # X-axis to have models
-    modelnames = [
-        'st28gm06n052',
-        'st28gm06n074',
-        'st28gm06n075',
-    ]
+    # Y-axis to have colour ranges
     modelsymbol = [
         'd','s','o'
     ]
-    # Y-axel, div färger
-    # modellerna med "error-bar-aktiga" linjer
-
-    # Y-axis with model data in errorbar like
+    #
+    # Y-axis with model data in errorbars
     # max-min, avr+std, avr, avr-std, , min-max
     # 052,074,075
     # Numbers from jupyternotebook with explore_timedep.ipynb
@@ -1459,202 +1321,128 @@ if plot_datacompare == 'y':
         ':','--','-'
     ]
     # Set up figure object
-    fig,ax = plt.subplots(
-        2,1,
-        figsize=(6,9)
-    )
-    # For VR-prop:
-    #fig,ax = plt.subplots(
-    #    1,2,
-    #    figsize=(10.5,4.5)
-    #)
-
-
-    # Plot fields for observed statistics from Suh21
+    fig,ax = plt.figure(figsize=(6,4)), plt.axes()
+    plotaxis = [0,6]
+    datapositions = [1,2,3,4,5]
     #
-    # From Fig9, 2 right panels two catalogues, 
-    #   first IRAScat-minmax
-    #   then  WISEcat-minmax
-    #   In middle, first: IRAS-mean, second: WISE-mean
-
-
-    suhdata = [
-        0.34,   # iras min
-        0.58,   # wise min
-        4.39,   # iras mean
-        2.15,   # wise mean
-        8.02,   # wise max
-        13.6,   # iras max
+    # Plot fields for observed statistics from Suh21
+    # From Suh21-Fig9, 2 right panels two catalogues, 
+    #
+    irasdata = [
+        0.34,           # min
+        4.39-2.18,      # avr-std
+        4.39,           # Average
+        4.39+2.18,      # avr+std
+        13.6,           # Max
     ]
-    suhstd = [
-        2.18,   # iras std
-        0.91,   # wise std
+    wisedata = [
+        0.58,           # min
+        2.15-0.91,      # avr-std
+        2.15,           # Average
+        2.15+0.91,      # avr+std
+        8.02,           # Max
     ]
-    suhcolours = [
-        'khaki','paleturquoise','red','blue'
-    ]
-    modelaxis = [0,4]
-    modelpositions = [0.8,2,3.2]
-    for nfield in range(4):
-        if nfield < 2:
-            ax[0].fill_between(
-                modelaxis,
-                [suhdata[nfield],suhdata[nfield]],
-                [suhdata[-nfield-1],suhdata[-nfield-1]],
-                color=suhcolours[nfield]
-            )
-        if nfield > 1:
-            # Plot average
-            ax[0].plot(
-                modelaxis,
-                [suhdata[nfield],suhdata[nfield]],
-                color=suhcolours[nfield],linewidth=3
-            )
-            # and std
-            ax[0].plot(
-                modelaxis,
-                [suhdata[nfield] + suhstd[nfield-2],suhdata[nfield] + suhstd[nfield-2]],
-                '--',color=suhcolours[nfield],linewidth=2
-            )
-            ax[0].plot(
-                modelaxis,
-                [suhdata[nfield] - suhstd[nfield-2],suhdata[nfield] - suhstd[nfield-2]],
-                '--',color=suhcolours[nfield],zorder=3,linewidth=2
-            )
-
     # Plot model colour ranges
     for nmodel,modeldat in enumerate(modeldata):
-        # error bars
         for nn in range(2):
-            ax[0].plot(
-                [modelpositions[nmodel],modelpositions[nmodel]],
+            ax.plot(
+                [datapositions[nmodel+2],datapositions[nmodel+2]],
                 [modeldat[nn],modeldat[-nn-1]],
-                'k',linestyle=linestyles[nn],zorder=4
+                'k',linestyle=linestyles[nn]
             )
-            ax[0].plot(
-                [modelpositions[nmodel]-0.2,modelpositions[nmodel]+0.2],
+            ax.plot(
+                [datapositions[nmodel+2]-0.3,datapositions[nmodel+2]+0.3],
                 [modeldat[nn],modeldat[nn]],
-                'k',zorder=4
+                'k'
             )
-            ax[0].plot(
-                [modelpositions[nmodel]-0.2,modelpositions[nmodel]+0.2],
+            ax.plot(
+                [datapositions[nmodel+2]-0.3,datapositions[nmodel+2]+0.3],
                 [modeldat[-nn-1],modeldat[-nn-1]],
-                'k',zorder=4
+                'k'
             )
-        ax[0].plot(
-            [modelpositions[nmodel],modelpositions[nmodel]],
+        ax.plot(
+            [datapositions[nmodel+2],datapositions[nmodel+2]],
             [modeldat[2],modeldat[2]],
-            modelsymbol[nmodel],color='k',markersize=12,zorder=4
+            modelsymbol[nmodel],color='k',markersize=12
         )
+    #
+    # Plot Suh21-data
+    # IRAS
+    for nn in range(2):
+        ax.plot(
+            [datapositions[0],datapositions[0]],
+            [irasdata[nn],irasdata[-nn-1]],
+            'r',linestyle=linestyles[nn]
+        )
+        ax.plot(
+            [datapositions[0]-0.3,datapositions[0]+0.3],
+            [irasdata[nn],irasdata[nn]],
+            'r'
+        )
+        ax.plot(
+            [datapositions[0]-0.3,datapositions[0]+0.3],
+            [irasdata[-nn-1],irasdata[-nn-1]],
+            'r'
+        )
+    ax.plot(
+        [datapositions[0],datapositions[0]],
+        [irasdata[2],irasdata[2]],
+        'p',color='r',markersize=12
+    )
+    ax.plot(
+        [0,6],
+        [irasdata[2],irasdata[2]],
+        'r:'
+    )
+    # WISE
+    for nn in range(2):
+        ax.plot(
+            [datapositions[1],datapositions[1]],
+            [wisedata[nn],wisedata[-nn-1]],
+            'b',linestyle=linestyles[nn]
+        )
+        ax.plot(
+            [datapositions[1]-0.3,datapositions[1]+0.3],
+            [wisedata[nn],wisedata[nn]],
+            'b'
+        )
+        ax.plot(
+            [datapositions[1]-0.3,datapositions[1]+0.3],
+            [wisedata[-nn-1],wisedata[-nn-1]],
+            'b'
+        )
+    ax.plot(
+        [datapositions[1],datapositions[1]],
+        [wisedata[2],wisedata[2]],
+        'h',color='b',markersize=12
+    )
+    ax.plot(
+        [0,6],
+        [wisedata[2],wisedata[2]],
+        'b:'
+    )
+
+
+
+
     # Set xlabels and tick settings
-    ax[0].set_xlim(0,4)
-    ax[0].set_xticks(modelpositions) 
-    ax[0].set_xticklabels(modelnames) 
-    ax[0].set_ylabel('K[2.2]$-$W3[12]', fontsize=18)
-    ax[0].tick_params(axis='both', which='major', labelsize=15)
+    ax.set_xlim(0.5,5.5)
+    ax.set_xticks(datapositions) 
+    ax.set_xticklabels(
+        ['IRAS', 'WISE', 'Model-A', 'Model-B', 'Model-C']
+    ) 
+    ax.set_ylabel('K[2.2]$-$W3[12]', fontsize=18)
+    ax.tick_params(axis='both', which='major', labelsize=15)
     #
+    # Final fig fix and save
     #
-    # NEXT PANEL
-    # compare with data one specific sources
-    #
-    # Y-axis: minimum/average flux ratio
-    # X-axis: total time of included data
-    #
-    # Model data:
-    modeltime =  34.857
-    # each row: model
-    # each column: Vband, Cobe2.2, Cobe3.5
-    modelfluxratios = np.array([
-        [0.00089898,0.04972 , 0.20425],
-        [0.0033807 ,0.06202 , 0.23182],
-        [0.058986  ,0.60118 , 0.69670],
-    ])
-    # Observed data:
-    # Save all band data separately
-    visualdata = np.array([
-        [  8.06 ,0.083179  ],
-        [ 14.47 ,0.15850   ],
-        [131.18 ,0.012023  ],
-        [143.96 ,0.044055  ],
-        [144.73 ,0.039811  ],
-        [171.37 ,0.0091201 ],
-    ])
-    Kbanddata = np.array([
-        [0.68 , 0.700],
-        [0.71 , 0.720],
-        [0.71 , 0.667],
-        [0.74 , 0.647],
-        [0.74 , 0.558],
-    ])
-    W1banddata = np.array([
-        [ 0.68, 0.857  ],
-        [ 0.71, 0.674  ],
-        [ 0.71, 0.765  ],
-        [ 0.74, 0.75   ],
-        [ 0.74, 0.664  ],
-        [10.4 , 0.39810],
-        [10.4 , 0.30199],
-    ])
-    allobsdata = [
-        visualdata,
-        Kbanddata,
-        W1banddata
-    ]
-    # Start plotting
-    #
-    # Settings for subplotinset:
-    # x0,y0,width,height
-    axin = ax[1].inset_axes(
-        bounds=[
-            0.09,0.4,0.3,0.39
-        ]
-    )
-
-    # Colours for each band
-    wavecolour = [
-        'b','orange','r'
-    ]
-    for nwave,obsdata in enumerate(allobsdata):
-
-        obstime = obsdata[:,0]
-        fluxratios = obsdata[:,1]
-
-        ax[1].plot(obstime,fluxratios,'.',color=wavecolour[nwave])
-        ax[1].plot(obstime,fluxratios,'--',color=wavecolour[nwave])
-        axin.plot(obstime,fluxratios,'.',color=wavecolour[nwave])
-        axin.plot(obstime,fluxratios,'--',color=wavecolour[nwave])
-
-        # Plot model results
-        for nmodel in range(3):
-            ax[1].plot(modeltime,modelfluxratios[nmodel,nwave],modelsymbol[nmodel],color=wavecolour[nwave])
-            #axin.plot(modeltime,modelfluxratios[nmodel,nwave],modelsymbol[nmodel],color=wavecolour[nwave])
-
-    # Add model labels
-    for nmodel,modelname in enumerate(modelnames):
-        ax[1].plot(-1,-1,modelsymbol[nmodel],color='k',markersize=6,label=modelname)
-
-    # Set axis settings
-    ax[1].set_xscale('log')
-    ax[1].set_yscale('log')
-    axin.set_xlim(0.65,0.8)
-    axin.set_ylim(0.5,0.9)
-    #ax[1].indicate_inset_zoom(axin)
-    ax[1].set_xlabel('Time series length (years)', fontsize=18)
-    ax[1].tick_params(axis='both', which='major', labelsize=15)
-    ax[1].set_ylabel(r'$F_\nu ($min$)/F_\nu ($average$)$', fontsize=18)
-    ax[1].legend(
-        #loc='upper right',
-        fontsize=14
-    )
-    # Final figure fixes, and save fig.
-    
     fig.tight_layout()
     fig.savefig(
         'figs/data_compare.pdf',
         facecolor='white',
         dpi=300
     )
-    fig.show()
+    #fig.show()
 
 #######################################################################
 # Plot for VR-prop
