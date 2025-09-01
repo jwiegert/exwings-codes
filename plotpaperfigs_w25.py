@@ -54,39 +54,36 @@ angles_label = [
     '270-0'
 ]
 Nangles = len(angles)
-# Set a list of model labels
+# Set a list of model and model labels
+models = [
+    'st28gm06n052_timedep',
+    'st28gm06n074',
+    'st28gm06n075',
+]
 models_label = [
     r'Model-A: $\alpha_{\rm stick} = 1$',
     r'Model-B: $\alpha_{\rm stick} = 0.1$',
     r'Model-C: $\alpha_{\rm stick} = 0.01$',
 ]
-Nmodels = len(models_label)
-
-
+Nmodels = len(models)
 
 # Plot-list
 plot_dustmass = 'n'
 plot_075grainsize = 'n'
 plot_052exampleimages = 'n'
-plot_LOSevents = 'n'
-plot_numbclouds = 'n'           # Plotta antal moln per vinkel per modell
 
-plot_allseds = 'n'              # SKIP
-plot_luminosities = 'n'         # SKIP
-plot_052fluxdensity = 'n'       # SKIP
-plot_fluxvariations = 'n'       # SKIP
+plot_numbclouds = 'n'           # Plotta antal moln per vinkel per modell
+plot_datacompare = 'n'          # Plots colour comparisons for each model with data
 
 
 
 # ONGOING
-
-
-
 # TODO
-plot_cloudareas = 'n'           # Plotta största molnet overall för varje modell
-                                # Så 3st subplots, en per modell
 
-plot_datacompare = 'y'          # Modify to only plot colour comparison
+plot_cloudareas = 'n'           # Plotta histogram över antal moln för varje modell
+
+plot_LOSevents = 'y'            # Add plots with "probabilty of detection"
+                                # Måste fixa alla datatabeller först igen
 
 
 
@@ -94,6 +91,13 @@ plot_datacompare = 'y'          # Modify to only plot colour comparison
 plotvr_exampleimages = 'n'
 plotvr_radiusplot = 'n'
 plotvr_datacompare = 'n'
+
+# SKIP THESE
+plot_allseds = 'n'              # SKIP
+plot_luminosities = 'n'         # SKIP
+plot_052fluxdensity = 'n'       # SKIP
+plot_fluxvariations = 'n'       # SKIP
+
 
 
 # Plots below ----------------------------------------------------------------#
@@ -148,9 +152,11 @@ if plot_dustmass == 'y':
     fig.tight_layout()
     ax[0].yaxis.set_label_coords(-0.09,0.09) # Moves ylabel to centre of vertical
     fig.savefig(
-        f'figs/052_074_075_dustmasscompare.pdf', dpi=300, facecolor="white"
+        f'figs/052_074_075_dustmasscompare.pdf', 
+        dpi=300, 
+        facecolor="white"
     )
-    fig.show()
+    #fig.show()
 #
 #####################################################################################
 # Plot max grain size bin vs time of 075 
@@ -258,7 +264,7 @@ if plot_allseds == 'y':
         facecolor='white',
         dpi=300
     )
-    fig.show()
+    #fig.show()
 #
 #####################################################################################
 # Plot all luminosities in three subplots 
@@ -404,7 +410,7 @@ if plot_luminosities == 'y':
         facecolor='white',
         dpi=300
     )
-    fig.show()
+    #fig.show()
 #
 ####################################################################################
 # Plot flux density at 2um over time for 052
@@ -500,8 +506,12 @@ if plot_052fluxdensity == 'y':
 
     # and save figure (and show)
     fig.tight_layout()
-    plt.savefig(f'figs/{model}_fluxtime_{wavelength}um.pdf', dpi=300)
-    fig.show()
+    plt.savefig(
+        f'figs/{model}_fluxtime_{wavelength}um.pdf', 
+        facecolor='white',
+        dpi=300
+    )
+    #fig.show()
 #
 #####################################################################################
 # Plot 6 snapshots at 2 and 10um to showcase what we're looking at
@@ -623,52 +633,97 @@ if plot_LOSevents == 'y':
     """
     All data for this plot
 
-    MODEL  Area limit    N clouds   N clouds/LOS   Aver length   Aver period (yrs)   FFT-period (yrs)
-    052     0.1          179        29.83          1.20          2.12                4.21
-            0.3          154        25.67          0.71          2.46                4.21
-            0.5           93        15.50          0.66          4.08                4.21
+        Total included time: 379.1480984769462 time units
+    MODEL  Area limit    N clouds   N clouds/LOS  Total port.   Aver period (yrs)   FFT-period (yrs)
+    052     0.1          168        28.00         0.4023        2.26                4.21
+            0.2          142        23.67         0.2580        2.67                4.21
+            0.3          110        18.33         0.1697        3.45                4.21
+            0.4           81        13.50         0.1184        4.68               12.64
+            0.5           64        10.67         0.0775        5.92               12.23
+            0.6           45         7.50         0.0509        8.43               12.64
 
-    074     0.1          154        25.67          1.21          2.77                6.46
-            0.3          115        19.17          0.60          3.71                8.89
-            0.5           54         9.00          0.52          7.90                8.89
+        Total included time: 426.6804631133246 time units
+    074     0.1          133        22.17         0.2812        3.21                5.93
+            0.2           95        15.83         0.1489        4.49                6.46
+            0.3           63        10.50         0.0848        6.77                7.90
+            0.4           48         8.00         0.0515        8.89               11.85
+            0.5           32         5.33         0.0326       13.33               11.85
+            0.6           17         2.83         0.0182       25.10               11.85
 
-    075     0.1           97        16.17          0.84          4.32                9.98
-            0.3           22         3.67          0.61         19.05               23.28
-            0.5           10         1.67          0.32         41.91                N/A
-
+        Total included time: 419.07515235389167 time units
+    075     0.1           80        13.33         0.1475        5.24                3.68
+            0.2           42         7.00         0.0551        9.98                9.98
+            0.3           20         3.33         0.0230       20.95               23.28
+            0.4            8         1.33         0.0094       52.38               34.92
+            0.5            4         0.66         0.0034      104.77                N/A
+            0.6            1         0.17         0.0008      419.08                N/A
 
 
     FRACT_AREA: 0.1 periods
     Model          0-0      90-0     90-90     90-270     180-0     270-0
-    Model-A:052    1.98     2.11     2.34      2.04       1.98      2.18
-    Model-B:074    2.74     2.54     3.09      2.74       2.96      2.37
-    Model-C:075    5.37     4.37     3.68      3.04       4.99      5.82
-                    Length
-    Model-A:052    1.26     1.37     1.32      1.04       1.09      1.06
-    Model-B:074    1.30     1.14     1.33      1.26       1.18      0.99
-    Model-C:075    1.07     0.73     0.79      0.68       0.88      1.08
+    Model-A:052    1.98     2.18     2.43      2.53       2.11      2.43
+    Model-B:074    3.39     3.23     3.23      3.09       3.09      3.23
+    Model-C:075    5.82     5.82     4.37      4.37       5.37      6.35
+                    Portion of total time
+    Model-A:052    0.5187   0.4887   0.4009    0.3358     0.3433    0.3308
+    Model-B:074    0.3252   0.2851   0.3029    0.2717     0.2673    0.2383
+    Model-C:075    0.1609   0.1382   0.1405    0.1836     0.1337    0.1292
+
+
+    FRACT_AREA: 0.2 periods
+    Model          0-0      90-0     90-90     90-270     180-0     270-0
+    Model-A:052    2.26     2.26     2.75      3.01       2.87      3.16
+    Model-B:074    3.56     4.18     4.74      5.47       4.74      4.74
+    Model-C:075    7.76    11.65     7.76     11.65       9.98     13.97
+                    Portion of total time
+    Model-A:052    0.3533   0.3007   0.2706    0.2055     0.2080    0.2130
+    Model-B:074    0.1715   0.1782   0.1715    0.1403     0.1069    0.1270
+    Model-C:075    0.0725   0.0567   0.0385    0.0431     0.0567    0.0635
 
 
     FRACT_AREA: 0.3 periods
     Model          0-0      90-0     90-90     90-270     180-0     270-0
-    Model-A:052    2.26     2.34     2.34      2.43       2.87      2.63
-    Model-B:074    3.56     4.45     3.56      3.23       3.95      3.74
-    Model-C:075   13.97    23.29    17.47     23.29      23.29     17.47
+    Model-A:052    2.87     3.16     3.01      4.21       3.95      3.95
+    Model-B:074    5.08     5.47     7.90      7.11       8.89      7.90
+    Model-C:075   17.47    23.29    34.94     17.47      34.94     13.97
                     Length
-    Model-A:052    0.87     0.77     0.80      0.57       0.64      0.58
-    Model-B:074    0.59     0.78     0.63      0.54       0.48      0.60
-    Model-C:075    0.67     0.95     0.32      0.32       0.84      0.63
+    Model-A:052    0.2456   0.2030   0.1779    0.1328     0.1253    0.1353
+    Model-B:074    0.0846   0.1047   0.1136    0.0802     0.0512    0.0757
+    Model-C:075    0.0227   0.0340   0.0091    0.0136     0.0249    0.0340
+
+
+    FRACT_AREA: 0.4 periods
+    Model          0-0      90-0     90-90     90-270     180-0     270-0
+    Model-A:052    4.21     3.72     4.21      5.27       7.02      4.86
+    Model-B:074    7.90     7.11     7.11      7.90      17.78     11.86
+    Model-C:075   34.94    34.94     N/A      69.87      69.87     34.94
+                    Portion of total time
+    Model-A:052    0.1729   0.1504   0.1078    0.1002     0.0802    0.1002
+    Model-B:074    0.0490   0.0690   0.0802    0.0445     0.0223    0.0445
+    Model-C:075    0.0113   0.0204   N/A       0.0023     0.0136    0.0091
 
 
     FRACT_AREA: 0.5 periods
     Model          0-0      90-0     90-90     90-270     180-0     270-0
-    Model-A:052    4.21     3.01     3.72      5.27       4.86      4.21
-    Model-B:074    7.90     7.90     7.11      6.47       8.89     10.16
-    Model-C:075   23.29    23.29     N/A       N/A       17.47      N/A
+    Model-A:052    4.86     4.86     6.32      5.75       9.03      6.32
+    Model-B:074   14.23    10.16    10.16     11.86      23.71     17.78
+    Model-C:075    N/A     69.87     N/A       N/A       34.94     69.87
                     Length
-    Model-A:052    0.93     0.64     0.74      0.54       0.57      0.53
-    Model-B:074    0.53     0.70     0.63      0.45       0.30      0.48
-    Model-C:075    0.48     0.26     N/A       N/A        0.24      N/A
+    Model-A:052    0.1328   0.0977   0.0526    0.0526     0.0626    0.0677
+    Model-B:074    0.0356   0.0423   0.0490    0.0312     0.0089    0.0290
+    Model-C:075    N/A      0.0091   N/A       N/A        0.0091    0.0023
+
+
+    FRACT_AREA: 0.6 periods
+    Model          0-0      90-0     90-90     90-270     180-0     270-0
+    Model-A:052    5.75     7.02    12.64     10.54      10.54      7.90
+    Model-B:074   23.71    17.78    14.28     17.78       N/A      71.14
+    Model-C:075    N/A     69.87     N/A       N/A        N/A       N/A
+                    Portion of total time
+    Model-A:052    0.0952   0.0702   0.0301    0.0301     0.0426    0.0376
+    Model-B:074    0.0200   0.0267   0.0334    0.0134     N/A       0.0156
+    Model-C:075    N/A      0.0045   N/A       N/A        N/A       N/A
+
     """;
 
     fig,ax = plt.subplots(
@@ -679,147 +734,194 @@ if plot_LOSevents == 'y':
         for nmodel in range(Nmodels):
             ax[nrow][nmodel].tick_params(axis='both', which='major', labelsize=15)
             ax[nrow][nmodel].set_xlim([-0.5,5.5])
-    ax[0][0].set_ylim([0,7])
-    ax[0][1].set_ylim([0,10])
-    ax[0][2].set_ylim([0,45])
+            ax[1][nmodel].set_ylim([0,1])
+    ax[0][0].set_ylim([0,14])
+    ax[0][1].set_ylim([0,25])
+    ax[0][2].set_ylim([0,75])
+    farea_colours = ['g','c','b','m','r','darkorange']
+    farea_markers = ['o','p','s','h','d','8']
+    farea_label = ['0.1','0.2','0.3','0.4','0.5','0.6']
     # Combine each style to one set for each model, plot in one figure
     #
     # model[0][:] - perioder per LOS
     # model[1][:] - Andel av tiden med moln per LOS, sannolikhet för detektion
     # model_average[0] - medelvärde från stortabell på medelperiod
+    # model_average[1] - medelvärde från stortabell på medelandel av tot tid
     #
-    # Period per LOS in same order above
+    # Period per LOS in same LOS-order as listed in angle-labels
     # Fract_area = 0.1
-    #    
+    #
     farea01_052 = [
         [
-            1.98,
-            2.11,
-            2.34,
-            2.04,
-            1.98,
-            2.18    
+            1.98, 2.18, 2.43, 2.53, 2.11, 2.43
         ],[
-            0
+            0.5187, 0.4887, 0.4009, 0.3358, 0.3433, 0.3308
         ]
     ]
-    farea01_052_average = 2.12
+    farea01_052_average = [2.26,0.4023]
     #
     farea01_074 = [
         [
-            2.74,
-            2.54,
-            3.09,
-            2.74,
-            2.96,
-            2.37
+            3.39, 3.23, 3.23, 3.09, 3.09, 3.23
         ],[
-            0
+            0.3252, 0.2851, 0.3029, 0.2717, 0.2673, 0.2383
         ]
     ]
-    farea01_074_average = 2.77
+    farea01_074_average = [3.21, 0.2812]
     #
     farea01_075 = [
         [
-            5.37,
-            4.37,
-            3.68,
-            3.04,
-            4.99,
-            5.82
+            5.82, 5.82, 4.37, 4.37, 5.37, 6.35
         ],[
-            0
+            0.1609, 0.1382, 0.1405, 0.1836, 0.1337, 0.1292
         ]
     ]
-    farea01_075_average = 4.32
+    farea01_075_average = [5.24, 0.1475]
+    #
+    # Fract_area = 0.2
+    #
+    farea02_052 = [
+        [
+            2.26, 2.26, 2.75, 3.01, 2.87, 3.16
+        ],[
+            0.3533, 0.3007, 0.2706, 0.2055, 0.2080, 0.2130
+        ]
+    ]
+    farea02_052_average = [2.67, 0.2580]
+    #
+    farea02_074 = [
+        [
+            3.56, 4.18, 4.74, 5.47, 4.74, 4.74
+        ],[
+            0.1715, 0.1782, 0.1715, 0.1403, 0.1069, 0.1270
+        ]
+    ]
+    farea02_074_average = [4.49, 0.1489]
+    #
+    farea02_075 = [
+        [
+            7.76, 11.65, 7.76, 11.65, 9.98, 13.97
+        ],[
+            0.0725, 0.0567, 0.0385, 0.0431, 0.0567, 0.0635
+        ]
+    ]
+    farea02_075_average = [9.98, 0.0551]
     #
     # Fract_area = 0.3
     #
     farea03_052 = [
         [
-            2.26,
-            2.34,
-            2.34,
-            2.43,
-            2.87,
-            2.63
+            2.87, 3.16, 3.01, 4.21, 3.95, 3.95
         ],[
-            0
+            0.2456, 0.2030, 0.1779, 0.1328, 0.1253, 0.1353
         ]
     ]
-    farea03_052_average = 2.46
+    farea03_052_average = [3.45, 0.1697]
     #
     farea03_074 = [
         [
-            3.56,
-            4.45,
-            3.56,
-            3.23,
-            3.95,
-            3.74
+            5.08, 5.47, 7.90, 7.11, 8.89, 7.90
         ],[
-            0
+            0.0846, 0.1047, 0.1136, 0.0802, 0.0512, 0.0757
         ]
     ]
-    farea03_074_average = 3.71
+    farea03_074_average = [6.77, 0.0848]
     #
     farea03_075 = [
         [
-            13.97,
-            23.29,
-            17.47,
-            23.29,
-            23.29,
-            17.47
+            17.47, 23.29, 34.94, 17.47, 34.94, 13.97
         ],[
-            0
+            0.0227, 0.0340, 0.0091, 0.0136, 0.0249, 0.0340
         ]
     ]
-    farea03_075_average = 19.05
+    farea03_075_average = [20.95, 0.0230]
+    #
+    # Fract_area = 0.4
+    #
+    farea04_052 = [
+        [
+            4.21, 3.72, 4.21, 5.27, 7.02, 4.86
+        ],[
+            0.1729, 0.1504, 0.1078, 0.1002, 0.0802, 0.1002
+        ]
+    ]
+    farea04_052_average = [4.68, 0.1184]
+    #
+    farea04_074 = [
+        [
+            7.90, 7.11, 7.11, 7.90, 17.78, 11.86
+        ],[
+            0.0490, 0.0690, 0.0802, 0.0445, 0.0223, 0.0445
+        ]
+    ]
+    farea04_074_average = [8.89, 0.0515]
+    #
+    farea04_075 = [
+        [
+            34.94, 34.94, -10, 69.87, 69.87, 34.94
+        ],[
+            0.0113, 0.0204, -10, 0.0023, 0.0136, 0.0091
+        ]
+    ]
+    farea04_075_average = [52.38, 0.0094]
     #
     # Fract_area = 0.5
     #
     farea05_052 = [
         [
-            4.21,
-            3.01,
-            3.72,
-            5.27,
-            4.86,
-            4.21
+            4.86, 4.86, 6.32, 5.75, 9.03, 6.32
         ],[
-            0
+            0.1328, 0.0977, 0.0526, 0.0526, 0.0626, 0.0677
         ]
     ]
-    farea05_052_average = 4.08
+    farea05_052_average = [5.92, 0.0775]
     #
     farea05_074 = [
         [
-            7.90,
-            7.90,
-            7.11,
-            6.47,
-            8.89,
-            10.16
+            14.23, 10.16, 10.16, 11.86, 23.71, 17.78
         ],[
-            0
+            0.0356, 0.0423, 0.0490, 0.0312, 0.0089, 0.0290
         ]
     ]
-    farea05_074_average = 7.90
+    farea05_074_average = [13.33, 0.0326]
     #
     farea05_075 = [
         [
-            23.29,
-            23.29,
-            -10,
-            -10,
-            17.47,
-            -10
+            -10, 69.87, -10, -10, 34.94, 69.87
         ],[
-            0
+            -10, 0.0091, -10, -10, 0.0091, 0.0023
         ]
     ]
-    farea05_075_average = 41.91
+    farea05_075_average =  [104.77, 0.0034]
+    #
+    # Fract_area = 0.6
+    #
+    farea06_052 = [
+        [
+            5.75, 7.02, 12.64, 10.54, 10.54, 7.90
+        ],[
+            0.0952, 0.0702, 0.0301, 0.0301, 0.0426, 0.0376
+        ]
+    ]
+    farea06_052_average = [8.43, 0.0509]
+    #
+    farea06_074 = [
+        [
+            23.71, 17.78, 14.28, 17.78, -10, 71.14
+        ],[
+            0.0200, 0.0267, 0.0334, 0.0134, -10, 0.0156
+        ]
+    ]
+    farea06_074_average = [25.10, 0.0182]
+    #
+    farea06_075 = [
+        [
+            -10, 69.87, -10, -10, -10, -10
+        ],[
+            -10, 0.0045, -10, -10, -10, -10
+        ]
+    ]
+    farea06_075_average = [419.08, 0.0008]
     #
     # Plot farea
     #
@@ -830,112 +932,227 @@ if plot_LOSevents == 'y':
         ax[0][0].plot(
             nangle,
             farea01_052[0][nangle],
-            'go',markersize=6
+            color=farea_colours[0],
+            marker=farea_markers[0],
+            markersize=6
+        )
+        # Plot farea0.2
+        ax[0][0].plot(
+            nangle,
+            farea02_052[0][nangle],
+            color=farea_colours[1],
+            marker=farea_markers[1],
+            markersize=6
         )
         # farea0.3
         ax[0][0].plot(
             nangle,
             farea03_052[0][nangle],
-            'bs',markersize=6
+            color=farea_colours[2],
+            marker=farea_markers[2],
+            markersize=6
+        )
+        # farea0.4
+        ax[0][0].plot(
+            nangle,
+            farea04_052[0][nangle],
+            color=farea_colours[3],
+            marker=farea_markers[3],
+            markersize=6
         )
         # farea0.5
         ax[0][0].plot(
             nangle,
             farea05_052[0][nangle],
-            'rd',markersize=6
+            color=farea_colours[4],
+            marker=farea_markers[4],
+            markersize=6
+        )
+        # farea0.6
+        ax[0][0].plot(
+            nangle,
+            farea06_052[0][nangle],
+            color=farea_colours[5],
+            marker=farea_markers[5],
+            markersize=6
         )
         # Plot 074
         # Plot farea0.1
         ax[0][1].plot(
             nangle,
             farea01_074[0][nangle],
-            'go',markersize=6
+            color=farea_colours[0],
+            marker=farea_markers[0],
+            markersize=6
+        )
+        # Plot farea0.2
+        ax[0][1].plot(
+            nangle,
+            farea02_074[0][nangle],
+            color=farea_colours[1],
+            marker=farea_markers[1],
+            markersize=6
         )
         # farea0.3
         ax[0][1].plot(
             nangle,
             farea03_074[0][nangle],
-            'bs',markersize=6
+            color=farea_colours[2],
+            marker=farea_markers[2],
+            markersize=6
+        )
+        # farea0.4
+        ax[0][1].plot(
+            nangle,
+            farea04_074[0][nangle],
+            color=farea_colours[3],
+            marker=farea_markers[3],
+            markersize=6
         )
         # farea0.5
         ax[0][1].plot(
             nangle,
             farea05_074[0][nangle],
-            'rd',markersize=6
+            color=farea_colours[4],
+            marker=farea_markers[4],
+            markersize=6
+        )
+        # farea0.6
+        ax[0][1].plot(
+            nangle,
+            farea06_074[0][nangle],
+            color=farea_colours[5],
+            marker=farea_markers[5],
+            markersize=6
         )
         # Plot 075
         # Plot farea0.1
         ax[0][2].plot(
             nangle,
             farea01_075[0][nangle],
-            'go',markersize=6
+            color=farea_colours[0],
+            marker=farea_markers[0],
+            markersize=6
+        )
+        # Plot farea0.2
+        ax[0][2].plot(
+            nangle,
+            farea02_075[0][nangle],
+            color=farea_colours[1],
+            marker=farea_markers[1],
+            markersize=6
         )
         # farea0.3
         ax[0][2].plot(
             nangle,
             farea03_075[0][nangle],
-            'bs',markersize=6
+            color=farea_colours[2],
+            marker=farea_markers[2],
+            markersize=6
+        )
+        # farea0.4
+        ax[0][2].plot(
+            nangle,
+            farea04_075[0][nangle],
+            color=farea_colours[3],
+            marker=farea_markers[3],
+            markersize=6
         )
         # farea0.5
         ax[0][2].plot(
             nangle,
             farea05_075[0][nangle],
-            'rd',markersize=6
+            color=farea_colours[4],
+            marker=farea_markers[4],
+            markersize=6
+        )
+        # farea0.6
+        ax[0][2].plot(
+            nangle,
+            farea06_075[0][nangle],
+            color=farea_colours[5],
+            marker=farea_markers[5],
+            markersize=6
         )
     #
     # And plot averages
     # For 052
     #
     ax[0][0].plot(
-        [-1,6],[farea01_052_average,farea01_052_average],'g--'
+        [-1,6],[farea01_052_average[0],farea01_052_average[0]],'--',color=farea_colours[0]
     )
     ax[0][0].plot(
-        [-1,6],[farea03_052_average,farea03_052_average],'b--'
+        [-1,6],[farea02_052_average[0],farea02_052_average[0]],'--',color=farea_colours[1]
     )
     ax[0][0].plot(
-        [-1,6],[farea05_052_average,farea05_052_average],'r--'
+        [-1,6],[farea03_052_average[0],farea03_052_average[0]],'--',color=farea_colours[2]
+    )
+    ax[0][0].plot(
+        [-1,6],[farea04_052_average[0],farea04_052_average[0]],'--',color=farea_colours[3]
+    )
+    ax[0][0].plot(
+        [-1,6],[farea05_052_average[0],farea05_052_average[0]],'--',color=farea_colours[4]
+    )
+    ax[0][0].plot(
+        [-1,6],[farea06_052_average[0],farea06_052_average[0]],'--',color=farea_colours[5]
     )
     #
     # For 074
     #
     ax[0][1].plot(
-        [-1,6],[farea01_074_average,farea01_074_average],'g--'
+        [-1,6],[farea01_074_average[0],farea01_074_average[0]],'--',color=farea_colours[0]
     )
     ax[0][1].plot(
-        [-1,6],[farea03_074_average,farea03_074_average],'b--'
+        [-1,6],[farea02_074_average[0],farea02_074_average[0]],'--',color=farea_colours[1]
     )
     ax[0][1].plot(
-        [-1,6],[farea05_074_average,farea05_074_average],'r--'
+        [-1,6],[farea03_074_average[0],farea03_074_average[0]],'--',color=farea_colours[2]
+    )
+    ax[0][1].plot(
+        [-1,6],[farea04_074_average[0],farea04_074_average[0]],'--',color=farea_colours[3]
+    )
+    ax[0][1].plot(
+        [-1,6],[farea05_074_average[0],farea05_074_average[0]],'--',color=farea_colours[4]
+    )
+    ax[0][1].plot(
+        [-1,6],[farea06_074_average[0],farea06_074_average[0]],'--',color=farea_colours[5]
     )
     #
     # For 075
     #
     ax[0][2].plot(
-        [-1,6],[farea01_075_average,farea01_075_average],'g--'
+        [-1,6],[farea01_075_average[0],farea01_075_average[0]],'--',color=farea_colours[0]
     )
     ax[0][2].plot(
-        [-1,6],[farea03_075_average,farea03_075_average],'b--'
+        [-1,6],[farea02_075_average[0],farea02_075_average[0]],'--',color=farea_colours[1]
     )
     ax[0][2].plot(
-        [-1,6],[farea05_075_average,farea05_075_average],'r--'
+        [-1,6],[farea03_075_average[0],farea03_075_average[0]],'--',color=farea_colours[2]
     )
-    # Also add upper limits for 075, angles 2,3,5
     ax[0][2].plot(
-        [2,3,5],
-        [43,43,43],
-        'r^'
+        [-1,6],[farea04_075_average[0],farea04_075_average[0]],'--',color=farea_colours[3]
     )
-    #
+    ax[0][2].plot(
+        [-1,6],[farea05_075_average[0],farea05_075_average[0]],'--',color=farea_colours[4]
+    )
+    ax[0][2].plot(
+        [-1,6],[farea06_075_average[0],farea06_075_average[0]],'--',color=farea_colours[5]
+    )    #
     # List the labels so that theres 1 per model.
     #
     labelpanel = 2
-    ax[0][labelpanel].plot(-1,-1,'go',markersize=6,label='0.1')
-    ax[0][labelpanel].plot(-1,-1,'bs',markersize=6,label='0.3')
-    ax[0][labelpanel].plot(-1,-1,'rd',markersize=6,label='0.5')
-    ax[0][labelpanel].legend(
+    for nn in range(len(farea_label)):
+        ax[1][labelpanel].plot(
+            -1,-1,
+            color=farea_colours[nn],
+            marker=farea_markers[nn],
+            markersize=6,
+            label=farea_label[nn]
+        )
+    ax[1][labelpanel].legend(
         #loc='upper left',
         title='Cloud area limit',
-        fontsize=14
+        fontsize=12
     )
     #
     # Modify xticklabels and title
@@ -974,11 +1191,6 @@ if plot_numbclouds == 'y':
         Nangles,Nmodels,
         figsize=(13,14)
     )
-    models = [
-        'st28gm06n052_timedep',
-        'st28gm06n074',
-        'st28gm06n075',
-    ]
     Rstar = 1.65
     Rin = 2*Rstar
     Rout = 6*Rstar
@@ -1018,7 +1230,7 @@ if plot_numbclouds == 'y':
                 ax[nangle,nmodel].tick_params(axis='both', which='major', labelsize=15)
                 ax[nangle,nmodel].tick_params(axis='both', which='major', labelsize=15)
                 ax[nangle,0].set_ylabel(
-                    f'N blobs at {angle}',
+                    f'N clouds at {angle}',
                     fontsize=18
                 )
         #
@@ -1038,9 +1250,87 @@ if plot_numbclouds == 'y':
     # 4 blobs is max
 
     fig.tight_layout()
-    fig.savefig('figs/nblobs_allangles.pdf')
+    fig.savefig(
+        'figs/nblobs_allangles.pdf',
+        facecolor='white',
+        dpi=300
+    )
     #plt.show()
 
+
+# Plot histograms over cloud
+if plot_cloudareas == 'y':
+
+    # Set various settings
+    fig,ax = plt.subplots(
+        1,Nmodels,
+        figsize=(13,4)
+    )
+    Rstar = 1.65
+    Rin = 2*Rstar
+    Rout = 6*Rstar
+    max_flux_contrast = 0.01
+    fract_starareas = [0.1,0.3,0.5]
+    fract_stararea_colours = [
+        'r','g','b'
+    ]
+    # Loop over models
+    for nmodel,model in enumerate(models):
+
+        # Declare/reset blob area list
+        blob_areas_all = []
+
+        # Load cloud areas
+        angles,nsnaps,nblobs,blob_areas = atf.load_imageblob_files(
+            filepath = f'../r3dresults/{model}_nospikes/',
+            max_flux_contrast = 0.01,
+            load_blobareas = 'y'
+        )
+        # Loop through all blob areas and put them in one huge 1D-list
+        for blob_area in blob_areas:
+            for blob in blob_area:
+                blob_areas_all.append(blob)
+
+
+        binareas, binranges, patches = ax[nmodel].hist(
+            blob_areas_all,
+            bins=int(np.round(np.max(blob_areas_all)*5)),
+            histtype='step',
+            align='mid',
+            color='k',
+            bottom=0.001,
+            log=True
+        )
+
+        # Plot fractional area limit
+        for nfract_stararea,fract_stararea in enumerate(fract_starareas):
+            ax[nmodel].plot(
+                [fract_stararea * np.pi*Rstar**2 , fract_stararea * np.pi*Rstar**2],
+                [0.001,np.max(binareas)+10000],
+                color=fract_stararea_colours[nfract_stararea],
+                label = f'{fract_stararea}'
+            )
+        # Set settings
+        ax[nmodel].tick_params(axis='both', which='major', labelsize=15)
+        ax[nmodel].tick_params(axis='both', which='major', labelsize=15)
+        ax[nmodel].set_ylim(0.5,np.max(binareas)+2000)
+        ax[nmodel].set_xlim(-0.2,15)
+        ax[nmodel].set_title(models_label[nmodel], fontsize=14)
+    ax[-1].legend(
+        title='Cloud area limit',
+        fontsize=14
+    )
+    ax[1].set_xlabel(r'Cloud area (au$^2$)', fontsize=18)
+    ax[0].set_ylabel('Number of clouds', fontsize=18)
+
+
+
+    fig.tight_layout()
+    fig.savefig(
+        'figs/blobareas_histogram.pdf',
+        facecolor='white',
+        dpi=300
+    )
 
 
 
@@ -1270,7 +1560,7 @@ if plot_fluxvariations == 'y':
         facecolor='white',
         dpi=300
     )
-    fig.show()
+    #fig.show()
 
 # Plot comparisons with data as found at 
 # suh2021, smiths2001, aavso.rg
@@ -1601,7 +1891,11 @@ if plotvr_radiusplot == 'y':
     ax[0].set_ylabel(r'Radius ($R_\star$)', fontsize=18)
     # Save figure
     fig.tight_layout()
-    fig.savefig(f"figs/{models[0].split('_')[0]}_sourceradius_{wavelength}um.pdf", dpi=300, facecolor="white")
+    fig.savefig(
+        f"figs/{models[0].split('_')[0]}_sourceradius_{wavelength}um.pdf", 
+        dpi=300, 
+        facecolor="white"
+    )
 
 # Plot special data compare for VR prop
 
@@ -1751,6 +2045,6 @@ if plotvr_datacompare == 'y':
         facecolor='white',
         dpi=300
     )
-    fig.show()
+    #fig.show()
 
 
