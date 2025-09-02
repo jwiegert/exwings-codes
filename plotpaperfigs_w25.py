@@ -68,24 +68,13 @@ models_label = [
 Nmodels = len(models)
 
 # Plot-list
-plot_dustmass = 'n'
-plot_075grainsize = 'n'
-plot_052exampleimages = 'n'
-
-plot_numbclouds = 'n'           # Plotta antal moln per vinkel per modell
+plot_dustmass = 'n'             # Plots dust masses vs time of all 3 models
+plot_075grainsize = 'n'         # Plots grain size vs time of 075
+plot_052exampleimages = 'n'     # Plots a number of example images of 052
+plot_numbclouds = 'n'           # Plots number of clouds per time for each angle&model
 plot_datacompare = 'n'          # Plots colour comparisons for each model with data
-
-
-
-# ONGOING
-# TODO
-
-plot_cloudareas = 'n'           # Plotta histogram över antal moln för varje modell
-
-plot_LOSevents = 'y'            # Add plots with "probabilty of detection"
-                                # Måste fixa alla datatabeller först igen
-
-
+plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities
+plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
 
 # For vr-prop
 plotvr_exampleimages = 'n'
@@ -724,6 +713,15 @@ if plot_LOSevents == 'y':
     Model-B:074    0.0200   0.0267   0.0334    0.0134     N/A       0.0156
     Model-C:075    N/A      0.0045   N/A       N/A        N/A       N/A
 
+    LOWER LIMITS (PERIODS)
+    052:
+        NONE
+    074:
+        0.6: 180-0, 270-0
+    075:
+        0.4: 90-90
+        0.5: 0-0, 90-90, 90-270
+        0.6: 0-0, 90-90, 90-270, 180-0, 270-0
     """;
 
     fig,ax = plt.subplots(
@@ -736,8 +734,8 @@ if plot_LOSevents == 'y':
             ax[nrow][nmodel].set_xlim([-0.5,5.5])
             ax[1][nmodel].set_ylim([0,1])
     ax[0][0].set_ylim([0,14])
-    ax[0][1].set_ylim([0,25])
-    ax[0][2].set_ylim([0,75])
+    ax[0][1].set_ylim([0,30])
+    ax[0][2].set_ylim([0,77])
     farea_colours = ['g','c','b','m','r','darkorange']
     farea_markers = ['o','p','s','h','d','8']
     farea_label = ['0.1','0.2','0.3','0.4','0.5','0.6']
@@ -1137,7 +1135,289 @@ if plot_LOSevents == 'y':
     )
     ax[0][2].plot(
         [-1,6],[farea06_075_average[0],farea06_075_average[0]],'--',color=farea_colours[5]
-    )    #
+    )
+    #
+    # PLOT SECOND ROW: cloud-portions
+    #
+    for nangle in range(Nangles):
+        #
+        # Cloud portions 052
+        # Plot farea0.1
+        ax[1][0].plot(
+            nangle,
+            farea01_052[1][nangle],
+            color=farea_colours[0],
+            marker=farea_markers[0],
+            markersize=6
+        )
+        # Plot farea0.2
+        ax[1][0].plot(
+            nangle,
+            farea02_052[1][nangle],
+            color=farea_colours[1],
+            marker=farea_markers[1],
+            markersize=6
+        )
+        # farea0.3
+        ax[1][0].plot(
+            nangle,
+            farea03_052[1][nangle],
+            color=farea_colours[2],
+            marker=farea_markers[2],
+            markersize=6
+        )
+        # farea0.4
+        ax[1][0].plot(
+            nangle,
+            farea04_052[1][nangle],
+            color=farea_colours[3],
+            marker=farea_markers[3],
+            markersize=6
+        )
+        # farea0.5
+        ax[1][0].plot(
+            nangle,
+            farea05_052[1][nangle],
+            color=farea_colours[4],
+            marker=farea_markers[4],
+            markersize=6
+        )
+        # farea0.6
+        ax[1][0].plot(
+            nangle,
+            farea06_052[1][nangle],
+            color=farea_colours[5],
+            marker=farea_markers[5],
+            markersize=6
+        )
+        #
+        # Cloud portions 074
+        # Plot farea0.1
+        ax[1][1].plot(
+            nangle,
+            farea01_074[1][nangle],
+            color=farea_colours[0],
+            marker=farea_markers[0],
+            markersize=6
+        )
+        # Plot farea0.2
+        ax[1][1].plot(
+            nangle,
+            farea02_074[1][nangle],
+            color=farea_colours[1],
+            marker=farea_markers[1],
+            markersize=6
+        )
+        # farea0.3
+        ax[1][1].plot(
+            nangle,
+            farea03_074[1][nangle],
+            color=farea_colours[2],
+            marker=farea_markers[2],
+            markersize=6
+        )
+        # farea0.4
+        ax[1][1].plot(
+            nangle,
+            farea04_074[1][nangle],
+            color=farea_colours[3],
+            marker=farea_markers[3],
+            markersize=6
+        )
+        # farea0.5
+        ax[1][1].plot(
+            nangle,
+            farea05_074[1][nangle],
+            color=farea_colours[4],
+            marker=farea_markers[4],
+            markersize=6
+        )
+        # farea0.6
+        ax[1][1].plot(
+            nangle,
+            farea06_074[1][nangle],
+            color=farea_colours[5],
+            marker=farea_markers[5],
+            markersize=6
+        )
+        #
+        # Cloud portions 075
+        # Plot farea0.1
+        ax[1][2].plot(
+            nangle,
+            farea01_075[1][nangle],
+            color=farea_colours[0],
+            marker=farea_markers[0],
+            markersize=6
+        )
+        # Plot farea0.2
+        ax[1][2].plot(
+            nangle,
+            farea02_075[1][nangle],
+            color=farea_colours[1],
+            marker=farea_markers[1],
+            markersize=6
+        )
+        # farea0.3
+        ax[1][2].plot(
+            nangle,
+            farea03_075[1][nangle],
+            color=farea_colours[2],
+            marker=farea_markers[2],
+            markersize=6
+        )
+        # farea0.4
+        ax[1][2].plot(
+            nangle,
+            farea04_075[1][nangle],
+            color=farea_colours[3],
+            marker=farea_markers[3],
+            markersize=6
+        )
+        # farea0.5
+        ax[1][2].plot(
+            nangle,
+            farea05_075[1][nangle],
+            color=farea_colours[4],
+            marker=farea_markers[4],
+            markersize=6
+        )
+        # farea0.6
+        ax[1][2].plot(
+            nangle,
+            farea06_075[1][nangle],
+            color=farea_colours[5],
+            marker=farea_markers[5],
+            markersize=6
+        )
+    #
+    # And plot DETECTION PROBABILITY averages
+    # For 052
+    #
+    ax[1][0].plot(
+        [-1,6],[farea01_052_average[1],farea01_052_average[1]],'--',color=farea_colours[0]
+    )
+    ax[1][0].plot(
+        [-1,6],[farea02_052_average[1],farea02_052_average[1]],'--',color=farea_colours[1]
+    )
+    ax[1][0].plot(
+        [-1,6],[farea03_052_average[1],farea03_052_average[1]],'--',color=farea_colours[2]
+    )
+    ax[1][0].plot(
+        [-1,6],[farea04_052_average[1],farea04_052_average[1]],'--',color=farea_colours[3]
+    )
+    ax[1][0].plot(
+        [-1,6],[farea05_052_average[1],farea05_052_average[1]],'--',color=farea_colours[4]
+    )
+    ax[1][0].plot(
+        [-1,6],[farea06_052_average[1],farea06_052_average[1]],'--',color=farea_colours[5]
+    )
+    #
+    # For 074
+    #
+    ax[1][1].plot(
+        [-1,6],[farea01_074_average[1],farea01_074_average[1]],'--',color=farea_colours[0]
+    )
+    ax[1][1].plot(
+        [-1,6],[farea02_074_average[1],farea02_074_average[1]],'--',color=farea_colours[1]
+    )
+    ax[1][1].plot(
+        [-1,6],[farea03_074_average[1],farea03_074_average[1]],'--',color=farea_colours[2]
+    )
+    ax[1][1].plot(
+        [-1,6],[farea04_074_average[1],farea04_074_average[1]],'--',color=farea_colours[3]
+    )
+    ax[1][1].plot(
+        [-1,6],[farea05_074_average[1],farea05_074_average[1]],'--',color=farea_colours[4]
+    )
+    ax[1][1].plot(
+        [-1,6],[farea06_074_average[1],farea06_074_average[1]],'--',color=farea_colours[5]
+    )
+    #
+    # For 075
+    #
+    ax[1][2].plot(
+        [-1,6],[farea01_075_average[1],farea01_075_average[1]],'--',color=farea_colours[0]
+    )
+    ax[1][2].plot(
+        [-1,6],[farea02_075_average[1],farea02_075_average[1]],'--',color=farea_colours[1]
+    )
+    ax[1][2].plot(
+        [-1,6],[farea03_075_average[1],farea03_075_average[1]],'--',color=farea_colours[2]
+    )
+    ax[1][2].plot(
+        [-1,6],[farea04_075_average[1],farea04_075_average[1]],'--',color=farea_colours[3]
+    )
+    ax[1][2].plot(
+        [-1,6],[farea05_075_average[1],farea05_075_average[1]],'--',color=farea_colours[4]
+    )
+    ax[1][2].plot(
+        [-1,6],[farea06_075_average[1],farea06_075_average[1]],'--',color=farea_colours[5]
+    )
+    #
+    # PLOT LOWER LIMITS FOR THOSE WITH NO DETECTIONS
+    #
+    #    074:
+    #    0.6: 180-0 (4), 270-0 (5)
+    ax[0][1].plot(
+        4,
+        29.4,
+        color=farea_colours[5],
+        marker='^',
+        markersize=6
+    )
+    ax[0][1].plot(
+        5,
+        29.4,
+        color=farea_colours[5],
+        marker='^',
+        markersize=6
+    )
+    #
+    #    075:
+    #    0.4: 90-90
+    ax[0][2].plot(
+        2,
+        75,
+        color=farea_colours[3],
+        marker='^',
+        markersize=6
+    )
+    #    0.5: 0-0, (90-90), 90-270
+    ax[0][2].plot(
+        0,
+        75,
+        color=farea_colours[4],
+        marker='^',
+        markersize=6
+    )
+    ax[0][2].plot(
+        3,
+        75,
+        color=farea_colours[4],
+        marker='^',
+        markersize=6
+    )
+    #    0.6: (0-0), (90-90), (90-270), 180-0, 270-0
+    ax[0][2].plot(
+        4,
+        75,
+        color=farea_colours[5],
+        marker='^',
+        markersize=6
+    )
+    ax[0][2].plot(
+        5,
+        75,
+        color=farea_colours[5],
+        marker='^',
+        markersize=6
+    )
+
+
+
+
+    #
     # List the labels so that theres 1 per model.
     #
     labelpanel = 2
@@ -1196,9 +1476,13 @@ if plot_numbclouds == 'y':
     Rout = 6*Rstar
     max_flux_contrast = 0.01
     fract_starareas = [0.1,0.3,0.5]
-    fract_stararea_colours = [
-        'r','g','b'
-    ]
+    fract_stararea_colours = ['r','g','b']
+    #
+    # Too messy with all farea and legend is too large. Doesnt say more to 
+    # have all, might as well use the subset
+    #fract_starareas = [0.1,0.2,0.3,0.4,0.5,0.6]
+    #fract_stararea_colours = ['g','c','b','m','r','darkorange']
+    #
     # Loop over models
     for nmodel,model in enumerate(models):
 
@@ -1270,10 +1554,8 @@ if plot_cloudareas == 'y':
     Rin = 2*Rstar
     Rout = 6*Rstar
     max_flux_contrast = 0.01
-    fract_starareas = [0.1,0.3,0.5]
-    fract_stararea_colours = [
-        'r','g','b'
-    ]
+    fract_starareas = [0.1,0.2,0.3,0.4,0.5,0.6]
+    fract_stararea_colours = ['g','c','b','m','r','darkorange']
     # Loop over models
     for nmodel,model in enumerate(models):
 
