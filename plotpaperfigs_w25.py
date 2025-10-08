@@ -69,7 +69,7 @@ Nmodels = len(models)
 
 # Plot-list
 plot_dustmass = 'n'             # Plots dust masses vs time of all 3 models
-plot_075grainsize = 'n'         # Plots grain size vs time of 075
+plot_075grainsize = 'y'         # Plots grain size vs time of 075
 plot_052exampleimages = 'n'     # Plots a number of example images of 052
 plot_numbclouds = 'n'           # Plots number of clouds per time for each angle&model
 plot_datacompare = 'n'          # Plots colour comparisons for each model with data
@@ -110,6 +110,11 @@ if plot_dustmass == 'y':
     phasetimes075 = np.loadtxt(path075+'snapshot_yr.dat')[:,1]
     dustmass075 = np.loadtxt(path075+'dustmass.dat')[:,1]
     time075 = phasetimes075 - phasetimes075[0]
+
+    # Print average and median dust masses
+    print(f'052\n  mean: {np.mean(dustmass052)} Msol\n  median: {np.median(dustmass052)} Msol\n')
+    print(f'074\n  mean: {np.mean(dustmass074)} Msol\n  median: {np.median(dustmass074)} Msol\n')
+    print(f'075\n  mean: {np.mean(dustmass075)} Msol\n  median: {np.median(dustmass075)} Msol\n')
 
     # Iniatiate figure object
     fig,ax = plt.subplots(
@@ -161,6 +166,7 @@ if plot_075grainsize == 'y':
     # Plot and save figure
     fig,ax = plt.figure(figsize=(6,3)), plt.axes()
     ax.plot(phasetimes075,grainsize075)
+    ax.set_xlim([phasetimes075[0],phasetimes075[-1]])
     ax.set_xlabel('Simulation time (yrs)',fontsize=18)
     ax.set_ylabel(r'Max grain size ($\mu$m)',fontsize=18)
     ax.tick_params(axis='both', which='major', labelsize=15)
@@ -551,9 +557,9 @@ if plot_052exampleimages == 'y':
             image2d = image2d/1e6
             # Set scales for the two wavelengths
             if ncolumn == 0:
-                scale = [1e-2,7]
+                scale = [1e-2,5]
             if ncolumn == 1:
-                scale = [1e-2,1]
+                scale = [1e-2,9e-1]
             # Plot image and save colourbar info
             imbar = ax[ntime,ncolumn].imshow(
                 image2d, 
@@ -563,18 +569,20 @@ if plot_052exampleimages == 'y':
                 vmax=scale[1],
                 cmap=plt.get_cmap('hot')
             )
-            # write time and flux on top of each left column
+            # write time on top of each left column
+            # flux: , {flux*1e-6:.3f} MJy
             if ncolumn == 0:
                 ax[ntime,0].set_title(
-                    f'{snapshots_times[ntime]:.2f} yrs, {flux*1e-6:.3f} MJy',
-                    fontsize = 10
+                    f'{snapshots_times[ntime]:.2f} yrs',
+                    fontsize = 10,
+                    loc='left'
                 )
             if ncolumn == 1:
                 # and only flux on second column
-                ax[ntime,1].set_title(
-                    f'{flux*1e-6:.3f} MJy',
-                    fontsize = 10
-                )
+                #ax[ntime,1].set_title(
+                #    f'{flux*1e-6:.3f} MJy',
+                #    fontsize = 10
+                #)
                 # Remove ylabelticks for second column except bottom
                 ax[ntime,1].axes.yaxis.set_ticklabels([])
             # And xticklabels for all rows except bottom
@@ -586,19 +594,19 @@ if plot_052exampleimages == 'y':
                 ax[ntime,ncolumn].set_ylabel('Offset (au)', fontsize = 14)
             # And colour bar on bottom bar
             if ntime == len(snapshots)-1:
-                divider = make_axes_locatable(ax[ntime,ncolumn])
-                cax = divider.append_axes(
-                    'bottom', 
-                    size='6%', 
-                    pad=0.7,
-                )
+                #divider = make_axes_locatable(ax[ntime,ncolumn])
+                #cax = divider.append_axes(
+                #    'bottom', 
+                #    size='6%', 
+                #    pad=0.7,
+                #)
                 cb0 = plt.colorbar(
                     imbar, 
-                    cax=cax, 
+                    #cax=cax, 
                     orientation = 'horizontal', 
                 )
                 cb0.ax.tick_params(labelsize=12)
-                # Only label on one, TODO move this to middle of plot
+                # Only label on one, TODO move this to middle of plot (manual labour in gimp)
                 if ncolumn == 0:
                     cb0.set_label(
                         label = 'Flux density (MJy at 1pc)', fontsize=12

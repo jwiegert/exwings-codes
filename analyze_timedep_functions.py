@@ -712,11 +712,11 @@ def extract_events(
     timerange = timerange - timerange[0]
 
     # Extract useful statistics
-    data_median = np.mean(eventdata)
+    data_mean = np.mean(eventdata)
     data_max = np.max(eventdata)
 
     # That gives event limits
-    event_limit = data_median + relative_limit*(data_max-data_median)
+    event_limit = data_mean + relative_limit*(data_max-data_mean)
 
     # Extract event statistics, number of and length of events
     event_sum = 0    # Length of all events
@@ -752,7 +752,7 @@ def extract_events(
         )
         ax.plot(
             [timerange[0],timerange[-1]],
-            [data_median,data_median],
+            [data_mean,data_mean],
             'k--'
         )
         ax.plot(
