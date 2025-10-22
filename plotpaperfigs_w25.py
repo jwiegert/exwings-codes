@@ -36,6 +36,15 @@ radian = 206264800 # milliasec
 baselineVLTI = 201.92 # metres
 baselineChandra = 300 # TODO metres
 
+# Set various general numbers
+Rstar = 1.65                            # Stellar radius in AU
+Rin = 2*Rstar                           # Annalus radii
+Rout = 6*Rstar                          # Annalus radii
+annulus_area = np.pi*(Rout-Rin)**2      # Annalus area in AU2
+pix_area = (876562500000.0/AUcm)**2     # Pixel area in AU2 (521**2 & 30**2AU**2 images)
+
+
+
 # Set LOS-angles
 angles = [
     'i000_phi000',
@@ -69,12 +78,15 @@ Nmodels = len(models)
 
 # Plot-list
 plot_dustmass = 'n'             # Plots dust masses vs time of all 3 models
-plot_075grainsize = 'y'         # Plots grain size vs time of 075
+plot_075grainsize = 'n'         # Plots grain size vs time of 075
 plot_052exampleimages = 'n'     # Plots a number of example images of 052
 plot_numbclouds = 'n'           # Plots number of clouds per time for each angle&model
 plot_datacompare = 'n'          # Plots colour comparisons for each model with data
 plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
+plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
+plot_allrandomsample = 'y'      # TODO Plots all 24 random images of all models
+
 
 # For vr-prop
 plotvr_exampleimages = 'n'
@@ -1479,9 +1491,6 @@ if plot_numbclouds == 'y':
         Nangles,Nmodels,
         figsize=(13,14)
     )
-    Rstar = 1.65
-    Rin = 2*Rstar
-    Rout = 6*Rstar
     max_flux_contrast = 0.01
     fract_starareas = [0.1,0.3,0.5]
     fract_stararea_colours = ['r','g','b']
@@ -1622,10 +1631,318 @@ if plot_cloudareas == 'y':
         dpi=300
     )
 
+# Plot "best of" random sample figures
+if plot_bestrandomsample == 'y':
+    # Plot only "best" of the random sample
+    #        052:    128 : 20.122 yrs at i090_phi090 : 2.0  1.0  1.0  0.0  0.0  0.0
+    #        074:    254 : 84.449 yrs at i090_phi270 : 2.0  1.0  1.0  0.0  0.0  0.0
+    #        075:    062 : 54.028 yrs at i090_phi090 : 1.0  1.0  1.0  0.0  0.0  0.0
+    #
+    # Set paths etc
+    imagepaths = [
+        '../r3dresults/st28gm06n052_timedep_nospikes/128/',
+        '../r3dresults/st28gm06n074_nospikes/254/',
+        '../r3dresults/st28gm06n075_nospikes/062/',
+    ]
+    imagenames = [
+        'image_i090_phi090_10um.out',
+        'image_i090_phi270_10um.out',
+        'image_i090_phi090_10um.out',
+    ]
+    imagetimes = [
+        'Model-A: 20.122 yr',
+        'Model-B: 84.449 yr',
+        'Model-C: 54.028 yr',
+    ]
+    # Overwrite labels for shorter version
+    models_label = [
+        'Model-A',
+        'Model-B',
+        'Model-C',
+    ]
+    # Chosen snapshots from random sample
+    nsnapshots = [
+        128,254,62
+    ]
+    # Angles of chosen snapshots
+    nangles = [
+        2,3,2
+    ]
+    # Max number of snapshots for each model
+    models_snapshots = [
+        400,
+        450,
+        442,
+    ]
+    model_colours = [
+        'b','r','g'
+    ]
+    model_symbols = [
+        'd','s','o'
+    ]
+    # Set up image object
+    fig,ax = plt.subplots(
+        1,4,
+        figsize=(13,3.5),
+    )
+    # Loop through the 3 different model selections
+    for nimage in range(3):
+        # Set all parameters
+        model = models[nimage]
+        nangle = nangles[nimage]
+        angle_label = angles_label[nangle]
+        nsnapshot = nsnapshots[nimage]
+        model_snapshot = models_snapshots[nimage]
+        imagepath = imagepaths[nimage]
+        imagename = imagenames[nimage]
+        imagetime = imagetimes[nimage]
+
+        # Create first 3 panels with the chosen images
+        # Load image
+        image2d,image2dlog,flux,axisplot = a3d.load_images(
+            path=imagepath,
+            image=imagename,
+            distance=1
+        )
+        # Change to MJy and scale (same as original example images)
+        # but with sqrt as well
+        image2d = np.sqrt(
+            image2d/1e6
+        )
+        scale = [
+            np.sqrt(1e-2),
+            np.sqrt(9e-1),
+        ]
+        # Plot image and save colourbar info
+        ax[nimage].imshow(
+            image2d, 
+            origin='lower', 
+            extent=axisplot, 
+            vmin=scale[0],
+            vmax=scale[1],
+            cmap=plt.get_cmap('hot')
+        )
+        # Write time for each observation
+        ax[nimage].set_title(
+            f'{imagetime}, {angle_label}',
+            fontsize = 12,
+            loc='left'
+        )
+        # Create final panel with cloud sizes
+        # load cloud sizes
+        temp1,temp2,temp3,blob_areas = atf.load_imageblob_files(
+            filepath=f'../r3dresults/{model}_nospikes/'
+        )
+        # Extract chosen snapshots and angles
+        row_counter = 1
+        angle_counter = 0
+        for blob_area in blob_areas:
+            if angle_counter == nangle and row_counter == nsnapshot:
+                # Print sizes of clouds for each model-selection
+                print(
+                    f'{model} {row_counter:03d} {angles[angle_counter]} : {blob_area}'
+                )
+                # Sort blob areas and plot, largest first
+                blob_area.sort()
+                blob_area = blob_area[::-1]
+                nblobs = len(blob_area)
+                # Save largest number of clouds
+                if nimage == 0:
+                    # Set initial max nblobs
+                    nblobs_max = nblobs
+                if nblobs > nblobs_max:
+                    # Change max nblobs if there are more nblobs in later models
+                    nblobs_max = nblobs
+                # Plot cloud sizes in final panel
+                ax[-1].plot(
+                    list(range(1,nblobs+1)),blob_area,
+                    model_symbols[nimage],
+                    color=model_colours[nimage],
+                    markersize=12,
+                    label=models_label[nimage],
+                )
+            # Update counters for cloud size extraction
+            row_counter += 1
+            if row_counter > model_snapshot:
+                row_counter = 1
+                angle_counter += 1
+
+        # Set general axis settings
+        ax[nimage].tick_params(axis='both', which='major', labelsize=15)
+        ax[nimage].tick_params(axis='both', which='major', labelsize=15)
+
+    # Plot fractional limits, pixel size and largest possible size
+    fract_starareas = [
+        0.1,0.2,0.3,0.4
+    ]
+    for fract_limit in fract_starareas:
+        ax[-1].plot(
+            [0,nblobs_max+1],[fract_limit*np.pi*Rstar**2,fract_limit*np.pi*Rstar**2],
+            'k:'
+        )
+    # Set figure settings
+    ax[0].set_ylabel('Offset (au)', fontsize = 14)
+    ax[1].set_xlabel('Offset (au)', fontsize = 14)
+    ax[-1].set_ylabel(r'Cloud area (au$^2$)', fontsize = 14)
+    ax[-1].set_xlabel('Cloud number', fontsize = 14)
+    ax[-1].legend(
+        loc='upper right',
+        fontsize=12
+    )
+    ax[-1].tick_params(axis='both', which='major', labelsize=15)
+    ax[-1].tick_params(axis='both', which='major', labelsize=15)
+    ax[-1].set_xticks(list(range(1,nblobs_max+1)))
+    ax[-1].set_xlim([0.8,nblobs_max+0.2])
+    ax[-1].set_ylim([-0.2,4])
+    ax[-1].set_box_aspect(1)
+
+    # Save figure
+    fig.tight_layout()
+    fig.savefig(
+        'figs/best_randomsample.pdf',
+        facecolor='white',
+        dpi=300
+    )
+
+
+# Plot 24*3 images for appendix, ie whole random sample
+if plot_allrandomsample == 'y':
+
+    # Set seed and random-generator-object
+    rng = np.random.default_rng(
+        seed=42
+    )
 
 
 
 
+    nsnap_start = 60
+    models_snapshots = [
+        400,
+        450,
+        442,
+    ]
+
+
+    # TODO
+    # fixa nedanför
+
+    # TODO
+    # extrahera
+    #  all_obs_snapshots
+    #  all_obs_angles
+    #
+    # Det är från random-generingeingen
+
+
+    # Loop over models here
+    for nmodel in range(Nmodels):
+        model_snapshot = models_snapshots[nmodel]
+        model = models[nmodel]
+
+
+        # Define snapshots and angles
+        # Observational snapshots
+        obs_snapshots = np.sort(rng.integers(
+            nsnap_start,high=model_snapshot,size=24
+        ))
+        # Randomized obs-angle for each snapshot as well
+        obs_angles = rng.integers(
+            0,high=6,size=24
+        )
+        # Set url settings
+        path = f'../r3dresults/{model}_nospikes/'
+
+        # Load snapshot-times for this model
+        snapshot_file = np.loadtxt(
+            f'{path}snapshot_yr.dat'
+        )
+        # Set up image object
+        fig,ax = plt.subplots(
+            6,4,
+            figsize=(9,14),
+        )
+        # reset snapshot-number-counter
+        snap_counter_lin = 0
+        snap_counterX = 0
+        snap_counterY = 0
+
+        # Loop over observation snapshots and angles
+        for n_obs,n_angle in zip(obs_snapshots,obs_angles):
+
+            # Change to ints
+            n_obs = n_obs.astype(int)
+            n_angle = n_angle.astype(int)
+
+            # Set angle name
+            angle = angles[n_angle]
+
+            # Extract correct time for each panel
+            for snaptime in snapshot_file:
+                if obs_snapshots[snap_counter_lin] == snaptime[0]:
+                    obs_time = snaptime[1]
+
+
+            # Load image
+            image2d,image2dlog,flux,axisplot = a3d.load_images(
+                path=f'{path}{n_obs:03d}/',
+                image=f'image_{angle}_10um.out',
+                distance=1
+            )
+            # Testplot image
+            #
+            # Change to MJy and to square-root stype
+            image2d = np.sqrt(
+                image2d/1e6
+            )
+            # Set scale same as for original example images for the two wavelengths
+            scale = [
+                np.sqrt(1e-2),np.sqrt(9e-1)
+            ]
+            # Plot image and save colourbar info
+            ax[snap_counterY,snap_counterX].imshow(
+                image2d, 
+                origin='lower', 
+                extent=axisplot, 
+                vmin=scale[0],
+                vmax=scale[1],
+                cmap=plt.get_cmap('hot')
+            )
+            # Write time for each observation
+            ax[snap_counterY,snap_counterX].set_title(
+                f'{obs_time:.2f} yrs, {angles_label[n_angle]}',
+                fontsize = 12,
+                loc='left'
+            )
+            # Remove all ticks and tick labels
+            ax[snap_counterY,snap_counterX].set_xticks([])
+            ax[snap_counterY,snap_counterX].set_yticks([])
+            #ax[snap_counterY,snap_counterX].axes.yaxis.set_ticklabels([])
+            #ax[snap_counterY,snap_counterX].axes.xaxis.set_ticklabels([])
+
+            # Update snapshot counters
+            snap_counter_lin += 1
+            snap_counterX += 1
+            if snap_counterX == 4:
+                snap_counterX = 0
+                snap_counterY += 1
+
+
+        # Save figure
+        fig.tight_layout()
+        fig.savefig(
+            f'figs/all_randomsample_{model}.pdf',
+            facecolor='white',
+            dpi=300
+        )
+
+
+
+
+
+
+#####################################################################################
+# OLD DISCARDED FIGS BELOW
 #####################################################################################
 # Plot statistics on F2um och F10um for each model.
 #
