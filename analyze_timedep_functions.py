@@ -467,8 +467,12 @@ def extract_imageblobs(
       Nlargeblobs : the number of blobs with image surface area larger than
                     fract_stararea x star_area and with pixels brighter than
                     max_flux_contrast x stellar flux density
-      np.max(blobareas) : area in AU^2 of the largest dust blob in the image
+      blobareas : Array of each blob area in AU^2
+      blobfluxes : Array of each blob integrated flux density in Jy at 1pc distance
       stellarflux_info : String with info on how stellar flux is estimated
+
+
+      Nlargeblobs, blobareas, blobfluxes, stellarflux_info
     """
     # Set annulus limits
     Rin = 2*Rstar
@@ -554,6 +558,8 @@ def extract_imageblobs(
         # Extract size of each component
         # Array to fill with blob-areas in AU^2
         blobareas = np.zeros(ncomponents)
+        # And summed Jy/pixel flux densities (total flux densities)
+        blobfluxes = np.zeros(ncomponents)
         # And counter of large blobs
         Nlargeblobs = 0
 
@@ -566,12 +572,29 @@ def extract_imageblobs(
             if blobareas[nblob-1] >= FracStarArea:
                 Nlargeblobs += 1
 
+            # Extract total flux density of blob
+            # First copy labeled image
+            image2dlabeled_mod = image2dlabeled.copy()
+            # Then loop through it and remove all pixels not currently part
+            # of current cloud
+            for xpix in range(Npix):
+                for ypix in range(Npix):
+                    if image2dlabeled_mod[ypix,xpix] == nblob:
+                        image2dlabeled_mod[ypix,xpix] = 1
+                    else:
+                        image2dlabeled_mod[ypix,xpix] = 0
+            # Multiply modified labeled image with original image
+            image2d_cloudflux = image2dlabeled_mod * image2d
+            # Save blob fluxes, in Jy/pix (units are Jy/au2 or Jy/asec2 now)
+            # at 1pc distance
+            blobfluxes[nblob-1] = np.sum(image2d_cloudflux)*pixsize_au**2
+
         # Return Number of large blobs and array with area of all blobs
-        return Nlargeblobs, blobareas, stellarflux_info
+        return Nlargeblobs, blobareas, blobfluxes, stellarflux_info
 
     else:
         # If there are no components, return just zeros and warning
-        return 0,np.zeros(1),'WARNING: No components found'
+        return 0,np.zeros(1),np.zeros(1),'WARNING: No components found'
 
 
 
@@ -580,7 +603,8 @@ def load_imageblob_files(
         filepath:str='../r3dresults/st28gm06n052_timedep_nospikes/',
         max_flux_contrast:float=0.01,
         fract_stararea:float=0.1,
-        load_blobareas:str='y'
+        load_blobareas:str='y',
+        load_blobfluxes:str='y'
     ):
     """
     Loads and returns arrays with pre-computed numbers on dusty blobs
@@ -640,9 +664,24 @@ def load_imageblob_files(
         # If not loading all areas, return list with zeros
         blob_areas = [0]
 
+    # Load all blob fluxes (if set to yes)
+    if load_blobfluxes == 'y' or load_blobfluxes == 'Y' or load_blobfluxes == 'yes':
+        # Changes so that each line in list is an array with floats
+        # Each float is the area of each cloud at that specific nsnap and nangle.
+        # Number of snapshots and angles are given above.
+        # imageblobs_blobfluxes_Flim0.01.dat
+        with open(f'{filepath}imageblobs_blobfluxes_Flim{max_flux_contrast}.dat', 'r') as fflux:
+            for flux_line in fflux.readlines():
+                if flux_line[0] != '#':
+                    flux_line = flux_line.split('[')[1][:-2]
+                    flux_line = flux_line.split(', ')
+                    blub_fluxes.append(np.array(flux_line).astype('float'))
+    else:
+        # If not loading all areas, return list with zeros
+        blub_fluxes = [0]
 
     # return all angles, snapshotnumbers, numb of blobs and largest blob areas
-    return angles,nsnaps,nblobs,blob_areas
+    return angles,nsnaps,nblobs,blob_areas,blub_fluxes
 
 
 

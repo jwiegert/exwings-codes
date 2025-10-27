@@ -327,8 +327,6 @@ def load_grid_information(
         return f'ERROR: load_grid_information can not find {gridinfo_path}.'
 
 
-
-
 # Load grid properties
 def load_grid_properties(
         amrpath:str='../amr_grid.inp'
@@ -1015,57 +1013,6 @@ def load_photocentre_file(
 
     return angles,snapshots,coordinatelist
 
-# ------------------------------------------------------------ #
-# Functions to set Plot-settings
-
-# TODO implement or remove these?
-
-def set_figurefonts():
-
-    # Import required packages
-    from matplotlib import rc
-    rc('font',**{'family':'serif','serif':['serif']})
-    rc('text', usetex=True)
-
-    # Set size of ticks and tick fonts, labels and scales.
-    rc('xtick.major',size=8)
-    rc('xtick.minor',size=4)
-    rc('ytick.major',size=8)
-    rc('ytick.minor',size=4)
-
-    plt.xticks(fontsize=18)
-    plt.yticks(fontsize=18)
-
-
-# This function sets standard plot settings TODO: REMOVE THIS?
-def set_ticklabels(
-        xlabel:str,
-        ylabel:str,
-        xscale:str,
-        yscale:str
-    ):
-    """
-    TODO add info
-    """
-
-    # Import required packages
-    from matplotlib import rc
-    rc('font',**{'family':'serif','serif':['serif']})
-    rc('text', usetex=True)
-
-    # Set size of ticks and tick fonts, labels and scales.
-    rc('xtick.major',size=8)
-    rc('xtick.minor',size=4)
-    rc('ytick.major',size=8)
-    rc('ytick.minor',size=4)
-    plt.xticks(fontsize=18)
-    plt.yticks(fontsize=18)
-    plt.xlabel(xlabel,fontsize=18)
-    plt.ylabel(ylabel,fontsize=18)
-    if xscale == "log":
-        plt.xscale('log')
-    if yscale == "log":
-        plt.yscale('log')
 
 # ------------------------------------------------------------ #
 # Plot various details of input and output data of R3D

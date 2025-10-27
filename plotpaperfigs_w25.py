@@ -85,7 +85,7 @@ plot_datacompare = 'n'          # Plots colour comparisons for each model with d
 plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
 plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
-plot_allrandomsample = 'y'      # TODO Plots all 24 random images of all models
+plot_allrandomsample = 'y'      # Plots all 24 random images of all models
 
 
 # For vr-prop
@@ -1650,9 +1650,9 @@ if plot_bestrandomsample == 'y':
         'image_i090_phi090_10um.out',
     ]
     imagetimes = [
-        'Model-A: 20.122 yr',
-        'Model-B: 84.449 yr',
-        'Model-C: 54.028 yr',
+        'Model-A: 20.12 yr',
+        'Model-B: 84.45 yr',
+        'Model-C: 54.03 yr',
     ]
     # Overwrite labels for shorter version
     models_label = [
@@ -1812,29 +1812,12 @@ if plot_allrandomsample == 'y':
     rng = np.random.default_rng(
         seed=42
     )
-
-
-
-
     nsnap_start = 60
     models_snapshots = [
         400,
         450,
         442,
     ]
-
-
-    # TODO
-    # fixa nedanför
-
-    # TODO
-    # extrahera
-    #  all_obs_snapshots
-    #  all_obs_angles
-    #
-    # Det är från random-generingeingen
-
-
     # Loop over models here
     for nmodel in range(Nmodels):
         model_snapshot = models_snapshots[nmodel]
