@@ -633,6 +633,7 @@ def load_imageblob_files(
     nsnaps = []
     nblobs = []
     blob_areas = []
+    blob_fluxes = []
 
     # Load all number of blobs
     with open(f'{filepath}imageblobs_numb_Flim{max_flux_contrast}_Farea{fract_stararea}.dat', 'r') as fnblobs:
@@ -675,13 +676,13 @@ def load_imageblob_files(
                 if flux_line[0] != '#':
                     flux_line = flux_line.split('[')[1][:-2]
                     flux_line = flux_line.split(', ')
-                    blub_fluxes.append(np.array(flux_line).astype('float'))
+                    blob_fluxes.append(np.array(flux_line).astype('float'))
     else:
         # If not loading all areas, return list with zeros
-        blub_fluxes = [0]
+        blob_fluxes = [0]
 
     # return all angles, snapshotnumbers, numb of blobs and largest blob areas
-    return angles,nsnaps,nblobs,blob_areas,blub_fluxes
+    return angles,nsnaps,nblobs,blob_areas,blob_fluxes
 
 
 
