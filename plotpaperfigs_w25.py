@@ -93,6 +93,11 @@ plotvr_exampleimages = 'n'
 plotvr_radiusplot = 'n'
 plotvr_datacompare = 'n'
 
+# For whyAGB5-talk
+# TODO
+
+
+
 # SKIP THESE
 plot_allseds = 'n'              # SKIP
 plot_luminosities = 'n'         # SKIP
@@ -565,7 +570,7 @@ if plot_052exampleimages == 'y':
                 image=imagefilename,
                 distance=1
             )
-            # Change to MJy
+            # Change to MJy/asec2 or au2 at 1pc
             image2d = image2d/1e6
             # Set scales for the two wavelengths
             if ncolumn == 0:
@@ -621,7 +626,7 @@ if plot_052exampleimages == 'y':
                 # Only label on one, TODO move this to middle of plot (manual labour in gimp)
                 if ncolumn == 0:
                     cb0.set_label(
-                        label = 'Flux density (MJy at 1pc)', fontsize=12
+                        label = r'Flux density (MJy au$^{-2}$, at 1pc)', fontsize=12
                     )
 
     # NOTE
@@ -1633,26 +1638,32 @@ if plot_cloudareas == 'y':
 
 # Plot "best of" random sample figures
 if plot_bestrandomsample == 'y':
-    # Plot only "best" of the random sample
-    #        052:    128 : 20.122 yrs at i090_phi090 : 2.0  1.0  1.0  0.0  0.0  0.0
-    #        074:    254 : 84.449 yrs at i090_phi270 : 2.0  1.0  1.0  0.0  0.0  0.0
-    #        075:    062 : 54.028 yrs at i090_phi090 : 1.0  1.0  1.0  0.0  0.0  0.0
+    # ie those with at least 1 cloud >0.1Astar and most clouds of those
+    # 
+    #    052
+    #        297 : 46.898 yrs at i090_phi000 : 3.0   0.0   0.0   0.0   0.0   0.0
+    #        297                 i090_phi000 : [1.18792849 0.74159698 0.01373328 1.08492891 1.60679345 0.81713 0.04806647 0.01029996 0.00343332 0.03089987]
+    #    074
+    #        413 : 109.641 yrs at i090_phi090 : 1.0   0.0   0.0   0.0   0.0   0.0
+    #        413                 i090_phi090 : [0.67636391 0.03089987 1.0299958  0.61799748 0.08583298 0.05493311]
+    #    075
+    #        136 : 65.753 yrs at i090_phi270 : 1.0   0.0   0.0   0.0   0.0   0.0
+    #        136                 i090_phi270 : [0.04806647 1.11582878 0.02059992 0.00343332 0.13733277]
     #
-    # Set paths etc
     imagepaths = [
-        '../r3dresults/st28gm06n052_timedep_nospikes/128/',
-        '../r3dresults/st28gm06n074_nospikes/254/',
-        '../r3dresults/st28gm06n075_nospikes/062/',
+        '../r3dresults/st28gm06n052_timedep_nospikes/297/',
+        '../r3dresults/st28gm06n074_nospikes/413/',
+        '../r3dresults/st28gm06n075_nospikes/136/',
     ]
     imagenames = [
+        'image_i090_phi000_10um.out',
         'image_i090_phi090_10um.out',
         'image_i090_phi270_10um.out',
-        'image_i090_phi090_10um.out',
     ]
     imagetimes = [
-        'Model-A: 20.12 yr',
-        'Model-B: 84.45 yr',
-        'Model-C: 54.03 yr',
+        'Model-A: 46.90 yr',
+        'Model-B: 109.64 yr',
+        'Model-C: 65.75 yr',
     ]
     # Overwrite labels for shorter version
     models_label = [
@@ -1662,11 +1673,11 @@ if plot_bestrandomsample == 'y':
     ]
     # Chosen snapshots from random sample
     nsnapshots = [
-        128,254,62
+        297,413,136
     ]
     # Angles of chosen snapshots
     nangles = [
-        2,3,2
+        1,2,3
     ]
     # Max number of snapshots for each model
     models_snapshots = [
@@ -1680,11 +1691,20 @@ if plot_bestrandomsample == 'y':
     model_symbols = [
         'd','s','o'
     ]
-    # Set up image object
+    # Set up image object and image scale
     fig,ax = plt.subplots(
         1,4,
         figsize=(13,3.5),
     )
+    scale = [
+        np.sqrt(1e-2),
+        np.sqrt(9e-1),
+    ]
+    # And numbers for contour lines in images
+    StarArea = np.pi * Rstar**2
+    max_flux_contrast = 0.01
+    exposure_limit = np.sqrt(240000*1e-6)
+    #
     # Loop through the 3 different model selections
     for nimage in range(3):
         # Set all parameters
@@ -1696,6 +1716,16 @@ if plot_bestrandomsample == 'y':
         imagepath = imagepaths[nimage]
         imagename = imagenames[nimage]
         imagetime = imagetimes[nimage]
+
+        # Load stellar flux to extract stellar flux limits
+        # in MJy and sqrt
+        nodustpath = imagepath.replace('nospikes', 'nodust')
+        temp1,temp2,stellarflux,temp3 = a3d.load_images(
+            path=nodustpath,
+            image=imagename
+        )
+        stellarflux /= StarArea
+        Fstarlimit = np.sqrt(max_flux_contrast * stellarflux * 1e-6)
 
         # Create first 3 panels with the chosen images
         # Load image
@@ -1709,10 +1739,6 @@ if plot_bestrandomsample == 'y':
         image2d = np.sqrt(
             image2d/1e6
         )
-        scale = [
-            np.sqrt(1e-2),
-            np.sqrt(9e-1),
-        ]
         # Plot image and save colourbar info
         ax[nimage].imshow(
             image2d, 
@@ -1722,6 +1748,24 @@ if plot_bestrandomsample == 'y':
             vmax=scale[1],
             cmap=plt.get_cmap('hot')
         )
+        # Exposure limit
+        ax[nimage].contour(
+            image2d, 
+            origin='lower', 
+            extent=axisplot, 
+            levels=[exposure_limit],
+            linewidths=1,
+            colors='cyan'
+        )
+        # Contrast limit line
+        ax[nimage].contour(
+            image2d, 
+            origin='lower', 
+            extent=axisplot, 
+            levels=[Fstarlimit],
+            linewidths=1,
+            colors='lightgrey'
+        )
         # Write time for each observation
         ax[nimage].set_title(
             f'{imagetime}, {angle_label}',
@@ -1730,7 +1774,7 @@ if plot_bestrandomsample == 'y':
         )
         # Create final panel with cloud sizes
         # load cloud sizes
-        temp1,temp2,temp3,blob_areas = atf.load_imageblob_files(
+        temp1,temp2,temp3,blob_areas,temp4 = atf.load_imageblob_files(
             filepath=f'../r3dresults/{model}_nospikes/'
         )
         # Extract chosen snapshots and angles
@@ -1758,7 +1802,7 @@ if plot_bestrandomsample == 'y':
                     list(range(1,nblobs+1)),blob_area,
                     model_symbols[nimage],
                     color=model_colours[nimage],
-                    markersize=12,
+                    markersize=10,
                     label=models_label[nimage],
                 )
             # Update counters for cloud size extraction
@@ -1780,6 +1824,12 @@ if plot_bestrandomsample == 'y':
             [0,nblobs_max+1],[fract_limit*np.pi*Rstar**2,fract_limit*np.pi*Rstar**2],
             'k:'
         )
+    # And a line at zero
+    ax[-1].plot(
+        [0,nblobs_max+1],[0,0],
+        'k--'
+    )
+
     # Set figure settings
     ax[0].set_ylabel('Offset (au)', fontsize = 14)
     ax[1].set_xlabel('Offset (au)', fontsize = 14)
@@ -1793,7 +1843,7 @@ if plot_bestrandomsample == 'y':
     ax[-1].tick_params(axis='both', which='major', labelsize=15)
     ax[-1].set_xticks(list(range(1,nblobs_max+1)))
     ax[-1].set_xlim([0.8,nblobs_max+0.2])
-    ax[-1].set_ylim([-0.2,4])
+    ax[-1].set_ylim([-0.2,2])
     ax[-1].set_box_aspect(1)
 
     # Save figure
@@ -1823,7 +1873,6 @@ if plot_allrandomsample == 'y':
         model_snapshot = models_snapshots[nmodel]
         model = models[nmodel]
 
-
         # Define snapshots and angles
         # Observational snapshots
         obs_snapshots = np.sort(rng.integers(
@@ -1833,6 +1882,21 @@ if plot_allrandomsample == 'y':
         obs_angles = rng.integers(
             0,high=6,size=24
         )
+        # Fix so that no snapshot-angle-combo appears twice
+        # Predefine first step
+        old_combo = [obs_snapshots[0],obs_angles[0]]
+        counter = 0
+        for nsnap,nangle in zip(obs_snapshots,obs_angles):
+            # Compare next snapshot with previous one
+            if counter > 0:
+                if old_combo == [nsnap,nangle]:
+                    # If theres an similarity just add 1... (works with seed=42)
+                    obs_snapshots[counter] += 1
+                # Update previous step
+                old_combo = [nsnap,nangle]
+            # Update step counter
+            counter += 1
+
         # Set url settings
         path = f'../r3dresults/{model}_nospikes/'
 
