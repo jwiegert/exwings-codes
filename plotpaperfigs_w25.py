@@ -85,7 +85,7 @@ plot_datacompare = 'n'          # Plots colour comparisons for each model with d
 plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
 plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
-plot_allrandomsample = 'y'      # Plots all 24 random images of all models
+plot_allrandomsample = 'n'      # Plots all 24 random images of all models
 
 
 # For vr-prop
@@ -94,7 +94,7 @@ plotvr_radiusplot = 'n'
 plotvr_datacompare = 'n'
 
 # For whyAGB5-talk
-# TODO
+plottalk_exampleimages = 'y'    # TODO
 
 
 
@@ -1585,10 +1585,11 @@ if plot_cloudareas == 'y':
         blob_areas_all = []
 
         # Load cloud areas
-        angles,nsnaps,nblobs,blob_areas = atf.load_imageblob_files(
+        angles,nsnaps,nblobs,blob_areas,temp1 = atf.load_imageblob_files(
             filepath = f'../r3dresults/{model}_nospikes/',
             max_flux_contrast = 0.01,
-            load_blobareas = 'y'
+            load_blobareas = 'y',
+            load_blobfluxes='n'
         )
         # Loop through all blob areas and put them in one huge 1D-list
         for blob_area in blob_areas:
@@ -1600,7 +1601,7 @@ if plot_cloudareas == 'y':
             blob_areas_all,
             bins=int(np.round(np.max(blob_areas_all)*5)),
             histtype='step',
-            align='mid',
+            align='left',
             color='k',
             bottom=0.001,
             log=True
@@ -1626,8 +1627,6 @@ if plot_cloudareas == 'y':
     )
     ax[1].set_xlabel(r'Cloud area (au$^2$)', fontsize=18)
     ax[0].set_ylabel('Number of clouds', fontsize=18)
-
-
 
     fig.tight_layout()
     fig.savefig(
@@ -2700,5 +2699,63 @@ if plotvr_datacompare == 'y':
         dpi=300
     )
     #fig.show()
+
+##############################################################################
+#
+# Plot for talks at whyAGB5
+
+if plottalk_exampleimages == 'y':
+    # plot 2x4 images from random sample of images
+    #
+    # 052:
+    # 090 : 14.101 yrs at i090_phi270
+    # 103 : 16.161 yrs at i180_phi000
+    # 128 : 20.122 yrs at i090_phi090
+    # 213 : 33.589 yrs at i090_phi270
+    # 297 : 46.898 yrs at i090_phi000
+    # 310 : 48.958 yrs at i000_phi000
+    # 323 : 51.018 yrs at i180_phi000
+    # 351 : 55.454 yrs at i270_phi000
+    #
+    # 074:
+    # 089 : 58.306 yrs at i000_phi000
+    # 135 : 65.594 yrs at i090_phi000
+    # 201 : 76.051 yrs at i090_phi270
+    # 243 : 82.706 yrs at i180_phi000
+    # 273 : 87.459 yrs at i180_phi000
+    # 349 : 99.501 yrs at i180_phi000
+    # 413 : 109.641 yrs at i090_phi090
+    # 419 : 110.591 yrs at i270_phi000
+    #
+    # 075:
+    # 062 : 54.028 yrs at i090_phi090
+    # 136 : 65.753 yrs at i090_phi270
+    # 235 : 81.438 yrs at i090_phi270
+    # 253 : 84.290 yrs at i090_phi270
+    # 277 : 88.093 yrs at i090_phi270
+    # 358 : 100.927 yrs at i090_phi090
+    # 360 : 101.244 yrs at i270_phi000
+    # 378 : 104.095 yrs at i090_phi090
+
+    # List models
+    # already in models
+
+    # List each models combo of snapshots and angles
+
+    # Create each figure, 2x4 subplotpanels
+
+    # Iniatiate figure object
+    fig,ax = plt.subplots(
+        2,4, 
+        figsize=(8,3.5),
+    )
+
+
+    fig.tight_layout()
+    fig.savefig(
+        'figs/talk_exampleimages_model.pdf',
+        facecolor='white',
+        dpi=300
+    )
 
 
