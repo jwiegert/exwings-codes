@@ -84,7 +84,7 @@ plot_numbclouds = 'n'           # Plots number of clouds per time for each angle
 plot_datacompare = 'n'          # Plots colour comparisons for each model with data
 plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
-plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
+plot_bestrandomsample = 'y'     # Plots three example figures and cloud sizes
 plot_allrandomsample = 'n'      # Plots all 24 random images of all models
 
 
@@ -94,7 +94,7 @@ plotvr_radiusplot = 'n'
 plotvr_datacompare = 'n'
 
 # For whyAGB5-talk
-plottalk_exampleimages = 'y'    # TODO
+plottalk_exampleimages = 'n'    # Plots 3 figs for whyAGB5-talk with some random sample images
 
 
 
@@ -528,11 +528,11 @@ if plot_052fluxdensity == 'y':
 #####################################################################################
 # Plot 6 snapshots at 2 and 10um to showcase what we're looking at
 if plot_052exampleimages == 'y':
-
+    #
     # Set paths
     path = '../r3dresults/st28gm06n052_timedep_nospikes/'
     modelabbreviation = '052'
-
+    #
     # Define wavelenvths
     wavelengths = [
         '02','10'
@@ -542,7 +542,7 @@ if plot_052exampleimages == 'y':
         290, 292, 294, 296, 298
     ]
     snapshots_times = []
-
+    #
     # Extract corresponding snapshot-times
     snapshot_file = np.loadtxt(
         path+'snapshot_yr.dat'
@@ -551,19 +551,19 @@ if plot_052exampleimages == 'y':
         for snapshot in snapshots:
             if snapshot == snaptime[0]:
                 snapshots_times.append(snaptime[1])
-
+    #
     # Create image objects and fill subplots
     fig,ax = plt.subplots(
         len(snapshots),len(wavelengths),
-        figsize=(5, 17)
+        figsize=(4.5, 14)
     )
     # Loop through wavelengths
     for ncolumn,wavelength in enumerate(wavelengths):
         imagefilename = f'image_i000_phi000_{wavelength}um.out'
-
+        #
         # Loop through snapshots
         for ntime,snapshot in enumerate(snapshots):
-
+            #
             # Load image
             image2d,image2dlog,flux,axisplot = a3d.load_images(
                 path=f'{path}{snapshot}/',
@@ -577,6 +577,7 @@ if plot_052exampleimages == 'y':
                 scale = [1e-2,5]
             if ncolumn == 1:
                 scale = [1e-2,9e-1]
+            #
             # Plot image and save colourbar info
             imbar = ax[ntime,ncolumn].imshow(
                 image2d, 
@@ -601,11 +602,14 @@ if plot_052exampleimages == 'y':
                 #    fontsize = 10
                 #)
                 # Remove ylabelticks for second column except bottom
-                ax[ntime,1].axes.yaxis.set_ticklabels([])
+                #ax[ntime,1].axes.yaxis.set_ticklabels([])
+                ax[ntime,1].set_yticks([])
+            #
             # And xticklabels for all rows except bottom
             if ntime < len(snapshots)-1:
-                ax[ntime,ncolumn].axes.xaxis.set_ticklabels([])
-
+                #ax[ntime,ncolumn].axes.xaxis.set_ticklabels([])
+                ax[ntime,ncolumn].set_xticks([])
+            #
             # Offset AU on outer plots
             if ncolumn == 0:
                 ax[ntime,ncolumn].set_ylabel('Offset (au)', fontsize = 14)
@@ -628,17 +632,16 @@ if plot_052exampleimages == 'y':
                     cb0.set_label(
                         label = r'Flux density (MJy au$^{-2}$, at 1pc)', fontsize=12
                     )
-
     # NOTE
     # final layout of image is fixed manually in GIMP
-
+    # Save fig
     fig.tight_layout()
     fig.savefig(
         'figs/052exampleimages.png', 
         facecolor='white',
         dpi=300
     )
-    #fig.show()
+
 
 #
 #####################################################################################
@@ -1765,6 +1768,17 @@ if plot_bestrandomsample == 'y':
             linewidths=1,
             colors='lightgrey'
         )
+        # Circle for the annulus
+        ax[nimage].add_patch(
+            plt.Circle(
+                (0,0), 
+                radius=2*Rstar, color='springgreen', fill=False, linestyle='--')
+        )
+        ax[nimage].add_patch(
+            plt.Circle(
+                (0,0), 
+                radius=6*Rstar, color='springgreen', fill=False, linestyle='--')
+        )
         # Write time for each observation
         ax[nimage].set_title(
             f'{imagetime}, {angle_label}',
@@ -1861,6 +1875,7 @@ if plot_allrandomsample == 'y':
     rng = np.random.default_rng(
         seed=42
     )
+    # Disregard snapshots below this number: 
     nsnap_start = 60
     models_snapshots = [
         400,
@@ -2708,54 +2723,128 @@ if plottalk_exampleimages == 'y':
     # plot 2x4 images from random sample of images
     #
     # 052:
-    # 090 : 14.101 yrs at i090_phi270
-    # 103 : 16.161 yrs at i180_phi000
-    # 128 : 20.122 yrs at i090_phi090
-    # 213 : 33.589 yrs at i090_phi270
-    # 297 : 46.898 yrs at i090_phi000
-    # 310 : 48.958 yrs at i000_phi000
-    # 323 : 51.018 yrs at i180_phi000
-    # 351 : 55.454 yrs at i270_phi000
+    # 090 : 14.101 yrs at i090_phi270  3
+    # 103 : 16.161 yrs at i180_phi000  4
+    # 128 : 20.122 yrs at i090_phi090  2
+    # 207 : 32.639 yrs at i090_phi000  1
+    # 213 : 33.589 yrs at i090_phi270  3
+    # 234 : 36.917 yrs at i000_phi000  0
+    # 297 : 46.898 yrs at i090_phi000  1
+    # 310 : 48.958 yrs at i000_phi000  0
+    # 323 : 51.018 yrs at i180_phi000  4
+    # 351 : 55.454 yrs at i270_phi000  5
     #
     # 074:
-    # 089 : 58.306 yrs at i000_phi000
-    # 135 : 65.594 yrs at i090_phi000
-    # 201 : 76.051 yrs at i090_phi270
-    # 243 : 82.706 yrs at i180_phi000
-    # 273 : 87.459 yrs at i180_phi000
-    # 349 : 99.501 yrs at i180_phi000
-    # 413 : 109.641 yrs at i090_phi090
-    # 419 : 110.591 yrs at i270_phi000
+    # 089 : 58.306 yrs at i000_phi000  0
+    # 135 : 65.594 yrs at i090_phi000  1
+    # 201 : 76.051 yrs at i090_phi270  3
+    # 220 : 79.062 yrs at i090_phi090  2
+    # 243 : 82.706 yrs at i180_phi000  4
+    # 273 : 87.459 yrs at i180_phi000  4
+    # 349 : 99.501 yrs at i180_phi000  4
+    # 356 : 100.610 yrs at i090_phi090 2
+    # 413 : 109.641 yrs at i090_phi090 2
+    # 419 : 110.591 yrs at i270_phi000 5
     #
     # 075:
-    # 062 : 54.028 yrs at i090_phi090
-    # 136 : 65.753 yrs at i090_phi270
-    # 235 : 81.438 yrs at i090_phi270
-    # 253 : 84.290 yrs at i090_phi270
-    # 277 : 88.093 yrs at i090_phi270
-    # 358 : 100.927 yrs at i090_phi090
-    # 360 : 101.244 yrs at i270_phi000
-    # 378 : 104.095 yrs at i090_phi090
-
+    # 062 : 54.028 yrs at i090_phi090  2
+    # 113 : 62.109 yrs at i090_phi090  2
+    # 136 : 65.753 yrs at i090_phi270  3
+    # 235 : 81.438 yrs at i090_phi270  3
+    # 253 : 84.290 yrs at i090_phi270  3
+    # 277 : 88.093 yrs at i090_phi270  3
+    # 313 : 93.797 yrs at i090_phi000  1
+    # 358 : 100.927 yrs at i090_phi090 2
+    # 360 : 101.244 yrs at i270_phi000 5
+    # 378 : 104.095 yrs at i090_phi090 2
+    #
     # List models
     # already in models
-
+    #
     # List each models combo of snapshots and angles
-
-    # Create each figure, 2x4 subplotpanels
-
-    # Iniatiate figure object
-    fig,ax = plt.subplots(
-        2,4, 
-        figsize=(8,3.5),
-    )
-
-
-    fig.tight_layout()
-    fig.savefig(
-        'figs/talk_exampleimages_model.pdf',
-        facecolor='white',
-        dpi=300
-    )
+    snapshots_models = [
+        [90,103,128,207,213,234,297,310,323,351],
+        [89,135,201,220,243,273,349,356,413,419],
+        [62,113,136,235,253,277,313,358,360,378]
+    ]
+    angles_models = [
+        [3,4,2,1,3,0,1,0,4,5],
+        [0,1,3,2,4,4,4,2,2,5],
+        [2,2,3,3,3,3,1,2,5,2]
+    ]
+    snapshottimes_models = [
+        [14.10,16.16,20.12,32.64,33.59,36.92,46.90,48.96,51.02,55.45],
+        [58.31,65.59,76.05,79.06,82.71,87.46,99.50,100.61,109.64,110.59],
+        [54.03,62.11,65.75,81.44,84.29,88.09,93.80,100.93,101.24,104.10]
+    ]
+    # Loop through models
+    for nmodel,model in enumerate(models):
+        #
+        # Iniatiate figure object
+        fig,ax = plt.subplots(
+            2,5, 
+            figsize=(8,4),
+        )
+        # Loop through snapshots and angles
+        snapshots_model = snapshots_models[nmodel]
+        snapshottimes_model = snapshottimes_models[nmodel]
+        angles_model = angles_models[nmodel]
+        counter_x = 0
+        counter_y = 0
+        for snapshot,snapshot_time,nangle in zip(snapshots_model,snapshottimes_model,angles_model):
+            # Set angle
+            angle = angles[nangle]
+            #
+            # Load image
+            image2d,image2dlog,flux,axisplot = a3d.load_images(
+                path=f'../r3dresults/{model}_nospikes/{snapshot:03d}/',
+                image=f'image_{angle}_10um.out',
+                distance=1
+            )
+            # Change to sqrt-scaled MJy/asec2 or au2 at 1pc
+            image2d = np.sqrt(image2d/1e6)
+            # Set vertical scale for the images
+            scale = [
+                np.sqrt(1e-2),
+                np.sqrt(9e-1)
+            ]
+            # Create each figure, 2x4 subplotpanels
+            ax[counter_y,counter_x].imshow(
+                image2d, 
+                origin='lower', 
+                extent=axisplot, 
+                vmin=scale[0],
+                vmax=scale[1],
+                cmap=plt.get_cmap('hot')
+            )
+            # Write time on top left courner
+            ax[counter_y,counter_x].set_title(
+                f'{snapshot_time:.2f} yrs, {angles_label[nangle]}',
+                fontsize = 10,
+                loc='left'
+            )
+            # Remove various tick and label markers to save space
+            if counter_y == 0:
+                ax[counter_y,counter_x].set_xticks([])
+            if counter_x > 0:
+                ax[counter_y,counter_x].set_yticks([])
+            # Add some labels
+            if counter_x == 0:
+                ax[counter_y,counter_x].set_ylabel('Offset (au)', fontsize = 14)
+            #
+            # Update panel number
+            counter_x += 1
+            if counter_x > 4:
+                counter_x = 0
+                counter_y += 1
+        ax[1,2].set_xlabel('Offset (au)', fontsize = 14)
+        #
+        # Save each figure
+        fig.tight_layout()
+        fig.savefig(
+            f'figs/talk_exampleimages_{model}.pdf',
+            facecolor='white',
+            dpi=300
+        )
 
 
