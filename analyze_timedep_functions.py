@@ -585,8 +585,8 @@ def extract_imageblobs(
                         image2dlabeled_mod[ypix,xpix] = 0
             # Multiply modified labeled image with original image
             image2d_cloudflux = image2dlabeled_mod * image2d
-            # Save blob fluxes, in Jy/pix (units are Jy/au2 or Jy/asec2 now)
-            # at 1pc distance
+            # Save blob fluxes, sum all in Jy/pix (units are Jy/au2 or Jy/asec2 
+            # first) at 1pc distance
             blobfluxes[nblob-1] = np.sum(image2d_cloudflux)*pixsize_au**2
 
         # Return Number of large blobs and array with area of all blobs
@@ -668,9 +668,8 @@ def load_imageblob_files(
     # Load all blob fluxes (if set to yes)
     if load_blobfluxes == 'y' or load_blobfluxes == 'Y' or load_blobfluxes == 'yes':
         # Changes so that each line in list is an array with floats
-        # Each float is the area of each cloud at that specific nsnap and nangle.
+        # Each float is the integrated flux of each cloud at that specific nsnap and nangle.
         # Number of snapshots and angles are given above.
-        # imageblobs_blobfluxes_Flim0.01.dat
         with open(f'{filepath}imageblobs_blobfluxes_Flim{max_flux_contrast}.dat', 'r') as fflux:
             for flux_line in fflux.readlines():
                 if flux_line[0] != '#':

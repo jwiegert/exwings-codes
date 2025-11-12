@@ -35,6 +35,7 @@ cubesize = 222757675648155.62/AUcm # Yes, hardcoded to large grid, change if nee
 radian = 206264800 # milliasec
 baselineVLTI = 201.92 # metres
 baselineChandra = 300 # TODO metres
+beamwidthVLTI_10um = 5.1e-3 # asec
 
 # Set various general numbers
 Rstar = 1.65                            # Stellar radius in AU
@@ -74,6 +75,12 @@ models_label = [
     r'Model-B: $\alpha_{\rm stick} = 0.1$',
     r'Model-C: $\alpha_{\rm stick} = 0.01$',
 ]
+model_colours = [
+    'b','r','g'
+]
+model_linestyles = [
+    '-','--','-.'
+]
 Nmodels = len(models)
 
 # Plot-list
@@ -84,8 +91,9 @@ plot_numbclouds = 'n'           # Plots number of clouds per time for each angle
 plot_datacompare = 'n'          # Plots colour comparisons for each model with data
 plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
-plot_bestrandomsample = 'y'     # Plots three example figures and cloud sizes
+plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
 plot_allrandomsample = 'n'      # Plots all 24 random images of all models
+plot_detrate_fluxdensity = 'n'  # Plots cumulative clouds per year with beam-averaged flux density
 
 
 # For vr-prop
@@ -94,6 +102,7 @@ plotvr_radiusplot = 'n'
 plotvr_datacompare = 'n'
 
 # For whyAGB5-talk
+plottalk_datadescript = 'y'
 plottalk_exampleimages = 'n'    # Plots 3 figs for whyAGB5-talk with some random sample images
 
 
@@ -141,27 +150,47 @@ if plot_dustmass == 'y':
     )
     legendlist = models_label
     # Plot all dust masses on top of eachother
-    ax[0].plot(time052,dustmass052,'b', label=legendlist[0])
-    ax[0].plot(time074,dustmass074,'r', label=legendlist[1])
-    ax[0].plot(time075,dustmass075,'g', label=legendlist[2])
-
+    massunit = 1e7
+    ax[0].plot(
+        time052,dustmass052*massunit,
+        color=model_colours[0], 
+        linestyle=model_linestyles[0],
+        label=legendlist[0]
+    )
+    ax[0].plot(
+        time074,dustmass074*massunit,
+        color=model_colours[1], 
+        linestyle=model_linestyles[1],
+        label=legendlist[1]
+    )
+    ax[0].plot(
+        time075,dustmass075*massunit,
+        color=model_colours[2], 
+        linestyle=model_linestyles[2],
+        label=legendlist[2]
+    )
     # And 075 in its own plot
-    ax[1].plot(time075,dustmass075,'g', label=legendlist[2])
-
-    ax[0].set_ylabel(r'Dust mass ($M_\odot $)',fontsize=18)
+    ax[1].plot(
+        time075,dustmass075*massunit,
+        color=model_colours[2], 
+        linestyle=model_linestyles[2],
+        label=legendlist[2]
+    )
+    ax[0].set_ylabel(r'Dust mass ($10^{-7}\,M_\odot$)',fontsize=18)
     ax[1].set_xlabel('Synchronised time (yrs)',fontsize=18)
     ax[0].tick_params(axis='both', which='major', labelsize=15)
     ax[1].tick_params(axis='both', which='major', labelsize=15)
     ax[0].set_xlim([0,np.max([time052[-1],time074[-1],time075[-1]])])
-    ax[0].set_ylim([0,3.5e-7])
+    ax[0].set_ylim([0,3.5])
+    ax[0].set_yticks([0,1,2,3])
     ax[1].set_xlim([0,time075[-1]])
-    ax[1].set_ylim([0,1.6e-8])
+    ax[1].set_ylim([0,0.16])
     ax[0].legend(fontsize=14)
     ax[1].legend(fontsize=14)
-
+    #
     # Save figure
     fig.tight_layout()
-    ax[0].yaxis.set_label_coords(-0.09,0.09) # Moves ylabel to centre of vertical
+    ax[0].yaxis.set_label_coords(-0.088,0.09) # Moves ylabel to centre of vertical
     fig.savefig(
         f'figs/052_074_075_dustmasscompare.pdf', 
         dpi=300, 
@@ -1441,10 +1470,6 @@ if plot_LOSevents == 'y':
         marker='^',
         markersize=6
     )
-
-
-
-
     #
     # List the labels so that theres 1 per model.
     #
@@ -1997,7 +2022,128 @@ if plot_allrandomsample == 'y':
             dpi=300
         )
 
+# TODO
+# Plot detection rate vs flux density of all dust clouds of each of the
+# three models.
+if plot_detrate_fluxdensity == 'y':
+    #
+    # Compute effect beam area in asec2
+    beam_area = np.pi * (0.5*beamwidthVLTI_10um)**2
+    # Set distance in pc
+    distance = 200
+    #
+    # Initiate fig-ax-object
+    fig,ax = plt.figure(figsize=(6,4)), plt.axes()
 
+    # Loop over models
+    for nmodel,model in enumerate(models):
+        #
+        # Extract total included sim-time for each model
+        snapshot_times = np.loadtxt(f'../r3dresults/{model}_nospikes/snapshot_yr.dat')[:,1]
+        tot_modeltime = snapshot_times[-1] - snapshot_times[0]
+        #
+        # Load all cloud sizes and all cloud flux densities at 1pc distance
+        # Fluxes are in Jy/pix2
+        angles,nsnaps,nblobs,blob_areas,blob_fluxes = atf.load_imageblob_files(
+            filepath=f'../r3dresults/{model}_nospikes/',
+            max_flux_contrast=0.01,
+            fract_stararea=0.1,
+            load_blobareas='y',
+            load_blobfluxes='y'
+        )
+        tot_modeltime *= len(angles) # Total time times number of angles
+        #
+        # Loop through all blob areas and put them in one huge 1D-list
+        blob_areas_all = []
+        for blob_area in blob_areas:
+            for blob in blob_area:
+                blob_areas_all.append(blob)
+        #
+        # Rewrite blob fluxes to just a 1D list or array
+        blob_fluxes_all = []
+        for blob_flux in blob_fluxes:
+            for blobf in blob_flux:
+                blob_fluxes_all.append(blobf)
+        #
+        # Check if number of listed cloud areas are the same as listed cloud flux densities
+        if len(blob_areas_all) != len(blob_fluxes_all):
+            print(f' No same number of clouds : {len(blob_areas_all),len(blob_fluxes_all)}')
+        else:
+            # Use both cloud areas and fluxes to compute beam-average fluxes
+            #
+            # Define list to fill with average fluxes
+            blob_beamaveraged_fluxes = []
+            # Define cloud counters
+            smallcloudcounter = 0
+            cloudcounter_all = 0
+            #
+            for blob_area,blob_flux in zip(blob_areas_all,blob_fluxes_all):
+                #
+                # Only work with existing clouds
+                if blob_area > 0:
+                    # Recompute blob area from au2 to asec2
+                    blob_area_asec = blob_area/distance**2
+                    # Update total cloud counter
+                    cloudcounter_all += 1
+                    #                
+                    # Check if blob is larger or smaller than effecive beam area
+                    # and then save new beam averaged flux density at new distance 
+                    # in a new list
+                    #
+                    # If Acloud <= Abeam
+                    #     Acloud / Abeam (effective area of beam is related to FWHM) * integrated-flux-density of cloud
+                    # If Acloud > Abeam
+                    #     Abeam / Acloud * integrated-flux-density of cloud
+                    #
+                    if blob_area_asec < beam_area:
+                        blob_beamaveraged_fluxes.append(
+                            blob_flux * blob_area_asec/beam_area / distance**2
+                        )
+                        # update counter of smaller-than-beam-clouds
+                        smallcloudcounter += 1
+                    else: 
+                        blob_beamaveraged_fluxes.append(
+                            blob_flux * beam_area/blob_area_asec / distance**2
+                        )
+            # Test plot
+            # Create flux range
+            minflux = 0
+            maxflux = 8
+            flux_range = np.linspace(minflux,maxflux,100)
+            cloud_counter = np.zeros(len(flux_range))
+            cloud_counter_normalised = np.zeros(len(flux_range))
+            cloud_counter_peryr = np.zeros(len(flux_range))
+
+            for nstep,flux_step in enumerate(flux_range):
+                # Extract number of clouds with flux at least at flux-steps
+                cloud_counter[nstep] = len(np.where(blob_beamaveraged_fluxes >= flux_step)[0])
+                # Numb clouds per total time
+                cloud_counter_peryr[nstep] = cloud_counter[nstep] / tot_modeltime
+        #
+        # Plot Nclouds per year for each model
+        ax.plot(
+            flux_range,
+            cloud_counter_peryr,
+            color=model_colours[nmodel],
+            linestyle=model_linestyles[nmodel],
+            label=models_label[nmodel]
+        )
+    # Set figure settings
+    ax.set_ylabel('Number clouds per year', fontsize = 14)
+    ax.set_xlabel('Beam-averaged flux density at 200 pc (Jy/beam)', fontsize = 14)
+    ax.legend(
+        fontsize=12
+    )
+    ax.tick_params(axis='both', which='major', labelsize=15)
+    ax.tick_params(axis='both', which='major', labelsize=15)
+    ax.set_xlim(minflux,maxflux)
+    ax.set_ylim([0,6])
+    fig.tight_layout()
+    fig.savefig(
+        f'figs/beamaveragefluxdensity.pdf',
+        facecolor='white',
+        dpi=300
+    )
 
 
 
