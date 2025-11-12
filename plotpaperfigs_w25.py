@@ -102,8 +102,9 @@ plotvr_radiusplot = 'n'
 plotvr_datacompare = 'n'
 
 # For whyAGB5-talk
-plottalk_datadescript = 'y'
+plottalk_datadescript = 'n'
 plottalk_exampleimages = 'n'    # Plots 3 figs for whyAGB5-talk with some random sample images
+plottalk_cloudperiods = 'y'
 
 
 
@@ -137,10 +138,15 @@ if plot_dustmass == 'y':
     dustmass075 = np.loadtxt(path075+'dustmass.dat')[:,1]
     time075 = phasetimes075 - phasetimes075[0]
 
+    # Define relaxation snapshot number
+    relaxsnap = 30
+    snaptime = phasetimes052[1] - phasetimes052[0]
+    relaxtime = relaxsnap * snaptime
+
     # Print average and median dust masses
-    print(f'052\n  mean: {np.mean(dustmass052)} Msol\n  median: {np.median(dustmass052)} Msol\n')
-    print(f'074\n  mean: {np.mean(dustmass074)} Msol\n  median: {np.median(dustmass074)} Msol\n')
-    print(f'075\n  mean: {np.mean(dustmass075)} Msol\n  median: {np.median(dustmass075)} Msol\n')
+    print(f'052\n  mean: {np.mean(dustmass052[relaxsnap:])} Msol\n  median: {np.median(dustmass052[relaxsnap:])} Msol\n')
+    print(f'074\n  mean: {np.mean(dustmass074[relaxsnap:])} Msol\n  median: {np.median(dustmass074[relaxsnap:])} Msol\n')
+    print(f'075\n  mean: {np.mean(dustmass075[relaxsnap:])} Msol\n  median: {np.median(dustmass075[relaxsnap:])} Msol\n')
 
     # Iniatiate figure object
     fig,ax = plt.subplots(
@@ -149,6 +155,23 @@ if plot_dustmass == 'y':
         gridspec_kw={'height_ratios': [2, 1]}
     )
     legendlist = models_label
+    # Add grey area for pre-relaxation time
+    ax[0].add_patch(
+        plt.Rectangle(
+            (0,0),
+            width=4.8,
+            height=4,
+            facecolor='lightgrey'
+        )
+    )
+    ax[1].add_patch(
+        plt.Rectangle(
+            (0,0),
+            width=4.8,
+            height=0.2,
+            facecolor='lightgrey'
+        )
+    )
     # Plot all dust masses on top of eachother
     massunit = 1e7
     ax[0].plot(
@@ -644,12 +667,6 @@ if plot_052exampleimages == 'y':
                 ax[ntime,ncolumn].set_ylabel('Offset (au)', fontsize = 14)
             # And colour bar on bottom bar
             if ntime == len(snapshots)-1:
-                #divider = make_axes_locatable(ax[ntime,ncolumn])
-                #cax = divider.append_axes(
-                #    'bottom', 
-                #    size='6%', 
-                #    pad=0.7,
-                #)
                 cb0 = plt.colorbar(
                     imbar, 
                     #cax=cax, 
@@ -2865,6 +2882,268 @@ if plotvr_datacompare == 'y':
 #
 # Plot for talks at whyAGB5
 
+
+
+# Plot example of 2D slices for whyAGB-talk introslides
+if plottalk_datadescript == 'y':
+    # 2D slices of input data to r3d
+
+    # Set up paths to data to plot
+    modelpath = '/media/joachim/carignan/exwings_archivedata/r3dresults_paper1/st28gm06n052_staranddust_1/'
+    gasdensitypath = f'{modelpath}190/dust_density_onestar_190.inp'
+    gastemperaturepath = f'{modelpath}190/dust_temperature_onestar_190.dat'
+    grainsizespath = f'{modelpath}grain_sizes_190.dat'
+
+    # And paths to grid information
+    gridcoordspath = f'{modelpath}grid_distances.csv'
+    gridsizepath = f'{modelpath}grid_cellsizes.csv'
+    amrpath = f'{modelpath}amr_grid.inp'
+
+    # Load all cellsizes
+    gridsizes = a3d.load_cellsizes(gridsizepath,amrpath)
+
+    # Load coordinates of all cells
+    gridcoords = a3d.load_griddistances(gridcoordspath,amrpath)
+    # gridcoords[:,1] 2] and 3] : x,y, and z distances
+
+    # Load densities
+    gasdensity = a3d.load_dustdensity(
+        path=gasdensitypath
+    )[2]
+    # Load temperature
+    gastemperatures = a3d.load_temperature(
+        path=gastemperaturepath,
+    )[2]
+
+    # Load grain sizes in cm
+    grainsizes = a3d.load_grainsizes(
+        grainsize_path=grainsizespath
+    )[0]
+    
+    # Extract indeces of all close to Z = 0, or actually as close as possible to
+    # base cell centre.
+    #
+    # NOTE: This is harcoded:
+    # From amr_grid, middle plane is within
+    # 0.5*-6187713212448.75 cm
+    # and
+    # 0.5*6187713212448.781 cm
+    # and
+    # N cells along outer edge: 72
+    #
+    # Or rather, the largest cells are in a plane within 0 and 6187713212448.781
+    # Extract cells with centrum between 0 and -0.5*0.618...
+    #
+    # Chose observed axes
+    # One along X-axis, one along Z-axis (eller?)
+    los_axes = [1,3]
+    # Below or above Z=0?
+    basecell = 6187713212448.75
+    #basecell = 6187713212448.781
+
+    # Set some image settings based on grid settings
+    # NOTE: hardcoded
+    mincellsize = np.min(gridsizes)                  # Minimum cell size
+    Nside = 72*16    # Number of finest cells along one side -> number of pixels along image side
+    gridcourner = 222757675648155.62-0.5*mincellsize # Coords of grid courner in cm
+    gridcournerAU = gridcourner/AUcm                 # Same but in AU
+    gridsize = gridcourner*2                         # Length of image and grid size
+
+    # Initiate fig-ax-objects
+    fig, ax = plt.subplots(
+        3,len(los_axes),
+        figsize = (10,12),
+    )
+
+    # Loop through the different LOSes
+    for naxis,los_axis in enumerate(los_axes):
+
+        # Positions of refinement 0 cells (-1/2)
+        NNzeroZ_0 = np.argwhere(
+            (gridcoords[:,los_axis] <= -0.99*(0.5)*basecell) & \
+            (gridcoords[:,los_axis] >= -1.01*(0.5)*basecell)
+        )
+        # Positions of refinement 1 cells (-1/4)
+        NNzeroZ_1 = np.argwhere(
+            (gridcoords[:,los_axis] <= -0.99*(0.5+0.25)*basecell) & \
+            (gridcoords[:,los_axis] >= -1.01*(0.5+0.25)*basecell)
+        )
+        # Positions of refinement 2 cells (-1/4 -1/8)
+        NNzeroZ_2 = np.argwhere(
+            (gridcoords[:,los_axis] <= -0.99*(0.5+0.25+0.125)*basecell) & \
+            (gridcoords[:,los_axis] >= -1.01*(0.5+0.25+0.125)*basecell)
+        )
+        # Positions of refinement 3 cells (-1/4 -1/8 -1/16)
+        NNzeroZ_3 = np.argwhere(
+            (gridcoords[:,los_axis] <= -0.99*(0.5+0.25+0.125+0.0625)*basecell) & \
+            (gridcoords[:,los_axis] >= -1.01*(0.5+0.25+0.125+0.0625)*basecell)
+        )
+        # Positions of refinement 4 cells (-1/4 -1/8 -1/16 -1/32)
+        NNzeroZ_4 = np.argwhere(
+            (gridcoords[:,los_axis] <= -0.99*(0.5+0.25+0.125+0.0625+0.03125)*basecell) & \
+            (gridcoords[:,los_axis] >= -1.01*(0.5+0.25+0.125+0.0625+0.03125)*basecell)
+        )
+        # Merge arrays
+        NNzeroZ = np.concatenate((
+            NNzeroZ_0,
+            NNzeroZ_1,
+            NNzeroZ_2,
+            NNzeroZ_3,
+            NNzeroZ_4,
+        ))
+
+        # Create 2D arrays of X-Y-grid
+        densities2D = np.zeros((Nside,Nside))
+        temperatures2D = np.zeros((Nside,Nside))
+        grainsizes2D = np.zeros((Nside,Nside))
+
+        # Rotate "xy"-coordinates depending on los_axis
+        #        r3d-z =  c5d-x
+        #        r3d-y =  c5d-y
+        #        r3d-x = -c5d-z
+        if los_axis == 3:
+            los_xaxis = 1
+            los_yaxis = 2
+        if los_axis == 2:
+            los_xaxis = 1
+            los_yaxis = 3
+        if los_axis == 1:
+            los_xaxis = 3
+            los_yaxis = 2
+
+        # Save Z=0-densities in 2D-arrays
+        for nn in NNzeroZ:
+            
+            xindex = int(np.round((gridcoords[nn,los_xaxis]+gridcourner) / gridsize * Nside))-1
+            yindex = int(np.round((gridcoords[nn,los_yaxis]+gridcourner) / gridsize * Nside))-1
+
+            # Refinement levels
+            # Radial distances to refinement 1: 0.2475659768178719 - 13.203518763619835 AU
+            # Radial distances to refinement 2: 0.4951319536357438 - 9.902639072714877 AU
+            # Radial distances to refinement 3: 0.7426979304536157 - 6.601759381809917 AU
+            # Radial distances to refinement 4: 0.9902639072714876 - 3.3008796909049587 AU
+            #
+            # Number of pixels for each cell is
+            #
+            # 4th refinement
+            if gridcoords[nn,0] >= 0.9902639072714876*AUcm and gridcoords[nn,0] <= 3.3008796909049587*AUcm:
+                npixels = 1
+            
+            # 3rd refinement
+            if gridcoords[nn,0] > 3.3008796909049587*AUcm and gridcoords[nn,0] <= 6.601759381809917*AUcm:
+                npixels = 2
+            if gridcoords[nn,0] >= 0.7426979304536157*AUcm and gridcoords[nn,0] < 0.9902639072714876*AUcm:
+                npixels = 2
+
+            # 2nd refinement
+            if gridcoords[nn,0] > 6.601759381809917*AUcm and gridcoords[nn,0] <= 9.902639072714877*AUcm:
+                npixels = 4
+            if gridcoords[nn,0] >= 0.4951319536357438*AUcm and gridcoords[nn,0] < 0.7426979304536157*AUcm:
+                npixels = 4
+
+            # 1st refinement
+            if gridcoords[nn,0] > 9.902639072714877*AUcm and gridcoords[nn,0] <= 13.203518763619835*AUcm:
+                npixels = 8
+            if gridcoords[nn,0] >= 0.2475659768178719*AUcm and gridcoords[nn,0] < 0.4951319536357438*AUcm:
+                npixels = 8
+
+            # Base cells
+            if gridcoords[nn,0] < 0.2475659768178719*AUcm or gridcoords[nn,0] > 13.203518763619835*AUcm:
+                npixels = 16
+
+            # Fill cells
+            # Log of densities
+            # temperatures
+            # grain sies in um
+            densities2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = np.log10(gasdensity[nn])
+            temperatures2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = np.log10(gastemperatures[nn])
+            grainsizes2D[xindex-npixels:xindex+npixels,yindex-npixels:yindex+npixels] = grainsizes[nn]*1e4
+
+        # Rotate image by 90 deg and set originparameter
+        densities2D = ndimage.rotate(densities2D, 90)
+        temperatures2D = ndimage.rotate(temperatures2D, 90)
+        grainsizes2D = ndimage.rotate(grainsizes2D, 90)
+        originparam = 'lower'
+
+        # Switch xy-axis on second row
+        if naxis == 1:
+            # Rotate 90 deg again
+            densities2D = ndimage.rotate(densities2D, -90)
+            temperatures2D = ndimage.rotate(temperatures2D, -90)
+            grainsizes2D = ndimage.rotate(grainsizes2D, -90)
+            originparam = 'upper'
+
+
+        # Set new axis ranges based on all the rotations and reversed axis.
+        axisplot  = [
+            -gridcournerAU,
+            gridcournerAU,
+            gridcournerAU,
+            -gridcournerAU
+        ]
+        # Initialise labels and colour bars
+        imbar = []
+        colourbarlabels = [
+            r'$\log ($ Gas density [g\,cm$^{-3}$] $)$',
+            r'$\log ($ Gas temperature [K] $)$',
+            r'Grain size ($\mu$m)'
+        ]
+        # Plot images and save colour bar info
+        imbar.append(ax[0,naxis].imshow(
+            densities2D,
+            origin=originparam, extent=axisplot, 
+            cmap=plt.get_cmap('pink'),
+            vmin=-17,
+            vmax=-6
+        ))
+        imbar.append(ax[1,naxis].imshow(
+            temperatures2D,
+            origin=originparam, extent=axisplot, 
+            cmap=plt.get_cmap('hot'),
+            vmin=2.5,
+            vmax=4.7
+        ))
+        imbar.append(ax[2,naxis].imshow(
+            grainsizes2D,
+            origin=originparam, extent=axisplot, 
+            cmap=plt.get_cmap('bone'),
+        ))
+        for nn in range(3):
+            # Rotate axis to be consistent with freytag2023 (on first row)
+            # and so that second row has postive in correct direction
+            ax[nn,naxis].invert_xaxis()
+            ax[nn,naxis].invert_yaxis()
+            ax[nn,naxis].invert_xaxis()
+            # and change x-lim and ylim to skip emtpy edges
+            ax[nn,naxis].set_xlim(-gridcournerAU+basecell/AUcm,gridcournerAU)
+            ax[nn,naxis].set_ylim(-gridcournerAU+basecell/AUcm,gridcournerAU)
+            # Set ticksettings    
+            ax[nn,naxis].tick_params(axis='both', which='major', labelsize=15)
+    #
+    # Set colour bars, only right column
+    for nn in range(3):
+        cb0 = plt.colorbar(
+            imbar[nn], 
+            location='right',
+            orientation='vertical', 
+        )
+        cb0.set_label(
+            label = colourbarlabels[nn], fontsize=18
+        )
+        cb0.ax.tick_params(labelsize=15)
+    #
+    # Set ylabel texts, only in middle
+    ax[1,0].set_ylabel('Y (au)',fontsize=18)
+    # Set xlabel text and tick params for all
+    ax[-1,0].set_xlabel('X (au)',fontsize=18) # only bottom row
+    ax[-1,1].set_xlabel('Z (au)',fontsize=18) # only bottom row
+    #
+    #Save figure
+    fig.tight_layout()
+    fig.savefig(f'figs/co5bold_2dslices.pdf', dpi=300, facecolor="white")
+
+
+# Plot example images, 3sets for whyAGB-talk
 if plottalk_exampleimages == 'y':
     # plot 2x4 images from random sample of images
     #
@@ -2929,7 +3208,7 @@ if plottalk_exampleimages == 'y':
         # Iniatiate figure object
         fig,ax = plt.subplots(
             2,5, 
-            figsize=(8,4),
+            figsize=(9,4),
         )
         # Loop through snapshots and angles
         snapshots_model = snapshots_models[nmodel]
@@ -2976,14 +3255,14 @@ if plottalk_exampleimages == 'y':
                 ax[counter_y,counter_x].set_yticks([])
             # Add some labels
             if counter_x == 0:
-                ax[counter_y,counter_x].set_ylabel('Offset (au)', fontsize = 14)
+                ax[counter_y,counter_x].set_ylabel('Offset (au)', fontsize = 10)
             #
             # Update panel number
             counter_x += 1
             if counter_x > 4:
                 counter_x = 0
                 counter_y += 1
-        ax[1,2].set_xlabel('Offset (au)', fontsize = 14)
+        #ax[1,2].set_xlabel('Offset (au)', fontsize = 14)
         #
         # Save each figure
         fig.tight_layout()
@@ -2993,4 +3272,110 @@ if plottalk_exampleimages == 'y':
             dpi=300
         )
 
+# Plot periods and detection probability for models for talk only, no LOS-angles
+if plottalk_cloudperiods == 'y':
+    #
+    # Data for plot
+    #
+    fract_areas = [
+        0.1,0.2,0.3,0.4,0.5,0.6
+    ]
+    average_periods = [
+        [
+            2.26,2.67,3.45,4.68,5.92,8.43
+        ],
+        [
+            3.21,4.49,6.77,8.89,13.33,25.1
+        ],
+        [
+            5.24,9.98,20.95,52.38,104.77,419.08
+        ],
+    ]
+    average_detectrates = [
+        [
+            40.23,25.80,16.97,11.84,7.75,5.09
+        ],
+        [
+            28.12,14.89,8.48,5.15,3.26,1.82
+        ],
+        [
+            14.75,5.51,2.30,0.94,0.34,0.08
+        ],
+    ]
+    average_prevalences = [
+        [
+            0.91,0.69,0.58,0.55,0.46,0.43
+        ],
+        [
+            0.90,0.67,0.57,0.46,0.43,0.46
+        ],
+        [
+            0.77,0.55,0.48,0.49,0.36,0.32
+        ],
+    ]
+    # Initiate figures
+    fig,ax = plt.subplots(
+        1,3, 
+        figsize=(9,3),
+    )
+    # Loop over models
+    for nmodel in range(len(models_label)):
+        average_period = average_periods[nmodel]
+        average_detectrate = average_detectrates[nmodel]
+        average_prevalence = average_prevalences[nmodel]
+        #
+        # Plot periods
+        ax[0].plot(
+            fract_areas,average_period,
+            color=model_colours[nmodel],
+            linestyle=model_linestyles[nmodel],
+        )
+        # Plot Detection rates
+        ax[1].plot(
+            fract_areas,average_detectrate,
+            color=model_colours[nmodel],
+            linestyle=model_linestyles[nmodel],
+            label=models_label[nmodel]
+        )
+        # Plot prevalences
+        ax[2].plot(
+            fract_areas,average_prevalence,
+            color=model_colours[nmodel],
+            linestyle=model_linestyles[nmodel],
+        )
 
+
+        # Set xticks for each subplot (same number as models, so reuse this loop)
+        ax[nmodel].set_xticks(fract_areas)
+
+
+
+    # Set plot settings
+
+    ax[1].legend(fontsize=10)
+
+    ax[0].set_ylim([0,60])
+    ax[1].set_ylim([0,50])
+    ax[2].set_ylim([0.2,1])
+    ax[0].set_ylabel('Average period (yrs)', fontsize = 10)
+    ax[1].set_ylabel('Detection rates (per cent)', fontsize = 10)
+    ax[2].set_ylabel('Average prevalence (yrs)', fontsize = 10)
+    ax[1].set_xlabel(r'Fractional cloud size ($A_\star$)', fontsize = 10)
+
+
+
+
+    # Save figures
+    fig.tight_layout()
+    fig.savefig(
+        f'figs/talk_cloudstatistics.pdf',
+        facecolor='white',
+        dpi=300
+    )
+
+
+
+
+#models_label
+#model_colours
+#model_linestyles
