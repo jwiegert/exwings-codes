@@ -89,7 +89,7 @@ plot_075grainsize = 'n'         # Plots grain size vs time of 075
 plot_052exampleimages = 'n'     # Plots a number of example images of 052
 plot_numbclouds = 'n'           # Plots number of clouds per time for each angle&model
 plot_datacompare = 'n'          # Plots colour comparisons for each model with data
-plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities
+plot_LOSevents = 'y'            # Plots angle-dependent cloud-periods and probabilities and overall
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
 plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
 plot_allrandomsample = 'n'      # Plots all 24 random images of all models
@@ -104,7 +104,7 @@ plotvr_datacompare = 'n'
 # For whyAGB5-talk
 plottalk_datadescript = 'n'
 plottalk_exampleimages = 'n'    # Plots 3 figs for whyAGB5-talk with some random sample images
-plottalk_cloudperiods = 'y'
+plottalk_cloudperiods = 'n'
 
 
 
@@ -798,18 +798,106 @@ if plot_LOSevents == 'y':
         0.6: 0-0, 90-90, 90-270, 180-0, 270-0
     """;
 
+    # Set fig-objects
     fig,ax = plt.subplots(
-        2,3,
-        figsize=(13,7)
+        3,3,
+        figsize=(13,10)
     )
-    for nrow in range(2):
+    # PLOT ALL los-AVERAGE NUMBERS
+    #
+    # Data for plot
+    #
+    fract_areas = [
+        0.1,0.2,0.3,0.4,0.5,0.6
+    ]
+    average_periods = [
+        [
+            2.26,2.67,3.45,4.68,5.92,8.43
+        ],
+        [
+            3.21,4.49,6.77,8.89,13.33,25.1
+        ],
+        [
+            5.24,9.98,20.95,52.38,104.77,419.08
+        ],
+    ]
+    average_detectrates = [
+        [
+            0.4023,0.2580,0.1697,0.1184,0.0775,0.0509
+        ],
+        [
+            0.2812,0.1489,0.0848,0.0515,0.0326,0.0182
+        ],
+        [
+            0.1475,0.0551,0.0230,0.0094,0.0034,0.0008
+        ],
+    ]
+    average_prevalences = [
+        [
+            0.91,0.69,0.58,0.55,0.46,0.43
+        ],
+        [
+            0.90,0.67,0.57,0.46,0.43,0.46
+        ],
+        [
+            0.77,0.55,0.48,0.49,0.36,0.32
+        ],
+    ]
+    # Loop over models
+    for nmodel in range(len(models_label)):
+        average_period = average_periods[nmodel]
+        average_detectrate = average_detectrates[nmodel]
+        average_prevalence = average_prevalences[nmodel]
+        #
+        # Plot periods
+        ax[0][0].plot(
+            fract_areas,average_period,
+            color=model_colours[nmodel],
+            linestyle=model_linestyles[nmodel],
+        )
+        # Plot Detection rates
+        ax[0][1].plot(
+            fract_areas,average_detectrate,
+            color=model_colours[nmodel],
+            linestyle=model_linestyles[nmodel],
+            label=models_label[nmodel]
+        )
+        # Plot prevalences
+        ax[0][2].plot(
+            fract_areas,average_prevalence,
+            color=model_colours[nmodel],
+            linestyle=model_linestyles[nmodel],
+        )
+        #
+        # Set plot settings
+        #
+        # Set xticks for each subplot (same number as models, so reuse this loop)
+        ax[0][nmodel].set_xticks(fract_areas)
+        ax[0][nmodel].tick_params(axis='both', which='major', labelsize=15)
+    ax[0][1].legend(fontsize=12)
+    ax[0][1].set_xlabel(r'Cloud area ($A_\star$)', fontsize = 18)
+    ax[0][0].set_ylim([0,60])
+    ax[0][1].set_ylim([0,0.5])
+    ax[0][2].set_ylim([0.2,1])
+    ax[0][0].set_ylabel('Average period (yrs)', fontsize = 18)
+    ax[0][1].set_ylabel('Detection probability', fontsize = 18)
+    ax[0][2].set_ylabel('Average prevalence (yrs)', fontsize = 18)
+
+
+
+
+
+    #
+    # PLOT ALL LOS-DEPENDENT NUMBERS
+    #
+    for nrow in range(1,3):
         for nmodel in range(Nmodels):
             ax[nrow][nmodel].tick_params(axis='both', which='major', labelsize=15)
             ax[nrow][nmodel].set_xlim([-0.5,5.5])
-            ax[1][nmodel].set_ylim([0,1])
-    ax[0][0].set_ylim([0,14])
-    ax[0][1].set_ylim([0,30])
-    ax[0][2].set_ylim([0,77])
+            ax[2][nmodel].set_ylim([0,1])
+    ax[1][0].set_ylim([0,14])
+    ax[1][1].set_ylim([0,30])
+    ax[1][2].set_ylim([0,77])
     farea_colours = ['g','c','b','m','r','darkorange']
     farea_markers = ['o','p','s','h','d','8']
     farea_label = ['0.1','0.2','0.3','0.4','0.5','0.6']
@@ -1001,7 +1089,7 @@ if plot_LOSevents == 'y':
 
         # Plot 052
         # Plot farea0.1
-        ax[0][0].plot(
+        ax[1][0].plot(
             nangle,
             farea01_052[0][nangle],
             color=farea_colours[0],
@@ -1009,7 +1097,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # Plot farea0.2
-        ax[0][0].plot(
+        ax[1][0].plot(
             nangle,
             farea02_052[0][nangle],
             color=farea_colours[1],
@@ -1017,7 +1105,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.3
-        ax[0][0].plot(
+        ax[1][0].plot(
             nangle,
             farea03_052[0][nangle],
             color=farea_colours[2],
@@ -1025,7 +1113,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.4
-        ax[0][0].plot(
+        ax[1][0].plot(
             nangle,
             farea04_052[0][nangle],
             color=farea_colours[3],
@@ -1033,7 +1121,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.5
-        ax[0][0].plot(
+        ax[1][0].plot(
             nangle,
             farea05_052[0][nangle],
             color=farea_colours[4],
@@ -1041,7 +1129,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.6
-        ax[0][0].plot(
+        ax[1][0].plot(
             nangle,
             farea06_052[0][nangle],
             color=farea_colours[5],
@@ -1050,7 +1138,7 @@ if plot_LOSevents == 'y':
         )
         # Plot 074
         # Plot farea0.1
-        ax[0][1].plot(
+        ax[1][1].plot(
             nangle,
             farea01_074[0][nangle],
             color=farea_colours[0],
@@ -1058,7 +1146,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # Plot farea0.2
-        ax[0][1].plot(
+        ax[1][1].plot(
             nangle,
             farea02_074[0][nangle],
             color=farea_colours[1],
@@ -1066,7 +1154,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.3
-        ax[0][1].plot(
+        ax[1][1].plot(
             nangle,
             farea03_074[0][nangle],
             color=farea_colours[2],
@@ -1074,7 +1162,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.4
-        ax[0][1].plot(
+        ax[1][1].plot(
             nangle,
             farea04_074[0][nangle],
             color=farea_colours[3],
@@ -1082,7 +1170,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.5
-        ax[0][1].plot(
+        ax[1][1].plot(
             nangle,
             farea05_074[0][nangle],
             color=farea_colours[4],
@@ -1090,7 +1178,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.6
-        ax[0][1].plot(
+        ax[1][1].plot(
             nangle,
             farea06_074[0][nangle],
             color=farea_colours[5],
@@ -1099,7 +1187,7 @@ if plot_LOSevents == 'y':
         )
         # Plot 075
         # Plot farea0.1
-        ax[0][2].plot(
+        ax[1][2].plot(
             nangle,
             farea01_075[0][nangle],
             color=farea_colours[0],
@@ -1107,7 +1195,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # Plot farea0.2
-        ax[0][2].plot(
+        ax[1][2].plot(
             nangle,
             farea02_075[0][nangle],
             color=farea_colours[1],
@@ -1115,7 +1203,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.3
-        ax[0][2].plot(
+        ax[1][2].plot(
             nangle,
             farea03_075[0][nangle],
             color=farea_colours[2],
@@ -1123,7 +1211,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.4
-        ax[0][2].plot(
+        ax[1][2].plot(
             nangle,
             farea04_075[0][nangle],
             color=farea_colours[3],
@@ -1131,7 +1219,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.5
-        ax[0][2].plot(
+        ax[1][2].plot(
             nangle,
             farea05_075[0][nangle],
             color=farea_colours[4],
@@ -1139,7 +1227,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.6
-        ax[0][2].plot(
+        ax[1][2].plot(
             nangle,
             farea06_075[0][nangle],
             color=farea_colours[5],
@@ -1150,64 +1238,64 @@ if plot_LOSevents == 'y':
     # And plot averages
     # For 052
     #
-    ax[0][0].plot(
+    ax[1][0].plot(
         [-1,6],[farea01_052_average[0],farea01_052_average[0]],'--',color=farea_colours[0]
     )
-    ax[0][0].plot(
+    ax[1][0].plot(
         [-1,6],[farea02_052_average[0],farea02_052_average[0]],'--',color=farea_colours[1]
     )
-    ax[0][0].plot(
+    ax[1][0].plot(
         [-1,6],[farea03_052_average[0],farea03_052_average[0]],'--',color=farea_colours[2]
     )
-    ax[0][0].plot(
+    ax[1][0].plot(
         [-1,6],[farea04_052_average[0],farea04_052_average[0]],'--',color=farea_colours[3]
     )
-    ax[0][0].plot(
+    ax[1][0].plot(
         [-1,6],[farea05_052_average[0],farea05_052_average[0]],'--',color=farea_colours[4]
     )
-    ax[0][0].plot(
+    ax[1][0].plot(
         [-1,6],[farea06_052_average[0],farea06_052_average[0]],'--',color=farea_colours[5]
     )
     #
     # For 074
     #
-    ax[0][1].plot(
+    ax[1][1].plot(
         [-1,6],[farea01_074_average[0],farea01_074_average[0]],'--',color=farea_colours[0]
     )
-    ax[0][1].plot(
+    ax[1][1].plot(
         [-1,6],[farea02_074_average[0],farea02_074_average[0]],'--',color=farea_colours[1]
     )
-    ax[0][1].plot(
+    ax[1][1].plot(
         [-1,6],[farea03_074_average[0],farea03_074_average[0]],'--',color=farea_colours[2]
     )
-    ax[0][1].plot(
+    ax[1][1].plot(
         [-1,6],[farea04_074_average[0],farea04_074_average[0]],'--',color=farea_colours[3]
     )
-    ax[0][1].plot(
+    ax[1][1].plot(
         [-1,6],[farea05_074_average[0],farea05_074_average[0]],'--',color=farea_colours[4]
     )
-    ax[0][1].plot(
+    ax[1][1].plot(
         [-1,6],[farea06_074_average[0],farea06_074_average[0]],'--',color=farea_colours[5]
     )
     #
     # For 075
     #
-    ax[0][2].plot(
+    ax[1][2].plot(
         [-1,6],[farea01_075_average[0],farea01_075_average[0]],'--',color=farea_colours[0]
     )
-    ax[0][2].plot(
+    ax[1][2].plot(
         [-1,6],[farea02_075_average[0],farea02_075_average[0]],'--',color=farea_colours[1]
     )
-    ax[0][2].plot(
+    ax[1][2].plot(
         [-1,6],[farea03_075_average[0],farea03_075_average[0]],'--',color=farea_colours[2]
     )
-    ax[0][2].plot(
+    ax[1][2].plot(
         [-1,6],[farea04_075_average[0],farea04_075_average[0]],'--',color=farea_colours[3]
     )
-    ax[0][2].plot(
+    ax[1][2].plot(
         [-1,6],[farea05_075_average[0],farea05_075_average[0]],'--',color=farea_colours[4]
     )
-    ax[0][2].plot(
+    ax[1][2].plot(
         [-1,6],[farea06_075_average[0],farea06_075_average[0]],'--',color=farea_colours[5]
     )
     #
@@ -1217,7 +1305,7 @@ if plot_LOSevents == 'y':
         #
         # Cloud portions 052
         # Plot farea0.1
-        ax[1][0].plot(
+        ax[2][0].plot(
             nangle,
             farea01_052[1][nangle],
             color=farea_colours[0],
@@ -1225,7 +1313,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # Plot farea0.2
-        ax[1][0].plot(
+        ax[2][0].plot(
             nangle,
             farea02_052[1][nangle],
             color=farea_colours[1],
@@ -1233,7 +1321,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.3
-        ax[1][0].plot(
+        ax[2][0].plot(
             nangle,
             farea03_052[1][nangle],
             color=farea_colours[2],
@@ -1241,7 +1329,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.4
-        ax[1][0].plot(
+        ax[2][0].plot(
             nangle,
             farea04_052[1][nangle],
             color=farea_colours[3],
@@ -1249,7 +1337,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.5
-        ax[1][0].plot(
+        ax[2][0].plot(
             nangle,
             farea05_052[1][nangle],
             color=farea_colours[4],
@@ -1257,7 +1345,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.6
-        ax[1][0].plot(
+        ax[2][0].plot(
             nangle,
             farea06_052[1][nangle],
             color=farea_colours[5],
@@ -1267,7 +1355,7 @@ if plot_LOSevents == 'y':
         #
         # Cloud portions 074
         # Plot farea0.1
-        ax[1][1].plot(
+        ax[2][1].plot(
             nangle,
             farea01_074[1][nangle],
             color=farea_colours[0],
@@ -1275,7 +1363,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # Plot farea0.2
-        ax[1][1].plot(
+        ax[2][1].plot(
             nangle,
             farea02_074[1][nangle],
             color=farea_colours[1],
@@ -1283,7 +1371,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.3
-        ax[1][1].plot(
+        ax[2][1].plot(
             nangle,
             farea03_074[1][nangle],
             color=farea_colours[2],
@@ -1291,7 +1379,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.4
-        ax[1][1].plot(
+        ax[2][1].plot(
             nangle,
             farea04_074[1][nangle],
             color=farea_colours[3],
@@ -1299,7 +1387,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.5
-        ax[1][1].plot(
+        ax[2][1].plot(
             nangle,
             farea05_074[1][nangle],
             color=farea_colours[4],
@@ -1307,7 +1395,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.6
-        ax[1][1].plot(
+        ax[2][1].plot(
             nangle,
             farea06_074[1][nangle],
             color=farea_colours[5],
@@ -1317,7 +1405,7 @@ if plot_LOSevents == 'y':
         #
         # Cloud portions 075
         # Plot farea0.1
-        ax[1][2].plot(
+        ax[2][2].plot(
             nangle,
             farea01_075[1][nangle],
             color=farea_colours[0],
@@ -1325,7 +1413,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # Plot farea0.2
-        ax[1][2].plot(
+        ax[2][2].plot(
             nangle,
             farea02_075[1][nangle],
             color=farea_colours[1],
@@ -1333,7 +1421,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.3
-        ax[1][2].plot(
+        ax[2][2].plot(
             nangle,
             farea03_075[1][nangle],
             color=farea_colours[2],
@@ -1341,7 +1429,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.4
-        ax[1][2].plot(
+        ax[2][2].plot(
             nangle,
             farea04_075[1][nangle],
             color=farea_colours[3],
@@ -1349,7 +1437,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.5
-        ax[1][2].plot(
+        ax[2][2].plot(
             nangle,
             farea05_075[1][nangle],
             color=farea_colours[4],
@@ -1357,7 +1445,7 @@ if plot_LOSevents == 'y':
             markersize=6
         )
         # farea0.6
-        ax[1][2].plot(
+        ax[2][2].plot(
             nangle,
             farea06_075[1][nangle],
             color=farea_colours[5],
@@ -1368,64 +1456,64 @@ if plot_LOSevents == 'y':
     # And plot DETECTION PROBABILITY averages
     # For 052
     #
-    ax[1][0].plot(
+    ax[2][0].plot(
         [-1,6],[farea01_052_average[1],farea01_052_average[1]],'--',color=farea_colours[0]
     )
-    ax[1][0].plot(
+    ax[2][0].plot(
         [-1,6],[farea02_052_average[1],farea02_052_average[1]],'--',color=farea_colours[1]
     )
-    ax[1][0].plot(
+    ax[2][0].plot(
         [-1,6],[farea03_052_average[1],farea03_052_average[1]],'--',color=farea_colours[2]
     )
-    ax[1][0].plot(
+    ax[2][0].plot(
         [-1,6],[farea04_052_average[1],farea04_052_average[1]],'--',color=farea_colours[3]
     )
-    ax[1][0].plot(
+    ax[2][0].plot(
         [-1,6],[farea05_052_average[1],farea05_052_average[1]],'--',color=farea_colours[4]
     )
-    ax[1][0].plot(
+    ax[2][0].plot(
         [-1,6],[farea06_052_average[1],farea06_052_average[1]],'--',color=farea_colours[5]
     )
     #
     # For 074
     #
-    ax[1][1].plot(
+    ax[2][1].plot(
         [-1,6],[farea01_074_average[1],farea01_074_average[1]],'--',color=farea_colours[0]
     )
-    ax[1][1].plot(
+    ax[2][1].plot(
         [-1,6],[farea02_074_average[1],farea02_074_average[1]],'--',color=farea_colours[1]
     )
-    ax[1][1].plot(
+    ax[2][1].plot(
         [-1,6],[farea03_074_average[1],farea03_074_average[1]],'--',color=farea_colours[2]
     )
-    ax[1][1].plot(
+    ax[2][1].plot(
         [-1,6],[farea04_074_average[1],farea04_074_average[1]],'--',color=farea_colours[3]
     )
-    ax[1][1].plot(
+    ax[2][1].plot(
         [-1,6],[farea05_074_average[1],farea05_074_average[1]],'--',color=farea_colours[4]
     )
-    ax[1][1].plot(
+    ax[2][1].plot(
         [-1,6],[farea06_074_average[1],farea06_074_average[1]],'--',color=farea_colours[5]
     )
     #
     # For 075
     #
-    ax[1][2].plot(
+    ax[2][2].plot(
         [-1,6],[farea01_075_average[1],farea01_075_average[1]],'--',color=farea_colours[0]
     )
-    ax[1][2].plot(
+    ax[2][2].plot(
         [-1,6],[farea02_075_average[1],farea02_075_average[1]],'--',color=farea_colours[1]
     )
-    ax[1][2].plot(
+    ax[2][2].plot(
         [-1,6],[farea03_075_average[1],farea03_075_average[1]],'--',color=farea_colours[2]
     )
-    ax[1][2].plot(
+    ax[2][2].plot(
         [-1,6],[farea04_075_average[1],farea04_075_average[1]],'--',color=farea_colours[3]
     )
-    ax[1][2].plot(
+    ax[2][2].plot(
         [-1,6],[farea05_075_average[1],farea05_075_average[1]],'--',color=farea_colours[4]
     )
-    ax[1][2].plot(
+    ax[2][2].plot(
         [-1,6],[farea06_075_average[1],farea06_075_average[1]],'--',color=farea_colours[5]
     )
     #
@@ -1433,14 +1521,14 @@ if plot_LOSevents == 'y':
     #
     #    074:
     #    0.6: 180-0 (4), 270-0 (5)
-    ax[0][1].plot(
+    ax[1][1].plot(
         4,
         29.4,
         color=farea_colours[5],
         marker='^',
         markersize=6
     )
-    ax[0][1].plot(
+    ax[1][1].plot(
         5,
         29.4,
         color=farea_colours[5],
@@ -1450,7 +1538,7 @@ if plot_LOSevents == 'y':
     #
     #    075:
     #    0.4: 90-90
-    ax[0][2].plot(
+    ax[1][2].plot(
         2,
         75,
         color=farea_colours[3],
@@ -1458,14 +1546,14 @@ if plot_LOSevents == 'y':
         markersize=6
     )
     #    0.5: 0-0, (90-90), 90-270
-    ax[0][2].plot(
+    ax[1][2].plot(
         0,
         75,
         color=farea_colours[4],
         marker='^',
         markersize=6
     )
-    ax[0][2].plot(
+    ax[1][2].plot(
         3,
         75,
         color=farea_colours[4],
@@ -1473,14 +1561,14 @@ if plot_LOSevents == 'y':
         markersize=6
     )
     #    0.6: (0-0), (90-90), (90-270), 180-0, 270-0
-    ax[0][2].plot(
+    ax[1][2].plot(
         4,
         75,
         color=farea_colours[5],
         marker='^',
         markersize=6
     )
-    ax[0][2].plot(
+    ax[1][2].plot(
         5,
         75,
         color=farea_colours[5],
@@ -1492,14 +1580,14 @@ if plot_LOSevents == 'y':
     #
     labelpanel = 2
     for nn in range(len(farea_label)):
-        ax[1][labelpanel].plot(
+        ax[2][labelpanel].plot(
             -1,-1,
             color=farea_colours[nn],
             marker=farea_markers[nn],
             markersize=6,
             label=farea_label[nn]
         )
-    ax[1][labelpanel].legend(
+    ax[2][labelpanel].legend(
         #loc='upper left',
         title='Cloud area limit',
         fontsize=12
@@ -1508,7 +1596,7 @@ if plot_LOSevents == 'y':
     # Modify xticklabels and title
     #
     for nmodel in range(Nmodels):
-        for nrow in range(2):
+        for nrow in range(1,3):
             ax[nrow][nmodel].set_xticks([0,1,2,3,4,5]) 
             ax[nrow][nmodel].set_xticklabels(angles_label) 
         ax[0][nmodel].set_title(models_label[nmodel],fontsize=14)
@@ -1517,9 +1605,10 @@ if plot_LOSevents == 'y':
     #
     # Set axislabels
     #
-    ax[0][0].set_ylabel(r'Average period (yrs)', fontsize=18)
-    ax[1][0].set_ylabel(r'Detection probability', fontsize=18)
+    ax[1][0].set_ylabel(r'Average period (yrs)', fontsize=18)
+    ax[2][0].set_ylabel(r'Detection probability', fontsize=18)
     ax[1][1].set_xlabel(r'LOS-angle',fontsize=18)
+    ax[2][1].set_xlabel(r'LOS-angle',fontsize=18)
     #
     # Save figure
     #
@@ -1529,7 +1618,6 @@ if plot_LOSevents == 'y':
         facecolor='white',
         dpi=300
     )
-    #fig.show()
 #
 # 
 # Plot number of clouds per model and LOS angle
@@ -2039,7 +2127,7 @@ if plot_allrandomsample == 'y':
             dpi=300
         )
 
-# TODO
+
 # Plot detection rate vs flux density of all dust clouds of each of the
 # three models.
 if plot_detrate_fluxdensity == 'y':
@@ -3343,28 +3431,19 @@ if plottalk_cloudperiods == 'y':
             color=model_colours[nmodel],
             linestyle=model_linestyles[nmodel],
         )
-
-
         # Set xticks for each subplot (same number as models, so reuse this loop)
         ax[nmodel].set_xticks(fract_areas)
-
-
-
+    #
     # Set plot settings
-
     ax[1].legend(fontsize=10)
-
     ax[0].set_ylim([0,60])
     ax[1].set_ylim([0,50])
     ax[2].set_ylim([0.2,1])
     ax[0].set_ylabel('Average period (yrs)', fontsize = 10)
-    ax[1].set_ylabel('Detection rates (per cent)', fontsize = 10)
+    ax[1].set_ylabel('Detection rate (per cent)', fontsize = 10)
     ax[2].set_ylabel('Average prevalence (yrs)', fontsize = 10)
-    ax[1].set_xlabel(r'Fractional cloud size ($A_\star$)', fontsize = 10)
-
-
-
-
+    ax[1].set_xlabel(r'Cloud area ($A_\star$)', fontsize = 10)
+    #
     # Save figures
     fig.tight_layout()
     fig.savefig(
@@ -3373,9 +3452,3 @@ if plottalk_cloudperiods == 'y':
         dpi=300
     )
 
-
-
-
-#models_label
-#model_colours
-#model_linestyles
