@@ -1929,7 +1929,9 @@ def plot_imageslinlog(
 # Plot a list of images in subplots (vertically)
 def plot_imagesubplots(
         imagelist:list=['../image.out'],
-        distance:float=1
+        distance:float=1,
+        imlin:str='n',
+        block_area:float=0,
     ):
     """
     Plots a list of images from R3d in subplots (max 3 in one row)
@@ -1937,6 +1939,8 @@ def plot_imagesubplots(
     ARGUMENTS
       imagelist: list of paths to .out files
       distance: distance to source in pc
+      block_area: Radius of centre-circle to block (the star)
+                  Set in units of AU.
 
     RETURNS
       gives matplotlib objects: fig and ax, plot with fig.show()
@@ -1982,22 +1986,78 @@ def plot_imagesubplots(
             image=imagefilename,
             distance=distance
         )
-        # Compute and apply gamma function of each image
-        scale = np.max(image2d)-np.min(image2d)
-        gamma = 0.3*np.log(image2d.max())/np.log(image2d.mean())
-        imageplot = ((image2d / scale)**gamma) * scale
-
-        # Plot image at spot nn, set title and axis labels
-        im0 = ax.ravel()[nn].imshow(
-            imageplot, 
-            origin='lower', extent=axisplot, 
-            cmap=plt.get_cmap('hot')
-        )
-        ax.ravel()[nn].set(
-            title=f'i:{incl}, phi:{phi}, {wavelengthum} um, {int(np.round(flux/1e6))} MJy', 
-            xlabel='Offset (au)',
-            ylabel='Offset (au)',
-        )
+        # If applicable, block a centre-area of the image
+        # as defined by input radius
+        if block_area > 0:
+            #
+            # Extract image props
+            num_x = np.shape(image2d)[0]
+            num_y = np.shape(image2d)[1]
+            coords_x = np.linspace(axisplot[0],axisplot[1],num_x)
+            coords_y = np.linspace(axisplot[2],axisplot[3],num_y)
+            #
+            for nx in range(num_x):
+                for ny in range(num_y):
+                    if (coords_x[nx] >= - np.sqrt(block_area**2 - coords_y[ny]**2)) and \
+                       (coords_x[nx] <=   np.sqrt(block_area**2 - coords_y[ny]**2)) and \
+                       (coords_y[ny] >= - np.sqrt(block_area**2 - coords_x[nx]**2)) and \
+                       (coords_y[ny] <=   np.sqrt(block_area**2 - coords_x[nx]**2)):
+                        # Then remove those pixels
+                        image2d[nx,ny] = 0
+                        image2dlog[nx,ny] = -20
+            #
+            # Set if log or lin-plot
+            if imlin == 'y':
+                imageplot = image2d
+                vmin = np.mean(imageplot) *1e-5
+                vmax = np.max(imageplot)  *1e-2
+            else:
+                imageplot = image2dlog
+                vmin = np.mean(imageplot) -5
+                vmax = np.max(imageplot)  -2
+            #
+            # And plot 
+            #
+            im0 = ax.ravel()[nn].imshow(
+                imageplot, 
+                origin='lower', extent=axisplot, 
+                vmin=vmin,
+                vmax=vmax,
+                cmap=plt.get_cmap('hot')
+            )
+            ax.ravel()[nn].set(
+                title=f'i:{incl}, phi:{phi}, {wavelengthum} um, {int(np.round(flux/1e6))} MJy', 
+                xlabel='Offset (au)',
+                ylabel='Offset (au)',
+            )
+        else: 
+            # Compute and apply gamma function of each image if no stellar block on but lin-scale is off
+            if imlin == 'y':
+                imageplot = image2d
+                vmin = np.mean(imageplot) *1e-5
+                vmax = np.max(imageplot)  *1e-1
+                im0 = ax.ravel()[nn].imshow(
+                    imageplot, 
+                    origin='lower', extent=axisplot, 
+                    vmin=vmin,
+                    vmax=vmax,
+                    cmap=plt.get_cmap('hot')
+                )
+            else:
+                scale = np.max(image2d)-np.min(image2d)
+                gamma = 0.3*np.log(image2d.max())/np.log(image2d.mean())
+                imageplot = ((image2d / scale)**gamma) * scale
+                # Plot image at spot nn, set title and axis labels
+                im0 = ax.ravel()[nn].imshow(
+                    imageplot, 
+                    origin='lower', extent=axisplot, 
+                    cmap=plt.get_cmap('hot')
+                )
+            ax.ravel()[nn].set(
+                title=f'i:{incl}, phi:{phi}, {wavelengthum} um, {int(np.round(flux/1e6))} MJy', 
+                xlabel='Offset (au)',
+                ylabel='Offset (au)',
+            )
 
     # Return fig and ax
     return fig, ax

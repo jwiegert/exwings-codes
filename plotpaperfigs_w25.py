@@ -89,7 +89,7 @@ plot_075grainsize = 'n'         # Plots grain size vs time of 075
 plot_052exampleimages = 'n'     # Plots a number of example images of 052
 plot_numbclouds = 'n'           # Plots number of clouds per time for each angle&model
 plot_datacompare = 'n'          # Plots colour comparisons for each model with data
-plot_LOSevents = 'y'            # Plots angle-dependent cloud-periods and probabilities and overall
+plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities and overall
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
 plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
 plot_allrandomsample = 'n'      # Plots all 24 random images of all models
@@ -875,18 +875,13 @@ if plot_LOSevents == 'y':
         ax[0][nmodel].set_xticks(fract_areas)
         ax[0][nmodel].tick_params(axis='both', which='major', labelsize=15)
     ax[0][1].legend(fontsize=12)
-    ax[0][1].set_xlabel(r'Cloud area ($A_\star$)', fontsize = 18)
+    ax[0][1].set_xlabel(r'Cloud area limit ($A_\star$)', fontsize = 18)
     ax[0][0].set_ylim([0,60])
     ax[0][1].set_ylim([0,0.5])
     ax[0][2].set_ylim([0.2,1])
     ax[0][0].set_ylabel('Average period (yrs)', fontsize = 18)
     ax[0][1].set_ylabel('Detection probability', fontsize = 18)
     ax[0][2].set_ylabel('Average prevalence (yrs)', fontsize = 18)
-
-
-
-
-
     #
     # PLOT ALL LOS-DEPENDENT NUMBERS
     #
@@ -2233,6 +2228,9 @@ if plot_detrate_fluxdensity == 'y':
             linestyle=model_linestyles[nmodel],
             label=models_label[nmodel]
         )
+        # Print number of clouds per year at 6Jy/beam
+        nnoiselevel = np.where(flux_range >= 4.902769495192231)[0][0]-1
+        print(f'{model} - detrate at 4.9Jy/beam: {cloud_counter_peryr[nnoiselevel]} (or period between clouds: {1/cloud_counter_peryr[nnoiselevel]})')
     # Set figure settings
     ax.set_ylabel('Number clouds per year', fontsize = 14)
     ax.set_xlabel('Beam-averaged flux density at 200 pc (Jy/beam)', fontsize = 14)
@@ -2244,12 +2242,12 @@ if plot_detrate_fluxdensity == 'y':
     ax.set_xlim(minflux,maxflux)
     ax.set_ylim([0,6])
     fig.tight_layout()
-    fig.savefig(
-        f'figs/beamaveragefluxdensity.pdf',
-        facecolor='white',
-        dpi=300
-    )
-
+    #fig.savefig(
+    #    f'figs/beamaveragefluxdensity.pdf',
+    #    facecolor='white',
+    #    dpi=300
+    #)
+    plt.show()
 
 
 
