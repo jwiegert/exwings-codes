@@ -2327,7 +2327,7 @@ def extract_grainsizes(
     size of each cell in the r3d-grid.
     TODO:
     Info about the grain sizes, the equation
-    FIrst use a5d.load_c5dheavydata to create necessary npy-files:
+    First use a5d.load_c5dheavydata to create necessary npy-files:
     
     ARGUMENTS
       PATHS
