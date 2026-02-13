@@ -3,19 +3,22 @@
 # each model.
 import analyze_r3d_functions as a3d
 import numpy as np
-import scipy
 import os
 
 print('Started extracting gas-to-dust-ratios.')
+AUcm = 1.49598e13 # AU in cm
 
-path = '../r3dresults/'
+#path = '../r3dresults/'
+path = '../../exwings_archivedata/'
 models = [
     'st28gm06n052',
-    'st28gm06n074',
+    #'st28gm06n074',
     'st28gm06n075',
 ]
 for model in models:
-    print(f'  Doing {model}')
+    print(
+        f'  Doing {model}'
+    )
     # Extract all snapshots included for this model.
     modelpath = path+model+'/'
     phases = [
@@ -25,87 +28,96 @@ for model in models:
     Nphases = len(
         phases
     )
+    # Load grid properties
+    #
+    # Load grid_distances (unit is cm)
+    griddistances = a3d.load_griddistances(
+        gridpath=f'{path}{model}/grid_distances.csv',
+        amrpath=f'{path}{model}/amr_grid.inp'
+    )
+    gridradii = griddistances[:,0]
+    #
+    # Load grid-cellsizes
+    gridsizes = a3d.load_cellsizes(
+        sizepath=f'{path}{model}/grid_cellsizes.csv',
+        amrpath=f'{path}{model}/amr_grid.inp',
+    )
     # Open output file
-
     with open(f'../{model}_gastodust_ratio.dat', 'w') as fratios:
         # Print header
-        fratios.writelines(f'# Gas to dust ratios for snapshots of moderl {model}.\n')
-        fratios.writelines(f'# Based on {Nbins} bins of dust-filled cells.\n')
+        fratios.writelines(f'# Gas to dust ratios for snapshots of model {model}.\n')
+        fratios.writelines(f'# Also lists dust smallest dust formation radius i AU.\n')
+        fratios.writelines(f'# All gas mass is all gas mass outside the dust form radius.\n')
         fratios.writelines(f'#\n')
-        fratios.writelines(f'# Snapshot  Mean     STD      Median   MAD\n')
+        fratios.writelines(f'# Snapshot    All-gas    Gas-in-dust    Dust-formation-radius(AU)\n')
         # Loop through all snapshots
         for phase in phases:
-            # Load gas density-opacity-data
+            print(f'  Doing snapshot {phase:03d}')
+            #
+            # Load gas densities*kappaross
             Ncells,Nspecies,gas_densityopacity = a3d.load_dustdensity(
-                path=f'{modelpath}{phase:03d}/dust_density_opastar.inp',
+                path=f'{path}/{model}/{phase:03d}/dust_density_opastar.inp',
                 numb_specie=1
             )
-            # Load gas kappaross-data
+            # Load gas kappaross
             gas_opacity = np.loadtxt(
-                f'{modelpath}{phase:03d}/star_opacities_smoothed.dat'
+                f'{path}/{model}/{phase:03d}/star_opacities_smoothed.dat'
             )
-            # Load dust densities and combine to one array
+            # Load dust-densities
             # First load number 1 and number of species
             Ncells,Nspecies,dust_densities = a3d.load_dustdensity(
-                path=f'{modelpath}{phase:03d}/dust_density_dust.inp',
+                path=f'{path}/{model}/{phase:03d}/dust_density_dust.inp',
                 numb_specie=1
             )
-            # Then loop over rest of speces, add all to same array
+            # Then loop over rest of species, add all to same array
             for nspecies in range(2,Nspecies+1):
                 Ncells,Nspecies,dust_density = a3d.load_dustdensity(
-                    path=f'{modelpath}{phase:03d}/dust_density_dust.inp',
+                    path=f'{path}/{model}/{phase:03d}/dust_density_dust.inp',
                     numb_specie=nspecies
                 )
                 dust_densities += dust_density
+            # 
+            # Declare temporary variables
+            dustmass = 0       # total dust mass in grams
+            gasmass_indust = 0 # gas mass in dustcontaining cells
+            gasmass_all = 0    # "total" gas mass 
+            dustform_radius = 30*AUcm
             #
-            # Create a dust-to-gas list
-            #
-            dusttogas = []
+            # Extract dust and gas masses
+            # Loop through cells
             for ncell in range(Ncells):
+                #
+                # Only look in cells with dust first
                 if dust_densities[ncell] > 0:
-                    dusttogas.append(
-                        dust_densities[ncell] / (gas_densityopacity[ncell]/gas_opacity[ncell])
-                    )
-            # Bin dust-to-gas cell-ratios into 100 bins
-            Nbins = 100
-            Ndustcells = len(
-                dusttogas
-            )
-            binsize = int(
-                np.round(Ndustcells/Nbins)
-            )
-            dusttogas_bins = np.zeros(
-                Nbins
-            )
-            for nbin in range(Nbins):
-                # Initial bin-index
-                ind_init = int(
-                    nbin*binsize
-                )
-                # Final bin-index (cut at end of list)
-                if (nbin+1)*binsize < Ndustcells:
-                    ind_final = int(
-                        (nbin+1)*binsize
-                    )
-                else:
-                    ind_final = int(
-                        Ndustcells
-                    )
-                # Take the max dust-to-gas-ratio of each bin
-                # to avoid noise with signularities
-                dusttogas_bins[nbin] = np.max(
-                    dusttogas[
-                        ind_init:ind_final
-                    ]
-                )
-            gastodust_bins = 1/dusttogas_bins
-            # Extract mean, std, median, mad
-            ratio_mean = np.mean(gastodust_bins)
-            ratio_std = np.std(gastodust_bins)
-            ratio_median = np.median(gastodust_bins)
-            ratio_mad = scipy.stats.median_abs_deviation(gastodust_bins)
+                    #
+                    # Grid cell volume in cm3
+                    cellvolume = gridsizes[ncell]**3
+                    #
+                    # Add up dust masses
+                    dustmass += dust_densities[ncell]*cellvolume
+                    #
+                    # Add up gas masses of dust-filled cells
+                    gasmass_indust += gas_densityopacity[ncell]*gas_opacity[ncell]*cellvolume
+                    #
+                    # Check for smallest altitude to centrum of grid
+                    if dustform_radius > gridradii[ncell]:
+                        dustform_radius = gridradii[ncell]
+            #
+            # Then add up all gas masses outside dust formation radius
+            for ncell in range(Ncells):
+                if gridradii[ncell] >= dustform_radius:
+                    gasmass_all += gas_densityopacity[ncell]*gas_opacity[ncell]*cellvolume
+            #
+            # Get gas-to-dust ratios and convert formation radius unit
+            gastodust_indust = gasmass_indust/dustmass
+            gastodust_allgas = gasmass_all/dustmass
+            dustform_radius /= AUcm
+            #
             # Write to file.
             fratios.writelines(
-                f'  {phase:03d}       {ratio_mean:.1f}   {ratio_std:.1f}   {ratio_median:.1f}   {ratio_mad:.1f}'
+                f'  {phase:03d}         {gastodust_allgas:.3f}   {gastodust_indust:.5f}       {dustform_radius:.3f}'
             )
 print('DONE')
+# TODO
+# rename and move final files to each nospikes-model-folder under r3dresults
+os.system('spd-say moo')

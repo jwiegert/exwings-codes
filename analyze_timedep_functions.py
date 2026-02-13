@@ -601,6 +601,7 @@ def extract_imageblobs(
 # function that loads data from ascii files with information on 
 def load_imageblob_files(
         filepath:str='../r3dresults/st28gm06n052_timedep_nospikes/',
+        relaxsnap:int=0,
         max_flux_contrast:float=0.01,
         fract_stararea:float=0.1,
         load_blobareas:str='y',
@@ -615,6 +616,7 @@ def load_imageblob_files(
                      with this syntax:
                      imageblobs_maxarea_Flim{max_flux_contrast}.dat
                      imageblobs_numb_Flim{max_flux_contrast}_Farea{fract_stararea}.dat
+      relaxsnap:int = snapshot number for relaxation of dust formation
       max_flux_contrast:float = Flux contrast-limit, contrast between blob-pixels
                                 and stellar flux density.
       fract_stararea:float = Smallest allowed size of cloud in image-plane. Set
@@ -628,13 +630,13 @@ def load_imageblob_files(
     # Automatically add / to end of path if it's missing
     if filepath[-1] != '/':
         filepath += '/'
-
+    #
     # Declare various lists
     nsnaps = []
     nblobs = []
     blob_areas = []
     blob_fluxes = []
-
+    #
     # Load all number of blobs
     with open(f'{filepath}imageblobs_numb_Flim{max_flux_contrast}_Farea{fract_stararea}.dat', 'r') as fnblobs:
         for nblobs_line in fnblobs.readlines():
@@ -643,13 +645,16 @@ def load_imageblob_files(
                 angles = nblobs_line.split()[2:]
             # Extract all number of blobs
             if nblobs_line[0] != '#':
-                nblobs.append(nblobs_line.split()[1:])
-                nsnaps.append(int(nblobs_line.split()[0]))
+                # Check if snapshot number if after relaxation
+                nsnap = int(nblobs_line.split()[0])
+                if nsnap >= relaxsnap:
+                    nblobs.append(nblobs_line.split()[1:])
+                    nsnaps.append(nsnap)
     # Change from strings in lists to arrays with numbers
     nblobs = np.array(nblobs).astype('int')
     nsnaps = np.array(nsnaps).astype('int')
-
-
+    #
+    #
     # Load all blog areas (if set to yes)
     if load_blobareas == 'y' or load_blobareas == 'Y' or load_blobareas == 'yes':
         # Changes so that each line in list is an array with floats
@@ -658,13 +663,17 @@ def load_imageblob_files(
         with open(f'{filepath}imageblobs_blobareas_Flim{max_flux_contrast}.dat', 'r') as farea:
             for area_line in farea.readlines():
                 if area_line[0] != '#':
-                    area_line = area_line.split('[')[1][:-2]
-                    area_line = area_line.split(', ')
-                    blob_areas.append(np.array(area_line).astype('float'))
+                    # Check if snapshot number if after relaxation
+                    nsnap = int(nblobs_line.split()[0])
+                    if nsnap >= relaxsnap:
+                        area_line = area_line.split('[')[1][:-2]
+                        area_line = area_line.split(', ')
+                        blob_areas.append(np.array(area_line).astype('float'))
     else:
         # If not loading all areas, return list with zeros
         blob_areas = [0]
-
+    #
+    #
     # Load all blob fluxes (if set to yes)
     if load_blobfluxes == 'y' or load_blobfluxes == 'Y' or load_blobfluxes == 'yes':
         # Changes so that each line in list is an array with floats
@@ -673,9 +682,12 @@ def load_imageblob_files(
         with open(f'{filepath}imageblobs_blobfluxes_Flim{max_flux_contrast}.dat', 'r') as fflux:
             for flux_line in fflux.readlines():
                 if flux_line[0] != '#':
-                    flux_line = flux_line.split('[')[1][:-2]
-                    flux_line = flux_line.split(', ')
-                    blob_fluxes.append(np.array(flux_line).astype('float'))
+                    # Check if snapshot number if after relaxation
+                    nsnap = int(nblobs_line.split()[0])
+                    if nsnap >= relaxsnap:
+                        flux_line = flux_line.split('[')[1][:-2]
+                        flux_line = flux_line.split(', ')
+                        blob_fluxes.append(np.array(flux_line).astype('float'))
     else:
         # If not loading all areas, return list with zeros
         blob_fluxes = [0]

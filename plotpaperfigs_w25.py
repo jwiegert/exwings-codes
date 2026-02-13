@@ -45,7 +45,6 @@ annulus_area = np.pi*(Rout-Rin)**2      # Annalus area in AU2
 pix_area = (876562500000.0/AUcm)**2     # Pixel area in AU2 (521**2 & 30**2AU**2 images)
 
 
-
 # Set LOS-angles
 angles = [
     'i000_phi000',
@@ -81,6 +80,7 @@ model_colours = [
 model_linestyles = [
     '-','--','-.'
 ]
+models_relaxsnap = [0,30,30]
 Nmodels = len(models)
 
 # Plot-list
@@ -88,12 +88,13 @@ plot_dustmass = 'n'             # Plots dust masses vs time of all 3 models
 plot_075grainsize = 'n'         # Plots grain size vs time of 075
 plot_052exampleimages = 'n'     # Plots a number of example images of 052
 plot_numbclouds = 'n'           # Plots number of clouds per time for each angle&model
-plot_datacompare = 'n'          # Plots colour comparisons for each model with data
-plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities and overall
+plot_LOSevents = 'y'            # Plots angle-dependent cloud-periods and probabilities and overall
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
 plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
 plot_allrandomsample = 'n'      # Plots all 24 random images of all models
 plot_detrate_fluxdensity = 'n'  # Plots cumulative clouds per year with beam-averaged flux density
+plot_gastodustratio = 'n'  # TODO Plots time-dependent gas-to-dust-ratio
+                           # borde markera som med massan, grått för 30snaps
 
 
 # For vr-prop
@@ -109,6 +110,7 @@ plottalk_cloudperiods = 'n'
 
 
 # SKIP THESE
+plot_datacompare = 'n'          # Plots colour comparisons for each model with data
 plot_allseds = 'n'              # SKIP
 plot_luminosities = 'n'         # SKIP
 plot_052fluxdensity = 'n'       # SKIP
@@ -1715,6 +1717,7 @@ if plot_cloudareas == 'y':
         # Load cloud areas
         angles,nsnaps,nblobs,blob_areas,temp1 = atf.load_imageblob_files(
             filepath = f'../r3dresults/{model}_nospikes/',
+            relaxsnap = models_relaxsnap[nmodel],
             max_flux_contrast = 0.01,
             load_blobareas = 'y',
             load_blobfluxes='n'
@@ -2140,12 +2143,13 @@ if plot_detrate_fluxdensity == 'y':
         #
         # Extract total included sim-time for each model
         snapshot_times = np.loadtxt(f'../r3dresults/{model}_nospikes/snapshot_yr.dat')[:,1]
-        tot_modeltime = snapshot_times[-1] - snapshot_times[0]
+        tot_modeltime = snapshot_times[-1] - snapshot_times[models_relaxsnap[nmodel]]
         #
         # Load all cloud sizes and all cloud flux densities at 1pc distance
         # Fluxes are in Jy/pix2
         angles,nsnaps,nblobs,blob_areas,blob_fluxes = atf.load_imageblob_files(
             filepath=f'../r3dresults/{model}_nospikes/',
+            relaxsnap=models_relaxsnap[nmodel],
             max_flux_contrast=0.01,
             fract_stararea=0.1,
             load_blobareas='y',
@@ -2242,12 +2246,12 @@ if plot_detrate_fluxdensity == 'y':
     ax.set_xlim(minflux,maxflux)
     ax.set_ylim([0,6])
     fig.tight_layout()
-    #fig.savefig(
-    #    f'figs/beamaveragefluxdensity.pdf',
-    #    facecolor='white',
-    #    dpi=300
-    #)
-    plt.show()
+    fig.savefig(
+        f'figs/beamaveragefluxdensity.pdf',
+        facecolor='white',
+        dpi=300
+    )
+    #plt.show()
 
 
 
@@ -2628,10 +2632,6 @@ if plot_datacompare == 'y':
         [wisedata[2],wisedata[2]],
         'b:'
     )
-
-
-
-
     # Set xlabels and tick settings
     ax.set_xlim(0.5,5.5)
     ax.set_xticks(datapositions) 
@@ -2814,6 +2814,7 @@ if plotvr_radiusplot == 'y':
         facecolor="white"
     )
 
+#===============================================================
 # Plot special data compare for VR prop
 
 # Plot comparisons with data as found at 
