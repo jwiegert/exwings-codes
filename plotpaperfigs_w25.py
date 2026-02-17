@@ -1,9 +1,9 @@
 # Plots various figures for first co5bold-r3d-paper
 import matplotlib.pyplot as plt
 from scipy import ndimage
+from scipy import stats
 import numpy as np
-import scipy.ndimage
-import re
+#import re
 import os
 
 from matplotlib import rc
@@ -85,16 +85,15 @@ Nmodels = len(models)
 
 # Plot-list
 plot_dustmass = 'n'             # Plots dust masses vs time of all 3 models
+plot_gastodustratio = 'y'  
 plot_075grainsize = 'n'         # Plots grain size vs time of 075
 plot_052exampleimages = 'n'     # Plots a number of example images of 052
 plot_numbclouds = 'n'           # Plots number of clouds per time for each angle&model
-plot_LOSevents = 'y'            # Plots angle-dependent cloud-periods and probabilities and overall
+plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities and overall
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
 plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
 plot_allrandomsample = 'n'      # Plots all 24 random images of all models
 plot_detrate_fluxdensity = 'n'  # Plots cumulative clouds per year with beam-averaged flux density
-plot_gastodustratio = 'n'  # TODO Plots time-dependent gas-to-dust-ratio
-                           # borde markera som med massan, grått för 30snaps
 
 
 # For vr-prop
@@ -224,6 +223,85 @@ if plot_dustmass == 'y':
     #fig.show()
 #
 #####################################################################################
+# Plot gas-to-dustratio estimates for each model
+
+
+if plot_gastodustratio == 'y':
+
+    # TODO fixa till denna så den är rätt storlek
+    #rätt fontstorlekar etc
+
+
+    models_label = [
+        r'Model-A',
+        r'Model-B',
+        r'Model-C',
+    ]
+    fig,ax = plt.figure(figsize=(6,3)), plt.axes()
+
+    # Plot Sofias values
+    ax.plot(
+        [0,4],
+        [250,250],
+        '--k'
+    )
+    ax.add_patch(
+        plt.Rectangle(
+            (0,70),
+            width=4,
+            height=580-70,
+            facecolor='lightgrey'
+        )
+    )
+    for nmodel,model in enumerate(models):
+        alldata = np.loadtxt(
+            f'../r3dresults/{model}_nospikes/gastodust_ratio.dat'
+        )
+        nsnaps = alldata[:,0]
+        gastodust = alldata[:,1]
+
+        average_gtd = np.mean(gastodust)
+        median_gtd = np.median(gastodust)
+        std_gtd = np.std(gastodust)
+        mad_gtd = stats.median_abs_deviation(gastodust)
+        min_gtd = np.min(gastodust)
+        max_gtd = np.max(gastodust)
+
+
+
+        print(f'Average gas to dust ratio {model}: {average_gtd:.3f}')
+        print(f'                       median: {median_gtd:.3f}')
+        print(f'                     stnd dev: {std_gtd:.3f}')
+        print(f'               median abs dev: {mad_gtd:.3f}')
+        print(f'                  min-max gtd: {min_gtd:.3f} - {max_gtd:.3f}')
+
+        ax.plot(
+            nmodel+1,average_gtd,
+            '.',markersize=15,
+            color=model_colours[nmodel]
+        )
+        ax.plot(
+            [nmodel+1,nmodel+1],
+            [median_gtd-mad_gtd,median_gtd+mad_gtd],
+            color=model_colours[nmodel]
+        )
+        ax.plot(
+            nmodel+1,median_gtd,
+            '*',markersize=15,
+            color=model_colours[nmodel]
+        )
+    ax.set_yscale('log')
+    ax.set_xlim([0.5,3.5])
+    ax.set_ylim([50,2e4])
+    ax.set_xticks([1,2,3]) 
+    ax.set_xticklabels(models_label);
+    ax.set_ylabel('Gas-to-dust ratio',fontsize=18)
+    ax.tick_params(axis='both', which='major', labelsize=15)
+    fig.tight_layout()
+    fig.savefig('figs/gastodustratio.pdf')
+
+
+#####################################################################################
 # Plot max grain size bin vs time of 075 
 if plot_075grainsize == 'y':
     # Load data from *075 model
@@ -236,8 +314,17 @@ if plot_075grainsize == 'y':
 
     # Plot and save figure
     fig,ax = plt.figure(figsize=(6,3)), plt.axes()
+    ax.add_patch(
+        plt.Rectangle(
+            (phasetimes075[0],0),
+            width=4.8,
+            height=1,
+            facecolor='lightgrey'
+        )
+    )
     ax.plot(phasetimes075,grainsize075)
     ax.set_xlim([phasetimes075[0],phasetimes075[-1]])
+    ax.set_ylim([0.55,0.95])
     ax.set_xlabel('Simulation time (yrs)',fontsize=18)
     ax.set_ylabel(r'Max grain size ($\mu$m)',fontsize=18)
     ax.tick_params(axis='both', which='major', labelsize=15)
@@ -699,105 +786,101 @@ if plot_LOSevents == 'y':
     All data for this plot
 
         Total included time: 379.1480984769462 time units
-    MODEL  Area limit    N clouds   N clouds/LOS  Total port.   Aver period (yrs)   FFT-period (yrs)
-    052     0.1          168        28.00         0.4023        2.26                4.21
-            0.2          142        23.67         0.2580        2.67                4.21
-            0.3          110        18.33         0.1697        3.45                4.21
-            0.4           81        13.50         0.1184        4.68               12.64
-            0.5           64        10.67         0.0775        5.92               12.23
-            0.6           45         7.50         0.0509        8.43               12.64
+    MODEL  Area limit    N clouds   N clouds/LOS  Total port.   Aver period (yrs)   FFT-period (yrs)  Aver Cloud occurence (yrs)
+    052     0.1          168        28.00         0.4023        2.26                4.21              0.91
+            0.2          142        23.67         0.2580        2.67                4.21              0.69
+            0.3          110        18.33         0.1697        3.45                4.21              0.58
+            0.4           81        13.50         0.1184        4.68               12.64              0.55
+            0.5           64        10.67         0.0775        5.92               12.23              0.46
+            0.6           45         7.50         0.0509        8.43               12.64              0.43
 
-        Total included time: 426.6804631133246 time units
-    074     0.1          133        22.17         0.2812        3.21                5.93
-            0.2           95        15.83         0.1489        4.49                6.46
-            0.3           63        10.50         0.0848        6.77                7.90
-            0.4           48         8.00         0.0515        8.89               11.85
-            0.5           32         5.33         0.0326       13.33               11.85
-            0.6           17         2.83         0.0182       25.10               11.85
+        Total included time: 398.16156216768024 time units
+    074     0.1          124        20.67         0.2713        3.21                6.63              0.87
+            0.2           85        14.17         0.1390        4.68                6.03              0.65
+            0.3           55         9.17         0.0792        7.24                8.30              0.57
+            0.4           40         6.67         0.0491        9.95                9.48              0.49
+            0.5           29         4.83         0.0317       13.73                8.30              0.44
+            0.6           16         2.67         0.0178       24.89               11.06              0.44
 
-        Total included time: 419.07515235389167 time units
-    075     0.1           80        13.33         0.1475        5.24                3.68
-            0.2           42         7.00         0.0551        9.98                9.98
-            0.3           20         3.33         0.0230       20.95               23.28
-            0.4            8         1.33         0.0094       52.38               34.92
-            0.5            4         0.66         0.0034      104.77                N/A
-            0.6            1         0.17         0.0008      419.08                N/A
+
+        Total included time: 390.5565745164974 time units
+    075     0.1           71        11.83         0.1356        5.50                6.51              0.75
+            0.2           37         6.17         0.0501       10.56               10.85              0.53
+            0.3           15         2.50         0.0198       26.04               21.70              0.52
+            0.4            6         1.00         0.0089       65.09              (32.55)             0.58
+            0.5            3         0.50         0.0032      130.19             (195.28)             0.42
+            0.6            1         0.17         0.0008      390.56             (390.56)             0.31
 
 
     FRACT_AREA: 0.1 periods
     Model          0-0      90-0     90-90     90-270     180-0     270-0
     Model-A:052    1.98     2.18     2.43      2.53       2.11      2.43
-    Model-B:074    3.39     3.23     3.23      3.09       3.09      3.23
-    Model-C:075    5.82     5.82     4.37      4.37       5.37      6.35
+    Model-B:074    3.33     3.17     3.50      3.02       3.17      3.17
+    Model-C:075    5.93     5.93     4.66      4.66       5.93      6.53
                     Portion of total time
     Model-A:052    0.5187   0.4887   0.4009    0.3358     0.3433    0.3308
-    Model-B:074    0.3252   0.2851   0.3029    0.2717     0.2673    0.2383
-    Model-C:075    0.1609   0.1382   0.1405    0.1836     0.1337    0.1292
+    Model-B:074    0.3165   0.2713   0.3046    0.2546     0.2618    0.2213
+    Model-C:075    0.1432   0.1165   0.1432    0.1796     0.1262    0.1068
 
 
     FRACT_AREA: 0.2 periods
     Model          0-0      90-0     90-90     90-270     180-0     270-0
     Model-A:052    2.26     2.26     2.75      3.01       2.87      3.16
-    Model-B:074    3.56     4.18     4.74      5.47       4.74      4.74
-    Model-C:075    7.76    11.65     7.76     11.65       9.98     13.97
+    Model-B:074    3.70     4.44     4.75      5.55       5.12      5.12
+    Model-C:075    9.33    16.32     7.25     10.88       9.33     16.32
                     Portion of total time
     Model-A:052    0.3533   0.3007   0.2706    0.2055     0.2080    0.2130
-    Model-B:074    0.1715   0.1782   0.1715    0.1403     0.1069    0.1270
-    Model-C:075    0.0725   0.0567   0.0385    0.0431     0.0567    0.0635
+    Model-B:074    0.1666   0.1666   0.1785    0.1190     0.0976    0.1071
+    Model-C:075    0.0704   0.0388   0.0412    0.0461     0.0607    0.0437
 
 
     FRACT_AREA: 0.3 periods
     Model          0-0      90-0     90-90     90-270     180-0     270-0
     Model-A:052    2.87     3.16     3.01      4.21       3.95      3.95
-    Model-B:074    5.08     5.47     7.90      7.11       8.89      7.90
-    Model-C:075   17.47    23.29    34.94     17.47      34.94     13.97
+    Model-B:074    5.12     6.05     7.39      8.32       9.51      9.51
+    Model-C:075   16.32    65.28    32.64     16.32      32.64     32.64
                     Length
     Model-A:052    0.2456   0.2030   0.1779    0.1328     0.1253    0.1353
-    Model-B:074    0.0846   0.1047   0.1136    0.0802     0.0512    0.0757
-    Model-C:075    0.0227   0.0340   0.0091    0.0136     0.0249    0.0340
+    Model-B:074    0.0857   0.0928   0.1214    0.0690     0.0452    0.0619
+    Model-C:075    0.0243   0.0243   0.0097    0.0146     0.0267    0.0194
 
 
     FRACT_AREA: 0.4 periods
     Model          0-0      90-0     90-90     90-270     180-0     270-0
     Model-A:052    4.21     3.72     4.21      5.27       7.02      4.86
-    Model-B:074    7.90     7.11     7.11      7.90      17.78     11.86
-    Model-C:075   34.94    34.94     N/A      69.87      69.87     34.94
+    Model-B:074    8.32     8.32     6.65      9.51      22.18     16.64
+    Model-C:075   32.64    65.28     N/A      65.28      65.28     65.28
                     Portion of total time
     Model-A:052    0.1729   0.1504   0.1078    0.1002     0.0802    0.1002
-    Model-B:074    0.0490   0.0690   0.0802    0.0445     0.0223    0.0445
-    Model-C:075    0.0113   0.0204   N/A       0.0023     0.0136    0.0091
+    Model-B:074    0.0500   0.0619   0.0857    0.0405     0.0214    0.0357
+    Model-C:075    0.0121   0.0194   N/A       0.0024     0.0146    0.0049
 
 
     FRACT_AREA: 0.5 periods
     Model          0-0      90-0     90-90     90-270     180-0     270-0
     Model-A:052    4.86     4.86     6.32      5.75       9.03      6.32
-    Model-B:074   14.23    10.16    10.16     11.86      23.71     17.78
-    Model-C:075    N/A     69.87     N/A       N/A       34.94     69.87
+    Model-B:074   13.31    11.09     9.51     13.31      22.18     22.18
+    Model-C:075    NA      65.28     NA        NA        32.64      NA
                     Length
     Model-A:052    0.1328   0.0977   0.0526    0.0526     0.0626    0.0677
-    Model-B:074    0.0356   0.0423   0.0490    0.0312     0.0089    0.0290
-    Model-C:075    N/A      0.0091   N/A       N/A        0.0091    0.0023
+    Model-B:074    0.0381   0.0357   0.0524    0.0309     0.0095    0.0238
+    Model-C:075    NA       0.0097   NA        NA         0.0097    NA
 
 
     FRACT_AREA: 0.6 periods
     Model          0-0      90-0     90-90     90-270     180-0     270-0
     Model-A:052    5.75     7.02    12.64     10.54      10.54      7.90
-    Model-B:074   23.71    17.78    14.28     17.78       N/A      71.14
-    Model-C:075    N/A     69.87     N/A       N/A        N/A       N/A
+    Model-B:074   22.18    22.18    13.31     16.64       NA       66.54
+    Model-C:075    NA      65.28     NA        NA         NA        NA
                     Portion of total time
     Model-A:052    0.0952   0.0702   0.0301    0.0301     0.0426    0.0376
-    Model-B:074    0.0200   0.0267   0.0334    0.0134     N/A       0.0156
-    Model-C:075    N/A      0.0045   N/A       N/A        N/A       N/A
+    Model-B:074    0.0214   0.0190   0.0357    0.0143     NA        0.0167
+    Model-C:075    NA       0.0049   NA        NA         NA        NA
 
-    LOWER LIMITS (PERIODS)
-    052:
-        NONE
-    074:
-        0.6: 180-0, 270-0
-    075:
-        0.4: 90-90
-        0.5: 0-0, 90-90, 90-270
-        0.6: 0-0, 90-90, 90-270, 180-0, 270-0
+
+    # TODO
+    # dissa att plotta de med NA helt och hållet
+
     """;
 
     # Set fig-objects
@@ -805,7 +888,14 @@ if plot_LOSevents == 'y':
         3,3,
         figsize=(13,10)
     )
+    # Set y-axle-lengths for periodicity to half of included time for each
+    periodtime_axis = [
+        0.5*63.22,
+        0.5*71.16,
+        0.5*69.87
+    ]
     # PLOT ALL los-AVERAGE NUMBERS
+    #   from "STORTABELL"
     #
     # Data for plot
     #
@@ -814,35 +904,35 @@ if plot_LOSevents == 'y':
     ]
     average_periods = [
         [
-            2.26,2.67,3.45,4.68,5.92,8.43
+            2.26,2.67,3.45,4.68,5.92,8.43         # 052
         ],
         [
-            3.21,4.49,6.77,8.89,13.33,25.1
+            3.21,4.68,7.24,9.95,13.73,24.89       # 074
         ],
         [
-            5.24,9.98,20.95,52.38,104.77,419.08
+            5.50,10.56,26.04,65.09,130.19,390.56  # 075
         ],
     ]
     average_detectrates = [
         [
-            0.4023,0.2580,0.1697,0.1184,0.0775,0.0509
+            0.4023,0.2580,0.1697,0.1184,0.0775,0.0509   # 052
         ],
         [
-            0.2812,0.1489,0.0848,0.0515,0.0326,0.0182
+            0.2713,0.1390,0.0792,0.0491,0.0317,0.0178   # 074
         ],
         [
-            0.1475,0.0551,0.0230,0.0094,0.0034,0.0008
+            0.1356,0.0501,0.0198,0.0089,0.0032,0.0008   # 075
         ],
     ]
     average_prevalences = [
         [
-            0.91,0.69,0.58,0.55,0.46,0.43
+            0.91,0.69,0.58,0.55,0.46,0.43   # 052
         ],
         [
-            0.90,0.67,0.57,0.46,0.43,0.46
+            0.87,0.65,0.57,0.49,0.44,0.44   # 074
         ],
         [
-            0.77,0.55,0.48,0.49,0.36,0.32
+            0.75,0.53,0.52,0.58,0.42,0.31   # 075
         ],
     ]
     # Loop over models
@@ -878,7 +968,7 @@ if plot_LOSevents == 'y':
         ax[0][nmodel].tick_params(axis='both', which='major', labelsize=15)
     ax[0][1].legend(fontsize=12)
     ax[0][1].set_xlabel(r'Cloud area limit ($A_\star$)', fontsize = 18)
-    ax[0][0].set_ylim([0,60])
+    ax[0][0].set_ylim([0,periodtime_axis[-1]])
     ax[0][1].set_ylim([0,0.5])
     ax[0][2].set_ylim([0.2,1])
     ax[0][0].set_ylabel('Average period (yrs)', fontsize = 18)
@@ -891,10 +981,8 @@ if plot_LOSevents == 'y':
         for nmodel in range(Nmodels):
             ax[nrow][nmodel].tick_params(axis='both', which='major', labelsize=15)
             ax[nrow][nmodel].set_xlim([-0.5,5.5])
-            ax[2][nmodel].set_ylim([0,1])
-    ax[1][0].set_ylim([0,14])
-    ax[1][1].set_ylim([0,30])
-    ax[1][2].set_ylim([0,77])
+            ax[1][nmodel].set_ylim([0,periodtime_axis[nmodel]])
+            ax[2][nmodel].set_ylim([0,0.7])
     farea_colours = ['g','c','b','m','r','darkorange']
     farea_markers = ['o','p','s','h','d','8']
     farea_label = ['0.1','0.2','0.3','0.4','0.5','0.6']
@@ -919,21 +1007,21 @@ if plot_LOSevents == 'y':
     #
     farea01_074 = [
         [
-            3.39, 3.23, 3.23, 3.09, 3.09, 3.23
+            3.33, 3.17, 3.50, 3.02, 3.17, 3.17 
         ],[
-            0.3252, 0.2851, 0.3029, 0.2717, 0.2673, 0.2383
+            0.3165, 0.2713, 0.3046, 0.2546, 0.2618, 0.2213
         ]
     ]
-    farea01_074_average = [3.21, 0.2812]
+    farea01_074_average = [3.21, 0.2713]
     #
     farea01_075 = [
         [
-            5.82, 5.82, 4.37, 4.37, 5.37, 6.35
+            5.93, 5.93, 4.66, 4.66, 5.93, 6.53
         ],[
-            0.1609, 0.1382, 0.1405, 0.1836, 0.1337, 0.1292
+            0.1432, 0.1165, 0.1432, 0.1796, 0.1262, 0.1068
         ]
     ]
-    farea01_075_average = [5.24, 0.1475]
+    farea01_075_average = [5.50, 0.1356]
     #
     # Fract_area = 0.2
     #
@@ -948,21 +1036,21 @@ if plot_LOSevents == 'y':
     #
     farea02_074 = [
         [
-            3.56, 4.18, 4.74, 5.47, 4.74, 4.74
+            3.70, 4.44, 4.75, 5.55, 5.12, 5.12
         ],[
-            0.1715, 0.1782, 0.1715, 0.1403, 0.1069, 0.1270
+            0.1666, 0.1666, 0.1785, 0.1190, 0.0976, 0.1071
         ]
     ]
-    farea02_074_average = [4.49, 0.1489]
+    farea02_074_average = [4.68, 0.1390]
     #
     farea02_075 = [
         [
-            7.76, 11.65, 7.76, 11.65, 9.98, 13.97
+            9.33, 16.32, 7.25, 10.88, 9.33, 16.32
         ],[
-            0.0725, 0.0567, 0.0385, 0.0431, 0.0567, 0.0635
+            0.0704, 0.0388, 0.0412, 0.0461, 0.0607, 0.0437
         ]
     ]
-    farea02_075_average = [9.98, 0.0551]
+    farea02_075_average = [10.56, 0.0501]
     #
     # Fract_area = 0.3
     #
@@ -977,21 +1065,21 @@ if plot_LOSevents == 'y':
     #
     farea03_074 = [
         [
-            5.08, 5.47, 7.90, 7.11, 8.89, 7.90
+            5.12, 6.05, 7.39, 8.32, 9.51, 9.51
         ],[
-            0.0846, 0.1047, 0.1136, 0.0802, 0.0512, 0.0757
+            0.0857, 0.0928, 0.1214, 0.0690, 0.0452, 0.0619
         ]
     ]
-    farea03_074_average = [6.77, 0.0848]
+    farea03_074_average = [7.24, 0.0792]
     #
     farea03_075 = [
         [
-            17.47, 23.29, 34.94, 17.47, 34.94, 13.97
+            16.32, 65.28, 32.64, 16.32, 32.64, 32.64
         ],[
-            0.0227, 0.0340, 0.0091, 0.0136, 0.0249, 0.0340
+            0.0243, 0.0243, 0.0097, 0.0146, 0.0267, 0.0194
         ]
     ]
-    farea03_075_average = [20.95, 0.0230]
+    farea03_075_average = [26.04, 0.0198]
     #
     # Fract_area = 0.4
     #
@@ -1006,21 +1094,21 @@ if plot_LOSevents == 'y':
     #
     farea04_074 = [
         [
-            7.90, 7.11, 7.11, 7.90, 17.78, 11.86
+            8.32, 8.32, 6.65, 9.51, 22.18, 16.64
         ],[
-            0.0490, 0.0690, 0.0802, 0.0445, 0.0223, 0.0445
+            0.05, 0.0619, 0.0857, 0.0405, 0.0214, 0.0357
         ]
     ]
-    farea04_074_average = [8.89, 0.0515]
+    farea04_074_average = [9.95, 0.0491]
     #
     farea04_075 = [
         [
-            34.94, 34.94, -10, 69.87, 69.87, 34.94
+            32.64, 65.28, -10, 65.28, 65.28, 65.28
         ],[
-            0.0113, 0.0204, -10, 0.0023, 0.0136, 0.0091
+            0.0121, 0.0194, -10, 0.0024, 0.0146, 0.0049
         ]
     ]
-    farea04_075_average = [52.38, 0.0094]
+    farea04_075_average = [65.09, 0.0089]
     #
     # Fract_area = 0.5
     #
@@ -1035,21 +1123,21 @@ if plot_LOSevents == 'y':
     #
     farea05_074 = [
         [
-            14.23, 10.16, 10.16, 11.86, 23.71, 17.78
+            13.31, 11.09, 9.51, 13.31, 22.18, 22.18
         ],[
-            0.0356, 0.0423, 0.0490, 0.0312, 0.0089, 0.0290
+            0.0381, 0.0357, 0.0524, 0.0309, 0.0095, 0.0238
         ]
     ]
-    farea05_074_average = [13.33, 0.0326]
+    farea05_074_average = [13.73, 0.0317]
     #
     farea05_075 = [
         [
-            -10, 69.87, -10, -10, 34.94, 69.87
+            -10, 65.28, -10, -10, 32.64, -10
         ],[
-            -10, 0.0091, -10, -10, 0.0091, 0.0023
+            -10, 0.0097, -10, -10, 0.0097, -10
         ]
     ]
-    farea05_075_average =  [104.77, 0.0034]
+    farea05_075_average =  [130.19, 0.0032]
     #
     # Fract_area = 0.6
     #
@@ -1064,21 +1152,21 @@ if plot_LOSevents == 'y':
     #
     farea06_074 = [
         [
-            23.71, 17.78, 14.28, 17.78, -10, 71.14
+            22.18, 22.18, 13.31, 16.64, -10, 66.54
         ],[
-            0.0200, 0.0267, 0.0334, 0.0134, -10, 0.0156
+            0.0214, 0.0190, 0.0357, 0.0143, -10, 0.0167
         ]
     ]
-    farea06_074_average = [25.10, 0.0182]
+    farea06_074_average = [24.89, 0.0178]
     #
     farea06_075 = [
         [
-            -10, 69.87, -10, -10, -10, -10
+            -10, 65.28, -10, -10, -10, -10
         ],[
-            -10, 0.0045, -10, -10, -10, -10
+            -10, 0.0049, -10, -10, -10, -10
         ]
     ]
-    farea06_075_average = [419.08, 0.0008]
+    farea06_075_average = [390.56, 0.0008]
     #
     # Plot farea
     #
@@ -1296,7 +1384,7 @@ if plot_LOSevents == 'y':
         [-1,6],[farea06_075_average[0],farea06_075_average[0]],'--',color=farea_colours[5]
     )
     #
-    # PLOT SECOND ROW: cloud-portions
+    # PLOT THIRD ROW: cloud-portions
     #
     for nangle in range(Nangles):
         #
@@ -1514,65 +1602,6 @@ if plot_LOSevents == 'y':
         [-1,6],[farea06_075_average[1],farea06_075_average[1]],'--',color=farea_colours[5]
     )
     #
-    # PLOT LOWER LIMITS FOR THOSE WITH NO DETECTIONS
-    #
-    #    074:
-    #    0.6: 180-0 (4), 270-0 (5)
-    ax[1][1].plot(
-        4,
-        29.4,
-        color=farea_colours[5],
-        marker='^',
-        markersize=6
-    )
-    ax[1][1].plot(
-        5,
-        29.4,
-        color=farea_colours[5],
-        marker='^',
-        markersize=6
-    )
-    #
-    #    075:
-    #    0.4: 90-90
-    ax[1][2].plot(
-        2,
-        75,
-        color=farea_colours[3],
-        marker='^',
-        markersize=6
-    )
-    #    0.5: 0-0, (90-90), 90-270
-    ax[1][2].plot(
-        0,
-        75,
-        color=farea_colours[4],
-        marker='^',
-        markersize=6
-    )
-    ax[1][2].plot(
-        3,
-        75,
-        color=farea_colours[4],
-        marker='^',
-        markersize=6
-    )
-    #    0.6: (0-0), (90-90), (90-270), 180-0, 270-0
-    ax[1][2].plot(
-        4,
-        75,
-        color=farea_colours[5],
-        marker='^',
-        markersize=6
-    )
-    ax[1][2].plot(
-        5,
-        75,
-        color=farea_colours[5],
-        marker='^',
-        markersize=6
-    )
-    #
     # List the labels so that theres 1 per model.
     #
     labelpanel = 2
@@ -1629,6 +1658,8 @@ if plot_numbclouds == 'y':
     max_flux_contrast = 0.01
     fract_starareas = [0.1,0.3,0.5]
     fract_stararea_colours = ['r','g','b']
+    fract_stararea_symbols = ['.','+','x']
+    fract_stararea_symbolsize = 10
     #
     # Too messy with all farea and legend is too large. Doesnt say more to 
     # have all, might as well use the subset
@@ -1644,19 +1675,44 @@ if plot_numbclouds == 'y':
         # Loop over fraction star area and load nblobs for all angles
         for nstararea,stararea in enumerate(fract_starareas):
 
-            angles,nsnaps,nblobs,blob_areas = atf.load_imageblob_files(
+            angles,nsnaps,nblobs,blob_areas,blob_fluxes = atf.load_imageblob_files(
                 filepath=f'../r3dresults/{model}_nospikes/',
-                fract_stararea = stararea
+                fract_stararea = stararea,
+                load_blobfluxes='n'
             )
             Nsnaps = len(nsnaps)
             Nangles = len(angles)
 
             # Plot for each model and each angle
             for nangle,angle in enumerate(angles_label):
-                ax[nangle,nmodel].step(
+                # Add relaxation-time for 074 and 075
+                if nmodel > 0:
+                    ax[nangle,nmodel].add_patch(
+                        plt.Rectangle(
+                            (phasetimes[0],0),
+                            width=4.8,
+                            height=5,
+                            facecolor='lightgrey'
+                        )
+                    )
+                # TODO testa andra markeringar här
+                #ax[nangle,nmodel].step(
+                #    phasetimes,
+                #    nblobs[:,nangle],
+                #    where='mid',
+                #    label=f'{stararea}',
+                #    color=fract_stararea_colours[nstararea]
+                #)
+                # Set all 0s to -1 to remove from plot
+                for nnb in range(len(nblobs[:,nangle])):
+                    if nblobs[nnb,nangle] == 0:
+                        nblobs[nnb,nangle] = -1
+                # Then plot
+                ax[nangle,nmodel].plot(
                     phasetimes,
                     nblobs[:,nangle],
-                    where='mid',
+                    fract_stararea_symbols[nstararea],
+                    markersize=fract_stararea_symbolsize,
                     label=f'{stararea}',
                     color=fract_stararea_colours[nstararea]
                 )

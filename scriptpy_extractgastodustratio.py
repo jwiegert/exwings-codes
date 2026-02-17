@@ -115,7 +115,7 @@ for model in models:
             #
             # Write to file.
             fratios.writelines(
-                f'  {phase:03d}         {gastodust_allgas:.3f}   {gastodust_indust:.5f}       {dustform_radius:.3f}'
+                f'  {phase:03d}         {gastodust_allgas:.3f}   {gastodust_indust:.5f}       {dustform_radius:.3f}\n'
             )
 print('DONE')
 # TODO

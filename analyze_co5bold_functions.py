@@ -2,7 +2,6 @@
 # from co5bold.
 
 # Import various libraries
-import cython
 import numpy as np
 from scipy.io.idl import readsav
 import matplotlib.pyplot as plt
@@ -285,7 +284,6 @@ def load_c5dheavydata(
 
 
 # Load c5d grid properties
-@cython.cfunc
 def load_grid_properties(
         savpath:str='../../exwings_archivedata/co5bold_data/dst28gm06n056/st28gm06n056_140.sav'
     ):
@@ -303,7 +301,7 @@ def load_grid_properties(
     c5ddata = c5ddata['ful']
 
     # Get number of gridcells from co5bold data
-    nc5dedge = cython.declare(cython.int, np.size(c5ddata['Z'][0][0][16]))
+    nc5dedge = np.size(c5ddata['Z'][0][0][16])
 
     # Declare output arrays
     c5dgrid = np.zeros((nc5dedge,3))
@@ -312,8 +310,6 @@ def load_grid_properties(
     cellsizesy = []
     cellsizesz = []
 
-    # Declare variables
-    nn = cython.declare(cython.int)
 
     for nn in range(nc5dedge):
 
