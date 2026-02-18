@@ -80,7 +80,7 @@ model_colours = [
 model_linestyles = [
     '-','--','-.'
 ]
-models_relaxsnap = [0,30,30]
+models_relaxsnap = [0,29,29]
 Nmodels = len(models)
 
 # Plot-list
@@ -224,13 +224,8 @@ if plot_dustmass == 'y':
 #
 #####################################################################################
 # Plot gas-to-dustratio estimates for each model
-
-
+#
 if plot_gastodustratio == 'y':
-
-    # TODO fixa till denna så den är rätt storlek
-    #rätt fontstorlekar etc
-
 
     models_label = [
         r'Model-A',
@@ -257,8 +252,11 @@ if plot_gastodustratio == 'y':
         alldata = np.loadtxt(
             f'../r3dresults/{model}_nospikes/gastodust_ratio.dat'
         )
-        nsnaps = alldata[:,0]
-        gastodust = alldata[:,1]
+        # Snapshot to cut from
+        relaxsnap = models_relaxsnap[nmodel]
+        #
+        nsnaps = alldata[relaxsnap:,0]
+        gastodust = alldata[relaxsnap:,1]
 
         average_gtd = np.mean(gastodust)
         median_gtd = np.median(gastodust)
@@ -266,8 +264,6 @@ if plot_gastodustratio == 'y':
         mad_gtd = stats.median_abs_deviation(gastodust)
         min_gtd = np.min(gastodust)
         max_gtd = np.max(gastodust)
-
-
 
         print(f'Average gas to dust ratio {model}: {average_gtd:.3f}')
         print(f'                       median: {median_gtd:.3f}')
