@@ -6,19 +6,20 @@ import numpy as np
 import os
 
 print('Started extracting gas-to-dust-ratios.')
-AUcm = 1.49598e13 # AU in cm
 
+# Set an inner radius to measure "all" gas masss
+AUcm = 1.49598e13 # AU in cm
+gasradius = 2*AUcm
+
+# Set paths
 #path = '../r3dresults/'
 path = '../../exwings_archivedata/'
 models = [
     'st28gm06n052',
     #'st28gm06n074',
-    'st28gm06n075',
+    #'st28gm06n075',
 ]
 for model in models:
-    print(
-        f'  Doing {model}'
-    )
     # Extract all snapshots included for this model.
     modelpath = path+model+'/'
     phases = [
@@ -46,13 +47,14 @@ for model in models:
     with open(f'../{model}_gastodust_ratio.dat', 'w') as fratios:
         # Print header
         fratios.writelines(f'# Gas to dust ratios for snapshots of model {model}.\n')
-        fratios.writelines(f'# Also lists dust smallest dust formation radius i AU.\n')
-        fratios.writelines(f'# All gas mass is all gas mass outside the dust form radius.\n')
-        fratios.writelines(f'#\n')
-        fratios.writelines(f'# Snapshot    All-gas    Gas-in-dust    Dust-formation-radius(AU)\n')
+        fratios.writelines('# Also lists dust smallest dust formation radius i AU.\n')
+        fratios.writelines(f'# All-gas column is all gas mass outside {int(gasradius/AUcm)} AU.\n')
+        fratios.writelines('# Gas in dust is all gas outside dust-formation radius.\n')
+        fratios.writelines('#\n')
+        fratios.writelines('# Snapshot   All-gas    Gas-in-dust    Dust-formation-radius(AU)\n')
         # Loop through all snapshots
         for phase in phases:
-            print(f'  Doing snapshot {phase:03d}')
+            print(f'  - Doing {model}: {phase:03d}')
             #
             # Load gas densities*kappaross
             Ncells,Nspecies,gas_densityopacity = a3d.load_dustdensity(
@@ -78,34 +80,31 @@ for model in models:
                 dust_densities += dust_density
             # 
             # Declare temporary variables
-            dustmass = 0       # total dust mass in grams
-            gasmass_indust = 0 # gas mass in dustcontaining cells
-            gasmass_all = 0    # "total" gas mass 
+            dustmass = 0                 # total dust mass in grams
+            gasmass_indust = 0           # gas mass outside dust-form-radius
+            gasmass_all = 0              # gas mass outside 2au
             dustform_radius = 30*AUcm
             #
             # Extract dust and gas masses
             # Loop through cells
             for ncell in range(Ncells):
-                #
                 # Only look in cells with dust first
                 if dust_densities[ncell] > 0:
-                    #
                     # Grid cell volume in cm3
                     cellvolume = gridsizes[ncell]**3
-                    #
                     # Add up dust masses
                     dustmass += dust_densities[ncell]*cellvolume
-                    #
-                    # Add up gas masses of dust-filled cells
-                    gasmass_indust += gas_densityopacity[ncell]*gas_opacity[ncell]*cellvolume
-                    #
                     # Check for smallest altitude to centrum of grid
                     if dustform_radius > gridradii[ncell]:
                         dustform_radius = gridradii[ncell]
             #
-            # Then add up all gas masses outside dust formation radius
+            # Then add up gas masses
             for ncell in range(Ncells):
+                # Gas mass outside dust formation radius
                 if gridradii[ncell] >= dustform_radius:
+                    gasmass_indust += gas_densityopacity[ncell]*gas_opacity[ncell]*cellvolume
+                # Gas mass outside 2 au
+                if gridradii[ncell] >= gasradius:
                     gasmass_all += gas_densityopacity[ncell]*gas_opacity[ncell]*cellvolume
             #
             # Get gas-to-dust ratios and convert formation radius unit
@@ -115,9 +114,9 @@ for model in models:
             #
             # Write to file.
             fratios.writelines(
-                f'  {phase:03d}         {gastodust_allgas:.3f}   {gastodust_indust:.5f}       {dustform_radius:.3f}\n'
+                f'  {phase:03d}        {gastodust_allgas:.4f}    {gastodust_indust:.4f}        {dustform_radius:.4f}\n'
             )
 print('DONE')
-# TODO
-# rename and move final files to each nospikes-model-folder under r3dresults
+# Rename and move final files to each nospikes-model-folder under r3dresults
+# in the terminal or shell-script.
 os.system('spd-say moo')

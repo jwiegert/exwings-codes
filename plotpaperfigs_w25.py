@@ -85,7 +85,7 @@ Nmodels = len(models)
 
 # Plot-list
 plot_dustmass = 'n'             # Plots dust masses vs time of all 3 models
-plot_gastodustratio = 'y'  
+plot_gastodustratio = 'y'       # Plots gas-todust-ratio of models vs NESS-sample and prints values
 plot_075grainsize = 'n'         # Plots grain size vs time of 075
 plot_052exampleimages = 'n'     # Plots a number of example images of 052
 plot_numbclouds = 'n'           # Plots number of clouds per time for each angle&model
@@ -256,21 +256,30 @@ if plot_gastodustratio == 'y':
         relaxsnap = models_relaxsnap[nmodel]
         #
         nsnaps = alldata[relaxsnap:,0]
-        gastodust = alldata[relaxsnap:,1]
-
+        gastodust = alldata[relaxsnap:,2]
+        allgas = alldata[relaxsnap:,1]
+        #
         average_gtd = np.mean(gastodust)
         median_gtd = np.median(gastodust)
         std_gtd = np.std(gastodust)
         mad_gtd = stats.median_abs_deviation(gastodust)
         min_gtd = np.min(gastodust)
         max_gtd = np.max(gastodust)
-
+        #
+        average_allgas = np.mean(allgas)
+        std_allgas = np.std(allgas)
+        median_allgas = np.median(allgas)
+        mad_allgas = stats.median_abs_deviation(allgas)
+        #
         print(f'Average gas to dust ratio {model}: {average_gtd:.3f}')
         print(f'                       median: {median_gtd:.3f}')
-        print(f'                     stnd dev: {std_gtd:.3f}')
+        print(f'                      std dev: {std_gtd:.3f}')
         print(f'               median abs dev: {mad_gtd:.3f}')
         print(f'                  min-max gtd: {min_gtd:.3f} - {max_gtd:.3f}')
-
+        print(f'        Average gas>2au ratio: {average_allgas:.3f} pm {std_allgas:.3f}')
+        print(f'         Median gas>2au ratio: {median_allgas:.3f} pm {mad_allgas:.3f}')
+        print()
+        #
         ax.plot(
             nmodel+1,average_gtd,
             '.',markersize=15,
