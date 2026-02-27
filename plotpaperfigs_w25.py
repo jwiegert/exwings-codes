@@ -85,11 +85,11 @@ Nmodels = len(models)
 
 # Plot-list
 plot_dustmass = 'n'             # Plots dust masses vs time of all 3 models
-plot_gastodustratio = 'y'       # Plots gas-todust-ratio of models vs NESS-sample and prints values
+plot_gastodustratio = 'n'       # Plots gas-todust-ratio of models vs NESS-sample and prints values
 plot_075grainsize = 'n'         # Plots grain size vs time of 075
 plot_052exampleimages = 'n'     # Plots a number of example images of 052
 plot_numbclouds = 'n'           # Plots number of clouds per time for each angle&model
-plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities and overall
+plot_LOSevents = 'y'            # Plots angle-dependent cloud-periods and probabilities and overall
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
 plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
 plot_allrandomsample = 'n'      # Plots all 24 random images of all models
@@ -297,7 +297,7 @@ if plot_gastodustratio == 'y':
         )
     ax.set_yscale('log')
     ax.set_xlim([0.5,3.5])
-    ax.set_ylim([50,2e4])
+    ax.set_ylim([7,2.5e4])
     ax.set_xticks([1,2,3]) 
     ax.set_xticklabels(models_label);
     ax.set_ylabel('Gas-to-dust ratio',fontsize=18)
@@ -785,7 +785,7 @@ if plot_052exampleimages == 'y':
 
 #
 #####################################################################################
-# Plot average period of Rsource, F2um, F10um events per model and angle
+# Plot statistics per model and angle
 if plot_LOSevents == 'y':
     """
     All data for this plot
@@ -881,13 +881,7 @@ if plot_LOSevents == 'y':
     Model-A:052    0.0952   0.0702   0.0301    0.0301     0.0426    0.0376
     Model-B:074    0.0214   0.0190   0.0357    0.0143     NA        0.0167
     Model-C:075    NA       0.0049   NA        NA         NA        NA
-
-
-    # TODO
-    # dissa att plotta de med NA helt och hållet
-
     """;
-
     # Set fig-objects
     fig,ax = plt.subplots(
         3,3,
@@ -976,7 +970,7 @@ if plot_LOSevents == 'y':
     ax[0][0].set_ylim([0,periodtime_axis[-1]])
     ax[0][1].set_ylim([0,0.5])
     ax[0][2].set_ylim([0.2,1])
-    ax[0][0].set_ylabel('Average period (yrs)', fontsize = 18)
+    ax[0][0].set_ylabel('Typical time scale (yrs)', fontsize = 18)
     ax[0][1].set_ylabel('Detection probability', fontsize = 18)
     ax[0][2].set_ylabel('Average prevalence (yrs)', fontsize = 18)
     #
@@ -1636,10 +1630,10 @@ if plot_LOSevents == 'y':
     #
     # Set axislabels
     #
-    ax[1][0].set_ylabel(r'Average period (yrs)', fontsize=18)
-    ax[2][0].set_ylabel(r'Detection probability', fontsize=18)
-    ax[1][1].set_xlabel(r'LOS-angle',fontsize=18)
-    ax[2][1].set_xlabel(r'LOS-angle',fontsize=18)
+    ax[1][0].set_ylabel('Typical time scale (yrs)', fontsize=18)
+    ax[2][0].set_ylabel('Detection probability', fontsize=18)
+    ax[1][1].set_xlabel('LOS-angle',fontsize=18)
+    ax[2][1].set_xlabel('LOS-angle',fontsize=18)
     #
     # Save figure
     #
@@ -1887,14 +1881,15 @@ if plot_bestrandomsample == 'y':
         1,4,
         figsize=(13,3.5),
     )
+    imagescaling = 0.45
     scale = [
-        np.sqrt(1e-2),
-        np.sqrt(9e-1),
+        (1e-2)**imagescaling,
+        (2e0)**imagescaling
     ]
     # And numbers for contour lines in images
     StarArea = np.pi * Rstar**2
     max_flux_contrast = 0.01
-    exposure_limit = np.sqrt(240000*1e-6)
+    exposure_limit = (240000*1e-6)**imagescaling
     #
     # Loop through the 3 different model selections
     for nimage in range(3):
@@ -1916,7 +1911,7 @@ if plot_bestrandomsample == 'y':
             image=imagename
         )
         stellarflux /= StarArea
-        Fstarlimit = np.sqrt(max_flux_contrast * stellarflux * 1e-6)
+        Fstarlimit = (max_flux_contrast * stellarflux * 1e-6)**imagescaling
 
         # Create first 3 panels with the chosen images
         # Load image
@@ -1925,11 +1920,9 @@ if plot_bestrandomsample == 'y':
             image=imagename,
             distance=1
         )
-        # Change to MJy and scale (same as original example images)
-        # but with sqrt as well
-        image2d = np.sqrt(
-            image2d/1e6
-        )
+        # Change to MJy and scale to some root'ish
+        image2d = (image2d/1e6)**imagescaling
+        #
         # Plot image and save colourbar info
         ax[nimage].imshow(
             image2d, 
@@ -2031,7 +2024,6 @@ if plot_bestrandomsample == 'y':
         [0,nblobs_max+1],[0,0],
         'k--'
     )
-
     # Set figure settings
     ax[0].set_ylabel('Offset (au)', fontsize = 14)
     ax[1].set_xlabel('Offset (au)', fontsize = 14)
@@ -2044,10 +2036,10 @@ if plot_bestrandomsample == 'y':
     ax[-1].tick_params(axis='both', which='major', labelsize=15)
     ax[-1].tick_params(axis='both', which='major', labelsize=15)
     ax[-1].set_xticks(list(range(1,nblobs_max+1)))
-    ax[-1].set_xlim([0.8,nblobs_max+0.2])
+    ax[-1].set_xlim([0.6,nblobs_max+0.4])
     ax[-1].set_ylim([-0.2,2])
     ax[-1].set_box_aspect(1)
-
+    #
     # Save figure
     fig.tight_layout()
     fig.savefig(
@@ -2142,12 +2134,13 @@ if plot_allrandomsample == 'y':
             # Testplot image
             #
             # Change to MJy and to square-root stype
-            image2d = np.sqrt(
-                image2d/1e6
-            )
+            # or some other root
+            imagescaling = 0.45
+            image2d = (image2d/1e6)**imagescaling
             # Set scale same as for original example images for the two wavelengths
             scale = [
-                np.sqrt(1e-2),np.sqrt(9e-1)
+                (1e-2)**imagescaling,
+                (2e0)**imagescaling
             ]
             # Plot image and save colourbar info
             ax[snap_counterY,snap_counterX].imshow(
@@ -2185,6 +2178,7 @@ if plot_allrandomsample == 'y':
             facecolor='white',
             dpi=300
         )
+    os.system('spd-say moo')
 
 
 # Plot detection rate vs flux density of all dust clouds of each of the
