@@ -89,10 +89,10 @@ plot_gastodustratio = 'n'       # Plots gas-todust-ratio of models vs NESS-sampl
 plot_075grainsize = 'n'         # Plots grain size vs time of 075
 plot_052exampleimages = 'n'     # Plots a number of example images of 052
 plot_numbclouds = 'n'           # Plots number of clouds per time for each angle&model
-plot_LOSevents = 'y'            # Plots angle-dependent cloud-periods and probabilities and overall
+plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities and overall
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
 plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
-plot_allrandomsample = 'n'      # Plots all 24 random images of all models
+plot_allrandomsample = 'y'      # Plots all 24 random images of all models
 plot_detrate_fluxdensity = 'n'  # Plots cumulative clouds per year with beam-averaged flux density
 
 
@@ -770,7 +770,7 @@ if plot_052exampleimages == 'y':
                 # Only label on one, TODO move this to middle of plot (manual labour in gimp)
                 if ncolumn == 0:
                     cb0.set_label(
-                        label = r'Flux density (MJy au$^{-2}$, at 1pc)', fontsize=12
+                        label = r'Flux density (MJy asec$^{-2}$, at 1pc)', fontsize=12
                     )
     # NOTE
     # final layout of image is fixed manually in GIMP
