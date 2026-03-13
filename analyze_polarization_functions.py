@@ -34,7 +34,12 @@ beamwidthVLTI_10um = 5.1e-3 # asec
 #    outputpath:str='../dustkapscatmat_opastar.inp'
 # )
 #
-#
+# apf.plot_onepolarization(
+#    imagepath:str='../r3dresults_vltcompare/st28gm06n052_nospikes/166_optoolmgsio/',
+#    imagewave:float=0.65,
+#    polarization:str='l',
+#    distance:float=1,
+#)
 #
 # ------------------------------------------------------------ #
 # Functions be here
@@ -305,6 +310,9 @@ def plot_onepolarization(
 
 
 def plot_allpolarizations():
+    """
+    TODO
+    """
     print('hej')
 
 

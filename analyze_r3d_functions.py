@@ -572,9 +572,11 @@ def load_grainsizes(
         grainsize_path:str='../grain_sizes_186.dat'
     ):
     """
-    TODO info
-    Loads already extracted-to-R3D grain sizes
+    Loads already extracted-to-R3D grain sizes out of ancillerary files created
+    when writing r3d-files from co5bold data.
+
     ARGUMENTS
+      grainsize_path:str: path to grain_sizes.dat-file
     RETURNS
       sizes : array with all grain sizes per grid cell
       Nleafs : number of cells
@@ -586,7 +588,7 @@ def load_grainsizes(
                 if line[0] != '#':
                     sizes.append(float(line.strip('\n')))
     else:
-        return f'ERROR: bin_grainsizes can not find {grainsize_path}.'
+        raise ValueError(f'    Bin_grainsizes can not find {grainsize_path}.')
     sizes = np.array(sizes)
     Nleafs = np.size(sizes)
 

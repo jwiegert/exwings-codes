@@ -125,7 +125,6 @@ Rsol = 6.955e10 # cm
 #
 # merge_dustopac(
 #    filenames:list=['dustopac.inp'],
-#    modelname:str='st28gm06n052',
 #    phases:list=[186,190,198],
 # )
 #
@@ -1634,7 +1633,6 @@ def merge_dustopac(
 
     ARGUMENTS
       filenames:list = list of dustopac-filenames
-      modelname:str = co5bold-model-name (folder in r3dresults)
       phases:list = list of phase-designations to loop through (folders inside modelfolder)
     
     RETURNS
