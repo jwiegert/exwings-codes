@@ -119,6 +119,7 @@ def plot_onepolarization(
         imagewave:float=0.65,
         polarization:str='l',
         distance:float=1,
+        vmaxcorr:float=1e-2
     ):
     """
     Loads all angles of one snapshot and one wavelength and
@@ -132,6 +133,7 @@ def plot_onepolarization(
         'l' : all linear = sqrt(Q2 + U2)
         'v' : circular = sqrt(V2)
       distance:float normalisation to flux densities of image, in parsec
+      vmaxcorr:float change max flux density limit for images
     TODO
       Add more polarization possibilities if I want to look at only one
       linear pol or so.
@@ -184,7 +186,7 @@ def plot_onepolarization(
         intensity_1d = []        #
         # Extract angle names
         angles.append(
-            image.split('_')[1]+'_'+image.split('_')[2]
+            image.split('_')[1]+' '+image.split('_')[2]
         )
         # Open image file
         with open(f'{imagepath}{image}', 'r') as fimage:
@@ -259,8 +261,7 @@ def plot_onepolarization(
             )
             # Create empty 2D array for the image and pixel counters
             image2d = np.zeros((npixels,npixels))
-            nx = 0
-            ny = 0
+            nx,ny = 0,0
             #
             for pixelflux in intensity_1d:
                 # Recompute unit to Jy/asec2
@@ -280,7 +281,7 @@ def plot_onepolarization(
                 extent=axisplot,
                 cmap=plt.get_cmap('hot'),
                 vmin=np.mean(image2d),
-                vmax=np.max(image2d)
+                vmax=np.max(image2d)*vmaxcorr
             )
             # Write out angle choice
             ax[nrow,ncol].set_title(
@@ -308,12 +309,150 @@ def plot_onepolarization(
     return fig,ax,fluxtotal
 
 
-
-def plot_allpolarizations():
+# Plot a subplot with image itnensity, lineare intensity and circular polarization intensity
+def plot_allpolarizations(
+        imagepath:str='../r3dresults_vltcompare/st28gm06n052_nospikes/166_optoolmgsio/',
+        imagefile:str='image_i000_phi000_0.65um.out',
+        distance:float=1,
+        vmaxcorr:float=1e-1,
+    ):
     """
     TODO
-    """
-    print('hej')
 
+    vmaxcorr:float change max flux density limit for images
+    """
+    # Automatically add / to end of path if it's missing
+    if imagepath[-1] != '/':
+        imagepath += '/'
+        #
+    # Extract imagename for plot later
+    imagename = f'{imagefile.split('_')[1]}{imagefile.split('_')[2]} {imagefile.split('_')[3][:-4]}'
+    #
+    # List polarisations
+    polarization = [
+        'Tot intensity',
+        'Linear intensity',
+        'Circular intensity',
+    ]
+    # Initiate subplot object
+    fig,ax = plt.subplots(
+        1,3,
+        figsize=(9,3),
+    )
+    # Declare lists for image intensity, linear pol intensity and circ pol intensity
+    # and for imageplotting
+    I_intens_1d = []
+    L_intens_1d = []
+    V_intens_1d = []
+    # Load data
+    with open(imagepath+imagefile, 'r') as f:
+        for nl,line in enumerate(f.readlines()):
+            #
+            # Check if polarised image or not
+            if nl == 0:
+                imagesetting = int(line.strip())
+            if imagesetting == 3:
+                # This is correct, otherwise raise error (see below)
+                #            
+                # Row 1: image size, pixels by pixels
+                if nl == 1:
+                    npixels_x = int(line.split()[0])
+                    npixels_y = int(line.split()[1])
+                    npixels = max([npixels_x,npixels_y])            
+                # row 3: pixel size is in cm, divide by AUcm for AU
+                if nl == 3:
+                    pixelsize_au = float(line.split()[0])/AUcm
+                #
+                # row 6 onward: pixel-values, four columns
+                # image.out's pixels has unit
+                # erg s-1 cm-2 Hz-1 ster-1
+                if nl > 5:
+                    if len(line.split()) > 1:
+                        # Loop over polarisation numbers
+                        # Split line and extract each column, strip from \n and make floats
+                        i_pixeldata = float(line.split()[0].strip())
+                        q_pixeldata = float(line.split()[1].strip())
+                        u_pixeldata = float(line.split()[2].strip())
+                        v_pixeldata = float(line.split()[3].strip())
+                        # Save each image-combo
+                        I_intens_1d.append(
+                            i_pixeldata
+                        )
+                        L_intens_1d.append(
+                            np.sqrt(q_pixeldata**2 + u_pixeldata**2)
+                        )
+                        V_intens_1d.append(
+                            np.sqrt(v_pixeldata**2)
+                        )
+    # Continue with plotting images
+    if imagesetting == 1:
+        # If not polarized, abort
+        raise ValueError('Not polarised, load normal image with a3d.load_images()!')
+    else:
+        # Continue with plotting image
+        #
+        # Size of whole image in AU and image-axis-scales
+        size_au = pixelsize_au * npixels
+        axisplot  = [-0.5*size_au,0.5*size_au,-0.5*size_au,0.5*size_au]
+        #
+        # Create 2D arrays
+        I_image2d = np.zeros((npixels,npixels))
+        L_image2d = np.zeros((npixels,npixels))
+        V_image2d = np.zeros((npixels,npixels))
+        # Set pixel counter
+        nx,ny = 0,0
+        #
+        for i_flux,l_flux,v_flux in zip(I_intens_1d,L_intens_1d,V_intens_1d):
+            # Convert image1d to 2d and change unit to Jy/asec2, ie normalised to distance
+            I_image2d[nx,ny] = i_flux * 1.e23 * 2.35044305391e-11 / distance**2
+            L_image2d[nx,ny] = l_flux * 1.e23 * 2.35044305391e-11 / distance**2
+            V_image2d[nx,ny] = v_flux * 1.e23 * 2.35044305391e-11 / distance**2
+            # Move nx and ny
+            nx = nx + 1
+            if nx == npixels_x:
+                nx = 0
+                ny = ny + 1
+        # Plot all three sub plots
+        ax[0].imshow(
+            I_image2d,
+            origin='lower',
+            extent=axisplot,
+            cmap=plt.get_cmap('hot'),
+            vmin=np.mean(I_image2d),
+            vmax=np.max(I_image2d)*vmaxcorr
+        )
+        ax[0].set(
+            title=polarization[0], 
+            xlabel='Offset (AU)',
+            ylabel='Offset (AU)'
+        )
+        ax[1].imshow(
+            L_image2d,
+            origin='lower',
+            extent=axisplot,
+            cmap=plt.get_cmap('hot'),
+            vmin=np.mean(L_image2d),
+            vmax=np.max(L_image2d)*vmaxcorr
+        )
+        ax[1].set(
+            title=polarization[1],
+            xlabel='Offset (AU)',
+        )
+        ax[2].imshow(
+            V_image2d,
+            origin='lower',
+            extent=axisplot,
+            cmap=plt.get_cmap('hot'),
+            vmin=np.mean(V_image2d),
+            vmax=np.max(V_image2d)*vmaxcorr
+        )
+        ax[2].set(
+            title=polarization[2],
+            xlabel='Offset (AU)',
+        )
+    fig.suptitle(
+        imagename, fontsize=14
+    )
+    return fig,ax
 
 

@@ -3012,21 +3012,23 @@ def write_photocentre_files(
     RETURNS
       File: photocentre_{wavelength}um.dat in model_path-folder
     """
-    print('Running: write_photocentre_files')
+    print(
+        'Running: write_photocentre_files'
+    )
     # Automatically add / to end of path if it's missing
     if model_path[-1] != '/':
         model_path += '/'
-
-    # Load all snapshots
+    #
+    # Load all available snapshots
     snapshots = [int(filename) for filename in os.listdir(model_path) if os.path.isdir(model_path+filename)]
     snapshots.sort()
     Nsnapshots = len(snapshots)
-
-
+    #
     # Open file to write all coords
     with open(f'{model_path}photocentre_{wavelength}um.dat','w') as fphotoc:
-        print('  Writing photocentre file')
-
+        print(
+            '  Writing photocentre file'
+        )
         # Write header
         fphotoc.writelines(f'# Photocentre coordinates at lambda = {wavelength} um\n')
         fphotoc.writelines(f'# Within circle with radius {beam_size} au (=0 -> whole image included).\n')
@@ -3035,22 +3037,24 @@ def write_photocentre_files(
         for angle in angles:
             fphotoc.writelines(f'    {angle}')
         fphotoc.writelines('\n# Snapshot      X-Y-R for each angle in AU')
-
+        #
         # Loop over time
         for snapshot in snapshots:
-
+            # Print some output
+            if snapshot == 100 or snapshot == 200 or snapshot == 300:
+                print(f'  At snapshot {snapshot}')
+            #
             # Print snapshot number
-            fphotoc.writelines(f'\n{snapshot}    ')
-
+            fphotoc.writelines(f'\n{snapshot:03d}    ')
+            #
             # Loop over angles
             for angle in angles:
-
+                #
                 # Extract each image's photocentre
                 pcX,pcY,pcR = compute_photocentre(
-                    image_link=f'{model_path}{snapshot}/image_{angle}_{wavelength}um.out',
+                    image_link=f'{model_path}{snapshot:03d}/image_{angle}_{wavelength}um.out',
                     beam_size=beam_size
                 )
                 # Write X-Y-R- coords for each angle, in AU
                 fphotoc.writelines(f'{pcX:.5f}  {pcY:.5f}  {pcR:.5f}    ')
-
     print('Done!')
