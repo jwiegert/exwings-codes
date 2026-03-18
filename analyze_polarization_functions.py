@@ -4,7 +4,7 @@
 # Various useful packages
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy
+#import scipy
 import re
 import os
 
@@ -309,7 +309,7 @@ def plot_onepolarization(
     return fig,ax,fluxtotal
 
 
-# Plot a subplot with image itnensity, lineare intensity and circular polarization intensity
+# Plot a subplot with image intensity, linear intensity and circular polarization intensity
 def plot_allpolarizations(
         imagepath:str='../r3dresults_vltcompare/st28gm06n052_nospikes/166_optoolmgsio/',
         imagefile:str='image_i000_phi000_0.65um.out',

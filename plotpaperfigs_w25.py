@@ -7,11 +7,11 @@ import numpy as np
 import os
 
 from matplotlib import rc
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+#from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-import analyze_co5bold_functions as a5d
+#import analyze_co5bold_functions as a5d
 import analyze_r3d_functions as a3d
-import create_r3d_functions as c3d
+#import create_r3d_functions as c3d
 import analyze_timedep_functions as atf
 
 # Figure settings
@@ -84,7 +84,7 @@ models_relaxsnap = [0,29,29]
 Nmodels = len(models)
 
 # Plot-list
-plot_dustmass = 'n'             # Plots dust masses vs time of all 3 models
+plot_dustmass = 'y'             # Plots dust masses vs time of all 3 models
 plot_gastodustratio = 'n'       # Plots gas-todust-ratio of models vs NESS-sample and prints values
 plot_075grainsize = 'n'         # Plots grain size vs time of 075
 plot_052exampleimages = 'n'     # Plots a number of example images of 052
@@ -92,7 +92,7 @@ plot_numbclouds = 'n'           # Plots number of clouds per time for each angle
 plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities and overall
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
 plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
-plot_allrandomsample = 'y'      # Plots all 24 random images of all models
+plot_allrandomsample = 'n'      # Plots all 24 random images of all models
 plot_detrate_fluxdensity = 'n'  # Plots cumulative clouds per year with beam-averaged flux density
 
 
