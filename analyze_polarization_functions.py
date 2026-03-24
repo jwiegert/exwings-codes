@@ -114,8 +114,9 @@ def write_r3d_emptypolarization(
             fstar.writelines('  0.0  0.0  0.0  0.0  0.0  0.0\n')
     # Done!
 
-def plot_onepolarization(
-        imagepath:str='../r3dresults_vltcompare/st28gm06n052_nospikes/166_optoolmgsio/',
+
+def plot_intensity_onepolarization(
+        imagepath:str='../r3dresults_polarized/st28gm06n052_images/166/',
         imagewave:float=0.65,
         polarization:str='l',
         distance:float=1,
@@ -134,9 +135,6 @@ def plot_onepolarization(
         'v' : circular = sqrt(V2)
       distance:float normalisation to flux densities of image, in parsec
       vmaxcorr:float change max flux density limit for images
-    TODO
-      Add more polarization possibilities if I want to look at only one
-      linear pol or so.
 
     RETURNS
       fix,ax,fluxtotal
@@ -310,8 +308,8 @@ def plot_onepolarization(
 
 
 # Plot a subplot with image intensity, linear intensity and circular polarization intensity
-def plot_allpolarizations(
-        imagepath:str='../r3dresults_vltcompare/st28gm06n052_nospikes/166_optoolmgsio/',
+def plot_intensity_allpolarizations(
+        imagepath:str='../r3dresults_polarized/st28gm06n052_images/166/',
         imagefile:str='image_i000_phi000_0.65um.out',
         distance:float=1,
         vmaxcorr:float=1e-1,
