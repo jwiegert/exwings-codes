@@ -84,7 +84,7 @@ models_relaxsnap = [0,29,29]
 Nmodels = len(models)
 
 # Plot-list
-plot_dustmass = 'y'             # Plots dust masses vs time of all 3 models
+plot_dustmass = 'n'             # Plots dust masses vs time of all 3 models
 plot_gastodustratio = 'n'       # Plots gas-todust-ratio of models vs NESS-sample and prints values
 plot_075grainsize = 'n'         # Plots grain size vs time of 075
 plot_052exampleimages = 'n'     # Plots a number of example images of 052
@@ -106,7 +106,10 @@ plottalk_datadescript = 'n'
 plottalk_exampleimages = 'n'    # Plots 3 figs for whyAGB5-talk with some random sample images
 plottalk_cloudperiods = 'n'
 
-
+# For NAISS activity report
+plotnaiss_examplefigs = 'n'
+# And for Susannes Cool stars poster
+plotconf_susanneposter = 'y'    # TODO
 
 # SKIP THESE
 plot_datacompare = 'n'          # Plots colour comparisons for each model with data
@@ -2537,6 +2540,127 @@ if plot_fluxvariations == 'y':
         dpi=300
     )
     #fig.show()
+
+
+# Plot a few example figs for NAISS activity report
+if plotnaiss_examplefigs == 'y':
+    #
+    #    052:  46.90yrs, 90-0        297
+    #    074: 110.59yrs, 270-0       419
+    #    075:  65.75yrs, 90-270      136
+    #
+    imagepaths = [
+        '../r3dresults/st28gm06n052_nospikes/297/',
+        '../r3dresults/st28gm06n074_nospikes/419/',
+        '../r3dresults/st28gm06n075_nospikes/136/',
+    ]
+    imagenames = [
+        'image_i090_phi000_10um.out',
+        'image_i270_phi000_10um.out',
+        'image_i090_phi270_10um.out',
+    ]
+    models_label = [
+        'st28gm06n052',
+        'st28gm06n074',
+        'st28gm06n075',
+    ]
+    imagetimes = [
+        f'{models_label[0]}: 46.90 yr',
+        f'{models_label[1]}: 110.59 yr',
+        f'{models_label[2]}: 65.75 yr',
+    ]
+    # Chosen snapshots from random sample
+    nsnapshots = [
+        297,419,136
+    ]
+    # Angles of chosen snapshots
+    nangles = [
+        1,5,3
+    ]
+    # Max number of snapshots for each model
+    models_snapshots = [
+        400,
+        450,
+        442,
+    ]
+    # Set up image object and image scale
+    fig,ax = plt.subplots(
+        1,3,
+        figsize=(10,3.5),
+    )
+    imagescaling = 0.45
+    scale = [
+        (1e-2)**imagescaling,
+        (2e0)**imagescaling
+    ]
+    #
+    # Loop through the 3 different model selections
+    for nimage in range(3):
+        # Set all parameters
+        model = models[nimage]
+        nangle = nangles[nimage]
+        angle_label = angles_label[nangle]
+        nsnapshot = nsnapshots[nimage]
+        model_snapshot = models_snapshots[nimage]
+        imagepath = imagepaths[nimage]
+        imagename = imagenames[nimage]
+        imagetime = imagetimes[nimage]
+
+        # Create panels with the chosen images
+        # Load image
+        image2d,image2dlog,flux,axisplot = a3d.load_images(
+            path=imagepath,
+            image=imagename,
+            distance=1
+        )
+        # Change to MJy and scale to some root'ish
+        image2d = (image2d/1e6)**imagescaling
+        #
+        # Plot image and save colourbar info
+        ax[nimage].imshow(
+            image2d, 
+            origin='lower', 
+            extent=axisplot, 
+            vmin=scale[0],
+            vmax=scale[1],
+            cmap=plt.get_cmap('hot')
+        )
+        # Write time for each observation
+        ax[nimage].set_title(
+            f'{imagetime}, {angle_label}',
+            fontsize = 14,
+            loc='left'
+        )
+        # Set general axis settings
+        ax[nimage].tick_params(axis='both', which='major', labelsize=15)
+        ax[nimage].tick_params(axis='both', which='major', labelsize=15)
+
+    # Set figure settings
+    ax[0].set_ylabel('Offset (au)', fontsize = 14)
+    ax[1].set_xlabel('Offset (au)', fontsize = 14)
+    #
+    # Save figure
+    fig.tight_layout()
+    fig.savefig(
+        'figs/naiss_r3dsample.pdf',
+        facecolor='white',
+        dpi=300
+    )
+
+
+if plotconf_susanneposter == 'y':
+    #
+    # A 2x2 image with example figures from one of the models
+    # 2 wavelengths and two time snapshots
+    #
+    # TODO
+    #
+    print('hej')
+
+
+
+
+
 
 # Plot comparisons with data as found at 
 # suh2021, smiths2001, aavso.rg

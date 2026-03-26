@@ -3041,7 +3041,7 @@ def write_photocentre_files(
         # Loop over time
         for snapshot in snapshots:
             # Print some output
-            if snapshot == 100 or snapshot == 200 or snapshot == 300:
+            if snapshot == 100 or snapshot == 200 or snapshot == 300 or snapshot == 400:
                 print(f'  At snapshot {snapshot}')
             #
             # Print snapshot number
