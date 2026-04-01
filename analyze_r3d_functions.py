@@ -2012,11 +2012,11 @@ def plot_imagesubplots(
             if imlin == 'y':
                 imageplot = image2d
                 vmin = np.mean(imageplot) *1e-5
-                vmax = np.max(imageplot)  *1e-2
+                vmax = np.max(imageplot)  *1e-1
             else:
                 imageplot = image2dlog
                 vmin = np.mean(imageplot) -5
-                vmax = np.max(imageplot)  -2
+                vmax = np.max(imageplot)  -1
             #
             # And plot 
             #

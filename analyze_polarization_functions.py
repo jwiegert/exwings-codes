@@ -26,7 +26,7 @@ beamwidthVLTI_10um = 5.1e-3 # asec
 
 
 #
-# ------------------------------------------------------------ #
+# ---------------------------------------------------------------------------- #
 # List of functions
 #
 # apf.write_r3d_emptypolarisation(
@@ -34,15 +34,31 @@ beamwidthVLTI_10um = 5.1e-3 # asec
 #    outputpath:str='../dustkapscatmat_opastar.inp'
 # )
 #
-# apf.plot_onepolarization(
-#    imagepath:str='../r3dresults_vltcompare/st28gm06n052_nospikes/166_optoolmgsio/',
+#
+# apf.plot_intensity_onepolarization(
+#    imagepath:str='../r3dresults_polarized/st28gm06n052_images/166/',
 #    imagewave:float=0.65,
 #    polarization:str='l',
 #    distance:float=1,
-#)
+#    vmaxcorr:float=1e-2
+#):
 #
-# ------------------------------------------------------------ #
-# Functions be here
+# apf.plot_intensity_allpolarizations(
+#    imagepath:str='../r3dresults_polarized/st28gm06n052_images/166/',
+#    imagefile:str='image_i000_phi000_0.65um.out',
+#    distance:float=1,
+#    vmaxcorr:float=1e-1,
+#):
+#
+# apf.plot_allpolarizationdirections(
+#    imagepath:str='../r3dresults_polarized/st28gm06n052_images/166/',
+#    imagefile:str='image_i000_phi000_0.65um.out',
+#    distance:float=1,
+#    vmaxcorr:float=1e-1,
+#):
+#
+# ---------------------------------------------------------------------------- #
+# Here be functions
 
 def write_r3d_emptypolarization(
         wavelengthpath:str='../r3dsims/wavelength_micron.inp',
@@ -315,9 +331,20 @@ def plot_intensity_allpolarizations(
         vmaxcorr:float=1e-1,
     ):
     """
-    TODO
+    Plots 3 subplots of all polarization intensities.
+    One with image intensity (standard image)
+    One with linear polarized intensity.
+    One with circular polarized intensity.
+    Of one image, at one wavelength and LOS-angle.
 
-    vmaxcorr:float change max flux density limit for images
+    ARGUMENTS
+      imagepath:str - path to folder with r3d-files.
+      imagefile:str - r3d-image file name.
+      distance:float - distance to model in pc
+      vmaxcorr:float - Image vertical scale upper limit correction based on max flux density.
+    
+    RETURNS
+      fig,ax - figure and axes-objects for plotting and/or saving.
     """
     # Automatically add / to end of path if it's missing
     if imagepath[-1] != '/':
@@ -454,3 +481,231 @@ def plot_intensity_allpolarizations(
     return fig,ax
 
 
+def plot_allpolarizationdirections(
+        imagepath:str='../r3dresults_polarized/st28gm06n052_images/166/',
+        imagefile:str='image_i000_phi000_0.65um.out',
+        distance:float=1,
+        vmaxcorr:float=1e-1,
+    ):
+    """
+    Plots all polarization directions in a 2x3 image.
+    First row shows intensity of Q+ and Q- (polarization along X-axis and Y-axis).
+    Second row shows intensity of U+ and U- (linear polarization 45deg to X-Y-axis).
+    Third row shows intensity of V+ and V- (circular polarization right handed and left handed).
+
+    ARGUMENTS
+      imagepath:str - path to folder with r3d-files.
+      imagefile:str - r3d-image file name.
+      distance:float - distance to model in pc
+      vmaxcorr:float - Image vertical scale upper limit correction based on max flux density.
+    
+    RETURNS
+      dict_polarizationmax - dictionary of all maximum values of all polarization directions
+      fig,ax - figure and axes-objects for plotting and/or saving.
+    """
+    # Automatically add / to end of path if it's missing
+    if imagepath[-1] != '/':
+        imagepath += '/'
+    # Start fig-objects for each polarization
+    # [0,:] - Q   - linear
+    # [1,:] - U   - linear
+    # [2,:] - V   - circular
+    fig,ax = plt.subplots(
+        3,2,
+        figsize=(7,10),
+    )
+    # Setup various lista and arrays
+    fluxtotal = []
+    q_pixeldata = []
+    u_pixeldata = []
+    v_pixeldata = []
+    # Open image file
+    with open(f'{imagepath}{imagefile}', 'r') as fimage:
+        # Loop through image
+        for nl,line in enumerate(fimage.readlines()):
+            # Check if polarized image or not
+            if nl == 0:
+                imagesetting = int(
+                    line.strip()
+                )
+            # Then check polarization setting
+            if imagesetting == 3:
+                # 3 means full polarisation, continue with extracting data
+                #
+                # Row 1: image size, pixels by pixels
+                if nl == 1:
+                    npixels_x = int(line.split()[0])
+                    npixels_y = int(line.split()[1])
+                    npixels = max([npixels_x,npixels_y])
+                # row 3: pixel size is in cm, divide by AUcm for AU
+                if nl == 3:
+                    pixelsize_au = float(line.split()[0])/AUcm
+                # row 6 onward: pixel-values, four columns
+                # image.out's pixels has unit
+                # erg s-1 cm-2 Hz-1 ster-1
+                if nl > 5:
+                    if len(line.split()) > 1:
+                        # Loop over polarization numbers
+                        # Split line and extract each column, strip from \n and make floats
+                        q_pixeldata.append(
+                            float(line.split()[1].strip())
+                        )
+                        u_pixeldata.append(
+                            float(line.split()[2].strip())
+                        )
+                        v_pixeldata.append(
+                            float(line.split()[3].strip())
+                        )
+    # Continue with image plotting
+    #
+    # Abort if imagesetting is incorrect
+    if imagesetting == 1:
+        raise ValueError('Not polarized, load normal image with a3d.load_images()!')
+    else:
+        # Extract some useful quantities
+        # pixel size in asec (pixelsize in au and distance in pc gives distance in asec)
+        pixelsize_as = pixelsize_au / distance
+        # Size of whole image in AU and image-axis-scales
+        size_au = pixelsize_au * npixels
+        axisplot  = [
+            -0.5*size_au,0.5*size_au,-0.5*size_au,0.5*size_au
+        ]
+        # Extract max polarizations in each direction
+        #
+        # Total flux density of the image in Jy
+        # Transform to Jy/pix and sum all
+        # 1 Jy = 1e23 erg/(s cm2 Hz)
+        # 1 asec = 1/(180/pi * 3600)^2 ster = 2.35044305391e-11 ster
+        # 1 pixel = pixelsize_as^2  asec^2
+        # So in effect unit is Jy/30x30AU2
+        #
+        dict_polarizationmax = {
+            'qplus_max' : np.max(q_pixeldata)*1.e23 * 2.35044305391e-11 / distance**2,
+            'qneg_max' : np.min(q_pixeldata)*1.e23 * 2.35044305391e-11 / distance**2,
+            'uplus_max' : np.max(u_pixeldata)*1.e23 * 2.35044305391e-11 / distance**2,
+            'uneg_max' : np.min(u_pixeldata)*1.e23 * 2.35044305391e-11 / distance**2,
+            'vplus_max' : np.max(v_pixeldata)*1.e23 * 2.35044305391e-11 / distance**2,
+            'vneg_max' : np.min(v_pixeldata)*1.e23 * 2.35044305391e-11 / distance**2,
+        }
+        # Loop through pixeldata and save in 2d-arrays
+        # First define image arrays
+        qplus_strength_2d = np.zeros((npixels_x,npixels_y))
+        qneg_strength_2d = np.zeros((npixels_x,npixels_y))
+        #
+        uplus_strength_2d = np.zeros((npixels_x,npixels_y))
+        uneg_strength_2d = np.zeros((npixels_x,npixels_y))
+        #
+        vplus_strength_2d = np.zeros((npixels_x,npixels_y))
+        vneg_strength_2d = np.zeros((npixels_x,npixels_y))
+        #
+        nx,ny = 0,0
+        #
+        for q_strength,u_strength,v_strength in zip(q_pixeldata,u_pixeldata,v_pixeldata):
+            # Save in image arrays, put all values to positives and
+            # recompute unit to Jy/asec2
+            if q_strength > 0:
+                qplus_strength_2d[nx,ny] =   q_strength * 1.e23 * 2.35044305391e-11 / distance**2
+            else: 
+                qneg_strength_2d[nx,ny] = -1*q_strength * 1.e23 * 2.35044305391e-11 / distance**2
+            if u_strength > 0:
+                uplus_strength_2d[nx,ny] =   u_strength * 1.e23 * 2.35044305391e-11 / distance**2
+            else: 
+                uneg_strength_2d[nx,ny] = -1*u_strength * 1.e23 * 2.35044305391e-11 / distance**2
+            if v_strength > 0:
+                vplus_strength_2d[nx,ny] =   v_strength * 1.e23 * 2.35044305391e-11 / distance**2
+            else: 
+                vneg_strength_2d[nx,ny] = -1*v_strength * 1.e23 * 2.35044305391e-11 / distance**2
+            # Move nx and ny
+            nx = nx + 1
+            if nx == npixels_x:
+                nx = 0
+                ny = ny + 1
+        # Plot all parameters
+        #
+        # Plot Qplus
+        ax[0,0].imshow(
+            qplus_strength_2d,
+            origin='lower',
+            extent=axisplot,
+            cmap=plt.get_cmap('hot'),
+            vmin=0,
+            vmax=np.max(qplus_strength_2d)*vmaxcorr
+        )
+        ax[0,0].set_title(
+            'Q plus', fontsize=14
+        )
+        # Plot Qminus
+        ax[0,1].imshow(
+            qneg_strength_2d,
+            origin='lower',
+            extent=axisplot,
+            cmap=plt.get_cmap('hot'),
+            vmin=0,
+            vmax=np.max(qplus_strength_2d)*vmaxcorr
+        )
+        ax[0,1].set_title(
+            'Q minus', fontsize=14
+        )
+        #
+        # Plot Uplus
+        ax[1,0].imshow(
+            uplus_strength_2d,
+            origin='lower',
+            extent=axisplot,
+            cmap=plt.get_cmap('hot'),
+            vmin=0,
+            vmax=np.max(uplus_strength_2d)*vmaxcorr
+        )
+        ax[1,0].set_title(
+            'U plus', fontsize=14
+        )
+        # Plot Uminus
+        ax[1,1].imshow(
+            uneg_strength_2d,
+            origin='lower',
+            extent=axisplot,
+            cmap=plt.get_cmap('hot'),
+            vmin=0,
+            vmax=np.max(uplus_strength_2d)*vmaxcorr
+        )
+        ax[1,1].set_title(
+            'U minus', fontsize=14
+        )
+        #
+        # Plot Vright (plus)
+        ax[2,0].imshow(
+            vplus_strength_2d,
+            origin='lower',
+            extent=axisplot,
+            cmap=plt.get_cmap('hot'),
+            vmin=0,
+            vmax=np.max(vplus_strength_2d)*vmaxcorr
+        )
+        ax[2,0].set_title(
+            'V right', fontsize=14
+        )
+        # Plot Vleft (minus)
+        ax[2,1].imshow(
+            vneg_strength_2d,
+            origin='lower',
+            extent=axisplot,
+            cmap=plt.get_cmap('hot'),
+            vmin=0,
+            vmax=np.max(vplus_strength_2d)*vmaxcorr
+        )
+        ax[2,1].set_title(
+            'V left', fontsize=14
+        )
+        # Set axis labels and tick sizes
+        for nrow in range(3):
+            for ncol in range(2):   
+                ax[nrow,0].set_ylabel(
+                    'Offset (au)',fontsize=14
+                )
+                ax[-1,ncol].set_xlabel(
+                    'Offset (au)',fontsize=14
+                )
+                ax[nrow,ncol].tick_params(
+                    axis='both', which='major', labelsize=15
+                )
+    return dict_polarizationmax,fig,ax
