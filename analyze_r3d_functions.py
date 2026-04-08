@@ -837,7 +837,7 @@ def load_images(
             if nl == 1:
                 npixels_x = int(line.split()[0])
                 npixels_y = int(line.split()[1])
-                npixels = max([npixels_x,npixels_y])            
+                npixels = max([npixels_x,npixels_y])
             # row 3: pixel size is in cm, divide by AUcm for AU
             if nl == 3:
                 pixelsize_au = float(line.split()[0])/AUcm
@@ -864,10 +864,13 @@ def load_images(
     axisplot  = [-0.5*size_au,0.5*size_au,-0.5*size_au,0.5*size_au]
 
     # Total flux density of the image in Jy
-    # Transoform to Jy/pix and sum all
-    # 1 Jy = 1e23 erg/(s cm2 Hz)
+    # Transform to Jy/pix and sum all
+    # 1 Jy = 1e-23 erg/(s cm2 Hz) 
+    #   -> 1erg(s cm2 Hz) = 1e23 Jy
     # 1 asec = 1/(180/pi * 3600)^2 ster = 2.35044305391e-11 ster
+    #   -> 1ster = 1/2.35044305391e-11 asec2
     # 1 pixel = pixelsize_as^2  asec^2
+    # So 1 erg/etc /ster = 1 * 1e23 Jy * 2.35044305391e-11 /asec2
     totalflux = sum(image1d) * 1.e23 * 2.35044305391e-11 * pixelsize_as**2
 
     # Create 2D arrays

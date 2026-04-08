@@ -34,6 +34,18 @@ beamwidthVLTI_10um = 5.1e-3 # asec
 #    outputpath:str='../dustkapscatmat_opastar.inp'
 # )
 #
+# apf.load_polarizationintensities(
+#   file_path:str='../r3dresults_polarized/st28gm06n075_images/polarizationintensity_0.65um.dat'
+#   angles:list=[
+#       'i000_phi000',
+#       'i090_phi000',
+#       'i090_phi090',
+#       'i090_phi270',
+#       'i180_phi000',
+#       'i270_phi000',
+#   ]
+# )
+#
 #
 # apf.plot_intensity_onepolarization(
 #    imagepath:str='../r3dresults_polarized/st28gm06n052_images/166/',
@@ -129,6 +141,109 @@ def write_r3d_emptypolarization(
         for nmatrix in range(Nmatrices):
             fstar.writelines('  0.0  0.0  0.0  0.0  0.0  0.0\n')
     # Done!
+
+# TODO
+# Function to load desired intensity of polarization
+def load_polarizationintensities(
+        file_path:str='../r3dresults_polarized/st28gm06n075_images/polarizationintensity_0.65um.dat',
+        angles:list=[
+            'i000_phi000',
+            'i090_phi000',
+            'i090_phi090',
+            'i090_phi270',
+            'i180_phi000',
+            'i270_phi000',
+        ],
+    ):
+    """
+    Loads dat-file with extracted polarization intensities, as created with script named
+    scriptpy_extractpolarizationintensity.py
+    Ie file that includes total intensity of each polarization, Q-linear, U-linear, circular
+    and total polarization of all linear polarizations.
+    
+    ARGUMENTS
+      file_path:str Path to polarization-dat file.
+      angles:list List of all angles to extract for. Defaults with all 6 of them
+    
+    RETURNS
+      snapshots    List of all included snapshot numbers
+      q_intensity  Intensity of all stokes Q (linear).
+      u_intensity  Intensity of all stokes U (linear).
+      v_intensity  Intensity of all stokes V (circular).
+      l_intensity  Intensity of all L polarizations (Q and U linear combined).
+    """
+    # TODO
+
+    # Save number of extraction angles
+    Nangles = len(angles)
+
+
+    # Open file
+    with open(file_path, 'r') as fpol:
+        # Loop through file
+        for line in fpol.readlines():
+            # Skip all comments
+            if line[0] != '#':
+                # Extract number of snapshots
+                if line.split('=')[0] == 'Nsnapshots':
+                    Nsnapshots = int(
+                        line.split('=')[1]
+                    )
+                # Extract angles
+                if line[:4] == '    ':
+                    # Save included angles in a list
+                    included_angles = line.split('    ')[1:]
+                    # remove \n on last angle
+                    included_angles[-1] = included_angles[-1].rstrip()
+    #
+    # Reset file reading
+    with open(file_path, 'r') as fpol:
+        # Define arrays to fill with intensity data
+        q_intensity = np.zeros((Nsnapshots,Nangles))
+        u_intensity = np.zeros((Nsnapshots,Nangles))
+        v_intensity = np.zeros((Nsnapshots,Nangles))
+        l_intensity = np.zeros((Nsnapshots,Nangles))
+        snapshots = np.zeros(Nsnapshots)
+        #
+        # Reset counter for number of lines (snapshots really)
+        line_counter = 0
+        #
+        # Loop through image file again to fill arrays
+        for nline,line in enumerate(fpol.readlines()):
+            # Extract snapshot numbers and polarization intensities
+            # for each angle
+            if nline > 4:
+                # Separate out snapshotnumber and angle-dependent polarization data
+                linedata = line.split('    ')
+                # Save snapshot numbers
+                snapshots[line_counter] = int(linedata[0])
+                # Reset wanted angle counter
+                angle_counter = 0
+                # Save polarization data for each angles
+                for nangle,inc_angle in enumerate(included_angles):
+                    if inc_angle in angles:
+                        # Extract polarizations
+                        qint = linedata[nangle+1].split('  ')[0]
+                        q_intensity[line_counter,angle_counter] = qint
+                        #
+                        uint = linedata[nangle+1].split('  ')[1]
+                        u_intensity[line_counter,angle_counter] = uint
+                        #
+                        vint = linedata[nangle+1].split('  ')[2]
+                        v_intensity[line_counter,angle_counter] = vint
+                        #
+                        lint = linedata[nangle+1].split('  ')[3]
+                        l_intensity[line_counter,angle_counter] = lint
+                        # Update angle counter
+                        angle_counter += 1
+                # Update data line counter
+                line_counter += 1
+    # Return all polarizations
+    # Zeros for those that are not asked for
+    return snapshots, q_intensity, u_intensity, v_intensity, l_intensity
+
+
+
 
 
 def plot_intensity_onepolarization(

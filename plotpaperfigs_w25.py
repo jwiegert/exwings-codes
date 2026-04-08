@@ -396,7 +396,6 @@ if plot_allseds == 'y':
                     wavelength,fluxes,
                     color=allcolour
                 )
-        
         # Plot average, stdrange of all
         ax[nmodel].plot(
             wavelength,flux_average,
@@ -421,14 +420,14 @@ if plot_allseds == 'y':
     # Save figure
     fig.tight_layout()
     fig.savefig(
-        'figs/all_seds.pdf', 
+        'figs/all_seds.pdf',
         facecolor='white',
         dpi=300
     )
     #fig.show()
 #
 #####################################################################################
-# Plot all luminosities in three subplots 
+# Plot all luminosities in three subplots
 
 if plot_luminosities == 'y':
     # Set figure objects
