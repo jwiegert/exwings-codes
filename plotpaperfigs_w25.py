@@ -104,12 +104,12 @@ plotvr_datacompare = 'n'
 # For whyAGB5-talk
 plottalk_datadescript = 'n'
 plottalk_exampleimages = 'n'    # Plots 3 figs for whyAGB5-talk with some random sample images
-plottalk_cloudperiods = 'n'
+plottalk_cloudperiods = 'y'
 
 # For NAISS activity report
 plotnaiss_examplefigs = 'n'
 # And for Susannes Cool stars poster
-plotconf_susanneposter = 'y'    # TODO
+plotconf_susanneposter = 'n'    # TODO
 
 # SKIP THESE
 plot_datacompare = 'n'          # Plots colour comparisons for each model with data
@@ -3547,35 +3547,35 @@ if plottalk_cloudperiods == 'y':
     ]
     average_periods = [
         [
-            2.26,2.67,3.45,4.68,5.92,8.43
+            2.26,2.67,3.45,4.68,5.92,8.43         # 052
         ],
         [
-            3.21,4.49,6.77,8.89,13.33,25.1
+            3.21,4.68,7.24,9.95,13.73,24.89       # 074
         ],
         [
-            5.24,9.98,20.95,52.38,104.77,419.08
+            5.50,10.56,26.04,65.09,130.19,390.56  # 075
         ],
     ]
     average_detectrates = [
         [
-            40.23,25.80,16.97,11.84,7.75,5.09
+            0.4023,0.2580,0.1697,0.1184,0.0775,0.0509   # 052
         ],
         [
-            28.12,14.89,8.48,5.15,3.26,1.82
+            0.2713,0.1390,0.0792,0.0491,0.0317,0.0178   # 074
         ],
         [
-            14.75,5.51,2.30,0.94,0.34,0.08
+            0.1356,0.0501,0.0198,0.0089,0.0032,0.0008   # 075
         ],
     ]
     average_prevalences = [
         [
-            0.91,0.69,0.58,0.55,0.46,0.43
+            0.91,0.69,0.58,0.55,0.46,0.43   # 052
         ],
         [
-            0.90,0.67,0.57,0.46,0.43,0.46
+            0.87,0.65,0.57,0.49,0.44,0.44   # 074
         ],
         [
-            0.77,0.55,0.48,0.49,0.36,0.32
+            0.75,0.53,0.52,0.58,0.42,0.31   # 075
         ],
     ]
     # Initiate figures
@@ -3613,11 +3613,11 @@ if plottalk_cloudperiods == 'y':
     #
     # Set plot settings
     ax[1].legend(fontsize=10)
-    ax[0].set_ylim([0,60])
-    ax[1].set_ylim([0,50])
+    ax[0].set_ylim([0,0.5*63.22])
+    ax[1].set_ylim([0,0.5])
     ax[2].set_ylim([0.2,1])
     ax[0].set_ylabel('Average period (yrs)', fontsize = 10)
-    ax[1].set_ylabel('Detection rate (per cent)', fontsize = 10)
+    ax[1].set_ylabel('Detection probability', fontsize = 10)
     ax[2].set_ylabel('Average prevalence (yrs)', fontsize = 10)
     ax[1].set_xlabel(r'Cloud area ($A_\star$)', fontsize = 10)
     #
