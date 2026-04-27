@@ -65,7 +65,7 @@ angles_label = [
 Nangles = len(angles)
 # Set a list of model and model labels
 models = [
-    'st28gm06n052_timedep',
+    'st28gm06n052',
     'st28gm06n074',
     'st28gm06n075',
 ]
@@ -3492,11 +3492,18 @@ if plottalk_exampleimages == 'y':
                 distance=1
             )
             # Change to sqrt-scaled MJy/asec2 or au2 at 1pc
-            image2d = np.sqrt(image2d/1e6)
+            #image2d = np.sqrt(image2d/1e6)
             # Set vertical scale for the images
+            #scale = [
+            #    np.sqrt(1e-2),
+            #    np.sqrt(9e-1)
+            #]
+            imagescaling = 0.45
+            image2d = (image2d/1e6)**imagescaling
+            # Set scale same as for original example images for the two wavelengths
             scale = [
-                np.sqrt(1e-2),
-                np.sqrt(9e-1)
+                (1e-2)**imagescaling,
+                (2e0)**imagescaling
             ]
             # Create each figure, 2x4 subplotpanels
             ax[counter_y,counter_x].imshow(
@@ -3616,7 +3623,7 @@ if plottalk_cloudperiods == 'y':
     ax[0].set_ylim([0,0.5*63.22])
     ax[1].set_ylim([0,0.5])
     ax[2].set_ylim([0.2,1])
-    ax[0].set_ylabel('Average period (yrs)', fontsize = 10)
+    ax[0].set_ylabel('Typical time scale (yrs)', fontsize = 10)
     ax[1].set_ylabel('Detection probability', fontsize = 10)
     ax[2].set_ylabel('Average prevalence (yrs)', fontsize = 10)
     ax[1].set_xlabel(r'Cloud area ($A_\star$)', fontsize = 10)
