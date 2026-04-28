@@ -87,7 +87,7 @@ Nmodels = len(models)
 plot_dustmass = 'n'             # Plots dust masses vs time of all 3 models
 plot_gastodustratio = 'n'       # Plots gas-todust-ratio of models vs NESS-sample and prints values
 plot_075grainsize = 'n'         # Plots grain size vs time of 075
-plot_052exampleimages = 'n'     # Plots a number of example images of 052
+plot_052exampleimages = 'y'     # Plots a number of example images of 052
 plot_numbclouds = 'n'           # Plots number of clouds per time for each angle&model
 plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities and overall
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
@@ -104,7 +104,7 @@ plotvr_datacompare = 'n'
 # For whyAGB5-talk
 plottalk_datadescript = 'n'
 plottalk_exampleimages = 'n'    # Plots 3 figs for whyAGB5-talk with some random sample images
-plottalk_cloudperiods = 'y'
+plottalk_cloudperiods = 'n'
 
 # For NAISS activity report
 plotnaiss_examplefigs = 'n'
@@ -676,9 +676,11 @@ if plot_052fluxdensity == 'y':
 #####################################################################################
 # Plot 6 snapshots at 2 and 10um to showcase what we're looking at
 if plot_052exampleimages == 'y':
+    # Impot package for custom colourbarticks
+    import matplotlib.ticker as mticker
     #
     # Set paths
-    path = '../r3dresults/st28gm06n052_timedep_nospikes/'
+    path = f'../r3dresults/{models[0]}_nospikes/'
     modelabbreviation = '052'
     #
     # Define wavelenvths
@@ -718,6 +720,8 @@ if plot_052exampleimages == 'y':
                 image=imagefilename,
                 distance=1
             )
+
+            """
             # Change to MJy/asec2 or au2 at 1pc
             image2d = image2d/1e6
             # Set scales for the two wavelengths
@@ -726,6 +730,31 @@ if plot_052exampleimages == 'y':
             if ncolumn == 1:
                 scale = [1e-2,9e-1]
             #
+            """
+
+
+            # Change to MJy and to square-root stype
+            # or some other root
+            imagescaling = 0.45
+            image2d = (image2d/1e6)**imagescaling
+            # Set scale same as for original example images for the two wavelengths
+            if ncolumn == 0:
+                scale = [
+                    1e-2**imagescaling,
+                    1e1**imagescaling
+                ]
+            if ncolumn == 1:
+                scale = [
+                    1e-2**imagescaling,
+                    2e0**imagescaling
+                ]
+            #
+
+
+
+
+
+
             # Plot image and save colourbar info
             imbar = ax[ntime,ncolumn].imshow(
                 image2d, 
@@ -761,19 +790,39 @@ if plot_052exampleimages == 'y':
             # Offset AU on outer plots
             if ncolumn == 0:
                 ax[ntime,ncolumn].set_ylabel('Offset (au)', fontsize = 14)
-            # And colour bar on bottom bar
-            if ntime == len(snapshots)-1:
-                cb0 = plt.colorbar(
-                    imbar, 
-                    #cax=cax, 
-                    orientation = 'horizontal', 
-                )
-                cb0.ax.tick_params(labelsize=12)
-                # Only label on one, TODO move this to middle of plot (manual labour in gimp)
-                if ncolumn == 0:
+                # And colour bar on bottom bar
+                if ntime == len(snapshots)-1:
+                    cb0 = plt.colorbar(
+                        imbar, 
+                        #cax=cax, 
+                        orientation = 'horizontal', 
+                        ticks=[1, 1.8660659830736148, 2.5491212546385245],
+                        format=mticker.FixedFormatter(['1', '4', '8']),
+                    )
+                    cb0.ax.tick_params(labelsize=12)
+                    # Only label on one, TODO move this to middle of plot (manual labour in gimp)
                     cb0.set_label(
                         label = r'Flux density (MJy asec$^{-2}$, at 1pc)', fontsize=12
                     )
+            # Another ticking for the second column
+            if ncolumn == 1:
+                if ntime == len(snapshots)-1:
+                    cb0 = plt.colorbar(
+                        imbar, 
+                        #cax=cax, 
+                        orientation = 'horizontal', 
+                        ticks=[0.4846893733285307, 0.8517146511227923, 1.1634765007012597],
+                        format=mticker.FixedFormatter(['0.2', '0.7', '1.4']),
+                    )
+                    cb0.ax.tick_params(labelsize=12)
+
+                    #cbar = fig.colorbar(cax,
+                    #ticks=[-1, 0, 1],
+                    #format=mticker.FixedFormatter(['< -1', '0', '> 1']),
+                    #extend='both'
+                    #)
+
+
     # NOTE
     # final layout of image is fixed manually in GIMP
     # Save fig
