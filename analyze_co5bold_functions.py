@@ -2386,7 +2386,7 @@ def extract_grainsizes(
                 gas_densities = np.load(f'../c5dgas_density_{phase}.npy')
                 monomer_densities = np.load(f'../c5ddust_density_{phase}.npy')
             else:
-                print(f'ERROR: One of these files doesnt exist, did you run a5d.load_c5dheavydata() before?\n    ../c5dgas_density_{phase}.npy, ../c5ddust_density_{phase}.npy \n')
+                raise ValueError(f'ERROR: One of these files doesnt exist, did you run a5d.load_c5dheavydata() before?\n    ../c5dgas_density_{phase}.npy, ../c5ddust_density_{phase}.npy \n')
 
 
             # Loop over the r3d-grid

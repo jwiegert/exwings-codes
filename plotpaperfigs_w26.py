@@ -87,8 +87,8 @@ Nmodels = len(models)
 plot_dustmass = 'n'             # Plots dust masses vs time of all 3 models
 plot_gastodustratio = 'n'       # Plots gas-todust-ratio of models vs NESS-sample and prints values
 plot_075grainsize = 'n'         # Plots grain size vs time of 075
-plot_052exampleimages = 'y'     # Plots a number of example images of 052
-plot_numbclouds = 'n'           # Plots number of clouds per time for each angle&model
+plot_052exampleimages = 'n'     # Plots a number of example images of 052
+plot_numbclouds = 'y'           # Plots number of clouds per time for each angle&model
 plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities and overall
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
 plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
@@ -109,7 +109,8 @@ plottalk_cloudperiods = 'n'
 # For NAISS activity report
 plotnaiss_examplefigs = 'n'
 # And for Susannes Cool stars poster
-plotconf_susanneposter = 'n'    # TODO
+plotconf_susanneposter = 'n'    # Plots fig for tokyo-poster
+plotconf_susanneposter_altern = 'n'
 
 # SKIP THESE
 plot_datacompare = 'n'          # Plots colour comparisons for each model with data
@@ -125,7 +126,7 @@ plot_fluxvariations = 'n'       # SKIP
 # Plot dust mass vs time for all three model
 if plot_dustmass == 'y':
     # Load data from *052 model
-    path052 = '../r3dresults/st28gm06n052_timedep_nospikes/'
+    path052 = '../r3dresults/st28gm06n052_nospikes/'
     phasetimes052 = np.loadtxt(path052+'snapshot_yr.dat')[:,1]
     dustmass052 = np.loadtxt(path052+'dustmass.dat')[:,1]
     time052 = phasetimes052 - phasetimes052[0]
@@ -156,7 +157,8 @@ if plot_dustmass == 'y':
     fig,ax = plt.subplots(
         2,1, 
         figsize=(6,6),
-        gridspec_kw={'height_ratios': [2, 1]}
+        gridspec_kw={'height_ratios': [2, 1]},
+        layout='constrained',
     )
     legendlist = models_label
     # Add grey area for pre-relaxation time
@@ -204,7 +206,7 @@ if plot_dustmass == 'y':
         label=legendlist[2]
     )
     ax[0].set_ylabel(r'Dust mass ($10^{-7}\,M_\odot$)',fontsize=18)
-    ax[1].set_xlabel('Synchronised time (yrs)',fontsize=18)
+    ax[1].set_xlabel('Time (yrs)',fontsize=18)
     ax[0].tick_params(axis='both', which='major', labelsize=15)
     ax[1].tick_params(axis='both', which='major', labelsize=15)
     ax[0].set_xlim([0,np.max([time052[-1],time074[-1],time075[-1]])])
@@ -216,7 +218,7 @@ if plot_dustmass == 'y':
     ax[1].legend(fontsize=14)
     #
     # Save figure
-    fig.tight_layout()
+    #fig.tight_layout()
     ax[0].yaxis.set_label_coords(-0.088,0.09) # Moves ylabel to centre of vertical
     fig.savefig(
         f'figs/052_074_075_dustmasscompare.pdf', 
@@ -748,13 +750,6 @@ if plot_052exampleimages == 'y':
                     1e-2**imagescaling,
                     2e0**imagescaling
                 ]
-            #
-
-
-
-
-
-
             # Plot image and save colourbar info
             imbar = ax[ntime,ncolumn].imshow(
                 image2d, 
@@ -1721,6 +1716,8 @@ if plot_numbclouds == 'y':
 
         # Load snapshot times for each model
         phasetimes = np.loadtxt(f'../r3dresults/{model}_nospikes/snapshot_yr.dat')[:,1]
+        # Synchronise to zero
+        phasetimes = phasetimes - phasetimes[0]
 
         # Loop over fraction star area and load nblobs for all angles
         for nstararea,stararea in enumerate(fract_starareas):
@@ -1781,7 +1778,7 @@ if plot_numbclouds == 'y':
             fontsize=14
         )
     ax[-1,1].set_xlabel(
-        'Simulation time (yrs)',
+        'Time (yrs)',
         fontsize=18
     )
     ax[-1,2].legend(
@@ -1887,7 +1884,7 @@ if plot_bestrandomsample == 'y':
     #        136                 i090_phi270 : [0.04806647 1.11582878 0.02059992 0.00343332 0.13733277]
     #
     imagepaths = [
-        '../r3dresults/st28gm06n052_timedep_nospikes/297/',
+        '../r3dresults/st28gm06n052_nospikes/297/',
         '../r3dresults/st28gm06n074_nospikes/413/',
         '../r3dresults/st28gm06n075_nospikes/136/',
     ]
@@ -1896,10 +1893,12 @@ if plot_bestrandomsample == 'y':
         'image_i090_phi090_10um.out',
         'image_i090_phi270_10um.out',
     ]
+    # 074: 109.6408500777104  - 44.36333461144791
+    # 075:  65.75287689113827 - 44.36343670296259
     imagetimes = [
         'Model-A: 46.90 yr',
-        'Model-B: 109.64 yr',
-        'Model-C: 65.75 yr',
+        'Model-B: 65.28 yr',
+        'Model-C: 21.39 yr',
     ]
     # Overwrite labels for shorter version
     models_label = [
@@ -2150,6 +2149,7 @@ if plot_allrandomsample == 'y':
         snapshot_file = np.loadtxt(
             f'{path}snapshot_yr.dat'
         )
+        start_time = snapshot_file[0,1]
         # Set up image object
         fig,ax = plt.subplots(
             6,4,
@@ -2171,10 +2171,10 @@ if plot_allrandomsample == 'y':
             angle = angles[n_angle]
 
             # Extract correct time for each panel
+            # start at zero (synchronise)
             for snaptime in snapshot_file:
                 if obs_snapshots[snap_counter_lin] == snaptime[0]:
-                    obs_time = snaptime[1]
-
+                    obs_time = snaptime[1] - start_time
 
             # Load image
             image2d,image2dlog,flux,axisplot = a3d.load_images(
@@ -2607,15 +2607,15 @@ if plotnaiss_examplefigs == 'y':
         'image_i270_phi000_10um.out',
         'image_i090_phi270_10um.out',
     ]
-    models_label = [
-        'st28gm06n052',
-        'st28gm06n074',
-        'st28gm06n075',
-    ]
+    #models_label = [
+    #    'st28gm06n052',
+    #    'st28gm06n074',
+    #    'st28gm06n075',
+    #]
     imagetimes = [
-        f'{models_label[0]}: 46.90 yr',
-        f'{models_label[1]}: 110.59 yr',
-        f'{models_label[2]}: 65.75 yr',
+        r'$\alpha_{\rm stick} = 1$, 46.90 yr',
+        r'$\alpha_{\rm stick} = 0.1$, 110.59 yr',
+        r'$\alpha_{\rm stick} = 0.01$, 65.75 yr',
     ]
     # Chosen snapshots from random sample
     nsnapshots = [
@@ -2696,14 +2696,196 @@ if plotnaiss_examplefigs == 'y':
     )
 
 
+
+# Plot a few example figs for NAISS activity report
 if plotconf_susanneposter == 'y':
     #
-    # A 2x2 image with example figures from one of the models
-    # 2 wavelengths and two time snapshots
+    #    052:  46.90yrs, 90-0        297
     #
-    # TODO
+    nsnapshots = [
+        279,285,291,298,304
+    ]
+    imagetimes = [
+        '44 yr',
+        '45 yr',
+        '46 yr',
+        '47 yr',
+        '48 yr',                
+    ]
+    Nimages = len(nsnapshots)
+    # Chosen snapshots from random sample
+    # Angles of chosen snapshots
+    nangle = 1
+    angle_label = angles_label[nangle]
+    # Max number of snapshots for each model
+    # Set up image object and image scale
+    fig,ax = plt.subplots(
+        1,Nimages,
+        figsize=(16,3.6),
+        layout='constrained'
+    )
+    imagescaling = 0.45
+    scale = [
+        (1e-3)**imagescaling,
+        (1.7e0)**imagescaling
+    ]
+    # Loop through the 3 different model selections
+    for nimage in range(Nimages):
+        # Set all parameters
+        nsnapshot = nsnapshots[nimage]
+        model_snapshot = 400
+        imagepath = f'../r3dresults/st28gm06n052_nospikes/{nsnapshot:03d}/'
+        imagename = 'image_i090_phi000_10um.out'
+        imagetime = imagetimes[nimage]
+
+        # Create panels with the chosen images
+        # Load image
+        image2d,image2dlog,flux,axisplot = a3d.load_images(
+            path=imagepath,
+            image=imagename,
+            distance=1
+        )
+        # Change to MJy and scale to some root'ish
+        image2d = (image2d/1e6)**imagescaling
+        #
+        # Plot image and save colourbar info
+        ax[nimage].imshow(
+            image2d, 
+            origin='lower', 
+            extent=axisplot, 
+            vmin=scale[0],
+            vmax=scale[1],
+            cmap=plt.get_cmap('hot')
+        )
+        # Write time for each observation
+        ax[nimage].text(
+            -14,14,
+            imagetime,
+            fontsize = 16,
+            verticalalignment='top', 
+            bbox=dict(
+                boxstyle='round', 
+                facecolor='white', 
+                alpha=0.9
+            )
+        )
+
+        #ax[nimage].set_title(
+        #    imagetime,
+        #    fontsize = 14,
+        #    loc='left'
+        #)
+        # Set general axis settings
+        ax[nimage].tick_params(axis='x', which='major', labelsize=12)
+        ax[nimage].tick_params(axis='y', which='major', labelsize=0)
+    ax[0].tick_params(axis='y', which='major', labelsize=12)
+    # Set figure settings
+    #ax[0].set_ylabel('Offset (au)', fontsize = 14)
+    ax[int((Nimages-1)/2)].set_xlabel('Offset (au)', fontsize = 14)
     #
-    print('hej')
+    # Save figure
+    #fig.tight_layout()
+    fig.savefig(
+        'figs/cstars_r3dsample.pdf',
+        facecolor='white',
+        dpi=300
+    )
+
+
+
+# Plot a few example figs for NAISS activity report
+if plotconf_susanneposter_altern == 'y':
+    #
+    #    052:  46.90yrs, 90-0        297
+    #
+    nsnapshots = [
+        285,291,298,304
+    ]
+    imagetimes = [
+        '45 yr',
+        '46 yr',
+        '47 yr',
+        '48 yr',                
+    ]
+    Nimages = len(nsnapshots)
+    # Chosen snapshots from random sample
+    # Angles of chosen snapshots
+    nangle = 1
+    angle_label = angles_label[nangle]
+    # Max number of snapshots for each model
+    # Set up image object and image scale
+    fig,ax = plt.subplots(
+        1,Nimages,
+        figsize=(16,4.4),
+        layout='constrained'
+    )
+    imagescaling = 0.45
+    scale = [
+        (1e-3)**imagescaling,
+        (1.7e0)**imagescaling
+    ]
+    # Loop through the 3 different model selections
+    for nimage in range(Nimages):
+        # Set all parameters
+        nsnapshot = nsnapshots[nimage]
+        model_snapshot = 400
+        imagepath = f'../r3dresults/st28gm06n052_nospikes/{nsnapshot:03d}/'
+        imagename = 'image_i090_phi000_10um.out'
+        imagetime = imagetimes[nimage]
+
+        # Create panels with the chosen images
+        # Load image
+        image2d,image2dlog,flux,axisplot = a3d.load_images(
+            path=imagepath,
+            image=imagename,
+            distance=1
+        )
+        # Change to MJy and scale to some root'ish
+        image2d = (image2d/1e6)**imagescaling
+        #
+        # Plot image and save colourbar info
+        ax[nimage].imshow(
+            image2d, 
+            origin='lower', 
+            extent=axisplot, 
+            vmin=scale[0],
+            vmax=scale[1],
+            cmap=plt.get_cmap('hot')
+        )
+        # Write time for each observation
+        ax[nimage].text(
+            -14,14,
+            imagetime,
+            fontsize = 16,
+            verticalalignment='top', 
+            bbox=dict(
+                boxstyle='round', 
+                facecolor='white', 
+                alpha=0.9
+            )
+        )
+        #.set_title(
+        #    imagetime,
+        #    fontsize = 14,
+        #    loc='left'
+        #)
+
+        # Set general axis settings
+        ax[nimage].tick_params(axis='x', which='major', labelsize=12)
+        ax[nimage].tick_params(axis='y', which='major', labelsize=0)
+        ax[nimage].set_xlabel('Offset (au)', fontsize = 14)
+    ax[0].tick_params(axis='y', which='major', labelsize=12)
+    # Set figure settings
+    #ax[0].set_ylabel('Offset (au)', fontsize = 14)
+    #ax[int((Nimages-1)/2)].set_xlabel('Offset (au)', fontsize = 14)
+    #
+    # Save figure
+    #fig.tight_layout()
+    fig.savefig(
+        'figs/cstars_r3dsample_fourpans.pdf',
+        facecolor='white',
+        dpi=300
+    )
 
 
 
