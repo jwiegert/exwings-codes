@@ -88,11 +88,11 @@ plot_dustmass = 'n'             # Plots dust masses vs time of all 3 models
 plot_gastodustratio = 'n'       # Plots gas-todust-ratio of models vs NESS-sample and prints values
 plot_075grainsize = 'n'         # Plots grain size vs time of 075
 plot_052exampleimages = 'n'     # Plots a number of example images of 052
-plot_numbclouds = 'y'           # Plots number of clouds per time for each angle&model
+plot_numbclouds = 'n'           # Plots number of clouds per time for each angle&model
 plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities and overall
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
 plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
-plot_allrandomsample = 'n'      # Plots all 24 random images of all models
+plot_allrandomsample = 'y'      # Plots all 24 random images of all models
 plot_detrate_fluxdensity = 'n'  # Plots cumulative clouds per year with beam-averaged flux density
 
 
@@ -1930,6 +1930,7 @@ if plot_bestrandomsample == 'y':
     fig,ax = plt.subplots(
         1,4,
         figsize=(13,3.5),
+        layout='constrained'
     )
     imagescaling = 0.45
     scale = [
@@ -2058,7 +2059,9 @@ if plot_bestrandomsample == 'y':
 
         # Set general axis settings
         ax[nimage].tick_params(axis='both', which='major', labelsize=15)
-        ax[nimage].tick_params(axis='both', which='major', labelsize=15)
+        # Remove text on yaxis for panels 2 and 3
+        if nimage > 0:
+            ax[nimage].tick_params(axis='y', which='major', labelsize=0)
 
     # Plot fractional limits, pixel size and largest possible size
     fract_starareas = [
@@ -2091,7 +2094,6 @@ if plot_bestrandomsample == 'y':
     ax[-1].set_box_aspect(1)
     #
     # Save figure
-    fig.tight_layout()
     fig.savefig(
         'figs/best_randomsample.pdf',
         facecolor='white',
@@ -2154,6 +2156,7 @@ if plot_allrandomsample == 'y':
         fig,ax = plt.subplots(
             6,4,
             figsize=(9,14),
+            layout='constrained',
         )
         # reset snapshot-number-counter
         snap_counter_lin = 0
@@ -2220,10 +2223,7 @@ if plot_allrandomsample == 'y':
             if snap_counterX == 4:
                 snap_counterX = 0
                 snap_counterY += 1
-
-
         # Save figure
-        fig.tight_layout()
         fig.savefig(
             f'figs/all_randomsample_{model}.pdf',
             facecolor='white',
