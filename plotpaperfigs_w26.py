@@ -87,12 +87,12 @@ Nmodels = len(models)
 plot_dustmass = 'n'             # Plots dust masses vs time of all 3 models
 plot_gastodustratio = 'n'       # Plots gas-todust-ratio of models vs NESS-sample and prints values
 plot_075grainsize = 'n'         # Plots grain size vs time of 075
-plot_052exampleimages = 'n'     # Plots a number of example images of 052
+plot_052exampleimages = 'y'     # Plots a number of example images of 052
 plot_numbclouds = 'n'           # Plots number of clouds per time for each angle&model
 plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities and overall
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
 plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
-plot_allrandomsample = 'y'      # Plots all 24 random images of all models
+plot_allrandomsample = 'n'      # Plots all 24 random images of all models
 plot_detrate_fluxdensity = 'n'  # Plots cumulative clouds per year with beam-averaged flux density
 
 
@@ -118,9 +118,9 @@ plot_allseds = 'n'              # SKIP
 plot_luminosities = 'n'         # SKIP
 plot_052fluxdensity = 'n'       # SKIP
 plot_fluxvariations = 'n'       # SKIP
-
-
-
+#
+#
+#
 # Plots below ----------------------------------------------------------------#
 #
 # Plot dust mass vs time for all three model
@@ -225,7 +225,6 @@ if plot_dustmass == 'y':
         dpi=300, 
         facecolor="white"
     )
-    #fig.show()
 #
 #####################################################################################
 # Plot gas-to-dustratio estimates for each model
@@ -237,13 +236,26 @@ if plot_gastodustratio == 'y':
         r'Model-B',
         r'Model-C',
     ]
-    fig,ax = plt.figure(figsize=(6,3)), plt.axes()
+    fig,ax = plt.figure(
+        figsize=(6,3),
+        layout='constrained',
+    ), plt.axes()
 
     # Plot Sofias values
     ax.plot(
         [0,4],
         [250,250],
         '--k'
+    )
+    ax.plot(
+        [0,4],
+        [6,6],
+        ':k'
+    )
+    ax.plot(
+        [0,4],
+        [16600,16600],
+        ':k'
     )
     ax.add_patch(
         plt.Rectangle(
@@ -259,55 +271,66 @@ if plot_gastodustratio == 'y':
         )
         # Snapshot to cut from
         relaxsnap = models_relaxsnap[nmodel]
-        #
         nsnaps = alldata[relaxsnap:,0]
-        gastodust = alldata[relaxsnap:,2]
-        allgas = alldata[relaxsnap:,1]
         #
-        average_gtd = np.mean(gastodust)
-        median_gtd = np.median(gastodust)
-        std_gtd = np.std(gastodust)
-        mad_gtd = stats.median_abs_deviation(gastodust)
-        min_gtd = np.min(gastodust)
-        max_gtd = np.max(gastodust)
+        # Statistics
+        gastodust_dustcells = alldata[relaxsnap:,1]
         #
-        average_allgas = np.mean(allgas)
-        std_allgas = np.std(allgas)
-        median_allgas = np.median(allgas)
-        mad_allgas = stats.median_abs_deviation(allgas)
+        average_dustcells = np.mean(gastodust_dustcells)
+        median_dustcells = np.median(gastodust_dustcells)
+        std_dustcells = np.std(gastodust_dustcells)
+        mad_dustcells = stats.median_abs_deviation(gastodust_dustcells)
+        min_dustcells = np.min(gastodust_dustcells)
+        max_dustcells = np.max(gastodust_dustcells)
         #
-        print(f'Average gas to dust ratio {model}: {average_gtd:.3f}')
-        print(f'                       median: {median_gtd:.3f}')
-        print(f'                      std dev: {std_gtd:.3f}')
-        print(f'               median abs dev: {mad_gtd:.3f}')
-        print(f'                  min-max gtd: {min_gtd:.3f} - {max_gtd:.3f}')
-        print(f'        Average gas>2au ratio: {average_allgas:.3f} pm {std_allgas:.3f}')
-        print(f'         Median gas>2au ratio: {median_allgas:.3f} pm {mad_allgas:.3f}')
+        #
+        gastodust_dustradius = alldata[relaxsnap:,2]
+        #
+        average_dustradius = np.mean(gastodust_dustradius)
+        median_dustradius = np.median(gastodust_dustradius)
+        std_dustradius = np.std(gastodust_dustradius)
+        mad_dustradius = stats.median_abs_deviation(gastodust_dustradius)
+        min_dustradius = np.min(gastodust_dustradius)
+        max_dustradius = np.max(gastodust_dustradius)
+        #
+        print(f'{model}               dustcells                dustradius')
+        print(f'Average gas to dust ratio: {average_dustcells:.3f}                {average_dustradius:.3f}')
+        print(f'                   median: {median_dustcells:.3f}                {median_dustradius:.3f}')
+        print(f'                  std dev: {std_dustcells:.3f}                {std_dustradius:.3f}')
+        print(f'           median abs dev: {mad_dustcells:.3f}                {mad_dustradius:.3f}')
+        print(f'              min-max gtd: {min_dustcells:.3f} - {max_dustcells:.3f}    {min_dustradius:.3f} - {max_dustradius:.3f}')
         print()
         #
+        # MAD of dustradius-data
         ax.plot(
-            nmodel+1,average_gtd,
-            '.',markersize=15,
+            nmodel+1,median_dustradius,
+            '.',markersize=10,
             color=model_colours[nmodel]
         )
         ax.plot(
             [nmodel+1,nmodel+1],
-            [median_gtd-mad_gtd,median_gtd+mad_gtd],
+            [median_dustradius-mad_dustcells,median_dustradius+mad_dustcells],
+            color=model_colours[nmodel]
+        )
+        # and of dustcells only
+        ax.plot(
+            nmodel+1,median_dustcells,
+            '*',markersize=10,
             color=model_colours[nmodel]
         )
         ax.plot(
-            nmodel+1,median_gtd,
-            '*',markersize=15,
+            [nmodel+1,nmodel+1],
+            [median_dustcells-mad_dustcells,median_dustcells+mad_dustcells],
             color=model_colours[nmodel]
         )
     ax.set_yscale('log')
     ax.set_xlim([0.5,3.5])
-    ax.set_ylim([7,2.5e4])
+    #ax.set_ylim([7,2.5e4])
+    ax.set_ylim([50,3e5])
     ax.set_xticks([1,2,3]) 
     ax.set_xticklabels(models_label);
     ax.set_ylabel('Gas-to-dust ratio',fontsize=18)
     ax.tick_params(axis='both', which='major', labelsize=15)
-    fig.tight_layout()
     fig.savefig('figs/gastodustratio.pdf')
 
 
@@ -707,7 +730,8 @@ if plot_052exampleimages == 'y':
     # Create image objects and fill subplots
     fig,ax = plt.subplots(
         len(snapshots),len(wavelengths),
-        figsize=(4.5, 14)
+        figsize=(4.5, 11.5),
+        layout='constrained',
     )
     # Loop through wavelengths
     for ncolumn,wavelength in enumerate(wavelengths):
@@ -722,7 +746,6 @@ if plot_052exampleimages == 'y':
                 image=imagefilename,
                 distance=1
             )
-
             """
             # Change to MJy/asec2 or au2 at 1pc
             image2d = image2d/1e6
@@ -733,8 +756,6 @@ if plot_052exampleimages == 'y':
                 scale = [1e-2,9e-1]
             #
             """
-
-
             # Change to MJy and to square-root stype
             # or some other root
             imagescaling = 0.45
@@ -797,7 +818,8 @@ if plot_052exampleimages == 'y':
                     cb0.ax.tick_params(labelsize=12)
                     # Only label on one, TODO move this to middle of plot (manual labour in gimp)
                     cb0.set_label(
-                        label = r'Flux density (MJy asec$^{-2}$, at 1pc)', fontsize=12
+                        label = r'Flux density (MJy asec$^{-2}$, at 1pc)', 
+                        fontsize=12,
                     )
             # Another ticking for the second column
             if ncolumn == 1:
@@ -816,14 +838,12 @@ if plot_052exampleimages == 'y':
                     #format=mticker.FixedFormatter(['< -1', '0', '> 1']),
                     #extend='both'
                     #)
-
-
     # NOTE
     # final layout of image is fixed manually in GIMP
     # Save fig
-    fig.tight_layout()
+    #fig.tight_layout()
     fig.savefig(
-        'figs/052exampleimages.png', 
+        'figs/052exampleimages.pdf', 
         facecolor='white',
         dpi=300
     )
@@ -931,7 +951,8 @@ if plot_LOSevents == 'y':
     # Set fig-objects
     fig,ax = plt.subplots(
         3,3,
-        figsize=(13,10)
+        figsize=(13,10),
+        layout='constrained'
     )
     # Set y-axle-lengths for periodicity to half of included time for each
     periodtime_axis = [
@@ -1682,8 +1703,6 @@ if plot_LOSevents == 'y':
     ax[2][1].set_xlabel('LOS-angle',fontsize=18)
     #
     # Save figure
-    #
-    fig.tight_layout()
     fig.savefig(
         'figs/periods_allmetrics.pdf', 
         facecolor='white',
@@ -1698,7 +1717,8 @@ if plot_numbclouds == 'y':
     # Set various settings
     fig,ax = plt.subplots(
         Nangles,Nmodels,
-        figsize=(13,14)
+        figsize=(13,14),
+        layout='constrained'
     )
     max_flux_contrast = 0.01
     fract_starareas = [0.1,0.3,0.5]
@@ -1787,14 +1807,11 @@ if plot_numbclouds == 'y':
         fontsize=14
     )
     # 4 blobs is max
-
-    fig.tight_layout()
     fig.savefig(
         'figs/nblobs_allangles.pdf',
         facecolor='white',
         dpi=300
     )
-    #plt.show()
 
 
 # Plot histograms over cloud
@@ -1803,7 +1820,8 @@ if plot_cloudareas == 'y':
     # Set various settings
     fig,ax = plt.subplots(
         1,Nmodels,
-        figsize=(13,4)
+        figsize=(13,4),
+        layout='constrained'
     )
     Rstar = 1.65
     Rin = 2*Rstar
@@ -1862,7 +1880,6 @@ if plot_cloudareas == 'y':
     ax[1].set_xlabel(r'Cloud area (au$^2$)', fontsize=18)
     ax[0].set_ylabel('Number of clouds', fontsize=18)
 
-    fig.tight_layout()
     fig.savefig(
         'figs/blobareas_histogram.pdf',
         facecolor='white',
@@ -2242,7 +2259,10 @@ if plot_detrate_fluxdensity == 'y':
     distance = 200
     #
     # Initiate fig-ax-object
-    fig,ax = plt.figure(figsize=(6,4)), plt.axes()
+    fig,ax = plt.figure(
+        figsize=(6,4),
+        layout='constrained'
+    ), plt.axes()
 
     # Loop over models
     for nmodel,model in enumerate(models):
@@ -2351,7 +2371,6 @@ if plot_detrate_fluxdensity == 'y':
     ax.tick_params(axis='both', which='major', labelsize=15)
     ax.set_xlim(minflux,maxflux)
     ax.set_ylim([0,6])
-    fig.tight_layout()
     fig.savefig(
         f'figs/beamaveragefluxdensity.pdf',
         facecolor='white',
