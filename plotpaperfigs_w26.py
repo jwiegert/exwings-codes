@@ -87,11 +87,11 @@ Nmodels = len(models)
 plot_dustmass = 'n'             # Plots dust masses vs time of all 3 models
 plot_gastodustratio = 'n'       # Plots gas-todust-ratio of models vs NESS-sample and prints values
 plot_075grainsize = 'n'         # Plots grain size vs time of 075
-plot_052exampleimages = 'y'     # Plots a number of example images of 052
+plot_052exampleimages = 'n'     # Plots a number of example images of 052
 plot_numbclouds = 'n'           # Plots number of clouds per time for each angle&model
 plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities and overall
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
-plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
+plot_bestrandomsample = 'y'     # Plots three example figures and cloud sizes
 plot_allrandomsample = 'n'      # Plots all 24 random images of all models
 plot_detrate_fluxdensity = 'n'  # Plots cumulative clouds per year with beam-averaged flux density
 
@@ -2078,8 +2078,13 @@ if plot_bestrandomsample == 'y':
         ax[nimage].tick_params(axis='both', which='major', labelsize=15)
         # Remove text on yaxis for panels 2 and 3
         if nimage > 0:
-            ax[nimage].tick_params(axis='y', which='major', labelsize=0)
-
+            ax[nimage].tick_params(
+                axis='y', 
+                which='major', 
+                color='w', 
+                labelsize=0, 
+                labelcolor='w'
+            )
     # Plot fractional limits, pixel size and largest possible size
     fract_starareas = [
         0.1,0.2,0.3,0.4
@@ -2795,6 +2800,7 @@ if plotconf_susanneposter == 'y':
         #    loc='left'
         #)
         # Set general axis settings
+        #    only labelsize=0 is not enough! Also add color='w'!
         ax[nimage].tick_params(axis='x', which='major', labelsize=12)
         ax[nimage].tick_params(axis='y', which='major', labelsize=0)
     ax[0].tick_params(axis='y', which='major', labelsize=12)
@@ -2890,6 +2896,7 @@ if plotconf_susanneposter_altern == 'y':
         #)
 
         # Set general axis settings
+        #    only labelsize=0 is not enough! Also add color='w'!
         ax[nimage].tick_params(axis='x', which='major', labelsize=12)
         ax[nimage].tick_params(axis='y', which='major', labelsize=0)
         ax[nimage].set_xlabel('Offset (au)', fontsize = 14)
