@@ -368,7 +368,7 @@ def plot_intensity_onepolarization(
         #
         # Abort if imagesetting is incorrect
         if imagesetting == 1:
-            raise ValueError('Not polarised, load normal image with a3d.load_images()!')
+            raise ValueError('Not polarized, load normal image with a3d.load_images()!')
         else:
             # Continue with plotting image
             #

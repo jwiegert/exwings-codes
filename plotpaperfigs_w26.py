@@ -89,9 +89,9 @@ plot_gastodustratio = 'n'       # Plots gas-todust-ratio of models vs NESS-sampl
 plot_075grainsize = 'n'         # Plots grain size vs time of 075
 plot_052exampleimages = 'n'     # Plots a number of example images of 052
 plot_numbclouds = 'n'           # Plots number of clouds per time for each angle&model
-plot_LOSevents = 'n'            # Plots angle-dependent cloud-periods and probabilities and overall
+plot_LOSevents = 'y'            # Plots angle-dependent cloud-periods and probabilities and overall
 plot_cloudareas = 'n'           # Plots histogram of N clouds per area size
-plot_bestrandomsample = 'y'     # Plots three example figures and cloud sizes
+plot_bestrandomsample = 'n'     # Plots three example figures and cloud sizes
 plot_allrandomsample = 'n'      # Plots all 24 random images of all models
 plot_detrate_fluxdensity = 'n'  # Plots cumulative clouds per year with beam-averaged flux density
 
@@ -948,6 +948,13 @@ if plot_LOSevents == 'y':
     Model-B:074    0.0214   0.0190   0.0357    0.0143     NA        0.0167
     Model-C:075    NA       0.0049   NA        NA         NA        NA
     """;
+    #
+    models_label_short = [
+        r'Model-A',
+        r'Model-B',
+        r'Model-C',
+    ]
+    
     # Set fig-objects
     fig,ax = plt.subplots(
         3,3,
@@ -1039,7 +1046,7 @@ if plot_LOSevents == 'y':
     ax[0][2].set_ylim([0.2,1])
     ax[0][0].set_ylabel('Typical time scale (yrs)', fontsize = 18)
     ax[0][1].set_ylabel('Detection probability', fontsize = 18)
-    ax[0][2].set_ylabel('Average prevalence (yrs)', fontsize = 18)
+    ax[0][2].set_ylabel('Average persistence (yrs)', fontsize = 18)
     #
     # PLOT ALL LOS-DEPENDENT NUMBERS
     #
@@ -1691,7 +1698,7 @@ if plot_LOSevents == 'y':
         for nrow in range(1,3):
             ax[nrow][nmodel].set_xticks([0,1,2,3,4,5]) 
             ax[nrow][nmodel].set_xticklabels(angles_label) 
-        ax[0][nmodel].set_title(models_label[nmodel],fontsize=14)
+            ax[nrow][nmodel].set_title(models_label_short[nmodel],fontsize=14,loc='left')
         #ax[0][nmodel].set_xticklabels(['','','','','','']) 
         
     #
